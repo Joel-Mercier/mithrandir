@@ -291,35 +291,64 @@ setup_backup_service() {
         return
     fi
 
-    local service_file="${SCRIPT_DIR}/systemd/homelab-backup.service"
-    local timer_file="${SCRIPT_DIR}/systemd/homelab-backup.timer"
     local backup_script="${SCRIPT_DIR}/backup.sh"
 
-    # Check if files exist
-    if [ ! -f "$service_file" ] || [ ! -f "$timer_file" ]; then
-        echo "WARNING: Backup service files not found. Skipping backup service setup."
-        return
-    fi
-
+    # Check if backup script exists
     if [ ! -f "$backup_script" ]; then
         echo "WARNING: backup.sh not found. Skipping backup service setup."
         return
     fi
 
-    # Create a temporary service file with the correct path
+    echo "Generating backup service files..."
+
+    # Generate service file with correct path
     local temp_service_file
     temp_service_file=$(mktemp)
-    # Replace the placeholder path with the actual backup script path
-    # Use @ as delimiter to avoid conflicts with path characters
-    sed "s@/path/to/homelab/backup.sh@${backup_script}@g" "$service_file" > "$temp_service_file"
+    cat > "$temp_service_file" <<EOF
+[Unit]
+Description=Home Lab Backup Service
+After=network-online.target
+Wants=network-online.target
 
-    # Copy service and timer files to systemd directory
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/root
+ExecStart=/usr/bin/bash ${backup_script}
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    # Generate timer file
+    local temp_timer_file
+    temp_timer_file=$(mktemp)
+    cat > "$temp_timer_file" <<EOF
+[Unit]
+Description=Daily Home Lab Backup Timer
+Requires=homelab-backup.service
+
+[Timer]
+# Run at 2:00 AM every day
+OnCalendar=*-*-* 02:00:00
+# If the system was off, run immediately when it comes back on
+Persistent=true
+# Randomize start time by 0-30 minutes to avoid load spikes
+RandomizedDelaySec=1800
+
+[Install]
+WantedBy=timers.target
+EOF
+
+    # Copy generated files to systemd directory
     echo "Installing backup service files..."
     run "cp $temp_service_file /etc/systemd/system/homelab-backup.service"
-    run "cp $timer_file /etc/systemd/system/homelab-backup.timer"
+    run "cp $temp_timer_file /etc/systemd/system/homelab-backup.timer"
 
-    # Clean up temp file
-    rm -f "$temp_service_file"
+    # Clean up temp files
+    rm -f "$temp_service_file" "$temp_timer_file"
 
     # Reload systemd daemon
     run "systemctl daemon-reload"

@@ -18,10 +18,12 @@ Backup configuration file:
 - `APPS`: Apps to backup - `"auto"` to detect installed apps, or space-separated list
 
 ### Systemd Service
-- **Service**: `systemd/homelab-backup.service`
+
+Automatically generated and installed by `setup.sh` to `/etc/systemd/system/`:
+- **Service**: `homelab-backup.service`
   - Runs `backup.sh` as a oneshot service
-  - Update `ExecStart` path to actual location of `backup.sh`
-- **Timer**: `systemd/homelab-backup.timer`
+  - Path to `backup.sh` is automatically configured
+- **Timer**: `homelab-backup.timer`
   - Runs daily at 2:00 AM with 0-30 minute randomization
   - Persistent: runs immediately if system was off during scheduled time
 
