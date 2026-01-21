@@ -10,7 +10,12 @@ run() {
 }
 
 container_running() {
-    docker compose -f "$dir/docker-compose.yml" ps -q "$name"
+    # Returns success (0) if a container with this exact name is currently running.
+    # We use docker's name filter because the script sets `container_name:` explicitly.
+    local name="$1"
+    local cid
+    cid=$(sudo docker ps -qf "name=^${name}$" 2>/dev/null || true)
+    [[ -n "$cid" ]]
 }
 
 get_running_image_id() {
@@ -35,6 +40,8 @@ prompt_update_if_needed() {
     local image="$2"
     local dir="$3"
 
+    local CURRENT_ID
+    local LATEST_ID
     CURRENT_ID=$(get_running_image_id "$name")
     LATEST_ID=$(get_latest_image_id "$image")
 
@@ -59,6 +66,7 @@ start_compose() {
     local name="$2"
 
     run "cd \"$dir\" && docker compose up -d"
+    local CID
     CID=$(sudo docker ps -qf "name=^${name}$")
 
     if [ -n "$CID" ]; then
@@ -225,7 +233,7 @@ echo "============================================="
 echo " Starting Raspberry Pi setup"
 echo "============================================="
 
-trap 'echo "ERROR: Script failed at line $LINENO"; exit 1' ERR
+trap 'echo "ERROR: Script failed at line $LINENO while running: $BASH_COMMAND"; exit 1' ERR
 
 AUTO_YES=false
 if [[ "${1:-}" == "--yes" ]]; then
@@ -639,6 +647,7 @@ if prompt_yes_no "Install / manage Navidrome?"; then
     else
         read -rp "Enter ND_SPOTIFY_ID: " ND_SPOTIFY_ID
         read -rsp "Enter ND_SPOTIFY_SECRET: " ND_SPOTIFY_SECRET
+        echo
 
         run "mkdir -p \"$NAVIDROME_DIR/data\""
         run "cat > \"$NAVIDROME_DIR/docker-compose.yml\" <<EOF
@@ -677,6 +686,7 @@ if prompt_yes_no "Install / manage DuckDNS?"; then
     else
         read -rp "Enter DuckDNS subdomain(s) (comma-separated): " DUCKDNS_SUBDOMAINS
         read -rsp "Enter DuckDNS token: " DUCKDNS_TOKEN
+        echo
 
         run "mkdir -p \"$DUCKDNS_DIR/config\""
         run "cat > \"$DUCKDNS_DIR/docker-compose.yml\" <<EOF
