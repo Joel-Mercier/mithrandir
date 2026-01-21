@@ -280,6 +280,80 @@ install_rclone() {
 }
 
 # -----------------------------
+# Backup systemd service setup
+# -----------------------------
+setup_backup_service() {
+    echo "Setting up backup systemd service"
+    
+    if ! has_systemd; then
+        echo "systemd not detected. Skipping backup service setup."
+        echo "You can manually set up backups using cron or another scheduler."
+        return
+    fi
+
+    local service_file="${SCRIPT_DIR}/systemd/homelab-backup.service"
+    local timer_file="${SCRIPT_DIR}/systemd/homelab-backup.timer"
+    local backup_script="${SCRIPT_DIR}/backup.sh"
+
+    # Check if files exist
+    if [ ! -f "$service_file" ] || [ ! -f "$timer_file" ]; then
+        echo "WARNING: Backup service files not found. Skipping backup service setup."
+        return
+    fi
+
+    if [ ! -f "$backup_script" ]; then
+        echo "WARNING: backup.sh not found. Skipping backup service setup."
+        return
+    fi
+
+    # Create a temporary service file with the correct path
+    local temp_service_file
+    temp_service_file=$(mktemp)
+    # Replace the placeholder path with the actual backup script path
+    # Use @ as delimiter to avoid conflicts with path characters
+    sed "s@/path/to/homelab/backup.sh@${backup_script}@g" "$service_file" > "$temp_service_file"
+
+    # Copy service and timer files to systemd directory
+    echo "Installing backup service files..."
+    run "cp $temp_service_file /etc/systemd/system/homelab-backup.service"
+    run "cp $timer_file /etc/systemd/system/homelab-backup.timer"
+
+    # Clean up temp file
+    rm -f "$temp_service_file"
+
+    # Reload systemd daemon
+    run "systemctl daemon-reload"
+
+    # Enable and start the timer
+    if systemctl is-enabled homelab-backup.timer >/dev/null 2>&1; then
+        echo "Backup timer already enabled."
+    else
+        echo "Enabling backup timer..."
+        run "systemctl enable homelab-backup.timer"
+    fi
+
+    if systemctl is-active homelab-backup.timer >/dev/null 2>&1; then
+        echo "Backup timer already running."
+    else
+        echo "Starting backup timer..."
+        run "systemctl start homelab-backup.timer"
+    fi
+
+    echo "Backup service installed and enabled."
+    echo "  Timer status: $(systemctl is-active homelab-backup.timer)"
+    
+    # Show next run time if available
+    local next_run
+    next_run=$(systemctl list-timers homelab-backup.timer --no-pager 2>/dev/null | tail -n 1 | awk '{print $1, $2, $3, $4}' || echo "N/A")
+    if [ -n "$next_run" ] && [ "$next_run" != "N/A" ]; then
+        echo "  Next run: $next_run"
+    else
+        echo "  Next run: Scheduled for daily at 2:00 AM"
+    fi
+    echo ""
+}
+
+# -----------------------------
 # Main
 # -----------------------------
 echo "============================================="
@@ -913,6 +987,8 @@ $INSTALL_HOMARR || echo "- Homarr"
 $INSTALL_JELLYFIN || echo "- Jellyfin"
 $INSTALL_NAVIDROME || echo "- Navidrome"
 $INSTALL_KUMA || echo "- Uptime Kuma"
+
+setup_backup_service
 
 echo
 echo "============================================="

@@ -25,11 +25,38 @@ Backup configuration file:
   - Runs daily at 2:00 AM with 0-30 minute randomization
   - Persistent: runs immediately if system was off during scheduled time
 
-Install: Copy service files to `/etc/systemd/system/`, then:
+## Usage
+
+First, configure everything in the Configuration section above, then:
+
+**Initial setup and updates:**
 ```bash
-sudo systemctl daemon-reload
-sudo systemctl enable --now homelab-backup.timer
+bash setup.sh [--yes]
 ```
+- `--yes`: Skip confirmation prompts
+
+Run for first install or to update containers.
+
+**Backup:**
+```bash
+bash backup.sh
+```
+Backs up all configured apps automatically. No arguments required.
+
+**Restore:**
+```bash
+bash restore.sh <app_name|full> [date] [--yes]
+```
+- `app_name`: Name of app to restore (e.g., `jellyfin`, `radarr`, `sonarr`)
+- `full`: Restore all apps and secrets
+- `date`: Backup date in `YYYY-MM-DD` format (default: `latest`)
+- `--yes`: Skip confirmation prompts
+
+Examples:
+- `bash restore.sh jellyfin` - Restore jellyfin from latest backup
+- `bash restore.sh jellyfin 2025-01-01` - Restore jellyfin from specific date
+- `bash restore.sh full` - Restore all apps from latest backup
+- `bash restore.sh full 2025-01-01 --yes` - Restore all apps from specific date without confirmation
 
 ## TODO
 
