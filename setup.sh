@@ -874,6 +874,8 @@ if $INSTALL_WIREGUARD; then
     echo
 fi
 
+echo
+
 if $INSTALL_JELLYFIN; then
     echo "Jellyfin note:"
     echo "  Official apps are available for:"
@@ -883,6 +885,15 @@ if $INSTALL_JELLYFIN; then
     echo "   - Smart TVs (Samsung, LG)"
     echo
 fi
+
+echo
+
+if $INSTALL_JELLYFIN && $INSTALL_JELLYSEERR; then
+    echo "Jellyseerr & Jellyfin note:"
+    echo "  Wholphin is an app that allows for media playback from Jellyfin and media discovery and request from Jellyseerr. You can use it instead of the official Jellyfin app."
+fi
+
+echo
 
 echo "============================================="
 echo " Setup complete"
