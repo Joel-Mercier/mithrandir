@@ -5,13 +5,25 @@ IFS=$'\n\t'
 # -----------------------------
 # Utility functions
 # -----------------------------
+load_env() {
+    local script_dir="${1:-.}"
+    local env_file="$script_dir/.env"
+    if [ -f "$env_file" ]; then
+        echo "Loading environment variables from .env file..."
+        set -a
+        source "$env_file"
+        set +a
+        echo "Environment variables loaded from .env"
+    else
+        echo "No .env file found. Using defaults and prompts."
+    fi
+}
+
 run() {
     sudo bash -c "$1"
 }
 
 container_running() {
-    # Returns success (0) if a container with this exact name is currently running.
-    # We use docker's name filter because the script sets `container_name:` explicitly.
     local name="$1"
     local cid
     cid=$(sudo docker ps -qf "name=^${name}$" 2>/dev/null || true)
@@ -77,6 +89,13 @@ start_compose() {
 }
 
 prompt_base_dir() {
+    if [ -n "${BASE_DIR:-}" ]; then
+        echo "Using base directory from .env: $BASE_DIR"
+        BASE_DIR=$(realpath -m "$BASE_DIR")
+        run "mkdir -p \"$BASE_DIR\""
+        return
+    fi
+
     DEFAULT_DIR="$HOME"
     read -rp "Enter the base directory where all Docker app folders should be created [$DEFAULT_DIR]: " BASE_DIR
 
@@ -235,7 +254,14 @@ echo "============================================="
 
 trap 'echo "ERROR: Script failed at line $LINENO while running: $BASH_COMMAND"; exit 1' ERR
 
-AUTO_YES=false
+# Get script directory for .env file location
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Load environment variables from .env file
+load_env "$SCRIPT_DIR"
+
+# Set AUTO_YES from .env or command line argument
+AUTO_YES="${AUTO_YES:-false}"
 if [[ "${1:-}" == "--yes" ]]; then
   AUTO_YES=true
 fi
@@ -264,9 +290,9 @@ services:
     container_name: homeassistant
     network_mode: host
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Etc/UTC
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-Etc/UTC}
     volumes:
       - $HA_DIR/data:/config
     ports:
@@ -322,9 +348,9 @@ services:
     image: $QBIT_IMAGE
     container_name: qbittorrent
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Etc/UTC
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-Etc/UTC}
       - WEBUI_PORT=8080
     volumes:
       - $QBIT_DIR/config:/config
@@ -360,9 +386,9 @@ services:
     image: $PROWLARR_IMAGE
     container_name: prowlarr
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Etc/UTC
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-Etc/UTC}
     volumes:
       - $PROWLARR_DIR/config:/config
     ports:
@@ -397,9 +423,9 @@ services:
     image: $RADARR_IMAGE
     container_name: radarr
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Etc/UTC
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-Etc/UTC}
     volumes:
       - $RADARR_DIR/config:/config
       - $DATA_DIR:/data
@@ -436,9 +462,9 @@ services:
     image: $SONARR_IMAGE
     container_name: sonarr
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Etc/UTC
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-Etc/UTC}
     volumes:
       - $SONARR_DIR/config:/config
       - $DATA_DIR:/data
@@ -471,9 +497,9 @@ services:
     image: $BAZARR_IMAGE
     container_name: bazarr
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Etc/UTC
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-Etc/UTC}
     volumes:
       - $BAZARR_DIR/config:/config
       - $DATA_DIR:/data
@@ -506,9 +532,9 @@ services:
     image: $LIDARR_IMAGE
     container_name: lidarr
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Etc/UTC
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-Etc/UTC}
     volumes:
       - $LIDARR_DIR/config:/config
       - $DATA_DIR:/data
@@ -615,9 +641,9 @@ services:
     image: $JELLYFIN_IMAGE
     container_name: jellyfin
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Etc/UTC
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-Etc/UTC}
     volumes:
       - $JELLYFIN_DIR/config:/config
       - $DATA_DIR:/data:ro
@@ -645,9 +671,17 @@ if prompt_yes_no "Install / manage Navidrome?"; then
     if container_running "navidrome"; then
         prompt_update_if_needed "navidrome" "$NAVIDROME_IMAGE" "$NAVIDROME_DIR"
     else
-        read -rp "Enter ND_SPOTIFY_ID: " ND_SPOTIFY_ID
-        read -rsp "Enter ND_SPOTIFY_SECRET: " ND_SPOTIFY_SECRET
-        echo
+        if [ -z "${ND_SPOTIFY_ID:-}" ]; then
+            read -rp "Enter ND_SPOTIFY_ID: " ND_SPOTIFY_ID
+        else
+            echo "Using ND_SPOTIFY_ID from .env"
+        fi
+        if [ -z "${ND_SPOTIFY_SECRET:-}" ]; then
+            read -rsp "Enter ND_SPOTIFY_SECRET: " ND_SPOTIFY_SECRET
+            echo
+        else
+            echo "Using ND_SPOTIFY_SECRET from .env"
+        fi
 
         run "mkdir -p \"$NAVIDROME_DIR/data\""
         run "cat > \"$NAVIDROME_DIR/docker-compose.yml\" <<EOF
@@ -655,7 +689,7 @@ services:
   navidrome:
     image: $NAVIDROME_IMAGE
     container_name: navidrome
-    user: 1000:1000
+    user: ${PUID:-1000}:${PGID:-1000}
     ports:
       - 4533:4533
     restart: unless-stopped
@@ -684,9 +718,17 @@ if prompt_yes_no "Install / manage DuckDNS?"; then
     if container_running "duckdns"; then
         prompt_update_if_needed "duckdns" "$DUCKDNS_IMAGE" "$DUCKDNS_DIR"
     else
-        read -rp "Enter DuckDNS subdomain(s) (comma-separated): " DUCKDNS_SUBDOMAINS
-        read -rsp "Enter DuckDNS token: " DUCKDNS_TOKEN
-        echo
+        if [ -z "${DUCKDNS_SUBDOMAINS:-}" ]; then
+            read -rp "Enter DuckDNS subdomain(s) (comma-separated): " DUCKDNS_SUBDOMAINS
+        else
+            echo "Using DUCKDNS_SUBDOMAINS from .env"
+        fi
+        if [ -z "${DUCKDNS_TOKEN:-}" ]; then
+            read -rsp "Enter DuckDNS token: " DUCKDNS_TOKEN
+            echo
+        else
+            echo "Using DUCKDNS_TOKEN from .env"
+        fi
 
         run "mkdir -p \"$DUCKDNS_DIR/config\""
         run "cat > \"$DUCKDNS_DIR/docker-compose.yml\" <<EOF
@@ -696,9 +738,9 @@ services:
     container_name: duckdns
     network_mode: host
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Etc/UTC
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-Etc/UTC}
       - SUBDOMAINS=$DUCKDNS_SUBDOMAINS
       - TOKEN=$DUCKDNS_TOKEN
       - UPDATE_IP=ipv4
@@ -727,12 +769,20 @@ if prompt_yes_no "Install / manage WireGuard VPN?"; then
         echo
         echo "WireGuard configuration:"
         echo "SERVERURL : Public DNS name or IP clients will use to reach this server"
-        echo "            (e.g. circuit-pi.duckdns.org or your public IP)"
+        echo "            (e.g. subdomain.duckdns.org or your public IP)"
         echo "PEERS     : Number of client devices allowed to connect (one config per device)"
         echo
 
-        read -rp "Enter SERVERURL: " WG_SERVERURL
-        read -rp "Enter number of PEERS (devices): " WG_PEERS
+        if [ -z "${WG_SERVERURL:-}" ]; then
+            read -rp "Enter SERVERURL: " WG_SERVERURL
+        else
+            echo "Using WG_SERVERURL from .env: $WG_SERVERURL"
+        fi
+        if [ -z "${WG_PEERS:-}" ]; then
+            read -rp "Enter number of PEERS (devices): " WG_PEERS
+        else
+            echo "Using WG_PEERS from .env: $WG_PEERS"
+        fi
 
         run "mkdir -p \"$WIREGUARD_DIR/config\" \"$WIREGUARD_DIR/lib/modules\""
         run "cat > \"$WIREGUARD_DIR/docker-compose.yml\" <<EOF
@@ -744,9 +794,9 @@ services:
       - NET_ADMIN
       - SYS_MODULE
     environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Etc/UTC
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-Etc/UTC}
       - SERVERURL=$WG_SERVERURL
       - SERVERPORT=51820
       - PEERS=$WG_PEERS
@@ -835,7 +885,9 @@ echo " Service Access Summary"
 echo "============================================="
 echo
 
-LOCAL_IP=$(ip route get 1.1.1.1 2>/dev/null | awk '{print $7; exit}')
+if [ -z "${LOCAL_IP:-}" ]; then
+    LOCAL_IP=$(ip route get 1.1.1.1 2>/dev/null | awk '{print $7; exit}')
+fi
 
 if [ -z "$LOCAL_IP" ]; then
     echo "Unable to detect local network IP."
