@@ -246,6 +246,40 @@ EOF"
 }
 
 # -----------------------------
+# rclone installation
+# -----------------------------
+install_rclone() {
+    echo "Starting rclone installation"
+    if command -v rclone >/dev/null 2>&1; then
+        local rclone_version
+        rclone_version=$(rclone version | head -n 1)
+        echo "rclone already installed: $rclone_version"
+        return
+    fi
+
+    detect_linux_distro
+
+    echo "Installing rclone..."
+    
+    run "apt update"
+    run "apt install -y curl unzip"
+    
+    run "curl https://rclone.org/install.sh | bash"
+    
+    if command -v rclone >/dev/null 2>&1; then
+        local rclone_version
+        rclone_version=$(rclone version | head -n 1)
+        echo "rclone installation completed: $rclone_version"
+        echo ""
+        echo "NOTE: To configure rclone for Google Drive, run: rclone config"
+        echo "      This will set up the remote connection to your Google Drive."
+    else
+        echo "ERROR: rclone installation may have failed. Please install manually."
+        exit 1
+    fi
+}
+
+# -----------------------------
 # Main
 # -----------------------------
 echo "============================================="
@@ -267,6 +301,7 @@ if [[ "${1:-}" == "--yes" ]]; then
 fi
 
 install_docker
+install_rclone
 prompt_base_dir
 
 # -----------------------------
