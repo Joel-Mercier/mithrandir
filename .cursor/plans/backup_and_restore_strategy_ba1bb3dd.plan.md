@@ -15,11 +15,9 @@ todos:
     content: Create systemd service and timer files for automated daily backups
     status: completed
   - id: add-helper-functions
-    content: Add utility functions for app mapping, backup validation, and rotation logic
+    content: Add utility functions for app mapping, backup validation, and rotation logicMake sure rclone is installed as part of the process of setup.sh we don't want to have to do it manually
     status: completed
-  - id: todo-1769033416443-hlulghs0r
-    content: Make sure rclone is installed as part of the process of setup.sh we don't want to have to do it manually
-    status: pending
+isProject: false
 ---
 
 # Backup and Restore Strategy Implementation
@@ -196,7 +194,6 @@ APPS="auto"  # or space-separated list: "radarr sonarr jellyfin"
 
 ## Usage Examples
 
-```bash
 # Manual backup
 ./backup.sh
 
@@ -211,4 +208,3 @@ APPS="auto"  # or space-separated list: "radarr sonarr jellyfin"
 
 # Restore all apps from specific date
 ./restore.sh full 2025-01-01
-```
