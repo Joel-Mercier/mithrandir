@@ -195,16 +195,21 @@ APPS="auto"  # or space-separated list: "radarr sonarr jellyfin"
 ## Usage Examples
 
 # Manual backup
+
 ./backup.sh
 
 # Restore specific app from specific date
+
 ./restore.sh jellyfin 2025-01-01
 
 # Restore specific app from latest
+
 ./restore.sh jellyfin
 
 # Restore all apps from latest
+
 ./restore.sh full
 
 # Restore all apps from specific date
+
 ./restore.sh full 2025-01-01
