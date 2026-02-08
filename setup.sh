@@ -787,7 +787,6 @@ services:
       - 8096:8096
       - 8920:8920
       - 7359:7359/udp
-      - 1900:1900/udp
     restart: unless-stopped
 EOF"
         start_compose "$JELLYFIN_DIR" "jellyfin"
