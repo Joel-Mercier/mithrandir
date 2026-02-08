@@ -1,2 +1,13 @@
 .env
 .env.*
+
+# Node/Bun
+node_modules/
+dist/
+.bun/
+
+# Logs
+*.log
+
+.DS_Store
+**/.DS_Store
