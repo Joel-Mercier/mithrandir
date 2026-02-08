@@ -9,6 +9,14 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_FILE="${SCRIPT_DIR}/backup.conf"
 LOG_FILE="/var/log/homelab-backup.log"
 
+# Ensure log file exists and is writable
+if [ ! -f "$LOG_FILE" ]; then
+    sudo touch "$LOG_FILE"
+    sudo chown "$(id -un):$(id -gn)" "$LOG_FILE"
+elif [ ! -w "$LOG_FILE" ]; then
+    sudo chown "$(id -un):$(id -gn)" "$LOG_FILE"
+fi
+
 # -----------------------------
 # Utility functions
 # -----------------------------
