@@ -67,8 +67,16 @@ load_config() {
     # Expand BASE_DIR to full path
     BASE_DIR=$(realpath -m "$BASE_DIR")
 
-    # Create backup directories
-    mkdir -p "$BACKUP_DIR/latest" "$BACKUP_DIR/archive"
+    # Create backup directories with proper ownership
+    if [ ! -d "$BACKUP_DIR" ]; then
+        sudo mkdir -p "$BACKUP_DIR/latest" "$BACKUP_DIR/archive"
+        sudo chown -R "$(id -un):$(id -gn)" "$BACKUP_DIR"
+    else
+        mkdir -p "$BACKUP_DIR/latest" "$BACKUP_DIR/archive" 2>/dev/null || {
+            sudo mkdir -p "$BACKUP_DIR/latest" "$BACKUP_DIR/archive"
+            sudo chown -R "$(id -un):$(id -gn)" "$BACKUP_DIR"
+        }
+    fi
 }
 
 # App mapping: maps app name to its directory structure
@@ -192,7 +200,7 @@ backup_app() {
         # Create tarball with multiple directories
         local app_basename
         app_basename=$(basename "$app_dir")
-        tar --zstd -cf "$backup_file" -C "$BASE_DIR" \
+        sudo tar --zstd -cf "$backup_file" -C "$BASE_DIR" \
             "${app_basename}/configs" \
             "${app_basename}/icons" \
             "${app_basename}/data" \
@@ -200,6 +208,7 @@ backup_app() {
             warn "Failed to create backup for $app_name"
             return 1
         }
+        sudo chown "$(id -un):$(id -gn)" "$backup_file"
     else
         local config_path="${app_dir}/${config_subdir}"
         local compose_path="${app_dir}/${compose_file}"
@@ -217,12 +226,13 @@ backup_app() {
         # Create tarball
         local app_basename
         app_basename=$(basename "$app_dir")
-        tar --zstd -cf "$backup_file" -C "$BASE_DIR" \
+        sudo tar --zstd -cf "$backup_file" -C "$BASE_DIR" \
             "${app_basename}/${config_subdir}" \
             "${app_basename}/${compose_file}" 2>/dev/null || {
             warn "Failed to create backup for $app_name"
             return 1
         }
+        sudo chown "$(id -un):$(id -gn)" "$backup_file"
     fi
 
     # Update latest symlink
@@ -292,7 +302,7 @@ rotate_local_backups() {
     log "Deleting $to_delete oldest backup(s)..."
     echo "$archive_dirs" | head -n "$to_delete" | while read -r dir; do
         log "Deleting old backup: $dir"
-        rm -rf "$dir"
+        rm -rf "$dir" 2>/dev/null || sudo rm -rf "$dir"
     done
 
     log "Local backup rotation complete"
