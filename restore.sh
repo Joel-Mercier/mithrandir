@@ -154,8 +154,7 @@ find_backup() {
             if [ "$archive_date" = "latest" ]; then
                 # Find the most recent archive on remote
                 remote_path=$(rclone lsd "${RCLONE_REMOTE}:/backups/archive/" 2>/dev/null | \
-                    grep "^\s*[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}" | \
-                    awk '{print $5}' | sort -r | head -n 1)
+                    awk '/[0-9]{4}-[0-9]{2}-[0-9]{2}/ {print $NF}' | sort -r | head -n 1)
                 if [ -z "$remote_path" ]; then
                     return 1
                 fi
@@ -164,19 +163,18 @@ find_backup() {
 
             remote_path="${RCLONE_REMOTE}:/backups/archive/${archive_date}/${app_name}.tar.zst"
             if rclone lsf "$remote_path" >/dev/null 2>&1; then
-                # Download to temp location
-                local temp_file
-                temp_file=$(mktemp)
+                # Download to a dedicated temp directory to avoid collisions
+                local temp_dir
+                temp_dir=$(mktemp -d)
                 log "Downloading backup from Google Drive..."
-                if rclone copy "$remote_path" "$(dirname "$temp_file")" --no-traverse 2>/dev/null; then
-                    local downloaded_file
-                    downloaded_file=$(dirname "$temp_file")/${app_name}.tar.zst
+                if rclone copy "$remote_path" "$temp_dir" --no-traverse 2>/dev/null; then
+                    local downloaded_file="${temp_dir}/${app_name}.tar.zst"
                     if [ -f "$downloaded_file" ]; then
                         echo "$downloaded_file"
                         return 0
                     fi
                 fi
-                rm -f "$temp_file"
+                rm -rf "$temp_dir"
             fi
         fi
     fi
@@ -227,18 +225,20 @@ restore_app() {
 
     # Find backup file
     local backup_file
-    backup_file=$(find_backup "$app_name" "$archive_date")
+    backup_file=$(find_backup "$app_name" "$archive_date") || true
     if [ -z "$backup_file" ] || [ ! -f "$backup_file" ]; then
-        error "Backup not found for $app_name from $archive_date"
+        warn "Backup not found for $app_name from $archive_date"
+        return 1
     fi
 
     log "Found backup: $backup_file"
 
     # Get app configuration
     local app_config
-    app_config=$(get_app_config "$app_name")
+    app_config=$(get_app_config "$app_name") || true
     if [ -z "$app_config" ]; then
-        error "Unknown app: $app_name"
+        warn "Unknown app: $app_name"
+        return 1
     fi
 
     local app_dir
@@ -258,7 +258,7 @@ restore_app() {
         read -rp "Continue? [y/N]: " confirm
         if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
             log "Restore cancelled by user"
-            exit 0
+            return 0
         fi
     fi
 
@@ -287,7 +287,8 @@ restore_app() {
     if tar --zstd -xf "$backup_file" -C "$BASE_DIR" 2>/dev/null; then
         log "Backup extracted successfully"
     else
-        error "Failed to extract backup"
+        warn "Failed to extract backup for $app_name"
+        return 1
     fi
 
     # Clean up temp file if it was downloaded
@@ -296,7 +297,17 @@ restore_app() {
     fi
 
     # Start container
-    start_container "$app_dir" "$compose_file"
+    local compose_path="${app_dir}/${compose_file}"
+    if [ ! -f "$compose_path" ]; then
+        warn "docker-compose.yml not found at $compose_path after restore"
+        return 1
+    fi
+    log "Starting container with docker compose..."
+    sudo docker compose -f "$compose_path" up -d >/dev/null 2>&1 || {
+        warn "Failed to start container for $app_name"
+        return 1
+    }
+    log "Container started successfully"
 
     log "=== Successfully restored $app_name ==="
 }
@@ -356,15 +367,54 @@ restore_full() {
     # Restore secrets first
     restore_secrets "$archive_date" "$skip_confirmation" || true
 
-    # Detect apps (similar to backup script)
-    local known_apps=("homeassistant" "qbittorrent" "prowlarr" "radarr" "sonarr" "bazarr" "lidarr" 
+    # Detect which apps have backups available (without downloading)
+    local known_apps=("homeassistant" "qbittorrent" "prowlarr" "radarr" "sonarr" "bazarr" "lidarr"
                       "jellyseerr" "homarr" "jellyfin" "navidrome" "duckdns" "wireguard" "uptime-kuma")
+
+    # Resolve "latest" to an actual date for remote lookups
+    local resolved_date="$archive_date"
+    if [ "$archive_date" = "latest" ]; then
+        # Check local latest symlinks first
+        if [ -d "${BACKUP_DIR}/latest" ]; then
+            local any_latest
+            any_latest=$(ls "${BACKUP_DIR}/latest/"*.tar.zst 2>/dev/null | head -n 1 || true)
+            if [ -n "$any_latest" ]; then
+                resolved_date="latest"
+            fi
+        fi
+    fi
 
     local apps_to_restore=()
     for app in "${known_apps[@]}"; do
-        local backup_file
-        backup_file=$(find_backup "$app" "$archive_date" 2>/dev/null)
-        if [ -n "$backup_file" ] && [ -f "$backup_file" ]; then
+        local found=false
+        # Check local
+        if [ "$resolved_date" = "latest" ]; then
+            local lf="${BACKUP_DIR}/latest/${app}.tar.zst"
+            if [ -L "$lf" ] || [ -f "$lf" ]; then
+                found=true
+            fi
+        else
+            local af="${BACKUP_DIR}/archive/${resolved_date}/${app}.tar.zst"
+            if [ -f "$af" ]; then
+                found=true
+            fi
+        fi
+        # Check remote only if not found locally
+        if [ "$found" = false ] && command -v rclone >/dev/null 2>&1; then
+            if rclone listremotes 2>/dev/null | grep -q "^${RCLONE_REMOTE}:"; then
+                local check_date="$archive_date"
+                if [ "$check_date" = "latest" ]; then
+                    check_date=$(rclone lsd "${RCLONE_REMOTE}:/backups/archive/" 2>/dev/null | \
+                        awk '/[0-9]{4}-[0-9]{2}-[0-9]{2}/ {print $NF}' | sort -r | head -n 1)
+                fi
+                if [ -n "$check_date" ]; then
+                    if rclone lsf "${RCLONE_REMOTE}:/backups/archive/${check_date}/${app}.tar.zst" >/dev/null 2>&1; then
+                        found=true
+                    fi
+                fi
+            fi
+        fi
+        if [ "$found" = true ]; then
             apps_to_restore+=("$app")
         fi
     done

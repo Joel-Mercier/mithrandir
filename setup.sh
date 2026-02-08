@@ -433,8 +433,6 @@ services:
       - TZ=${TZ:-Etc/UTC}
     volumes:
       - $HA_DIR/data:/config
-    ports:
-      - 8123:8123
     restart: unless-stopped
 EOF"
         start_compose "$HA_DIR" "homeassistant"
@@ -957,7 +955,7 @@ EOF"
         echo
 
         if sudo docker exec wireguard test -f /config/peer1/peer1.conf; then
-            sudo docker exec wireguard qrencode -t ansiutf8 < /config/peer1/peer1.conf
+            sudo docker exec wireguard /bin/bash -c 'qrencode -t ansiutf8 < /config/peer1/peer1.conf'
             echo
             echo "QR code displayed above (peer1)."
             echo "PNG file location:"
@@ -965,7 +963,7 @@ EOF"
         else
             echo "WireGuard peer1 configuration not found yet."
             echo "If this is the first run, wait ~30 seconds and re-run:"
-            echo "  sudo docker exec wireguard qrencode -t ansiutf8 < /config/peer1/peer1.conf"
+            echo "  sudo docker exec wireguard /bin/bash -c 'qrencode -t ansiutf8 < /config/peer1/peer1.conf'"
         fi
     fi
 fi
@@ -1015,6 +1013,8 @@ $INSTALL_JELLYSEERR || echo "- Jellyseerr"
 $INSTALL_HOMARR || echo "- Homarr"
 $INSTALL_JELLYFIN || echo "- Jellyfin"
 $INSTALL_NAVIDROME || echo "- Navidrome"
+$INSTALL_DUCKDNS || echo "- DuckDNS"
+$INSTALL_WIREGUARD || echo "- WireGuard"
 $INSTALL_KUMA || echo "- Uptime Kuma"
 
 setup_backup_service

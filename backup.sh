@@ -208,11 +208,9 @@ backup_app() {
 
         # Create tarball
         local app_basename
-        local config_basename
         app_basename=$(basename "$app_dir")
-        config_basename=$(basename "$config_path")
         tar --zstd -cf "$backup_file" -C "$BASE_DIR" \
-            "${app_basename}/${config_basename}" \
+            "${app_basename}/${config_subdir}" \
             "${app_basename}/${compose_file}" 2>/dev/null || {
             warn "Failed to create backup for $app_name"
             return 1
@@ -236,6 +234,9 @@ backup_secrets() {
     local secrets=()
     [ -f "${SCRIPT_DIR}/.env" ] && secrets+=(".env")
     [ -f "${SCRIPT_DIR}/setup.sh" ] && secrets+=("setup.sh")
+    [ -f "${SCRIPT_DIR}/backup.sh" ] && secrets+=("backup.sh")
+    [ -f "${SCRIPT_DIR}/restore.sh" ] && secrets+=("restore.sh")
+    [ -f "${SCRIPT_DIR}/backup.conf" ] && secrets+=("backup.conf")
 
     if [ ${#secrets[@]} -eq 0 ]; then
         warn "No secrets found to backup"
@@ -336,8 +337,7 @@ rotate_remote_backups() {
     # List all archive directories on remote
     local remote_dirs
     remote_dirs=$(rclone lsd "${RCLONE_REMOTE}:/backups/archive/" 2>/dev/null | \
-        grep "^\s*[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}" | \
-        awk '{print $5}' | sort) || {
+        awk '/[0-9]{4}-[0-9]{2}-[0-9]{2}/ {print $NF}' | sort) || {
         warn "Failed to list remote backups"
         return 1
     }
