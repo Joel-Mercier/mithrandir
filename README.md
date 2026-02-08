@@ -33,9 +33,10 @@ First, configure everything in the Configuration section above, then:
 
 **Initial setup and updates:**
 ```bash
-bash setup.sh [--yes]
+bash setup.sh [--yes] [--uninstall]
 ```
 - `--yes`: Skip confirmation prompts
+- `--uninstall`: Interactively remove individual apps (stops container, removes config and compose file)
 
 Run for first install or to update containers.
 
@@ -43,7 +44,7 @@ Run for first install or to update containers.
 ```bash
 bash backup.sh
 ```
-Backs up all configured apps automatically. No arguments required.
+Backs up all configured apps automatically. No arguments required. Runs without root — uses `sudo` internally for privileged operations.
 
 **Restore:**
 ```bash
