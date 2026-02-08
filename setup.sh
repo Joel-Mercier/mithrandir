@@ -47,6 +47,60 @@ prompt_yes_no() {
     [[ -z "$RESP" || "$RESP" =~ ^[Yy]$ ]]
 }
 
+# Valid app names (container name = directory name under BASE_DIR)
+VALID_APPS=(
+    homeassistant qbittorrent prowlarr radarr sonarr bazarr lidarr
+    jellyseerr homarr jellyfin navidrome duckdns wireguard uptime-kuma
+)
+
+is_valid_app() {
+    local app="$1"
+    for valid in "${VALID_APPS[@]}"; do
+        [[ "$app" == "$valid" ]] && return 0
+    done
+    return 1
+}
+
+uninstall_app() {
+    local app="$1"
+    local app_dir="$BASE_DIR/$app"
+
+    if [ ! -d "$app_dir" ]; then
+        echo "ERROR: App directory not found: $app_dir"
+        echo "Is '$app' installed?"
+        exit 1
+    fi
+
+    echo
+    echo "============================================="
+    echo " Uninstalling: $app"
+    echo "============================================="
+    echo
+
+    # Stop and remove container
+    if [ -f "$app_dir/docker-compose.yml" ]; then
+        echo "Stopping and removing container..."
+        run "cd \"$app_dir\" && docker compose down"
+        echo "Container stopped and removed."
+    else
+        echo "WARNING: No docker-compose.yml found in $app_dir"
+    fi
+
+    # Ask about removing data
+    echo
+    echo "App directory: $app_dir"
+    if prompt_yes_no "Remove app directory and all its data? (This is irreversible)"; then
+        run "rm -rf \"$app_dir\""
+        echo "Removed: $app_dir"
+    else
+        echo "Kept app directory: $app_dir"
+        echo "You can manually remove it later with: sudo rm -rf $app_dir"
+    fi
+
+    echo
+    echo "Uninstall of '$app' complete."
+}
+
 prompt_update_if_needed() {
     local name="$1"
     local image="$2"
@@ -397,10 +451,44 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Load environment variables from .env file
 load_env "$SCRIPT_DIR"
 
-# Set AUTO_YES from .env or command line argument
+# Parse command line arguments
 AUTO_YES="${AUTO_YES:-false}"
-if [[ "${1:-}" == "--yes" ]]; then
-  AUTO_YES=true
+UNINSTALL_APP=""
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --yes)
+            AUTO_YES=true
+            shift
+            ;;
+        --uninstall)
+            if [[ -z "${2:-}" ]]; then
+                echo "ERROR: --uninstall requires an app name."
+                echo "Usage: bash setup.sh --uninstall <app> [--yes]"
+                echo "Valid apps: ${VALID_APPS[*]}"
+                exit 1
+            fi
+            UNINSTALL_APP="$2"
+            if ! is_valid_app "$UNINSTALL_APP"; then
+                echo "ERROR: Unknown app '$UNINSTALL_APP'"
+                echo "Valid apps: ${VALID_APPS[*]}"
+                exit 1
+            fi
+            shift 2
+            ;;
+        *)
+            echo "ERROR: Unknown argument '$1'"
+            echo "Usage: bash setup.sh [--yes] [--uninstall <app>]"
+            exit 1
+            ;;
+    esac
+done
+
+# Handle uninstall mode
+if [[ -n "$UNINSTALL_APP" ]]; then
+    prompt_base_dir
+    uninstall_app "$UNINSTALL_APP"
+    exit 0
 fi
 
 install_docker
