@@ -9,6 +9,14 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_FILE="${SCRIPT_DIR}/backup.conf"
 LOG_FILE="/var/log/homelab-restore.log"
 
+# Ensure log file exists and is writable
+if [ ! -f "$LOG_FILE" ]; then
+    sudo touch "$LOG_FILE"
+    sudo chown "$(id -un):$(id -gn)" "$LOG_FILE"
+elif [ ! -w "$LOG_FILE" ]; then
+    sudo chown "$(id -un):$(id -gn)" "$LOG_FILE"
+fi
+
 # -----------------------------
 # Utility functions
 # -----------------------------
@@ -269,31 +277,31 @@ restore_app() {
     # Stop container
     stop_container "$container_name"
 
-    # Remove config directory
+    # Remove config directory (these are typically root-owned by Docker)
     if [ "$config_subdir" = "multiple" ]; then
         # Special handling for homarr
         log "Removing config directories for $app_name..."
-        [ -d "${app_dir}/configs" ] && rm -rf "${app_dir}/configs"
-        [ -d "${app_dir}/icons" ] && rm -rf "${app_dir}/icons"
-        [ -d "${app_dir}/data" ] && rm -rf "${app_dir}/data"
+        [ -d "${app_dir}/configs" ] && sudo rm -rf "${app_dir}/configs"
+        [ -d "${app_dir}/icons" ] && sudo rm -rf "${app_dir}/icons"
+        [ -d "${app_dir}/data" ] && sudo rm -rf "${app_dir}/data"
     else
         local config_path="${app_dir}/${config_subdir}"
         log "Removing config directory: $config_path"
-        [ -d "$config_path" ] && rm -rf "$config_path"
+        [ -d "$config_path" ] && sudo rm -rf "$config_path"
     fi
 
-    # Extract backup
+    # Extract backup (use sudo since target dirs may be root-owned)
     log "Extracting backup..."
-    if tar --zstd -xf "$backup_file" -C "$BASE_DIR" 2>/dev/null; then
+    if sudo tar --zstd -xf "$backup_file" -C "$BASE_DIR" 2>/dev/null; then
         log "Backup extracted successfully"
     else
         warn "Failed to extract backup for $app_name"
         return 1
     fi
 
-    # Clean up temp file if it was downloaded
+    # Clean up temp dir if backup was downloaded from remote
     if [[ "$backup_file" == /tmp/* ]]; then
-        rm -f "$backup_file"
+        rm -rf "$(dirname "$backup_file")"
     fi
 
     # Start container
@@ -349,9 +357,9 @@ restore_secrets() {
         error "Failed to extract secrets backup"
     fi
 
-    # Clean up temp file if it was downloaded
+    # Clean up temp dir if backup was downloaded from remote
     if [[ "$backup_file" == /tmp/* ]]; then
-        rm -f "$backup_file"
+        rm -rf "$(dirname "$backup_file")"
     fi
 
     log "=== Successfully restored secrets ==="
