@@ -819,6 +819,7 @@ if prompt_yes_no "Install / manage Navidrome?"; then
         fi
 
         run "mkdir -p \"$NAVIDROME_DIR/data\""
+        run "chown -R ${PUID:-1000}:${PGID:-1000} \"$NAVIDROME_DIR/data\""
         run "cat > \"$NAVIDROME_DIR/docker-compose.yml\" <<EOF
 services:
   navidrome:
