@@ -165,7 +165,7 @@ detect_apps() {
         fi
     done
 
-    echo "${apps[@]}"
+    printf '%s\n' "${apps[@]}"
 }
 
 # Backup a single app
@@ -401,14 +401,14 @@ main() {
     local apps_to_backup
     if [ "$APPS" = "auto" ]; then
         log "Auto-detecting installed apps..."
-        apps_to_backup=($(detect_apps))
+        readarray -t apps_to_backup < <(detect_apps)
         if [ ${#apps_to_backup[@]} -eq 0 ]; then
             warn "No apps detected, nothing to backup"
             exit 0
         fi
         log "Detected apps: ${apps_to_backup[*]}"
     else
-        apps_to_backup=($APPS)
+        readarray -t apps_to_backup < <(printf '%s\n' $APPS)
         log "Using configured apps: ${apps_to_backup[*]}"
     fi
 
