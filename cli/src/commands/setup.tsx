@@ -15,8 +15,6 @@ import {
   waitForDocker,
   installDocker,
   isContainerRunning,
-  containerExists,
-  removeContainer,
   getRunningImageId,
   pullImage,
   composeUp,
@@ -392,22 +390,14 @@ export function SetupCommand({ flags }: SetupCommandProps) {
             const currentId = await getRunningImageId(containerName);
             const latestId = await pullImage(app.image);
             if (currentId !== latestId) {
-              // Update: pull, down, up
-              const composePath = getComposePath(app, envConfig.BASE_DIR);
-              await composeDown(composePath);
+              // Update: write new compose, down, up (matches setup.sh update path)
               await writeComposeAndStart(app, envConfig);
               results.push({ app, status: "updated" });
             } else {
               results.push({ app, status: "done" });
             }
           } else {
-            // Remove any stopped container with the same name before fresh install
-            const exists = await containerExists(containerName);
-            if (exists) {
-              await removeContainer(containerName);
-            }
-
-            // Fresh install
+            // Fresh install (writeComposeAndStart handles cleanup of stale containers)
             await writeComposeAndStart(app, envConfig);
             results.push({ app, status: "done" });
           }
@@ -630,6 +620,11 @@ async function writeComposeAndStart(
     "-c",
     `cat > "${composePath}" << 'COMPOSE_EOF'\n${compose}COMPOSE_EOF`,
   ], { sudo: true });
+
+  // Tear down any existing container for this project (handles re-runs,
+  // migration from setup.sh, and stopped containers). Matches setup.sh's
+  // "docker compose down && docker compose up -d" pattern.
+  await composeDown(composePath).catch(() => {});
 
   // Start container
   await composeUp(composePath);
