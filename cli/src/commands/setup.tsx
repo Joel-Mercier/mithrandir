@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Box, Text, useApp, useInput } from "ink";
 import { Select, MultiSelect, TextInput, ConfirmInput } from "@inkjs/ui";
 import Spinner from "ink-spinner";
@@ -17,6 +17,7 @@ import {
   isContainerRunning,
   getRunningImageId,
   pullImage,
+  removeContainer,
   composeUp,
   composeDown,
 } from "../lib/docker.js";
@@ -349,8 +350,11 @@ export function SetupCommand({ flags }: SetupCommandProps) {
   // ─── Step: Install apps ─────────────────────────────────────────────────────
 
   function InstallAppsStep() {
+    const loopStarted = useRef(false);
+
     useEffect(() => {
-      if (selectedApps.length > 0) {
+      if (selectedApps.length > 0 && !loopStarted.current) {
+        loopStarted.current = true;
         startInstallLoop();
       }
     }, [selectedApps]);
@@ -623,10 +627,13 @@ async function writeComposeAndStart(
     `cat > "${composePath}" << 'COMPOSE_EOF'\n${compose}COMPOSE_EOF`,
   ], { sudo: true });
 
-  // Tear down any existing container for this project (handles re-runs,
-  // migration from setup.sh, and stopped containers). Matches setup.sh's
-  // "docker compose down && docker compose up -d" pattern.
+  // Clean up any existing container before starting fresh.
+  // 1) compose down: removes containers owned by this compose project
+  // 2) docker rm -f: catches orphaned containers from prior CLI runs
+  //    (old -f flag created different project labels) or docker run
   await composeDown(composePath).catch(() => {});
+  const containerName = app.containerName ?? app.name;
+  await removeContainer(containerName);
 
   // Start container
   await composeUp(composePath);
