@@ -67,17 +67,6 @@ export function SetupCommand({ flags }: SetupCommandProps) {
   const [localIp, setLocalIp] = useState("localhost");
   const [error, setError] = useState<string | null>(null);
 
-  // App installation state
-  const [installIdx, setInstallIdx] = useState(0);
-  const [installPhase, setInstallPhase] = useState<
-    "secrets" | "pulling" | "composing" | "done"
-  >("secrets");
-  const [pendingSecrets, setPendingSecrets] = useState<SecretDefinition[]>([]);
-  const [secretIdx, setSecretIdx] = useState(0);
-  const [appResults, setAppResults] = useState<
-    Array<{ app: AppDefinition; status: "done" | "error" | "updated"; error?: string }>
-  >([]);
-
   // Initialization
   useEffect(() => {
     init();
@@ -347,125 +336,8 @@ export function SetupCommand({ flags }: SetupCommandProps) {
     );
   }
 
-  // ─── Step: Install apps ─────────────────────────────────────────────────────
-
-  function InstallAppsStep() {
-    const loopStarted = useRef(false);
-
-    useEffect(() => {
-      if (selectedApps.length > 0 && !loopStarted.current) {
-        loopStarted.current = true;
-        startInstallLoop();
-      }
-    }, [selectedApps]);
-
-    async function startInstallLoop() {
-      const results: Array<{
-        app: AppDefinition;
-        status: "done" | "error" | "updated";
-        error?: string;
-      }> = [];
-
-      for (let i = 0; i < selectedApps.length; i++) {
-        const app = selectedApps[i];
-        setInstallIdx(i);
-        setInstallPhase("secrets");
-
-        try {
-          // Collect secrets if needed and not auto-yes
-          if (app.secrets && app.secrets.length > 0) {
-            for (const secret of app.secrets) {
-              const existing = envConfig[secret.envVar];
-              if (!existing && !autoYes) {
-                // Wait for user input via the secret prompt UI
-                await waitForSecret(secret);
-              }
-            }
-          }
-
-          setInstallPhase("pulling");
-
-          // Check if container already exists (running)
-          const containerName = getContainerName(app);
-          const running = await isContainerRunning(containerName);
-
-          if (running) {
-            // Check for updates
-            const currentId = await getRunningImageId(containerName);
-            const latestId = await pullImage(app.image);
-            if (currentId !== latestId) {
-              // Update: write new compose, down, up (matches setup.sh update path)
-              await writeComposeAndStart(app, envConfig);
-              results.push({ app, status: "updated" });
-            } else {
-              results.push({ app, status: "done" });
-            }
-          } else {
-            // Fresh install (writeComposeAndStart handles cleanup of stale containers)
-            await writeComposeAndStart(app, envConfig);
-            results.push({ app, status: "done" });
-          }
-        } catch (err: any) {
-          // Prefer stderr (actual Docker error) over execa's generic message
-          const detail = err.stderr?.trim() || err.message;
-          results.push({ app, status: "error", error: detail });
-        }
-
-        setAppResults([...results]);
-      }
-
-      // Save env config
-      await saveEnvConfig(envConfig);
-      setStep("backup-service");
-    }
-
-    async function waitForSecret(_secret: SecretDefinition): Promise<void> {
-      // In auto mode, secrets come from .env. In interactive mode,
-      // the secret prompt is handled by the parent render.
-      // For simplicity, we just check .env; if missing, skip.
-      return;
-    }
-
-    if (selectedApps.length === 0) return null;
-    const currentApp = selectedApps[installIdx];
-    if (!currentApp) return null;
-
-    return (
-      <Box flexDirection="column">
-        <StepIndicator
-          current={5}
-          total={7}
-          label={`Installing Apps (${installIdx + 1}/${selectedApps.length})`}
-        />
-
-        {/* Completed apps */}
-        {appResults.map((r) => (
-          <AppStatus
-            key={r.app.name}
-            name={r.app.displayName}
-            status={r.status === "error" ? "error" : "done"}
-            message={
-              r.status === "updated"
-                ? "Updated"
-                : r.status === "error"
-                  ? r.error
-                  : undefined
-            }
-          />
-        ))}
-
-        {/* Current app */}
-        {installIdx < selectedApps.length && (
-          <Text>
-            <Text color="yellow"><Spinner type="dots" /></Text>
-            {" "}{currentApp.displayName}
-            {installPhase === "pulling" && " — pulling image..."}
-            {installPhase === "composing" && " — starting container..."}
-          </Text>
-        )}
-      </Box>
-    );
-  }
+  // InstallAppsStep is defined at module level to avoid React component
+  // recreation on parent re-renders (the classic inner-component anti-pattern).
 
   // ─── Step: Backup service ───────────────────────────────────────────────────
 
@@ -585,9 +457,151 @@ export function SetupCommand({ flags }: SetupCommandProps) {
       {step === "rclone" && <RcloneStep />}
       {step === "base-dir" && <BaseDirStep />}
       {step === "app-select" && <AppSelectStep />}
-      {step === "install-apps" && <InstallAppsStep />}
+      {step === "install-apps" && (
+        <InstallAppsStep
+          selectedApps={selectedApps}
+          envConfig={envConfig}
+          autoYes={autoYes}
+          onComplete={async () => {
+            await saveEnvConfig(envConfig);
+            setStep("backup-service");
+          }}
+        />
+      )}
       {step === "backup-service" && <BackupServiceStep />}
       {step === "summary" && <SummaryStep />}
+    </Box>
+  );
+}
+
+// ─── Module-level components ─────────────────────────────────────────────────
+
+interface InstallAppsStepProps {
+  selectedApps: AppDefinition[];
+  envConfig: EnvConfig;
+  autoYes: boolean;
+  onComplete: () => void;
+}
+
+function InstallAppsStep({ selectedApps, envConfig, autoYes, onComplete }: InstallAppsStepProps) {
+  const loopStarted = useRef(false);
+  const [installIdx, setInstallIdx] = useState(0);
+  const [installPhase, setInstallPhase] = useState<
+    "secrets" | "pulling" | "composing" | "done"
+  >("secrets");
+  const [appResults, setAppResults] = useState<
+    Array<{ app: AppDefinition; status: "done" | "error" | "updated"; error?: string }>
+  >([]);
+
+  useEffect(() => {
+    if (selectedApps.length > 0 && !loopStarted.current) {
+      loopStarted.current = true;
+      startInstallLoop();
+    }
+  }, []);
+
+  async function startInstallLoop() {
+    const results: Array<{
+      app: AppDefinition;
+      status: "done" | "error" | "updated";
+      error?: string;
+    }> = [];
+
+    for (let i = 0; i < selectedApps.length; i++) {
+      const app = selectedApps[i];
+      setInstallIdx(i);
+      setInstallPhase("secrets");
+
+      try {
+        // Collect secrets if needed and not auto-yes
+        if (app.secrets && app.secrets.length > 0) {
+          for (const secret of app.secrets) {
+            const existing = envConfig[secret.envVar];
+            if (!existing && !autoYes) {
+              // Wait for user input via the secret prompt UI
+              await waitForSecret(secret);
+            }
+          }
+        }
+
+        setInstallPhase("pulling");
+
+        // Check if container already exists (running)
+        const containerName = getContainerName(app);
+        const running = await isContainerRunning(containerName);
+
+        if (running) {
+          // Check for updates
+          const currentId = await getRunningImageId(containerName);
+          const latestId = await pullImage(app.image);
+          if (currentId !== latestId) {
+            // Update: write new compose, down, up (matches setup.sh update path)
+            await writeComposeAndStart(app, envConfig);
+            results.push({ app, status: "updated" });
+          } else {
+            results.push({ app, status: "done" });
+          }
+        } else {
+          // Fresh install (writeComposeAndStart handles cleanup of stale containers)
+          await writeComposeAndStart(app, envConfig);
+          results.push({ app, status: "done" });
+        }
+      } catch (err: any) {
+        // Prefer stderr (actual Docker error) over execa's generic message
+        const detail = err.stderr?.trim() || err.message;
+        results.push({ app, status: "error", error: detail });
+      }
+
+      setAppResults([...results]);
+    }
+
+    onComplete();
+  }
+
+  async function waitForSecret(_secret: SecretDefinition): Promise<void> {
+    // In auto mode, secrets come from .env. In interactive mode,
+    // the secret prompt is handled by the parent render.
+    // For simplicity, we just check .env; if missing, skip.
+    return;
+  }
+
+  if (selectedApps.length === 0) return null;
+  const currentApp = selectedApps[installIdx];
+  if (!currentApp) return null;
+
+  return (
+    <Box flexDirection="column">
+      <StepIndicator
+        current={5}
+        total={7}
+        label={`Installing Apps (${installIdx + 1}/${selectedApps.length})`}
+      />
+
+      {/* Completed apps */}
+      {appResults.map((r) => (
+        <AppStatus
+          key={r.app.name}
+          name={r.app.displayName}
+          status={r.status === "error" ? "error" : "done"}
+          message={
+            r.status === "updated"
+              ? "Updated"
+              : r.status === "error"
+                ? r.error
+                : undefined
+          }
+        />
+      ))}
+
+      {/* Current app */}
+      {installIdx < selectedApps.length && (
+        <Text>
+          <Text color="yellow"><Spinner type="dots" /></Text>
+          {" "}{currentApp.displayName}
+          {installPhase === "pulling" && " — pulling image..."}
+          {installPhase === "composing" && " — starting container..."}
+        </Text>
+      )}
     </Box>
   );
 }
