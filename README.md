@@ -2,6 +2,14 @@
 
 Automated setup and backup system for Docker-based homelab applications.
 
+## Quick Start
+
+```bash
+git clone <repo> && cd homelab
+bash cli/install.sh          # Installs Bun + dependencies
+sudo bun run cli/src/index.tsx setup
+```
+
 ## Configuration
 
 ### .env File
@@ -15,30 +23,67 @@ Backup configuration file:
 - `LOCAL_RETENTION`: Number of local backups to keep (default: `5`)
 - `REMOTE_RETENTION`: Number of Google Drive backups to keep (default: `10`)
 - `RCLONE_REMOTE`: rclone remote name for Google Drive (default: `gdrive`)
-- `APPS`: Apps to backup - `"auto"` to detect installed apps, or space-separated list
+- `APPS`: Apps to backup - `"auto"` to detect installed apps, or comma-separated list
 
 ### Systemd Service
 
-Automatically generated and installed by `setup.sh` to `/etc/systemd/system/`:
+Automatically generated and installed by setup to `/etc/systemd/system/`:
 - **Service**: `homelab-backup.service`
-  - Runs `backup.sh` as a oneshot service
-  - Path to `backup.sh` is automatically configured
+  - Runs backup as a oneshot service
+  - Path is automatically configured during setup
 - **Timer**: `homelab-backup.timer`
   - Runs daily at 2:00 AM with 0-30 minute randomization
   - Persistent: runs immediately if system was off during scheduled time
 
-## Usage
+## Usage (CLI)
 
-First, configure everything in the Configuration section above, then:
+The Ink CLI requires Bun. Run `bash cli/install.sh` first to install Bun and dependencies on a bare Debian/Ubuntu server.
+
+**Setup wizard:**
+```bash
+sudo bun run cli/src/index.tsx setup [--yes]
+```
+Interactive multi-step wizard: installs Docker and rclone, prompts for base directory, lets you pick services to install, configures the systemd backup timer, and prints a summary with service URLs. `--yes` skips all prompts, selects all apps, and uses defaults from `.env`.
+
+**Backup:**
+```bash
+sudo bun run cli/src/index.tsx backup
+```
+Backs up all configured apps. In a terminal it shows spinners and colored progress; from systemd (non-TTY) it writes timestamped plaintext to stdout and `/var/log/homelab-backup.log`.
+
+**Restore:**
+```bash
+sudo bun run cli/src/index.tsx restore <app|full> [date] [--yes]
+```
+- `app`: Name of app to restore (e.g., `jellyfin`, `radarr`, `sonarr`)
+- `full`: Restore all apps and secrets
+- `date`: Backup date in `YYYY-MM-DD` format (default: `latest`)
+- `--yes`: Skip confirmation prompts
+
+Examples:
+```bash
+sudo bun run cli/src/index.tsx restore jellyfin
+sudo bun run cli/src/index.tsx restore jellyfin 2025-01-01
+sudo bun run cli/src/index.tsx restore full
+sudo bun run cli/src/index.tsx restore full 2025-01-01 --yes
+```
+
+**Uninstall an app:**
+```bash
+sudo bun run cli/src/index.tsx uninstall <app>
+```
+Stops and removes the container. Prompts whether to also delete the app's data and configuration.
+
+## Usage (Bash — legacy)
+
+The original bash scripts remain as a fallback until the CLI is proven stable.
 
 **Initial setup and updates:**
 ```bash
-bash setup.sh [--yes] [--uninstall]
+bash setup.sh [--yes] [--uninstall <app>]
 ```
 - `--yes`: Skip confirmation prompts
-- `--uninstall`: Interactively remove individual apps (stops container, removes config and compose file)
-
-Run for first install or to update containers.
+- `--uninstall <app>`: Remove an individual app (stops container, removes config and compose file)
 
 **Backup:**
 ```bash
@@ -50,16 +95,6 @@ Backs up all configured apps automatically. No arguments required. Runs without 
 ```bash
 bash restore.sh <app_name|full> [date] [--yes]
 ```
-- `app_name`: Name of app to restore (e.g., `jellyfin`, `radarr`, `sonarr`)
-- `full`: Restore all apps and secrets
-- `date`: Backup date in `YYYY-MM-DD` format (default: `latest`)
-- `--yes`: Skip confirmation prompts
-
-Examples:
-- `bash restore.sh jellyfin` - Restore jellyfin from latest backup
-- `bash restore.sh jellyfin 2025-01-01` - Restore jellyfin from specific date
-- `bash restore.sh full` - Restore all apps from latest backup
-- `bash restore.sh full 2025-01-01 --yes` - Restore all apps from specific date without confirmation
 
 ## TODO
 
