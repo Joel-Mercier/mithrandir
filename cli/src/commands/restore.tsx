@@ -1,13 +1,11 @@
-import React, { useState, useEffect } from "react";
-import { Box, Text, useApp, useInput } from "ink";
-import { Select, ConfirmInput, Spinner as UiSpinner } from "@inkjs/ui";
+import { useState, useEffect } from "react";
+import { Box, Text, useApp } from "ink";
+import { ConfirmInput, Spinner as UiSpinner } from "@inkjs/ui";
 import Spinner from "ink-spinner";
 import { loadBackupConfig, getProjectRoot } from "../lib/config.js";
 import {
-  APP_REGISTRY,
   getApp,
   getAppNames,
-  getAppDir,
   getConfigPaths,
   getComposePath,
   getContainerName,

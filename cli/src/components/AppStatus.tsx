@@ -1,4 +1,3 @@
-import React from "react";
 import { Text } from "ink";
 
 type Status = "running" | "stopped" | "installing" | "error" | "done" | "skipped";

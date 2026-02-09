@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Box, Text, useApp, useInput } from "ink";
-import { Select, MultiSelect, TextInput, ConfirmInput } from "@inkjs/ui";
+import { useState, useEffect, useRef } from "react";
+import { Box, Text, useApp } from "ink";
+import { MultiSelect, TextInput, ConfirmInput } from "@inkjs/ui";
 import Spinner from "ink-spinner";
 import {
   APP_REGISTRY,
@@ -35,7 +35,6 @@ import { Header } from "../components/Header.js";
 import { StepIndicator } from "../components/StepIndicator.js";
 import { AppStatus } from "../components/AppStatus.js";
 import type { AppDefinition, EnvConfig, SecretDefinition } from "../types.js";
-import { existsSync } from "fs";
 import { homedir } from "os";
 
 interface SetupCommandProps {

@@ -1,7 +1,6 @@
 #!/usr/bin/env bun
 import meow from "meow";
 import { render } from "ink";
-import React from "react";
 import { runBackup } from "./commands/backup.js";
 import { RestoreCommand } from "./commands/restore.js";
 import { SetupCommand } from "./commands/setup.js";

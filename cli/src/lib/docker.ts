@@ -1,6 +1,6 @@
 import { dirname } from "path";
 import { shell, commandExists } from "./shell.js";
-import { hasSystemd, isWsl } from "./systemd.js";
+import { hasSystemd } from "./systemd.js";
 import type { AppDefinition } from "../types.js";
 import { getContainerName, getComposePath } from "./apps.js";
 

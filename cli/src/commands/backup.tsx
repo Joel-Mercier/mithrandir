@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { render, Box, Text } from "ink";
 import Spinner from "ink-spinner";
 import { StatusMessage } from "@inkjs/ui";
