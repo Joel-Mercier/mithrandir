@@ -1,6 +1,7 @@
 import { readFile } from "fs/promises";
 import { existsSync } from "fs";
 import { resolve, dirname } from "path";
+import { homedir } from "os";
 import type { EnvConfig, BackupConfig } from "../types.js";
 
 /** Find the project root (where .env / backup.conf live) */
@@ -43,7 +44,7 @@ export async function loadEnvConfig(
   const envPath = resolve(root, ".env");
 
   const defaults: EnvConfig = {
-    BASE_DIR: "/opt/docker",
+    BASE_DIR: homedir(),
     PUID: "1000",
     PGID: "1000",
     TZ: "Etc/UTC",
@@ -71,7 +72,7 @@ export async function loadBackupConfig(
     REMOTE_RETENTION: 10,
     RCLONE_REMOTE: "gdrive",
     APPS: "auto",
-    BASE_DIR: "/opt/docker",
+    BASE_DIR: homedir(),
   };
 
   // Try loading .env first for BASE_DIR

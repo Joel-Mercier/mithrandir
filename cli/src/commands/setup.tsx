@@ -15,9 +15,12 @@ import {
   waitForDocker,
   installDocker,
   isContainerRunning,
+  containerExists,
+  removeContainer,
   getRunningImageId,
   pullImage,
   composeUp,
+  composeDown,
 } from "../lib/docker.js";
 import { isRcloneInstalled, installRclone } from "../lib/rclone.js";
 import { generateCompose } from "../lib/compose.js";
@@ -34,6 +37,7 @@ import { StepIndicator } from "../components/StepIndicator.js";
 import { AppStatus } from "../components/AppStatus.js";
 import type { AppDefinition, EnvConfig, SecretDefinition } from "../types.js";
 import { existsSync } from "fs";
+import { homedir } from "os";
 
 interface SetupCommandProps {
   flags: { yes?: boolean };
@@ -55,7 +59,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
 
   const [step, setStep] = useState<SetupStep>("init");
   const [envConfig, setEnvConfig] = useState<EnvConfig>({
-    BASE_DIR: "/opt/docker",
+    BASE_DIR: homedir(),
     PUID: "1000",
     PGID: "1000",
     TZ: "Etc/UTC",
@@ -379,7 +383,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
 
           setInstallPhase("pulling");
 
-          // Check if container already exists
+          // Check if container already exists (running)
           const containerName = getContainerName(app);
           const running = await isContainerRunning(containerName);
 
@@ -388,19 +392,25 @@ export function SetupCommand({ flags }: SetupCommandProps) {
             const currentId = await getRunningImageId(containerName);
             const latestId = await pullImage(app.image);
             if (currentId !== latestId) {
-              // Update: recreate with new image
+              // Update: pull, down, up
               const composePath = getComposePath(app, envConfig.BASE_DIR);
+              await composeDown(composePath);
               await writeComposeAndStart(app, envConfig);
               results.push({ app, status: "updated" });
             } else {
               results.push({ app, status: "done" });
             }
-            continue;
-          }
+          } else {
+            // Remove any stopped container with the same name before fresh install
+            const exists = await containerExists(containerName);
+            if (exists) {
+              await removeContainer(containerName);
+            }
 
-          // Fresh install
-          await writeComposeAndStart(app, envConfig);
-          results.push({ app, status: "done" });
+            // Fresh install
+            await writeComposeAndStart(app, envConfig);
+            results.push({ app, status: "done" });
+          }
         } catch (err: any) {
           results.push({ app, status: "error", error: err.message });
         }
