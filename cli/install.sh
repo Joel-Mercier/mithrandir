@@ -26,14 +26,39 @@ if ! command -v curl &>/dev/null || ! command -v unzip &>/dev/null; then
   sudo apt-get install -y -qq curl unzip
 fi
 
+# Determine the user's login shell and its rc file
+USER_SHELL="$(basename "${SHELL:-/bin/bash}")"
+case "$USER_SHELL" in
+  zsh)  SHELL_RC="$HOME/.zshrc" ;;
+  bash) SHELL_RC="$HOME/.bashrc" ;;
+  *)    SHELL_RC="$HOME/.bashrc" ;;
+esac
+
 # Install Bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+
 if command -v bun &>/dev/null; then
   log "Bun already installed: $(bun --version)"
 else
   log "Installing Bun..."
-  curl -fsSL https://bun.sh/install | bash
-  export BUN_INSTALL="$HOME/.bun"
-  export PATH="$BUN_INSTALL/bin:$PATH"
+  curl -fsSL https://bun.com/install | bash
+
+  # The installer targets ~/.bashrc by default. If the user's shell is
+  # different, ensure their rc file also has the PATH entries.
+  if [[ "$SHELL_RC" != "$HOME/.bashrc" ]]; then
+    BUN_PATH_LINE='export BUN_INSTALL="$HOME/.bun"'
+    if ! grep -qF "$BUN_PATH_LINE" "$SHELL_RC" 2>/dev/null; then
+      log "Adding Bun to $SHELL_RC..."
+      {
+        echo ""
+        echo "# bun"
+        echo 'export BUN_INSTALL="$HOME/.bun"'
+        echo 'export PATH="$BUN_INSTALL/bin:$PATH"'
+      } >> "$SHELL_RC"
+    fi
+  fi
+
   log "Bun installed: $(bun --version)"
 fi
 
@@ -45,3 +70,5 @@ bun install
 log ""
 log "Setup complete! Run the CLI with:"
 log "  sudo bun run $SCRIPT_DIR/src/index.tsx setup"
+log ""
+log "If 'bun' is not found in a new terminal, run: source $SHELL_RC"
