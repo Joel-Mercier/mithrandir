@@ -66,6 +66,13 @@ export function SetupCommand({ flags }: SetupCommandProps) {
   const [selectedApps, setSelectedApps] = useState<AppDefinition[]>([]);
   const [localIp, setLocalIp] = useState("localhost");
   const [error, setError] = useState<string | null>(null);
+  const [completedSteps, setCompletedSteps] = useState<
+    Array<{ name: string; status: "done" | "skipped"; message: string; notes?: string[] }>
+  >([]);
+
+  function addCompletedStep(entry: { name: string; status: "done" | "skipped"; message: string; notes?: string[] }) {
+    setCompletedSteps(prev => [...prev, entry]);
+  }
 
   // Initialization
   useEffect(() => {
@@ -101,6 +108,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
         setStatus("waiting");
         if (await waitForDocker(5, 1000)) {
           setStatus("done");
+          addCompletedStep({ name: "Docker", status: "done", message: "Ready" });
           setStep("rclone");
           return;
         }
@@ -124,6 +132,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
           return;
         }
         setStatus("done");
+        addCompletedStep({ name: "Docker", status: "done", message: "Installed" });
         setStep("rclone");
       } catch (err: any) {
         setError(`Docker install failed: ${err.message}`);
@@ -184,6 +193,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
     async function checkRclone() {
       if (await isRcloneInstalled()) {
         setStatus("done");
+        addCompletedStep({ name: "rclone", status: "done", message: "Ready" });
         setStep("base-dir");
         return;
       }
@@ -199,6 +209,15 @@ export function SetupCommand({ flags }: SetupCommandProps) {
       try {
         await installRclone();
         setStatus("done");
+        addCompletedStep({
+          name: "rclone",
+          status: "done",
+          message: "Installed",
+          notes: [
+            "NOTE: To configure rclone for Google Drive, run: rclone config",
+            "      This will set up the remote connection to your Google Drive.",
+          ],
+        });
         setStep("base-dir");
       } catch (err: any) {
         setError(`rclone install failed: ${err.message}`);
@@ -275,6 +294,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
         { sudo: true },
       );
 
+      addCompletedStep({ name: "Base directory", status: "done", message: dir });
       setStep("app-select");
     }
 
@@ -290,7 +310,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
     return (
       <Box flexDirection="column">
         <StepIndicator current={3} total={7} label="Base Directory" />
-        <Text>Where should apps be installed?</Text>
+        <Text>Enter the base directory where all Docker app folders should be created:</Text>
         <Box>
           <Text color="blue">{">"} </Text>
           <TextInput
@@ -356,6 +376,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
 
       if (!systemdAvailable || wsl) {
         setStatus("skipped");
+        addCompletedStep({ name: "Backup Timer", status: "skipped", message: "systemd not available" });
         setStep("summary");
         return;
       }
@@ -368,8 +389,10 @@ export function SetupCommand({ flags }: SetupCommandProps) {
         const cliEntry = new URL("../index.tsx", import.meta.url).pathname;
         await installSystemdUnits(cliEntry);
         setStatus("done");
+        addCompletedStep({ name: "Backup Timer", status: "done", message: "Daily at 2:00 AM" });
       } catch {
         setStatus("skipped");
+        addCompletedStep({ name: "Backup Timer", status: "skipped", message: "Failed to install" });
       }
 
       setStep("summary");
@@ -407,8 +430,10 @@ export function SetupCommand({ flags }: SetupCommandProps) {
   // ─── Step: Summary ──────────────────────────────────────────────────────────
 
   function SummaryStep() {
+    const hasApp = (name: string) => selectedApps.some(a => a.name === name);
+
     useEffect(() => {
-      const timer = setTimeout(() => exit(), 500);
+      const timer = setTimeout(() => exit(), 1500);
       return () => clearTimeout(timer);
     }, []);
 
@@ -418,7 +443,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
         <Box marginBottom={1}>
           <Text bold color="green">All services are running!</Text>
         </Box>
-        <Box flexDirection="column">
+        <Box flexDirection="column" marginBottom={1}>
           <Text bold>Service URLs:</Text>
           {selectedApps
             .filter((app) => app.port)
@@ -428,7 +453,38 @@ export function SetupCommand({ flags }: SetupCommandProps) {
                 <Text color="cyan">http://{localIp}:{app.port}</Text>
               </Text>
             ))}
+          {hasApp("duckdns") && (
+            <Text>{"  "}{"DuckDNS".padEnd(20)}<Text dimColor>Background service (no web interface)</Text></Text>
+          )}
+          {hasApp("wireguard") && (
+            <Text>{"  "}{"WireGuard".padEnd(20)}<Text dimColor>VPN service active on UDP port 51820</Text></Text>
+          )}
         </Box>
+        {hasApp("wireguard") && (
+          <Box flexDirection="column" marginBottom={1}>
+            <Text bold>WireGuard note:</Text>
+            <Text>  Official mobile apps are available for Android and iOS.</Text>
+            <Text>  To display the QR code for peer1, run:</Text>
+            <Text dimColor>  sudo docker exec wireguard /bin/bash -c 'qrencode -t ansiutf8 {"<"} /config/peer1/peer1.conf'</Text>
+          </Box>
+        )}
+        {hasApp("jellyfin") && (
+          <Box flexDirection="column" marginBottom={1}>
+            <Text bold>Jellyfin note:</Text>
+            <Text>  Official apps are available for:</Text>
+            <Text>   - Android / iOS</Text>
+            <Text>   - Android TV</Text>
+            <Text>   - Apple TV</Text>
+            <Text>   - Smart TVs (Samsung, LG)</Text>
+          </Box>
+        )}
+        {hasApp("jellyfin") && hasApp("jellyseerr") && (
+          <Box flexDirection="column" marginBottom={1}>
+            <Text bold>Jellyseerr & Jellyfin note:</Text>
+            <Text>  Wholphin is an app that allows for media playback from Jellyfin</Text>
+            <Text>  and media discovery and request from Jellyseerr.</Text>
+          </Box>
+        )}
       </Box>
     );
   }
@@ -447,6 +503,14 @@ export function SetupCommand({ flags }: SetupCommandProps) {
   return (
     <Box flexDirection="column">
       <Header title="Setup Wizard" />
+      {completedSteps.map((cs, i) => (
+        <Box key={i} flexDirection="column">
+          <AppStatus name={cs.name} status={cs.status} message={cs.message} />
+          {cs.notes?.map((note, j) => (
+            <Text key={j} dimColor>  {note}</Text>
+          ))}
+        </Box>
+      ))}
       {step === "init" && (
         <Text>
           <Text color="green"><Spinner type="dots" /></Text>
