@@ -96,7 +96,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
   // ─── Step: Docker ───────────────────────────────────────────────────────────
 
   function DockerStep() {
-    const [status, setStatus] = useState<"checking" | "installing" | "waiting" | "done">(
+    const [status, setStatus] = useState<"checking" | "confirm" | "installing" | "waiting" | "done">(
       "checking",
     );
 
@@ -117,7 +117,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
       if (autoYes) {
         await doInstall();
       } else {
-        setStatus("installing");
+        setStatus("confirm");
       }
     }
 
@@ -126,7 +126,11 @@ export function SetupCommand({ flags }: SetupCommandProps) {
       try {
         await installDocker();
         setStatus("waiting");
-        await waitForDocker();
+        const ready = await waitForDocker();
+        if (!ready) {
+          setError("Docker daemon did not become ready in time.");
+          return;
+        }
         setStatus("done");
         setStep("rclone");
       } catch (err: any) {
@@ -147,6 +151,17 @@ export function SetupCommand({ flags }: SetupCommandProps) {
             {" "}Checking Docker...
           </Text>
         )}
+        {status === "confirm" && (
+          <Box flexDirection="column">
+            <Text>Docker is not installed. Install it now?</Text>
+            <ConfirmInput
+              onConfirm={() => { doInstall(); }}
+              onCancel={() => {
+                setError("Docker is required. Aborting setup.");
+              }}
+            />
+          </Box>
+        )}
         {status === "installing" && (
           <Text>
             <Text color="yellow"><Spinner type="dots" /></Text>
@@ -166,7 +181,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
   // ─── Step: rclone ───────────────────────────────────────────────────────────
 
   function RcloneStep() {
-    const [status, setStatus] = useState<"checking" | "installing" | "done">(
+    const [status, setStatus] = useState<"checking" | "confirm" | "installing" | "done">(
       "checking",
     );
 
@@ -183,7 +198,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
       if (autoYes) {
         await doInstall();
       } else {
-        setStatus("installing");
+        setStatus("confirm");
       }
     }
 
@@ -210,6 +225,17 @@ export function SetupCommand({ flags }: SetupCommandProps) {
             <Text color="green"><Spinner type="dots" /></Text>
             {" "}Checking rclone...
           </Text>
+        )}
+        {status === "confirm" && (
+          <Box flexDirection="column">
+            <Text>rclone is not installed. Install it now?</Text>
+            <ConfirmInput
+              onConfirm={() => { doInstall(); }}
+              onCancel={() => {
+                setError("rclone is required for backups. Aborting setup.");
+              }}
+            />
+          </Box>
         )}
         {status === "installing" && (
           <Text>

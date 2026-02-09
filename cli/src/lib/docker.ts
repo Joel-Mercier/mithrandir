@@ -1,4 +1,5 @@
 import { shell, commandExists } from "./shell.js";
+import { hasSystemd, isWsl } from "./systemd.js";
 import type { AppDefinition } from "../types.js";
 import { getContainerName, getComposePath } from "./apps.js";
 
@@ -88,6 +89,24 @@ export async function installDocker(): Promise<void> {
     ["install", "-y", "docker-ce", "docker-ce-cli", "containerd.io", "docker-buildx-plugin", "docker-compose-plugin"],
     { sudo: true },
   );
+
+  // Start Docker daemon
+  if (await hasSystemd()) {
+    await shell("systemctl", ["enable", "docker"], { sudo: true });
+    await shell("systemctl", ["enable", "containerd"], { sudo: true });
+    await shell("systemctl", ["start", "containerd"], { sudo: true });
+    await shell("systemctl", ["start", "docker"], { sudo: true });
+  } else {
+    // WSL or non-systemd: start dockerd manually if not already running
+    const pgrep = await shell("bash", ["-c", "pgrep -x dockerd"], {
+      ignoreError: true,
+    });
+    if (pgrep.exitCode !== 0) {
+      await shell("bash", ["-c", "dockerd > /var/log/dockerd.log 2>&1 &"], {
+        sudo: true,
+      });
+    }
+  }
 }
 
 /** Check if a container is running */
