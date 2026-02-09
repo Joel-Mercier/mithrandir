@@ -59,7 +59,20 @@ else
     fi
   fi
 
+  # Symlink into /usr/local/bin so bun is available under sudo
+  # (sudo resets PATH to secure_path which doesn't include ~/.bun/bin)
+  log "Symlinking bun into /usr/local/bin..."
+  sudo ln -sf "$BUN_INSTALL/bin/bun" /usr/local/bin/bun
+  sudo ln -sf "$BUN_INSTALL/bin/bunx" /usr/local/bin/bunx
+
   log "Bun installed: $(bun --version)"
+fi
+
+# Ensure symlinks exist even if bun was already installed
+if [[ ! -L /usr/local/bin/bun ]]; then
+  log "Symlinking bun into /usr/local/bin..."
+  sudo ln -sf "$BUN_INSTALL/bin/bun" /usr/local/bin/bun
+  sudo ln -sf "$BUN_INSTALL/bin/bunx" /usr/local/bin/bunx
 fi
 
 # Install Node dependencies
