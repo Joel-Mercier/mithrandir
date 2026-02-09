@@ -1,3 +1,4 @@
+import { dirname } from "path";
 import { shell, commandExists } from "./shell.js";
 import { hasSystemd, isWsl } from "./systemd.js";
 import type { AppDefinition } from "../types.js";
@@ -156,25 +157,25 @@ export async function pullImage(image: string): Promise<string> {
   return result.stdout.trim();
 }
 
-/** Start a container using docker compose */
+/** Start a container using docker compose (runs from app dir, matching setup.sh) */
 export async function composeUp(
   composePath: string,
 ): Promise<void> {
   await shell(
     "docker",
-    ["compose", "-f", composePath, "up", "-d"],
-    { sudo: true },
+    ["compose", "up", "-d"],
+    { sudo: true, cwd: dirname(composePath) },
   );
 }
 
-/** Stop a container using docker compose */
+/** Stop a container using docker compose (runs from app dir, matching setup.sh) */
 export async function composeDown(
   composePath: string,
 ): Promise<void> {
   await shell(
     "docker",
-    ["compose", "-f", composePath, "down"],
-    { sudo: true },
+    ["compose", "down"],
+    { sudo: true, cwd: dirname(composePath) },
   );
 }
 

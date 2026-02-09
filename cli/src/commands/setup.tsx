@@ -402,7 +402,9 @@ export function SetupCommand({ flags }: SetupCommandProps) {
             results.push({ app, status: "done" });
           }
         } catch (err: any) {
-          results.push({ app, status: "error", error: err.message });
+          // Prefer stderr (actual Docker error) over execa's generic message
+          const detail = err.stderr?.trim() || err.message;
+          results.push({ app, status: "error", error: detail });
         }
 
         setAppResults([...results]);
