@@ -2,7 +2,7 @@
 import meow from "meow";
 import { render } from "ink";
 import { runBackup } from "./commands/backup.js";
-import { RestoreCommand } from "./commands/restore.js";
+import { runRestore } from "./commands/restore.js";
 import { SetupCommand } from "./commands/setup.js";
 import { UninstallCommand } from "./commands/uninstall.js";
 import { ErrorBoundary } from "./components/ErrorBoundary.js";
@@ -61,11 +61,7 @@ switch (command) {
     break;
 
   case "restore":
-    render(
-      <ErrorBoundary>
-        <RestoreCommand args={cli.input.slice(1)} flags={cli.flags} />
-      </ErrorBoundary>,
-    );
+    runRestore(cli.input.slice(1), cli.flags);
     break;
 
   case "uninstall":
