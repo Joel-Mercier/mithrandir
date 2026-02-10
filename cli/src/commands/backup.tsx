@@ -1,17 +1,21 @@
 import { useState, useEffect } from "react";
-import { render, Box, Text } from "ink";
+import { render, Box, Text, useApp } from "ink";
 import Spinner from "ink-spinner";
 import { StatusMessage } from "@inkjs/ui";
 import { loadBackupConfig, getProjectRoot } from "../lib/config.js";
 import {
   APP_REGISTRY,
   getApp,
-  getAppDir,
   getConfigPaths,
   getComposePath,
 } from "../lib/apps.js";
 import { createBackup, createSecretsBackup } from "../lib/tar.js";
-import { upload, rotateRemote, isRcloneInstalled } from "../lib/rclone.js";
+import {
+  upload,
+  rotateRemote,
+  isRcloneInstalled,
+  isRcloneRemoteConfigured,
+} from "../lib/rclone.js";
 import { shell } from "../lib/shell.js";
 import { createBackupLogger, Logger } from "../lib/logger.js";
 import { Header } from "../components/Header.js";
@@ -20,321 +24,46 @@ import type { BackupConfig } from "../types.js";
 import type { AppDefinition } from "../types.js";
 import { existsSync } from "fs";
 
-// ─── Headless (non-TTY) backup ───────────────────────────────────────────────
-
-async function runHeadlessBackup(): Promise<void> {
-  const logger = createBackupLogger();
-  await logger.info("Starting backup (headless mode)");
-
-  try {
-    const config = await loadBackupConfig();
-    const projectRoot = getProjectRoot();
-    const today = new Date().toISOString().slice(0, 10);
-    const archiveDir = `${config.BACKUP_DIR}/archive/${today}`;
-    const latestDir = `${config.BACKUP_DIR}/latest`;
-
-    // Create directories
-    await shell("mkdir", ["-p", archiveDir], { sudo: true });
-    await shell("mkdir", ["-p", latestDir], { sudo: true });
-
-    // Detect apps
-    const apps = await detectInstalledApps(config);
-    await logger.info(`Found ${apps.length} installed apps: ${apps.map((a) => a.name).join(", ")}`);
-
-    const failed: string[] = [];
-
-    // Backup each app
-    for (const app of apps) {
-      try {
-        const outputPath = `${archiveDir}/${app.name}.tar.zst`;
-        await logger.info(`Backing up ${app.displayName}...`);
-        await createBackup(app, config.BASE_DIR, outputPath);
-
-        // Update latest symlink
-        const latestLink = `${latestDir}/${app.name}.tar.zst`;
-        await shell("rm", ["-f", latestLink], { sudo: true });
-        await shell("ln", ["-sf", outputPath, latestLink], { sudo: true });
-
-        await logger.info(`  ✓ ${app.displayName}`);
-      } catch (err: any) {
-        failed.push(app.name);
-        await logger.warn(`  ✗ ${app.displayName}: ${err.message}`);
-      }
-    }
-
-    // Backup secrets
-    try {
-      const secretsPath = `${archiveDir}/secrets.tar.zst`;
-      await logger.info("Backing up secrets...");
-      await createSecretsBackup(projectRoot, secretsPath);
-      const latestLink = `${latestDir}/secrets.tar.zst`;
-      await shell("rm", ["-f", latestLink], { sudo: true });
-      await shell("ln", ["-sf", secretsPath, latestLink], { sudo: true });
-      await logger.info("  ✓ secrets");
-    } catch (err: any) {
-      await logger.warn(`  ✗ secrets: ${err.message}`);
-    }
-
-    // Rotate local backups
-    await rotateLocalBackups(config, logger);
-
-    // Upload to remote
-    if (await isRcloneInstalled()) {
-      try {
-        await logger.info(`Uploading to ${config.RCLONE_REMOTE}...`);
-        await upload(
-          archiveDir,
-          config.RCLONE_REMOTE,
-          `/backups/archive/${today}`,
-        );
-        await logger.info("Upload complete");
-
-        // Rotate remote
-        const deleted = await rotateRemote(
-          config.RCLONE_REMOTE,
-          "/backups/archive",
-          config.REMOTE_RETENTION,
-        );
-        if (deleted.length > 0) {
-          await logger.info(`Rotated ${deleted.length} remote backup(s)`);
-        }
-      } catch (err: any) {
-        await logger.warn(`Remote upload failed: ${err.message}`);
-      }
-    } else {
-      await logger.warn("rclone not installed, skipping remote upload");
-    }
-
-    if (failed.length > 0) {
-      await logger.error(`Backup completed with failures: ${failed.join(", ")}`);
-      process.exit(1);
-    } else {
-      await logger.info("Backup completed successfully");
-    }
-  } catch (err: any) {
-    await logger.error(`Backup failed: ${err.message}`);
-    process.exit(1);
-  }
-}
-
-// ─── Interactive (TTY) backup ────────────────────────────────────────────────
-
-type AppBackupState = "pending" | "running" | "done" | "error";
-
-interface AppBackupStatus {
-  app: AppDefinition;
-  state: AppBackupState;
-  error?: string;
-}
-
-function BackupInteractive() {
-  const [phase, setPhase] = useState<
-    "detecting" | "backing-up" | "secrets" | "rotating" | "uploading" | "done"
-  >("detecting");
-  const [appStatuses, setAppStatuses] = useState<AppBackupStatus[]>([]);
-  const [currentApp, setCurrentApp] = useState<string>("");
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [failedCount, setFailedCount] = useState(0);
-
-  useEffect(() => {
-    runInteractiveBackup();
-  }, []);
-
-  async function runInteractiveBackup() {
-    try {
-      const config = await loadBackupConfig();
-      const projectRoot = getProjectRoot();
-      const today = new Date().toISOString().slice(0, 10);
-      const archiveDir = `${config.BACKUP_DIR}/archive/${today}`;
-      const latestDir = `${config.BACKUP_DIR}/latest`;
-
-      await shell("mkdir", ["-p", archiveDir], { sudo: true });
-      await shell("mkdir", ["-p", latestDir], { sudo: true });
-
-      // Detect apps
-      const apps = await detectInstalledApps(config);
-      const statuses: AppBackupStatus[] = apps.map((app) => ({
-        app,
-        state: "pending" as AppBackupState,
-      }));
-      setAppStatuses(statuses);
-      setPhase("backing-up");
-
-      let failed = 0;
-
-      // Backup each app
-      for (let i = 0; i < apps.length; i++) {
-        const app = apps[i];
-        setCurrentApp(app.displayName);
-        statuses[i].state = "running";
-        setAppStatuses([...statuses]);
-
-        try {
-          const outputPath = `${archiveDir}/${app.name}.tar.zst`;
-          await createBackup(app, config.BASE_DIR, outputPath);
-
-          const latestLink = `${latestDir}/${app.name}.tar.zst`;
-          await shell("rm", ["-f", latestLink], { sudo: true });
-          await shell("ln", ["-sf", outputPath, latestLink], { sudo: true });
-
-          statuses[i].state = "done";
-        } catch (err: any) {
-          statuses[i].state = "error";
-          statuses[i].error = err.message;
-          failed++;
-        }
-        setAppStatuses([...statuses]);
-      }
-
-      // Secrets
-      setPhase("secrets");
-      try {
-        const secretsPath = `${archiveDir}/secrets.tar.zst`;
-        await createSecretsBackup(projectRoot, secretsPath);
-        const latestLink = `${latestDir}/secrets.tar.zst`;
-        await shell("rm", ["-f", latestLink], { sudo: true });
-        await shell("ln", ["-sf", secretsPath, latestLink], { sudo: true });
-      } catch {
-        // Non-fatal
-      }
-
-      // Rotate local
-      setPhase("rotating");
-      const logger = createBackupLogger();
-      await rotateLocalBackups(config, logger);
-
-      // Upload
-      if (await isRcloneInstalled()) {
-        setPhase("uploading");
-        try {
-          await upload(
-            archiveDir,
-            config.RCLONE_REMOTE,
-            `/backups/archive/${today}`,
-          );
-          await rotateRemote(
-            config.RCLONE_REMOTE,
-            "/backups/archive",
-            config.REMOTE_RETENTION,
-          );
-        } catch {
-          setMessage("Remote upload failed (continuing)");
-        }
-      }
-
-      setFailedCount(failed);
-      setPhase("done");
-      if (failed > 0) {
-        setTimeout(() => process.exit(1), 100);
-      } else {
-        setTimeout(() => process.exit(0), 100);
-      }
-    } catch (err: any) {
-      setError(err.message);
-    }
-  }
-
-  if (error) {
-    return (
-      <Box flexDirection="column">
-        <Header title="Backup" />
-        <StatusMessage variant="error">Backup failed: {error}</StatusMessage>
-      </Box>
-    );
-  }
-
-  return (
-    <Box flexDirection="column">
-      <Header title="Backup" />
-
-      {phase === "detecting" && (
-        <Text>
-          <Text color="green">
-            <Spinner type="dots" />
-          </Text>
-          {" "}Detecting installed apps...
-        </Text>
-      )}
-
-      {phase !== "detecting" && (
-        <Box flexDirection="column" marginBottom={1}>
-          {appStatuses.map((status) => (
-            <Box key={status.app.name}>
-              {status.state === "running" ? (
-                <Text>
-                  <Text color="yellow">
-                    <Spinner type="dots" />
-                  </Text>
-                  {" "}{status.app.displayName}
-                </Text>
-              ) : (
-                <AppStatus
-                  name={status.app.displayName}
-                  status={
-                    status.state === "done"
-                      ? "done"
-                      : status.state === "error"
-                        ? "error"
-                        : "skipped"
-                  }
-                  message={status.error}
-                />
-              )}
-            </Box>
-          ))}
-        </Box>
-      )}
-
-      {phase === "secrets" && (
-        <Text>
-          <Text color="green">
-            <Spinner type="dots" />
-          </Text>
-          {" "}Backing up secrets...
-        </Text>
-      )}
-
-      {phase === "rotating" && (
-        <Text>
-          <Text color="green">
-            <Spinner type="dots" />
-          </Text>
-          {" "}Rotating old backups...
-        </Text>
-      )}
-
-      {phase === "uploading" && (
-        <Text>
-          <Text color="green">
-            <Spinner type="dots" />
-          </Text>
-          {" "}Uploading to remote...
-        </Text>
-      )}
-
-      {phase === "done" && (
-        <Box marginTop={1}>
-          {failedCount > 0 ? (
-            <StatusMessage variant="warning">
-              Backup completed with {failedCount} failure(s)
-            </StatusMessage>
-          ) : (
-            <StatusMessage variant="success">
-              Backup completed successfully
-            </StatusMessage>
-          )}
-        </Box>
-      )}
-
-      {message && (
-        <Text dimColor>{message}</Text>
-      )}
-    </Box>
-  );
-}
-
 // ─── Shared helpers ──────────────────────────────────────────────────────────
+
+/** Create backup directory structure (matches bash load_config) */
+async function ensureBackupDirs(backupDir: string): Promise<void> {
+  if (!existsSync(backupDir)) {
+    await shell(
+      "mkdir",
+      ["-p", `${backupDir}/latest`, `${backupDir}/archive`],
+      { sudo: true },
+    );
+    const { stdout: user } = await shell("id", ["-un"]);
+    const { stdout: group } = await shell("id", ["-gn"]);
+    await shell(
+      "chown",
+      ["-R", `${user.trim()}:${group.trim()}`, backupDir],
+      { sudo: true },
+    );
+  } else {
+    // Try without sudo first, fall back to sudo (matches bash)
+    const result = await shell(
+      "mkdir",
+      ["-p", `${backupDir}/latest`, `${backupDir}/archive`],
+      { ignoreError: true },
+    );
+    if (result.exitCode !== 0) {
+      await shell(
+        "mkdir",
+        ["-p", `${backupDir}/latest`, `${backupDir}/archive`],
+        { sudo: true },
+      );
+      const { stdout: user } = await shell("id", ["-un"]);
+      const { stdout: group } = await shell("id", ["-gn"]);
+      await shell(
+        "chown",
+        ["-R", `${user.trim()}:${group.trim()}`, backupDir],
+        { sudo: true },
+      );
+    }
+  }
+}
 
 /** Detect installed apps by checking for docker-compose.yml and config dirs */
 async function detectInstalledApps(
@@ -351,7 +80,6 @@ async function detectInstalledApps(
   // Auto-detect: check for docker-compose.yml and config dirs
   const installed: AppDefinition[] = [];
   for (const app of APP_REGISTRY) {
-    const appDir = getAppDir(app, config.BASE_DIR);
     const composePath = getComposePath(app, config.BASE_DIR);
     const configPaths = getConfigPaths(app, config.BASE_DIR);
 
@@ -367,15 +95,23 @@ async function detectInstalledApps(
   return installed;
 }
 
-/** Rotate local backups: keep only LOCAL_RETENTION most recent */
+/**
+ * Rotate local backups: keep only LOCAL_RETENTION most recent.
+ * Returns the number of deleted directories.
+ */
 async function rotateLocalBackups(
   config: BackupConfig,
-  logger: Logger,
-): Promise<void> {
+  logger?: Logger,
+): Promise<number> {
+  if (logger)
+    await logger.info(
+      `Rotating local backups (keeping ${config.LOCAL_RETENTION} most recent)...`,
+    );
+
   const archiveBase = `${config.BACKUP_DIR}/archive`;
 
   const result = await shell("ls", ["-1", archiveBase], { ignoreError: true });
-  if (result.exitCode !== 0 || !result.stdout.trim()) return;
+  if (result.exitCode !== 0 || !result.stdout.trim()) return 0;
 
   const dirs = result.stdout
     .trim()
@@ -383,24 +119,452 @@ async function rotateLocalBackups(
     .filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d))
     .sort();
 
-  if (dirs.length > config.LOCAL_RETENTION) {
-    const toDelete = dirs.slice(0, dirs.length - config.LOCAL_RETENTION);
-    for (const dir of toDelete) {
-      await shell("rm", ["-rf", `${archiveBase}/${dir}`], { sudo: true });
-      await logger.info(`Rotated local backup: ${dir}`);
+  if (dirs.length <= config.LOCAL_RETENTION) {
+    if (logger)
+      await logger.info(
+        `Only ${dirs.length} backup(s) found, no rotation needed`,
+      );
+    return 0;
+  }
+
+  const toDelete = dirs.slice(0, dirs.length - config.LOCAL_RETENTION);
+  if (logger) await logger.info(`Deleting ${toDelete.length} oldest backup(s)...`);
+  for (const dir of toDelete) {
+    await shell("rm", ["-rf", `${archiveBase}/${dir}`], { sudo: true });
+    if (logger) await logger.info(`Deleted old backup: ${dir}`);
+  }
+  if (logger) await logger.info("Local backup rotation complete");
+  return toDelete.length;
+}
+
+// ─── Headless (non-TTY) backup ───────────────────────────────────────────────
+
+async function runHeadlessBackup(appFilter?: string): Promise<void> {
+  const logger = createBackupLogger();
+  await logger.info("=== Starting backup process ===");
+
+  try {
+    const config = await loadBackupConfig();
+    const projectRoot = getProjectRoot();
+    const today = new Date().toISOString().slice(0, 10);
+    const archiveDir = `${config.BACKUP_DIR}/archive/${today}`;
+    const latestDir = `${config.BACKUP_DIR}/latest`;
+
+    // Create backup directory structure
+    await ensureBackupDirs(config.BACKUP_DIR);
+    await shell("mkdir", ["-p", archiveDir]);
+
+    // Determine which apps to backup
+    let apps: AppDefinition[];
+    if (appFilter) {
+      const app = getApp(appFilter);
+      if (!app) {
+        await logger.error(`Unknown app: ${appFilter}`);
+        process.exit(1);
+      }
+      apps = [app];
+      await logger.info(`Backing up single app: ${appFilter}`);
+    } else {
+      apps = await detectInstalledApps(config);
+      if (apps.length === 0) {
+        await logger.warn("No apps detected, nothing to backup");
+        process.exit(0);
+      }
+      if (config.APPS === "auto") {
+        await logger.info(
+          `Auto-detecting installed apps...\nDetected apps: ${apps.map((a) => a.name).join(", ")}`,
+        );
+      } else {
+        await logger.info(
+          `Using configured apps: ${apps.map((a) => a.name).join(", ")}`,
+        );
+      }
+    }
+
+    // Backup each app
+    const failed: string[] = [];
+    for (const app of apps) {
+      try {
+        await logger.info(`Backing up ${app.name}...`);
+        const outputPath = `${archiveDir}/${app.name}.tar.zst`;
+        await createBackup(app, config.BASE_DIR, outputPath);
+
+        // Update latest symlink
+        await shell("ln", [
+          "-sf",
+          outputPath,
+          `${latestDir}/${app.name}.tar.zst`,
+        ]);
+
+        await logger.info(
+          `Successfully backed up ${app.name} to ${outputPath}`,
+        );
+      } catch (err: any) {
+        failed.push(app.name);
+        await logger.warn(`Failed to create backup for ${app.name}: ${err.message}`);
+      }
+    }
+
+    // Backup secrets
+    try {
+      await logger.info("Backing up secrets...");
+      const secretsPath = `${archiveDir}/secrets.tar.zst`;
+      await createSecretsBackup(projectRoot, secretsPath);
+      await shell("ln", [
+        "-sf",
+        secretsPath,
+        `${latestDir}/secrets.tar.zst`,
+      ]);
+      await logger.info(
+        `Successfully backed up secrets to ${secretsPath}`,
+      );
+    } catch (err: any) {
+      await logger.warn(`Failed to create secrets backup: ${err.message}`);
+    }
+
+    // Rotate local backups
+    await rotateLocalBackups(config, logger);
+
+    // Upload to remote
+    if (await isRcloneInstalled()) {
+      if (await isRcloneRemoteConfigured(config.RCLONE_REMOTE)) {
+        try {
+          await logger.info(
+            `Uploading backup to remote (${config.RCLONE_REMOTE})...`,
+          );
+          await upload(
+            archiveDir,
+            config.RCLONE_REMOTE,
+            `/backups/archive/${today}`,
+          );
+          await logger.info("Successfully uploaded backup to remote");
+        } catch (err: any) {
+          await logger.warn(
+            `Failed to upload backup to remote: ${err.message}`,
+          );
+        }
+
+        // Rotate remote backups
+        try {
+          await logger.info(
+            `Rotating remote backups (keeping ${config.REMOTE_RETENTION} most recent)...`,
+          );
+          const deleted = await rotateRemote(
+            config.RCLONE_REMOTE,
+            "/backups/archive",
+            config.REMOTE_RETENTION,
+          );
+          if (deleted.length > 0) {
+            for (const dir of deleted) {
+              await logger.info(`Deleted old remote backup: ${dir}`);
+            }
+          } else {
+            await logger.info("No remote rotation needed");
+          }
+          await logger.info("Remote backup rotation complete");
+        } catch (err: any) {
+          await logger.warn(`Remote rotation failed: ${err.message}`);
+        }
+      } else {
+        await logger.warn(
+          `rclone remote '${config.RCLONE_REMOTE}' not found, skipping remote upload`,
+        );
+        await logger.warn("Configure rclone with: rclone config");
+      }
+    } else {
+      await logger.warn("rclone not found, skipping remote upload");
+    }
+
+    // Summary
+    await logger.info("=== Backup process complete ===");
+    if (failed.length > 0) {
+      await logger.warn(
+        `Some apps failed to backup: ${failed.join(", ")}`,
+      );
+      process.exit(1);
+    } else {
+      await logger.info("All apps backed up successfully");
+    }
+  } catch (err: any) {
+    await logger.error(`Backup failed: ${err.message}`);
+    process.exit(1);
+  }
+}
+
+// ─── Interactive (TTY) backup ────────────────────────────────────────────────
+
+interface CompletedStep {
+  name: string;
+  status: "done" | "error" | "skipped";
+  message?: string;
+}
+
+function BackupInteractive({ appFilter }: { appFilter?: string }) {
+  const { exit } = useApp();
+  const [completedSteps, setCompletedSteps] = useState<CompletedStep[]>([]);
+  const [phase, setPhase] = useState<"init" | "running" | "done">("init");
+  const [currentLabel, setCurrentLabel] = useState("Loading configuration...");
+  const [failedCount, setFailedCount] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+
+  function addStep(step: CompletedStep) {
+    setCompletedSteps((prev) => [...prev, step]);
+  }
+
+  useEffect(() => {
+    runInteractiveBackup();
+  }, []);
+
+  async function runInteractiveBackup() {
+    try {
+      const config = await loadBackupConfig();
+      const projectRoot = getProjectRoot();
+      const today = new Date().toISOString().slice(0, 10);
+      const archiveDir = `${config.BACKUP_DIR}/archive/${today}`;
+      const latestDir = `${config.BACKUP_DIR}/latest`;
+
+      // Create backup directory structure
+      await ensureBackupDirs(config.BACKUP_DIR);
+      await shell("mkdir", ["-p", archiveDir]);
+
+      setPhase("running");
+
+      // Determine which apps to backup
+      let apps: AppDefinition[];
+      if (appFilter) {
+        const app = getApp(appFilter);
+        if (!app) {
+          setError(`Unknown app: ${appFilter}`);
+          return;
+        }
+        apps = [app];
+      } else {
+        setCurrentLabel("Detecting installed apps...");
+        apps = await detectInstalledApps(config);
+        if (apps.length === 0) {
+          addStep({
+            name: "Detection",
+            status: "skipped",
+            message: "No apps found",
+          });
+          setPhase("done");
+          setTimeout(() => exit(), 500);
+          return;
+        }
+        addStep({
+          name: "Detection",
+          status: "done",
+          message: `Found ${apps.length} app(s): ${apps.map((a) => a.name).join(", ")}`,
+        });
+      }
+
+      let failed = 0;
+
+      // Backup each app
+      for (const app of apps) {
+        setCurrentLabel(`Backing up ${app.displayName}...`);
+        try {
+          const outputPath = `${archiveDir}/${app.name}.tar.zst`;
+          await createBackup(app, config.BASE_DIR, outputPath);
+          await shell("ln", [
+            "-sf",
+            outputPath,
+            `${latestDir}/${app.name}.tar.zst`,
+          ]);
+          addStep({ name: app.displayName, status: "done" });
+        } catch (err: any) {
+          addStep({
+            name: app.displayName,
+            status: "error",
+            message: err.message,
+          });
+          failed++;
+        }
+      }
+
+      // Backup secrets
+      setCurrentLabel("Backing up secrets...");
+      try {
+        const secretsPath = `${archiveDir}/secrets.tar.zst`;
+        await createSecretsBackup(projectRoot, secretsPath);
+        await shell("ln", [
+          "-sf",
+          secretsPath,
+          `${latestDir}/secrets.tar.zst`,
+        ]);
+        addStep({ name: "Secrets", status: "done" });
+      } catch (err: any) {
+        addStep({
+          name: "Secrets",
+          status: "error",
+          message: err.message,
+        });
+      }
+
+      // Rotate local backups
+      setCurrentLabel(
+        `Rotating local backups (keeping ${config.LOCAL_RETENTION} most recent)...`,
+      );
+      const rotatedCount = await rotateLocalBackups(config);
+      if (rotatedCount > 0) {
+        addStep({
+          name: "Local rotation",
+          status: "done",
+          message: `Removed ${rotatedCount} old backup(s)`,
+        });
+      } else {
+        addStep({
+          name: "Local rotation",
+          status: "done",
+          message: "No rotation needed",
+        });
+      }
+
+      // Upload + rotate remote
+      if (await isRcloneInstalled()) {
+        if (await isRcloneRemoteConfigured(config.RCLONE_REMOTE)) {
+          // Upload
+          setCurrentLabel(
+            `Uploading to ${config.RCLONE_REMOTE}...`,
+          );
+          try {
+            await upload(
+              archiveDir,
+              config.RCLONE_REMOTE,
+              `/backups/archive/${today}`,
+            );
+            addStep({ name: "Remote upload", status: "done" });
+          } catch (err: any) {
+            addStep({
+              name: "Remote upload",
+              status: "error",
+              message: err.message,
+            });
+          }
+
+          // Rotate remote
+          setCurrentLabel(
+            `Rotating remote backups (keeping ${config.REMOTE_RETENTION} most recent)...`,
+          );
+          try {
+            const deleted = await rotateRemote(
+              config.RCLONE_REMOTE,
+              "/backups/archive",
+              config.REMOTE_RETENTION,
+            );
+            if (deleted.length > 0) {
+              addStep({
+                name: "Remote rotation",
+                status: "done",
+                message: `Removed ${deleted.length} old backup(s)`,
+              });
+            } else {
+              addStep({
+                name: "Remote rotation",
+                status: "done",
+                message: "No rotation needed",
+              });
+            }
+          } catch (err: any) {
+            addStep({
+              name: "Remote rotation",
+              status: "error",
+              message: err.message,
+            });
+          }
+        } else {
+          addStep({
+            name: "Remote backup",
+            status: "skipped",
+            message: `Remote '${config.RCLONE_REMOTE}' not configured (run: rclone config)`,
+          });
+        }
+      } else {
+        addStep({
+          name: "Remote backup",
+          status: "skipped",
+          message: "rclone not installed",
+        });
+      }
+
+      setFailedCount(failed);
+      setPhase("done");
+      setTimeout(() => {
+        process.exitCode = failed > 0 ? 1 : 0;
+        exit();
+      }, 500);
+    } catch (err: any) {
+      setError(err.message);
+      setTimeout(() => {
+        process.exitCode = 1;
+        exit();
+      }, 500);
     }
   }
+
+  if (error) {
+    return (
+      <Box flexDirection="column">
+        <Header title="Backup" />
+        <StatusMessage variant="error">Backup failed: {error}</StatusMessage>
+      </Box>
+    );
+  }
+
+  return (
+    <Box flexDirection="column">
+      <Header title="Backup" />
+
+      {/* Persistent completed steps */}
+      {completedSteps.map((step, i) => (
+        <AppStatus
+          key={i}
+          name={step.name}
+          status={step.status}
+          message={step.message}
+        />
+      ))}
+
+      {/* Current active phase with spinner */}
+      {phase === "running" && (
+        <Text>
+          <Text color="green">
+            <Spinner type="dots" />
+          </Text>
+          {" "}{currentLabel}
+        </Text>
+      )}
+
+      {/* Final summary */}
+      {phase === "done" && (
+        <Box marginTop={1}>
+          {failedCount > 0 ? (
+            <StatusMessage variant="warning">
+              Backup completed with {failedCount} failure(s)
+            </StatusMessage>
+          ) : (
+            <StatusMessage variant="success">
+              Backup completed successfully
+            </StatusMessage>
+          )}
+        </Box>
+      )}
+    </Box>
+  );
 }
 
 // ─── Entry point ─────────────────────────────────────────────────────────────
 
 export async function runBackup(
   flags: { yes?: boolean },
+  appFilter?: string,
 ): Promise<void> {
   if (process.stdout.isTTY) {
-    const { waitUntilExit } = render(<BackupInteractive />);
+    const { waitUntilExit } = render(
+      <BackupInteractive appFilter={appFilter} />,
+    );
     await waitUntilExit();
   } else {
-    await runHeadlessBackup();
+    await runHeadlessBackup(appFilter);
   }
 }

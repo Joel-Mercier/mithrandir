@@ -14,7 +14,7 @@ const cli = meow(
 
   Commands
     setup                     Interactive setup wizard
-    backup                    Backup all configured apps
+    backup [app]              Backup all or a specific app
     restore <app|full> [date] Restore app(s) from backup
     uninstall <app>           Uninstall an app
 
@@ -27,6 +27,7 @@ const cli = meow(
     $ homelab setup
     $ homelab setup --yes
     $ homelab backup
+    $ homelab backup radarr
     $ homelab restore jellyfin
     $ homelab restore full 2025-01-01
     $ homelab restore full latest --yes
@@ -56,7 +57,7 @@ switch (command) {
     break;
 
   case "backup":
-    runBackup(cli.flags);
+    runBackup(cli.flags, cli.input[1]);
     break;
 
   case "restore":

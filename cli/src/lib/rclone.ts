@@ -5,6 +5,17 @@ export async function isRcloneInstalled(): Promise<boolean> {
   return commandExists("rclone");
 }
 
+/** Check if a specific rclone remote is configured (matches bash: rclone listremotes | grep) */
+export async function isRcloneRemoteConfigured(
+  remoteName: string,
+): Promise<boolean> {
+  const result = await shell("rclone", ["listremotes"], { ignoreError: true });
+  if (result.exitCode !== 0) return false;
+  return result.stdout
+    .split("\n")
+    .some((line) => line.trim() === `${remoteName}:`);
+}
+
 /** Install rclone via the official install script */
 export async function installRclone(): Promise<void> {
   await shell("bash", [

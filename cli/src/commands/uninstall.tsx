@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Box, Text, useApp } from "ink";
 import { ConfirmInput } from "@inkjs/ui";
 import Spinner from "ink-spinner";
@@ -7,7 +7,6 @@ import {
   getAppNames,
   getAppDir,
   getContainerName,
-  getComposePath,
 } from "../lib/apps.js";
 import {
   stopContainer,
