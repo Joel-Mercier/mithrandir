@@ -9,7 +9,9 @@ export async function isRcloneInstalled(): Promise<boolean> {
 export async function isRcloneRemoteConfigured(
   remoteName: string,
 ): Promise<boolean> {
-  const result = await shell("rclone", ["listremotes"], { ignoreError: true });
+  // Use sudo because rclone config is typically stored in /root/.config/rclone/
+  // (setup and systemd service run as root)
+  const result = await shell("rclone", ["listremotes"], { sudo: true, ignoreError: true });
   if (result.exitCode !== 0) return false;
   return result.stdout
     .split("\n")
@@ -36,7 +38,7 @@ export async function upload(
     `${remote}:${remotePath}`,
     "--log-level",
     "INFO",
-  ]);
+  ], { sudo: true });
 }
 
 /** Download a remote file to a local directory */
@@ -45,7 +47,7 @@ export async function download(
   remotePath: string,
   localDir: string,
 ): Promise<void> {
-  await shell("rclone", ["copy", `${remote}:${remotePath}`, localDir]);
+  await shell("rclone", ["copy", `${remote}:${remotePath}`, localDir], { sudo: true });
 }
 
 /** List directories at a remote path. Returns directory names. */
@@ -56,7 +58,7 @@ export async function listDirs(
   const result = await shell(
     "rclone",
     ["lsd", `${remote}:${remotePath}`],
-    { ignoreError: true },
+    { sudo: true, ignoreError: true },
   );
 
   if (result.exitCode !== 0 || !result.stdout.trim()) return [];
@@ -81,7 +83,7 @@ export async function remoteFileExists(
   const result = await shell(
     "rclone",
     ["ls", `${remote}:${remotePath}`],
-    { ignoreError: true },
+    { sudo: true, ignoreError: true },
   );
   return result.exitCode === 0 && result.stdout.trim().length > 0;
 }
@@ -91,7 +93,7 @@ export async function purgeRemote(
   remote: string,
   remotePath: string,
 ): Promise<void> {
-  await shell("rclone", ["purge", `${remote}:${remotePath}`]);
+  await shell("rclone", ["purge", `${remote}:${remotePath}`], { sudo: true });
 }
 
 /**
