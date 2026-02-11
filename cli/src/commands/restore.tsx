@@ -193,7 +193,8 @@ async function findAvailableBackups(
 
   // Check remote for apps not found locally
   if (await isRcloneInstalled()) {
-    if (await isRcloneRemoteConfigured(config.RCLONE_REMOTE)) {
+    const remoteCheck = await isRcloneRemoteConfigured(config.RCLONE_REMOTE);
+    if (remoteCheck.configured) {
       try {
         let remoteDate = date;
         if (date === "latest") {

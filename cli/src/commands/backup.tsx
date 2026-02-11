@@ -227,7 +227,8 @@ async function runHeadlessBackup(appFilter?: string): Promise<void> {
 
     // Upload to remote
     if (await isRcloneInstalled()) {
-      if (await isRcloneRemoteConfigured(config.RCLONE_REMOTE)) {
+      const remoteCheck = await isRcloneRemoteConfigured(config.RCLONE_REMOTE);
+      if (remoteCheck.configured) {
         try {
           await logger.info(
             `Uploading backup to remote (${config.RCLONE_REMOTE})...`,
@@ -240,7 +241,7 @@ async function runHeadlessBackup(appFilter?: string): Promise<void> {
           await logger.info("Successfully uploaded backup to remote");
         } catch (err: any) {
           await logger.warn(
-            `Failed to upload backup to remote: ${err.message}`,
+            `Failed to upload backup to remote: ${err.message}${err.stderr ? `\n  stderr: ${err.stderr}` : ""}`,
           );
         }
 
@@ -263,13 +264,13 @@ async function runHeadlessBackup(appFilter?: string): Promise<void> {
           }
           await logger.info("Remote backup rotation complete");
         } catch (err: any) {
-          await logger.warn(`Remote rotation failed: ${err.message}`);
+          await logger.warn(`Remote rotation failed: ${err.message}${err.stderr ? `\n  stderr: ${err.stderr}` : ""}`);
         }
       } else {
         await logger.warn(
-          `rclone remote '${config.RCLONE_REMOTE}' not found, skipping remote upload`,
+          `rclone remote '${config.RCLONE_REMOTE}' not configured, skipping remote upload`,
         );
-        await logger.warn("Configure rclone with: rclone config");
+        await logger.warn(remoteCheck.reason);
       }
     } else {
       await logger.warn("rclone not found, skipping remote upload");
@@ -422,7 +423,8 @@ function BackupInteractive({ appFilter }: { appFilter?: string }) {
 
       // Upload + rotate remote
       if (await isRcloneInstalled()) {
-        if (await isRcloneRemoteConfigured(config.RCLONE_REMOTE)) {
+        const remoteCheck = await isRcloneRemoteConfigured(config.RCLONE_REMOTE);
+        if (remoteCheck.configured) {
           // Upload
           setCurrentLabel(
             `Uploading to ${config.RCLONE_REMOTE}...`,
@@ -438,7 +440,7 @@ function BackupInteractive({ appFilter }: { appFilter?: string }) {
             addStep({
               name: "Remote upload",
               status: "error",
-              message: err.message,
+              message: err.stderr?.trim() || err.message,
             });
           }
 
@@ -469,14 +471,14 @@ function BackupInteractive({ appFilter }: { appFilter?: string }) {
             addStep({
               name: "Remote rotation",
               status: "error",
-              message: err.message,
+              message: err.stderr?.trim() || err.message,
             });
           }
         } else {
           addStep({
             name: "Remote backup",
             status: "skipped",
-            message: `Remote '${config.RCLONE_REMOTE}' not configured (run: rclone config)`,
+            message: remoteCheck.reason,
           });
         }
       } else {

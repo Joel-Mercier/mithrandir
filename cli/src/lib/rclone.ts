@@ -5,17 +5,32 @@ export async function isRcloneInstalled(): Promise<boolean> {
   return commandExists("rclone");
 }
 
-/** Check if a specific rclone remote is configured (matches bash: rclone listremotes | grep) */
+/**
+ * Check if a specific rclone remote is configured (matches bash: rclone listremotes | grep).
+ * Returns { configured: true } or { configured: false, reason: string } for diagnostics.
+ */
 export async function isRcloneRemoteConfigured(
   remoteName: string,
-): Promise<boolean> {
-  // Use sudo because rclone config is typically stored in /root/.config/rclone/
-  // (setup and systemd service run as root)
-  const result = await shell("rclone", ["listremotes"], { sudo: true, ignoreError: true });
-  if (result.exitCode !== 0) return false;
-  return result.stdout
+): Promise<{ configured: true } | { configured: false; reason: string }> {
+  const result = await shell("rclone", ["listremotes"], { ignoreError: true });
+  if (result.exitCode !== 0) {
+    return {
+      configured: false,
+      reason: `rclone listremotes failed (exit ${result.exitCode}): ${result.stderr.trim() || "(no stderr)"}`,
+    };
+  }
+  const remotes = result.stdout
     .split("\n")
-    .some((line) => line.trim() === `${remoteName}:`);
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const found = remotes.some((line) => line === `${remoteName}:`);
+  if (!found) {
+    return {
+      configured: false,
+      reason: `remote '${remoteName}:' not found in rclone listremotes output: [${remotes.join(", ")}]`,
+    };
+  }
+  return { configured: true };
 }
 
 /** Install rclone via the official install script */
@@ -38,7 +53,7 @@ export async function upload(
     `${remote}:${remotePath}`,
     "--log-level",
     "INFO",
-  ], { sudo: true });
+  ]);
 }
 
 /** Download a remote file to a local directory */
@@ -47,7 +62,7 @@ export async function download(
   remotePath: string,
   localDir: string,
 ): Promise<void> {
-  await shell("rclone", ["copy", `${remote}:${remotePath}`, localDir], { sudo: true });
+  await shell("rclone", ["copy", `${remote}:${remotePath}`, localDir]);
 }
 
 /** List directories at a remote path. Returns directory names. */
@@ -58,7 +73,7 @@ export async function listDirs(
   const result = await shell(
     "rclone",
     ["lsd", `${remote}:${remotePath}`],
-    { sudo: true, ignoreError: true },
+    { ignoreError: true },
   );
 
   if (result.exitCode !== 0 || !result.stdout.trim()) return [];
@@ -83,7 +98,7 @@ export async function remoteFileExists(
   const result = await shell(
     "rclone",
     ["ls", `${remote}:${remotePath}`],
-    { sudo: true, ignoreError: true },
+    { ignoreError: true },
   );
   return result.exitCode === 0 && result.stdout.trim().length > 0;
 }
@@ -93,7 +108,7 @@ export async function purgeRemote(
   remote: string,
   remotePath: string,
 ): Promise<void> {
-  await shell("rclone", ["purge", `${remote}:${remotePath}`], { sudo: true });
+  await shell("rclone", ["purge", `${remote}:${remotePath}`]);
 }
 
 /**
