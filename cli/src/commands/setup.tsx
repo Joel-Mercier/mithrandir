@@ -606,7 +606,8 @@ function InstallAppsStep({ selectedApps, envConfig, autoYes, onComplete }: Insta
             results.push({ app, status: "done" });
           }
         } else {
-          // Fresh install (writeComposeAndStart handles cleanup of stale containers)
+          // Fresh install: pull image first, then compose up
+          await pullImage(app.image);
           setInstallPhase("composing");
           await writeComposeAndStart(app, envConfig);
           results.push({ app, status: "done" });
