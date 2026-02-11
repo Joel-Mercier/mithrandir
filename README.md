@@ -96,6 +96,12 @@ Backs up all configured apps automatically. No arguments required. Runs without 
 bash restore.sh <app_name|full> [date] [--yes]
 ```
 
+**Uninstall:**
+```bash
+sudo bash uninstall.sh
+```
+Uninstalls all Homelab components, including Docker, backup systemd timer, rclone, and local backups. Also prompts for confirmation to delete all app data directories.
+
 ## TODO
 
 - [ ] Replace Uptime Kuma with Gatus which has support for file based configuration (could allow to setup alerts and monitoring directly in the script without using the UI)
