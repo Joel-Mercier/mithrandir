@@ -29,12 +29,12 @@ export async function shell(
   const cmd = sudo ? "sudo" : command;
   const cmdArgs = sudo ? [command, ...args] : args;
 
+  const execaOpts: Record<string, unknown> = { reject: !ignoreError };
+  if (cwd) execaOpts.cwd = cwd;
+  if (env) execaOpts.env = env;
+
   try {
-    const result = await execa(cmd, cmdArgs, {
-      cwd,
-      env,
-      reject: !ignoreError,
-    });
+    const result = await execa(cmd, cmdArgs, execaOpts);
     return {
       stdout: result.stdout,
       stderr: result.stderr,
@@ -65,12 +65,11 @@ export function shellStream(
   const cmd = sudo ? "sudo" : command;
   const cmdArgs = sudo ? [command, ...args] : args;
 
-  return execa(cmd, cmdArgs, {
-    cwd,
-    env,
-    stdout: "pipe",
-    stderr: "pipe",
-  });
+  const execaOpts: Record<string, unknown> = { stdout: "pipe", stderr: "pipe" };
+  if (cwd) execaOpts.cwd = cwd;
+  if (env) execaOpts.env = env;
+
+  return execa(cmd, cmdArgs, execaOpts);
 }
 
 /** Check if a command exists on the system */
