@@ -599,6 +599,7 @@ function InstallAppsStep({ selectedApps, envConfig, autoYes, onComplete }: Insta
           const latestId = await pullImage(app.image);
           if (currentId !== latestId) {
             // Update: write new compose, down, up (matches setup.sh update path)
+            setInstallPhase("composing");
             await writeComposeAndStart(app, envConfig);
             results.push({ app, status: "updated" });
           } else {
@@ -606,6 +607,7 @@ function InstallAppsStep({ selectedApps, envConfig, autoYes, onComplete }: Insta
           }
         } else {
           // Fresh install (writeComposeAndStart handles cleanup of stale containers)
+          setInstallPhase("composing");
           await writeComposeAndStart(app, envConfig);
           results.push({ app, status: "done" });
         }

@@ -27,6 +27,8 @@ export function generateCompose(
 
   if (app.user) {
     lines.push(`    user: "${app.user}"`);
+  } else if (app.name === "navidrome") {
+    lines.push(`    user: "${envConfig.PUID}:${envConfig.PGID}"`);
   }
 
   // Network mode
@@ -76,11 +78,6 @@ export function generateCompose(
         env[composeKey] = value;
       }
     }
-  }
-
-  // Navidrome uses user directive instead of PUID/PGID
-  if (app.name === "navidrome") {
-    // user is set in the compose as PUID:PGID
   }
 
   if (Object.keys(env).length > 0) {
@@ -192,6 +189,8 @@ function getContainerConfigPath(app: AppDefinition): string {
   switch (app.name) {
     case "jellyseerr":
       return "/app/config";
+    case "navidrome":
+      return "/data";
     case "uptime-kuma":
       return "/app/data";
     default:
