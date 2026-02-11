@@ -1,8 +1,31 @@
 import { shell, commandExists } from "./shell.js";
+import { existsSync } from "fs";
 
 /** Check if rclone is installed */
 export async function isRcloneInstalled(): Promise<boolean> {
   return commandExists("rclone");
+}
+
+/**
+ * Resolve the rclone config file path.
+ * When running under sudo, the config lives under the original user's home,
+ * not /root. We detect this via SUDO_USER and look up their home directory.
+ */
+async function resolveRcloneConfigArgs(): Promise<string[]> {
+  const sudoUser = process.env.SUDO_USER;
+  if (!sudoUser) return [];
+
+  // Look up the original user's home directory via getent
+  const result = await shell("getent", ["passwd", sudoUser], { ignoreError: true });
+  if (result.exitCode !== 0 || !result.stdout.trim()) return [];
+
+  const homeDir = result.stdout.split(":")[5];
+  if (!homeDir) return [];
+
+  const configPath = `${homeDir}/.config/rclone/rclone.conf`;
+  if (!existsSync(configPath)) return [];
+
+  return ["--config", configPath];
 }
 
 /**
@@ -12,13 +35,22 @@ export async function isRcloneInstalled(): Promise<boolean> {
 export async function isRcloneRemoteConfigured(
   remoteName: string,
 ): Promise<{ configured: true } | { configured: false; reason: string }> {
-  const result = await shell("rclone", ["listremotes"], { ignoreError: true });
+  const configArgs = await resolveRcloneConfigArgs();
+  const result = await shell("rclone", [...configArgs, "listremotes"], { ignoreError: true });
+
   if (result.exitCode !== 0) {
     return {
       configured: false,
-      reason: `rclone listremotes failed (exit ${result.exitCode}): ${result.stderr.trim() || "(no stderr)"}`,
+      reason: [
+        `rclone listremotes failed (exit ${result.exitCode})`,
+        `stderr: ${result.stderr.trim() || "(empty)"}`,
+        `HOME=${process.env.HOME ?? "(unset)"}`,
+        `SUDO_USER=${process.env.SUDO_USER ?? "(unset)"}`,
+        configArgs.length ? `config: ${configArgs[1]}` : "config: (default)",
+      ].join(", "),
     };
   }
+
   const remotes = result.stdout
     .split("\n")
     .map((line) => line.trim())
@@ -27,7 +59,12 @@ export async function isRcloneRemoteConfigured(
   if (!found) {
     return {
       configured: false,
-      reason: `remote '${remoteName}:' not found in rclone listremotes output: [${remotes.join(", ")}]`,
+      reason: [
+        `remote '${remoteName}:' not found in: [${remotes.join(", ") || "(empty)"}]`,
+        `HOME=${process.env.HOME ?? "(unset)"}`,
+        `SUDO_USER=${process.env.SUDO_USER ?? "(unset)"}`,
+        configArgs.length ? `config: ${configArgs[1]}` : "config: (default)",
+      ].join(", "),
     };
   }
   return { configured: true };
@@ -47,7 +84,9 @@ export async function upload(
   remote: string,
   remotePath: string,
 ): Promise<void> {
+  const configArgs = await resolveRcloneConfigArgs();
   await shell("rclone", [
+    ...configArgs,
     "copy",
     localPath,
     `${remote}:${remotePath}`,
@@ -62,7 +101,8 @@ export async function download(
   remotePath: string,
   localDir: string,
 ): Promise<void> {
-  await shell("rclone", ["copy", `${remote}:${remotePath}`, localDir]);
+  const configArgs = await resolveRcloneConfigArgs();
+  await shell("rclone", [...configArgs, "copy", `${remote}:${remotePath}`, localDir]);
 }
 
 /** List directories at a remote path. Returns directory names. */
@@ -70,9 +110,10 @@ export async function listDirs(
   remote: string,
   remotePath: string,
 ): Promise<string[]> {
+  const configArgs = await resolveRcloneConfigArgs();
   const result = await shell(
     "rclone",
-    ["lsd", `${remote}:${remotePath}`],
+    [...configArgs, "lsd", `${remote}:${remotePath}`],
     { ignoreError: true },
   );
 
@@ -95,9 +136,10 @@ export async function remoteFileExists(
   remote: string,
   remotePath: string,
 ): Promise<boolean> {
+  const configArgs = await resolveRcloneConfigArgs();
   const result = await shell(
     "rclone",
-    ["ls", `${remote}:${remotePath}`],
+    [...configArgs, "ls", `${remote}:${remotePath}`],
     { ignoreError: true },
   );
   return result.exitCode === 0 && result.stdout.trim().length > 0;
@@ -108,7 +150,8 @@ export async function purgeRemote(
   remote: string,
   remotePath: string,
 ): Promise<void> {
-  await shell("rclone", ["purge", `${remote}:${remotePath}`]);
+  const configArgs = await resolveRcloneConfigArgs();
+  await shell("rclone", [...configArgs, "purge", `${remote}:${remotePath}`]);
 }
 
 /**
