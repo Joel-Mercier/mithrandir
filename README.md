@@ -104,5 +104,6 @@ Uninstalls all Homelab components, including Docker, backup systemd timer, rclon
 
 ## TODO
 
+- [ ] Restructure the project to use Bun as a build tool and to have a nicer API to run commands (e.g., `homelab setup` instead of `bun run cli/src/index.tsx setup`)
 - [ ] Replace Uptime Kuma with Gatus which has support for file based configuration (could allow to setup alerts and monitoring directly in the script without using the UI)
 - [ ] Check if Profilarr is a good solution for quality profiles
