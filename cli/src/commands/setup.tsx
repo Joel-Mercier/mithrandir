@@ -385,8 +385,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
       }
 
       try {
-        const cliEntry = new URL("../index.tsx", import.meta.url).pathname;
-        await installSystemdUnits(cliEntry);
+        await installSystemdUnits();
         setStatus("done");
         addCompletedStep({ name: "Backup Timer", status: "done", message: "Daily at 2:00 AM" });
       } catch {

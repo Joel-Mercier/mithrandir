@@ -1,5 +1,4 @@
 import { shell } from "./shell.js";
-import { resolve } from "path";
 
 const SERVICE_NAME = "homelab-backup";
 
@@ -16,11 +15,7 @@ function getPaths(): SystemdPaths {
 }
 
 /** Generate the systemd service unit content */
-export function generateServiceUnit(cliEntryPath: string): string {
-  // Resolve the absolute path to the Bun binary
-  const bunHome = process.env.BUN_INSTALL ?? `${process.env.HOME}/.bun`;
-  const bunBin = `${bunHome}/bin/bun`;
-
+export function generateServiceUnit(): string {
   return `[Unit]
 Description=Homelab Backup Service
 After=docker.service
@@ -28,9 +23,8 @@ Requires=docker.service
 
 [Service]
 Type=oneshot
-ExecStart=${bunBin} run ${cliEntryPath} backup
-Environment="BUN_INSTALL=${bunHome}"
-Environment="PATH=${bunHome}/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin"
+ExecStart=/usr/local/bin/homelab backup
+Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin"
 StandardOutput=journal
 StandardError=journal
 
@@ -55,13 +49,10 @@ WantedBy=timers.target
 }
 
 /** Install the systemd service and timer */
-export async function installSystemdUnits(
-  cliEntryPath: string,
-): Promise<void> {
+export async function installSystemdUnits(): Promise<void> {
   const paths = getPaths();
-  const absCliPath = resolve(cliEntryPath);
 
-  const serviceContent = generateServiceUnit(absCliPath);
+  const serviceContent = generateServiceUnit();
   const timerContent = generateTimerUnit();
 
   // Write unit files

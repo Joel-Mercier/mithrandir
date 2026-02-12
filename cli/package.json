@@ -4,10 +4,11 @@
   "type": "module",
   "description": "Automated Docker-based homelab setup, backup, and restore",
   "bin": {
-    "homelab": "./src/index.tsx"
+    "homelab": "./dist/homelab.js"
   },
   "scripts": {
     "start": "bun run src/index.tsx",
+    "build": "bun run build.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

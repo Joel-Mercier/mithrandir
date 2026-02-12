@@ -10,13 +10,14 @@ Automated Docker-based homelab setup, backup, and restore system for Debian/Ubun
 
 ### Ink CLI (cli/)
 ```bash
-bun install                              # Install dependencies (run from cli/)
-bun run cli/src/index.tsx --help         # Show usage
-bun run cli/src/index.tsx setup          # Interactive setup wizard
-bun run cli/src/index.tsx backup         # Backup all apps
-bun run cli/src/index.tsx restore <app|full> [date] [--yes]
-bun run cli/src/index.tsx uninstall <app>
+cd cli && bun install                    # Install dependencies
+cd cli && bun run build                  # Bundle into dist/homelab.js
+sudo homelab setup                       # Interactive setup wizard
+sudo homelab backup                      # Backup all apps
+sudo homelab restore <app|full> [date] [--yes]
+sudo homelab uninstall <app>
 cd cli && bun run typecheck              # TypeScript type checking (tsc --noEmit)
+bun run cli/src/index.tsx --help         # Dev mode (unbundled)
 ```
 
 ### Bash Scripts (legacy fallback)
@@ -59,4 +60,4 @@ The backup command runs from systemd timer (non-TTY) daily. `commands/backup.tsx
 - Bash scripts require bash 4+, use `set -Eeuo pipefail`, and set `IFS=$'\n\t'`
 - Docker operations require sudo/root
 - Homarr is the only app with `configSubdir: "multiple"` (3 dirs: configs, icons, data)
-- Systemd unit for CLI must set explicit `PATH` and `BUN_INSTALL` since systemd doesn't source `.bashrc`
+- Systemd unit uses `/usr/local/bin/homelab` directly; only needs `PATH` set (no `BUN_INSTALL`)

@@ -1,15 +1,19 @@
 import { readFile } from "fs/promises";
 import { existsSync } from "fs";
-import { resolve, dirname } from "path";
+import { resolve, dirname, join } from "path";
 import { homedir } from "os";
 import type { EnvConfig, BackupConfig } from "../types.js";
 
 /** Find the project root (where .env / backup.conf live) */
 export function getProjectRoot(): string {
-  // Walk up from cli/src/lib to find the repo root
-  const cliDir = dirname(dirname(dirname(new URL(import.meta.url).pathname)));
-  // cliDir = /path/to/homelab/cli, go one more up
-  return dirname(cliDir);
+  // Walk up until we find the directory containing cli/package.json.
+  // Works from both source (cli/src/lib/) and bundled (cli/dist/) locations.
+  let dir = dirname(new URL(import.meta.url).pathname);
+  while (dir !== dirname(dir)) {
+    if (existsSync(join(dir, "cli", "package.json"))) return dir;
+    dir = dirname(dir);
+  }
+  throw new Error("Could not find homelab project root");
 }
 
 /** Parse a KEY=VALUE file (handles quoting and comments) */

@@ -256,6 +256,12 @@ async function step1RemoveSystemdUnits() {
     await shell("rm", ["-f", LOG_FILE]);
     info(`Removed backup log ${LOG_FILE}`);
   }
+
+  // Remove homelab CLI symlink
+  if (existsSync("/usr/local/bin/homelab")) {
+    await shell("rm", ["-f", "/usr/local/bin/homelab"]);
+    info("Removed /usr/local/bin/homelab");
+  }
 }
 
 // ---------------------------------------------------------------------------

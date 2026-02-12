@@ -7,7 +7,7 @@ Automated setup and backup system for Docker-based homelab applications.
 ```bash
 git clone <repo> && cd homelab
 bash cli/install.sh          # Installs Bun + dependencies
-sudo bun run cli/src/index.tsx setup
+sudo homelab setup
 ```
 
 ## Configuration
@@ -37,23 +37,23 @@ Automatically generated and installed by setup to `/etc/systemd/system/`:
 
 ## Usage (CLI)
 
-The Ink CLI requires Bun. Run `bash cli/install.sh` first to install Bun and dependencies on a bare Debian/Ubuntu server.
+The CLI requires Bun. Run `bash cli/install.sh` first to install Bun, build the CLI, and install the `homelab` command on a bare Debian/Ubuntu server.
 
 **Setup wizard:**
 ```bash
-sudo bun run cli/src/index.tsx setup [--yes]
+sudo homelab setup [--yes]
 ```
 Interactive multi-step wizard: installs Docker and rclone, prompts for base directory, lets you pick services to install, configures the systemd backup timer, and prints a summary with service URLs. `--yes` skips all prompts, selects all apps, and uses defaults from `.env`.
 
 **Backup:**
 ```bash
-sudo bun run cli/src/index.tsx backup
+sudo homelab backup
 ```
 Backs up all configured apps. In a terminal it shows spinners and colored progress; from systemd (non-TTY) it writes timestamped plaintext to stdout and `/var/log/homelab-backup.log`.
 
 **Restore:**
 ```bash
-sudo bun run cli/src/index.tsx restore <app|full> [date] [--yes]
+sudo homelab restore <app|full> [date] [--yes]
 ```
 - `app`: Name of app to restore (e.g., `jellyfin`, `radarr`, `sonarr`)
 - `full`: Restore all apps and secrets
@@ -62,21 +62,21 @@ sudo bun run cli/src/index.tsx restore <app|full> [date] [--yes]
 
 Examples:
 ```bash
-sudo bun run cli/src/index.tsx restore jellyfin
-sudo bun run cli/src/index.tsx restore jellyfin 2025-01-01
-sudo bun run cli/src/index.tsx restore full
-sudo bun run cli/src/index.tsx restore full 2025-01-01 --yes
+sudo homelab restore jellyfin
+sudo homelab restore jellyfin 2025-01-01
+sudo homelab restore full
+sudo homelab restore full 2025-01-01 --yes
 ```
 
 **Uninstall an app:**
 ```bash
-sudo bun run cli/src/index.tsx uninstall <app>
+sudo homelab uninstall <app>
 ```
 Stops and removes the container. Prompts whether to also delete the app's data and configuration.
 
 **Full system uninstall:**
 ```bash
-sudo bun run cli/src/index.tsx uninstall
+sudo homelab uninstall
 ```
 Removes all Homelab components: Docker, backup systemd timer, rclone, local backups, and app data directories. Equivalent to `sudo bash uninstall.sh`.
 
@@ -110,6 +110,6 @@ Uninstalls all Homelab components, including Docker, backup systemd timer, rclon
 
 ## TODO
 
-- [ ] Restructure the project to use Bun as a build tool and to have a nicer API to run commands (e.g., `homelab setup` instead of `bun run cli/src/index.tsx setup`)
+- [x] Restructure the project to use Bun as a build tool and to have a nicer API to run commands (e.g., `homelab setup` instead of `bun run cli/src/index.tsx setup`)
 - [ ] Replace Uptime Kuma with Gatus which has support for file based configuration (could allow to setup alerts and monitoring directly in the script without using the UI)
 - [ ] Check if Profilarr is a good solution for quality profiles

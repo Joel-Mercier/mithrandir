@@ -80,8 +80,16 @@ log "Installing dependencies..."
 cd "$SCRIPT_DIR"
 bun install
 
+# Build the CLI bundle
+log "Building CLI..."
+bun run build
+
+# Install the homelab command
+log "Installing homelab command..."
+sudo ln -sf "$SCRIPT_DIR/dist/homelab.js" /usr/local/bin/homelab
+
 log ""
 log "Setup complete! Run the CLI with:"
-log "  sudo bun run $SCRIPT_DIR/src/index.tsx setup"
+log "  sudo homelab setup"
 log ""
 log "If 'bun' is not found in a new terminal, run: source $SHELL_RC"

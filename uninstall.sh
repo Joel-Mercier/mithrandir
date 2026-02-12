@@ -91,6 +91,12 @@ if [[ -f "$LOG_FILE" ]]; then
     info "Removed backup log $LOG_FILE"
 fi
 
+# Remove homelab CLI symlink
+if [[ -L /usr/local/bin/homelab ]]; then
+    rm -f /usr/local/bin/homelab
+    info "Removed /usr/local/bin/homelab"
+fi
+
 # ===========================================
 # Step 2: Stop Docker services and clean up
 # ===========================================
