@@ -74,6 +74,12 @@ sudo bun run cli/src/index.tsx uninstall <app>
 ```
 Stops and removes the container. Prompts whether to also delete the app's data and configuration.
 
+**Full system uninstall:**
+```bash
+sudo bun run cli/src/index.tsx uninstall
+```
+Removes all Homelab components: Docker, backup systemd timer, rclone, local backups, and app data directories. Equivalent to `sudo bash uninstall.sh`.
+
 ## Usage (Bash — legacy)
 
 The original bash scripts remain as a fallback until the CLI is proven stable.

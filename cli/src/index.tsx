@@ -4,7 +4,7 @@ import { render } from "ink";
 import { runBackup } from "./commands/backup.js";
 import { runRestore } from "./commands/restore.js";
 import { SetupCommand } from "./commands/setup.js";
-import { UninstallCommand } from "./commands/uninstall.js";
+import { runUninstall } from "./commands/uninstall.js";
 import { ErrorBoundary } from "./components/ErrorBoundary.js";
 
 const cli = meow(
@@ -16,7 +16,7 @@ const cli = meow(
     setup                     Interactive setup wizard
     backup [app]              Backup all or a specific app
     restore <app|full> [date] Restore app(s) from backup
-    uninstall <app>           Uninstall an app
+    uninstall [app]           Uninstall an app, or full system uninstall
 
   Options
     --yes, -y                 Skip confirmation prompts
@@ -32,6 +32,7 @@ const cli = meow(
     $ homelab restore full 2025-01-01
     $ homelab restore full latest --yes
     $ homelab uninstall radarr
+    $ homelab uninstall
 `,
   {
     importMeta: import.meta,
@@ -65,11 +66,7 @@ switch (command) {
     break;
 
   case "uninstall":
-    render(
-      <ErrorBoundary>
-        <UninstallCommand app={cli.input[1]} flags={cli.flags} />
-      </ErrorBoundary>,
-    );
+    runUninstall(cli.input.slice(1), cli.flags);
     break;
 
   default:
