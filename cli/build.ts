@@ -11,7 +11,7 @@ const result = await Bun.build({
   naming: "homelab.js",
   plugins: [
     {
-      name: "stub-devtools",
+      name: "esm-compat",
       setup(build) {
         // react-devtools-core is an optional peer dep of ink, not needed at runtime
         build.onResolve({ filter: /^react-devtools-core$/ }, () => ({
@@ -20,6 +20,17 @@ const result = await Bun.build({
         }));
         build.onLoad({ filter: /.*/, namespace: "stub" }, () => ({
           contents: "export default undefined;",
+          loader: "js",
+        }));
+
+        // signal-exit ESM has no default export, but ink does `import signalExit from 'signal-exit'`.
+        // Shim it to re-export onExit as default.
+        build.onResolve({ filter: /^signal-exit$/ }, () => ({
+          path: "signal-exit",
+          namespace: "shim",
+        }));
+        build.onLoad({ filter: /.*/, namespace: "shim" }, () => ({
+          contents: `export { onExit as default, onExit, load, unload, signals } from ${JSON.stringify(join(import.meta.dir, "node_modules/signal-exit/dist/mjs/index.js"))};`,
           loader: "js",
         }));
       },
