@@ -110,7 +110,7 @@ Uninstalls all Homelab components, including Docker, backup systemd timer, rclon
 
 ## TODO
 
-- [x] Restructure the project to use Bun as a build tool and to have a nicer API to run commands (e.g., `homelab setup` instead of `bun run cli/src/index.tsx setup`)
-- [ ] Rebrand the CLI's command name and header to match the new Mithrandir name and theme. Adapt the header to include the gandalf ascii, the Mithrandir title and a old medieval parchemin banner underneath with "Home Lab Setup"
+- [ ] Rebrand the CLI's command name and header to match the new Mithrandir name and theme. Adapt the header to include the gandalf ascii, the Mithrandir title in a gothic, oldscholl, dungeons and dragons like esthetic and a old medieval parchemin banner
+  underneath with "Home Lab Setup"
 - [ ] Replace Uptime Kuma with Gatus which has support for file based configuration (could allow to setup alerts and monitoring directly in the script without using the UI)
 - [ ] Check if Profilarr is a good solution for quality profiles

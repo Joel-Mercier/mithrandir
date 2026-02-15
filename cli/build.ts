@@ -2,13 +2,13 @@ import { chmod } from "fs/promises";
 import { join } from "path";
 
 const outdir = join(import.meta.dir, "dist");
-const outfile = join(outdir, "homelab.js");
+const outfile = join(outdir, "mithrandir.js");
 
 const result = await Bun.build({
   entrypoints: [join(import.meta.dir, "src/index.tsx")],
   outdir,
   target: "bun",
-  naming: "homelab.js",
+  naming: "mithrandir.js",
   plugins: [
     {
       name: "esm-compat",

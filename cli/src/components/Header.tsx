@@ -27,35 +27,47 @@ const gandalfArt = [
   "⡐⠌⠄⡕⠲⢌⡢⡠⠂⡄⠐⡕⡱⡎⡇⢗⢌⡂⡿⡸⣜⣵⢱⡣⣷⣹⡂⡗⣻⡪⣏⣗⡽⣳⢽⢯⣺⣽⣽⣿⣿⣿⣿⣿⣻⣿⣻⣿⣿⡄",
 ];
 
+function makeBanner(text: string): string[] {
+  const inner = ` ⚔  ${text}  ⚔ `;
+  const width = inner.length;
+  return [
+    `╔${"═".repeat(width)}╗`,
+    `║${inner}║`,
+    `╚${"═".repeat(width)}╝`,
+  ];
+}
+
 export function Header({ title }: HeaderProps) {
+  const divider = "⚜ ═══════════════════════════════ ⚜";
+
   return (
     <Box flexDirection="column" marginBottom={1}>
       <Box flexDirection="column" alignItems="center">
         <Box flexDirection="column">
           {gandalfArt.map((line, i) => (
-            <Text key={i} color="gray">{line}</Text>
+            <Text key={i} color="yellow" dimColor>{line}</Text>
           ))}
         </Box>
-        <Box flexDirection="column" marginTop={1}>
-          <Text bold color="cyan">
-            {"  _   _                      _       _     "}
+        <Box flexDirection="column" alignItems="center" marginTop={1}>
+          <Text color="yellow">{divider}</Text>
+          <Text bold color="yellow">
+            {"╔╦╗╦╔╦╗╦ ╦╦═╗╔═╗╔╗╔╔╦╗╦╦═╗"}
           </Text>
-          <Text bold color="cyan">
-            {" | | | | ___  _ __ ___   ___| | __ _| |__  "}
+          <Text bold color="yellow">
+            {"║║║║ ║ ╠═╣╠╦╝╠═╣║║║ ║║║╠╦╝"}
           </Text>
-          <Text bold color="cyan">
-            {" | |_| |/ _ \\| '_ ` _ \\ / _ \\ |/ _` | '_ \\ "}
+          <Text bold color="yellow">
+            {"╩ ╩╩ ╩ ╩ ╩╩╚═╩ ╩╝╚╝═╩╝╩╩╚═"}
           </Text>
-          <Text bold color="cyan">
-            {" |  _  | (_) | | | | | |  __/ | (_| | |_) |"}
-          </Text>
-          <Text bold color="cyan">
-            {" |_| |_|\\___/|_| |_| |_|\\___|_|\\__,_|_.__/ "}
-          </Text>
+          <Text color="yellow">{divider}</Text>
         </Box>
       </Box>
       {title && (
-        <Text dimColor>  {title}</Text>
+        <Box flexDirection="column" alignItems="center" marginTop={1}>
+          {makeBanner(title).map((line, i) => (
+            <Text key={i} bold color="white">{line}</Text>
+          ))}
+        </Box>
       )}
     </Box>
   );

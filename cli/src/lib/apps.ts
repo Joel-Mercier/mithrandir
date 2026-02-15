@@ -1,7 +1,7 @@
 import type { AppDefinition } from "../types.js";
 
 /**
- * Single source of truth for all homelab services.
+ * Single source of truth for all mithrandir services.
  * Replaces get_app_config() in backup.sh/restore.sh, VALID_APPS in setup.sh,
  * and per-app compose blocks in setup.sh.
  */

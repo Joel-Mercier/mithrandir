@@ -17,13 +17,13 @@ function getPaths(): SystemdPaths {
 /** Generate the systemd service unit content */
 export function generateServiceUnit(): string {
   return `[Unit]
-Description=Homelab Backup Service
+Description=Mithrandir Backup Service
 After=docker.service
 Requires=docker.service
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/bin/homelab backup
+ExecStart=/usr/local/bin/mithrandir backup
 Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin"
 StandardOutput=journal
 StandardError=journal
@@ -36,7 +36,7 @@ WantedBy=multi-user.target
 /** Generate the systemd timer unit content */
 export function generateTimerUnit(): string {
   return `[Unit]
-Description=Homelab Backup Timer
+Description=Mithrandir Backup Timer
 
 [Timer]
 OnCalendar=*-*-* 02:00:00

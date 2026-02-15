@@ -468,8 +468,8 @@ async function step1RemoveSystemdUnits() {
     await shell("rm", ["-f", LOG_FILE]);
   }
 
-  if (existsSync("/usr/local/bin/homelab")) {
-    await shell("rm", ["-f", "/usr/local/bin/homelab"]);
+  if (existsSync("/usr/local/bin/mithrandir")) {
+    await shell("rm", ["-f", "/usr/local/bin/mithrandir"]);
   }
 }
 

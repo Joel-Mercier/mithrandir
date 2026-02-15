@@ -1,4 +1,4 @@
-/** Shared types for the homelab CLI */
+/** Shared types for the mithrandir CLI */
 
 export interface AppDefinition {
   /** Internal name, e.g. "radarr" */

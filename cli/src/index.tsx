@@ -10,7 +10,7 @@ import { ErrorBoundary } from "./components/ErrorBoundary.js";
 const cli = meow(
   `
   Usage
-    $ homelab <command> [options]
+    $ mithrandir <command> [options]
 
   Commands
     setup                     Interactive setup wizard
@@ -24,15 +24,15 @@ const cli = meow(
     --version                 Show version
 
   Examples
-    $ homelab setup
-    $ homelab setup --yes
-    $ homelab backup
-    $ homelab backup radarr
-    $ homelab restore jellyfin
-    $ homelab restore full 2025-01-01
-    $ homelab restore full latest --yes
-    $ homelab uninstall radarr
-    $ homelab uninstall
+    $ mithrandir setup
+    $ mithrandir setup --yes
+    $ mithrandir backup
+    $ mithrandir backup radarr
+    $ mithrandir restore jellyfin
+    $ mithrandir restore full 2025-01-01
+    $ mithrandir restore full latest --yes
+    $ mithrandir uninstall radarr
+    $ mithrandir uninstall
 `,
   {
     importMeta: import.meta,

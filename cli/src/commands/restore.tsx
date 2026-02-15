@@ -804,7 +804,7 @@ export async function runRestore(
 
   // Validate target
   if (!target) {
-    console.log(`Usage: homelab restore <app|full> [date] [--yes]\n`);
+    console.log(`Usage: mithrandir restore <app|full> [date] [--yes]\n`);
     console.log(`Apps: ${getAppNames().join(", ")}`);
     console.log(`Date: YYYY-MM-DD or "latest" (default: latest)`);
     process.exit(1);

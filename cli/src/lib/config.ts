@@ -13,7 +13,7 @@ export function getProjectRoot(): string {
     if (existsSync(join(dir, "cli", "package.json"))) return dir;
     dir = dirname(dir);
   }
-  throw new Error("Could not find homelab project root");
+  throw new Error("Could not find mithrandir project root");
 }
 
 /** Parse a KEY=VALUE file (handles quoting and comments) */

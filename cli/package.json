@@ -1,10 +1,10 @@
 {
-  "name": "homelab",
+  "name": "mithrandir",
   "version": "1.0.0",
   "type": "module",
   "description": "Automated Docker-based homelab setup, backup, and restore",
   "bin": {
-    "homelab": "./dist/homelab.js"
+    "mithrandir": "./dist/mithrandir.js"
   },
   "scripts": {
     "start": "bun run src/index.tsx",
