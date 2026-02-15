@@ -9,6 +9,7 @@ import {
   getContainerName,
   getComposePath,
   getConfigPaths,
+  filterConflicts,
 } from "../lib/apps.js";
 import {
   isDockerInstalled,
@@ -326,7 +327,9 @@ export function SetupCommand({ flags }: SetupCommandProps) {
   function AppSelectStep() {
     useEffect(() => {
       if (autoYes) {
-        setSelectedApps([...APP_REGISTRY]);
+        // In auto mode, select all apps but filter conflicts (prefer Seerr over Jellyseerr)
+        const allApps = APP_REGISTRY.filter((a) => a.name !== "jellyseerr");
+        setSelectedApps(filterConflicts(allApps));
         setStep("install-apps");
       }
     }, []);
@@ -342,7 +345,8 @@ export function SetupCommand({ flags }: SetupCommandProps) {
       const apps = values
         .map((name) => getApp(name))
         .filter((a): a is AppDefinition => a !== undefined);
-      setSelectedApps(apps);
+      const filtered = filterConflicts(apps);
+      setSelectedApps(filtered);
       setStep("install-apps");
     }
 
@@ -350,6 +354,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
       <Box flexDirection="column">
         <StepIndicator current={4} total={7} label="Select Apps" />
         <Text>Choose services to install (space to toggle, enter to confirm):</Text>
+        <Text dimColor>Note: Seerr and Jellyseerr conflict (same port). Only the first selected will be installed.</Text>
         <MultiSelect options={options} onSubmit={handleSubmit} />
       </Box>
     );
@@ -707,6 +712,16 @@ async function writeComposeAndStart(
     `cat > "${composePath}" << 'COMPOSE_EOF'\n${compose}COMPOSE_EOF`,
   ], { sudo: true });
 
+  // Set ownership for config dirs BEFORE starting the container.
+  // Seerr (and Jellyseerr) run as the node user (UID 1000) inside the
+  // container, so the config dir must be writable before first start.
+  for (const p of configPaths) {
+    await shell("chown", ["-R", `${envConfig.PUID}:${envConfig.PGID}`, p], {
+      sudo: true,
+      ignoreError: true,
+    });
+  }
+
   // Clean up any existing container before starting fresh.
   // 1) compose down: removes containers owned by this compose project
   // 2) docker rm -f: catches orphaned containers from prior CLI runs
@@ -717,12 +732,4 @@ async function writeComposeAndStart(
 
   // Start container
   await composeUp(composePath);
-
-  // Set ownership for config dirs
-  for (const p of configPaths) {
-    await shell("chown", ["-R", `${envConfig.PUID}:${envConfig.PGID}`, p], {
-      sudo: true,
-      ignoreError: true,
-    });
-  }
 }

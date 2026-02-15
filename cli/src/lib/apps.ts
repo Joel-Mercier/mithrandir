@@ -78,12 +78,13 @@ export const APP_REGISTRY: AppDefinition[] = [
   {
     name: "jellyseerr",
     displayName: "Jellyseerr",
-    description: "Media request manager for Jellyfin",
+    description: "Media request manager for Jellyfin (legacy)",
     image: "ghcr.io/fallenbagel/jellyseerr:latest",
     port: 5055,
     configSubdir: "app/config",
     needsDataDir: false,
     init: true,
+    conflictsWith: ["seerr"],
     environment: {
       LOG_LEVEL: "debug",
       PORT: "5055",
@@ -100,12 +101,13 @@ export const APP_REGISTRY: AppDefinition[] = [
   {
     name: "seerr",
     displayName: "Seerr",
-    description: "Media request manager for Jellyfin",
+    description: "Media request manager for Jellyfin (recommended, successor to Jellyseerr)",
     image: "ghcr.io/seerr-team/seerr:latest",
     port: 5055,
     configSubdir: "app/config",
     needsDataDir: false,
     init: true,
+    conflictsWith: ["jellyseerr"],
     environment: {
       LOG_LEVEL: "debug",
       PORT: "5055",
@@ -267,4 +269,27 @@ export function getConfigPaths(
 /** Get the compose file path for an app */
 export function getComposePath(app: AppDefinition, baseDir: string): string {
   return `${getAppDir(app, baseDir)}/docker-compose.yml`;
+}
+
+/**
+ * Filter out apps that conflict with already-selected apps.
+ * Earlier entries in the selection win (first-selected takes priority).
+ */
+export function filterConflicts(apps: AppDefinition[]): AppDefinition[] {
+  const selected = new Set<string>();
+  const excluded = new Set<string>();
+  const result: AppDefinition[] = [];
+
+  for (const app of apps) {
+    if (excluded.has(app.name)) continue;
+    selected.add(app.name);
+    result.push(app);
+    if (app.conflictsWith) {
+      for (const c of app.conflictsWith) {
+        if (!selected.has(c)) excluded.add(c);
+      }
+    }
+  }
+
+  return result;
 }

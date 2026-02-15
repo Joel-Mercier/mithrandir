@@ -772,10 +772,10 @@ EOF"
 fi
 
 # -----------------------------
-# Jellyseerr
+# Jellyseerr (legacy — conflicts with Seerr, same port 5055)
 # -----------------------------
-describe_app "Jellyseerr" \
-"Request management system for Jellyfin that lets users request movies and TV shows."
+describe_app "Jellyseerr (legacy)" \
+"Request management system for Jellyfin. NOTE: Seerr is the recommended successor."
 
 if prompt_yes_no "Install / manage Jellyseerr?"; then
     INSTALL_JELLYSEERR=true
@@ -786,6 +786,7 @@ if prompt_yes_no "Install / manage Jellyseerr?"; then
         prompt_update_if_needed "jellyseerr" "$JELLYSEERR_IMAGE" "$JELLYSEERR_DIR"
     else
         run "mkdir -p \"$JELLYSEERR_DIR/app/config\""
+        run "chown -R ${PUID:-1000}:${PGID:-1000} \"$JELLYSEERR_DIR/app/config\""
         run "cat > \"$JELLYSEERR_DIR/docker-compose.yml\" <<EOF
 services:
   jellyseerr:
@@ -813,21 +814,27 @@ EOF"
 fi
 
 # -----------------------------
-# Seerr
+# Seerr (recommended — conflicts with Jellyseerr, same port 5055)
 # -----------------------------
-describe_app "Seerr" \
-"Request management system for Jellyfin that lets users request movies and TV shows."
+if $INSTALL_JELLYSEERR; then
+    echo
+    echo "Skipping Seerr — Jellyseerr is already selected (both use port 5055)."
+    echo
+else
+    describe_app "Seerr (recommended)" \
+    "Request management system for Jellyfin. Successor to Jellyseerr."
 
-if prompt_yes_no "Install / manage Seerr?"; then
-    INSTALL_SEERR=true
-    SEERR_IMAGE="ghcr.io/seerr-team/seerr:latest"
-    SEERR_DIR="$BASE_DIR/seerr"
+    if prompt_yes_no "Install / manage Seerr?"; then
+        INSTALL_SEERR=true
+        SEERR_IMAGE="ghcr.io/seerr-team/seerr:latest"
+        SEERR_DIR="$BASE_DIR/seerr"
 
-    if container_running "seerr"; then
-        prompt_update_if_needed "seerr" "$SEERR_IMAGE" "$SEERR_DIR"
-    else
-        run "mkdir -p \"$SEERR_DIR/app/config\""
-        run "cat > \"$SEERR_DIR/docker-compose.yml\" <<EOF
+        if container_running "seerr"; then
+            prompt_update_if_needed "seerr" "$SEERR_IMAGE" "$SEERR_DIR"
+        else
+            run "mkdir -p \"$SEERR_DIR/app/config\""
+            run "chown -R ${PUID:-1000}:${PGID:-1000} \"$SEERR_DIR/app/config\""
+            run "cat > \"$SEERR_DIR/docker-compose.yml\" <<EOF
 services:
   seerr:
     image: $SEERR_IMAGE
@@ -849,7 +856,8 @@ services:
       retries: 3
     restart: unless-stopped
 EOF"
-        start_compose "$SEERR_DIR" "seerr"
+            start_compose "$SEERR_DIR" "seerr"
+        fi
     fi
 fi
 
@@ -1140,6 +1148,7 @@ $INSTALL_SONARR || echo "- Sonarr"
 $INSTALL_BAZARR || echo "- Bazarr"
 $INSTALL_LIDARR || echo "- Lidarr"
 $INSTALL_JELLYSEERR || echo "- Jellyseerr"
+$INSTALL_SEERR || echo "- Seerr"
 $INSTALL_HOMARR || echo "- Homarr"
 $INSTALL_JELLYFIN || echo "- Jellyfin"
 $INSTALL_NAVIDROME || echo "- Navidrome"
@@ -1211,8 +1220,8 @@ fi
 
 echo
 
-if $INSTALL_JELLYFIN && $INSTALL_JELLYSEERR; then
-    echo "Jellyseerr, Seerr & Jellyfin note:"
+if $INSTALL_JELLYFIN && ($INSTALL_JELLYSEERR || $INSTALL_SEERR); then
+    echo "Jellyseerr / Seerr & Jellyfin note:"
     echo "  Wholphin is an app that allows for media playback from Jellyfin and media discovery and request from Jellyseerr / Seerr. You can use it instead of the official Jellyfin app."
 fi
 

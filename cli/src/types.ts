@@ -53,6 +53,8 @@ export interface AppDefinition {
   restartPolicy?: string;
   /** Music dir mount for navidrome */
   mountMusicDir?: boolean;
+  /** Names of apps that conflict with this one (e.g. same port) */
+  conflictsWith?: string[];
 }
 
 export interface SecretDefinition {
