@@ -5,8 +5,8 @@ set -Eeuo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-log() { echo "[homelab] $*"; }
-error() { echo "[homelab] ERROR: $*" >&2; exit 1; }
+log() { echo "[mithrandir] $*"; }
+error() { echo "[mithrandir] ERROR: $*" >&2; exit 1; }
 
 # Check for Debian/Ubuntu
 if [[ -f /etc/os-release ]]; then
@@ -84,12 +84,12 @@ bun install
 log "Building CLI..."
 bun run build
 
-# Install the homelab command
-log "Installing homelab command..."
-sudo ln -sf "$SCRIPT_DIR/dist/homelab.js" /usr/local/bin/homelab
+# Install the mithrandir command
+log "Installing mithrandir command..."
+sudo ln -sf "$SCRIPT_DIR/dist/mithrandir.js" /usr/local/bin/mithrandir
 
 log ""
 log "Setup complete! Run the CLI with:"
-log "  sudo homelab setup"
+log "  sudo mithrandir setup"
 log ""
 log "If 'bun' is not found in a new terminal, run: source $SHELL_RC"

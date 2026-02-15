@@ -7,7 +7,7 @@ Automated setup and backup system for Docker-based homelab applications.
 ```bash
 git clone <repo> && cd homelab
 bash cli/install.sh          # Installs Bun + dependencies
-sudo homelab setup
+sudo mithrandir setup
 ```
 
 ## Configuration
@@ -37,23 +37,23 @@ Automatically generated and installed by setup to `/etc/systemd/system/`:
 
 ## Usage (CLI)
 
-The CLI requires Bun. Run `bash cli/install.sh` first to install Bun, build the CLI, and install the `homelab` command on a bare Debian/Ubuntu server.
+The CLI requires Bun. Run `bash cli/install.sh` first to install Bun, build the CLI, and install the `mithrandir` command on a bare Debian/Ubuntu server.
 
 **Setup wizard:**
 ```bash
-sudo homelab setup [--yes]
+sudo mithrandir setup [--yes]
 ```
 Interactive multi-step wizard: installs Docker and rclone, prompts for base directory, lets you pick services to install, configures the systemd backup timer, and prints a summary with service URLs. `--yes` skips all prompts, selects all apps, and uses defaults from `.env`.
 
 **Backup:**
 ```bash
-sudo homelab backup
+sudo mithrandir backup
 ```
 Backs up all configured apps. In a terminal it shows spinners and colored progress; from systemd (non-TTY) it writes timestamped plaintext to stdout and `/var/log/homelab-backup.log`.
 
 **Restore:**
 ```bash
-sudo homelab restore <app|full> [date] [--yes]
+sudo mithrandir restore <app|full> [date] [--yes]
 ```
 - `app`: Name of app to restore (e.g., `jellyfin`, `radarr`, `sonarr`)
 - `full`: Restore all apps and secrets
@@ -62,21 +62,21 @@ sudo homelab restore <app|full> [date] [--yes]
 
 Examples:
 ```bash
-sudo homelab restore jellyfin
-sudo homelab restore jellyfin 2025-01-01
-sudo homelab restore full
-sudo homelab restore full 2025-01-01 --yes
+sudo mithrandir restore jellyfin
+sudo mithrandir restore jellyfin 2025-01-01
+sudo mithrandir restore full
+sudo mithrandir restore full 2025-01-01 --yes
 ```
 
 **Uninstall an app:**
 ```bash
-sudo homelab uninstall <app>
+sudo mithrandir uninstall <app>
 ```
 Stops and removes the container. Prompts whether to also delete the app's data and configuration.
 
 **Full system uninstall:**
 ```bash
-sudo homelab uninstall
+sudo mithrandir uninstall
 ```
 Removes all Homelab components: Docker, backup systemd timer, rclone, local backups, and app data directories. Equivalent to `sudo bash uninstall.sh`.
 
@@ -110,7 +110,6 @@ Uninstalls all Homelab components, including Docker, backup systemd timer, rclon
 
 ## TODO
 
-- [ ] Rebrand the CLI's command name and header to match the new Mithrandir name and theme. Adapt the header to include the gandalf ascii, the Mithrandir title in a gothic, oldscholl, dungeons and dragons like esthetic and a old medieval parchemin banner
-  underneath with "Home Lab Setup"
+- [x] Rebrand the CLI's command name and header to match the new Mithrandir name and theme
 - [ ] Replace Uptime Kuma with Gatus which has support for file based configuration (could allow to setup alerts and monitoring directly in the script without using the UI)
 - [ ] Check if Profilarr is a good solution for quality profiles
