@@ -1,44 +1,14 @@
-import { createInterface } from "readline";
+import { useState, useEffect } from "react";
+import { render, Box, Text, useApp } from "ink";
+import Spinner from "ink-spinner";
+import { ConfirmInput, StatusMessage } from "@inkjs/ui";
 import { existsSync, readdirSync, statSync } from "fs";
 import { homedir } from "os";
 import { getApp, getAppNames, getAppDir } from "../lib/apps.js";
 import { shell, commandExists } from "../lib/shell.js";
 import { loadEnvConfig } from "../lib/config.js";
-
-// ---------------------------------------------------------------------------
-// ANSI helpers (match uninstall.sh colours)
-// ---------------------------------------------------------------------------
-const GREEN = "\x1b[0;32m";
-const YELLOW = "\x1b[1;33m";
-const RED = "\x1b[0;31m";
-const BLUE = "\x1b[0;34m";
-const NC = "\x1b[0m";
-
-function info(msg: string) {
-  console.log(`${GREEN}[INFO]${NC} ${msg}`);
-}
-function warn(msg: string) {
-  console.log(`${YELLOW}[WARN]${NC} ${msg}`);
-}
-function error(msg: string) {
-  console.log(`${RED}[ERROR]${NC} ${msg}`);
-}
-function section(msg: string) {
-  console.log(`\n${BLUE}--- ${msg} ---${NC}`);
-}
-
-// ---------------------------------------------------------------------------
-// Readline prompt helper
-// ---------------------------------------------------------------------------
-function prompt(question: string): Promise<string> {
-  const rl = createInterface({ input: process.stdin, output: process.stdout });
-  return new Promise((resolve) => {
-    rl.question(question, (answer) => {
-      rl.close();
-      resolve(answer.trim());
-    });
-  });
-}
+import { Header } from "../components/Header.js";
+import { AppStatus } from "../components/AppStatus.js";
 
 // ---------------------------------------------------------------------------
 // PATH safety — ensure standard paths exist when running under sudo/systemd
@@ -59,144 +29,403 @@ function ensurePath() {
   process.env.PATH = current.join(":");
 }
 
-// ---------------------------------------------------------------------------
-// Entry point
-// ---------------------------------------------------------------------------
-export async function runUninstall(
-  args: string[],
-  flags: { yes?: boolean },
-) {
-  ensurePath();
+// ===========================================================================
+// Per-app uninstall (interactive Ink component)
+// ===========================================================================
 
-  // Root check
-  if (process.getuid?.() !== 0) {
-    error("This command must be run as root (use sudo).");
-    process.exit(1);
-  }
-
-  const autoYes = flags.yes ?? false;
-  const appArg = args[0];
-
-  if (appArg) {
-    await uninstallApp(appArg, autoYes);
-  } else {
-    await uninstallSystem(autoYes);
-  }
+interface CompletedStep {
+  name: string;
+  status: "done" | "error" | "skipped";
+  message?: string;
 }
 
-// ===========================================================================
-// Per-app uninstall (matches setup.sh uninstall_app())
-// ===========================================================================
-async function uninstallApp(appName: string, autoYes: boolean) {
-  const app = getApp(appName);
-  if (!app) {
-    error(`Unknown app: ${appName}`);
-    console.log(`Valid apps: ${getAppNames().join(", ")}`);
-    process.exit(1);
+function AppUninstallInteractive({
+  appName,
+  autoYes,
+}: {
+  appName: string;
+  autoYes: boolean;
+}) {
+  const { exit } = useApp();
+  const [completedSteps, setCompletedSteps] = useState<CompletedStep[]>([]);
+  const [phase, setPhase] = useState<
+    "init" | "stopping" | "confirm-delete" | "deleting" | "done"
+  >("init");
+  const [currentLabel, setCurrentLabel] = useState("Initializing...");
+  const [error, setError] = useState<string | null>(null);
+  const [appDir, setAppDir] = useState("");
+
+  function addStep(step: CompletedStep) {
+    setCompletedSteps((prev) => [...prev, step]);
   }
 
-  const env = await loadEnvConfig();
-  const appDir = getAppDir(app, env.BASE_DIR);
+  useEffect(() => {
+    run();
+  }, []);
 
-  if (!existsSync(appDir)) {
-    error(`App directory not found: ${appDir}`);
-    console.log(`Is '${appName}' installed?`);
-    process.exit(1);
+  async function run() {
+    const app = getApp(appName);
+    if (!app) {
+      setError(`Unknown app: ${appName}\nValid apps: ${getAppNames().join(", ")}`);
+      return;
+    }
+
+    const env = await loadEnvConfig();
+    const dir = getAppDir(app, env.BASE_DIR);
+    setAppDir(dir);
+
+    if (!existsSync(dir)) {
+      setError(`App directory not found: ${dir}\nIs '${appName}' installed?`);
+      return;
+    }
+
+    // Stop and remove container
+    const composePath = `${dir}/docker-compose.yml`;
+    if (existsSync(composePath)) {
+      setPhase("stopping");
+      setCurrentLabel(`Stopping ${appName} container...`);
+      await shell("docker", ["compose", "down"], { cwd: dir, ignoreError: true });
+      addStep({ name: "Stop container", status: "done", message: "Container stopped and removed" });
+    } else {
+      addStep({ name: "Stop container", status: "skipped", message: "No docker-compose.yml found" });
+    }
+
+    // Ask about removing data
+    if (autoYes) {
+      await deleteAppData(dir);
+    } else {
+      setPhase("confirm-delete");
+    }
   }
 
-  console.log("");
-  console.log("=============================================");
-  console.log(` Uninstalling: ${appName}`);
-  console.log("=============================================");
-  console.log("");
-
-  // Stop and remove container via docker compose
-  const composePath = `${appDir}/docker-compose.yml`;
-  if (existsSync(composePath)) {
-    console.log("Stopping and removing container...");
-    await shell("docker", ["compose", "down"], { cwd: appDir, ignoreError: true });
-    console.log("Container stopped and removed.");
-  } else {
-    warn(`No docker-compose.yml found in ${appDir}`);
+  async function deleteAppData(dir: string) {
+    setPhase("deleting");
+    setCurrentLabel("Removing app data...");
+    await shell("rm", ["-rf", dir]);
+    addStep({ name: "Remove data", status: "done", message: `Removed ${dir}` });
+    setPhase("done");
+    setTimeout(() => exit(), 500);
   }
 
-  // Ask about removing data
-  console.log("");
-  console.log(`App directory: ${appDir}`);
+  function handleConfirmDelete() {
+    deleteAppData(appDir);
+  }
 
-  let removeData = autoYes;
-  if (!autoYes) {
-    const answer = await prompt(
-      "Remove app directory and all its data? (This is irreversible) (y/N): ",
+  function handleCancelDelete() {
+    addStep({
+      name: "Remove data",
+      status: "skipped",
+      message: `Kept ${appDir}`,
+    });
+    setPhase("done");
+    setTimeout(() => exit(), 500);
+  }
+
+  if (error) {
+    return (
+      <Box flexDirection="column">
+        <Header title={`Uninstall: ${appName}`} />
+        <StatusMessage variant="error">{error}</StatusMessage>
+      </Box>
     );
-    removeData = /^[Yy]$/.test(answer);
   }
 
-  if (removeData) {
-    await shell("rm", ["-rf", appDir]);
-    console.log(`Removed: ${appDir}`);
-  } else {
-    console.log(`Kept app directory: ${appDir}`);
-    console.log(`You can manually remove it later with: sudo rm -rf ${appDir}`);
-  }
+  return (
+    <Box flexDirection="column">
+      <Header title={`Uninstall: ${appName}`} />
 
-  console.log("");
-  console.log(`Uninstall of '${appName}' complete.`);
+      {completedSteps.map((step, i) => (
+        <AppStatus
+          key={i}
+          name={step.name}
+          status={step.status}
+          message={step.message}
+        />
+      ))}
+
+      {(phase === "init" || phase === "stopping" || phase === "deleting") && (
+        <Text>
+          <Text color="green">
+            <Spinner type="dots" />
+          </Text>
+          {" "}{currentLabel}
+        </Text>
+      )}
+
+      {phase === "confirm-delete" && (
+        <Box flexDirection="column" marginTop={1}>
+          <Text>App directory: <Text bold>{appDir}</Text></Text>
+          <Text>Remove app directory and all its data? (This is irreversible)</Text>
+          <Box marginTop={1}>
+            <Text>Continue? </Text>
+            <ConfirmInput onConfirm={handleConfirmDelete} onCancel={handleCancelDelete} />
+          </Box>
+        </Box>
+      )}
+
+      {phase === "done" && (
+        <Box marginTop={1}>
+          <StatusMessage variant="success">
+            Uninstall of '{appName}' complete
+          </StatusMessage>
+        </Box>
+      )}
+    </Box>
+  );
 }
 
 // ===========================================================================
-// Full system uninstall (matches uninstall.sh)
+// Full system uninstall (interactive Ink component)
 // ===========================================================================
+
 const BACKUP_DIR = "/backups";
 const SERVICE_NAME = "homelab-backup";
 const LOG_FILE = "/var/log/homelab-backup.log";
 
-async function uninstallSystem(autoYes: boolean) {
-  console.log("");
-  console.log("============================================");
-  console.log("  Homelab Complete Uninstall");
-  console.log("============================================");
-  console.log("");
-  warn("This will permanently remove:");
-  console.log("  - All running and stopped Docker containers");
-  console.log("  - All Docker images, volumes, and networks");
-  console.log("  - Docker Engine, CLI, containerd, and plugins");
-  console.log("  - All Docker configuration files");
-  console.log(`  - Backup systemd timer and service (${SERVICE_NAME})`);
-  console.log("  - rclone and its configuration");
-  console.log(`  - All local backups in ${BACKUP_DIR}`);
-  console.log(`  - Backup log at ${LOG_FILE}`);
-  console.log("");
+function SystemUninstallInteractive({ autoYes }: { autoYes: boolean }) {
+  const { exit } = useApp();
+  const [completedSteps, setCompletedSteps] = useState<CompletedStep[]>([]);
+  const [phase, setPhase] = useState<
+    "confirm" | "running" | "confirm-appdata" | "deleting-appdata" | "done"
+  >("confirm");
+  const [currentLabel, setCurrentLabel] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [appDataDirs, setAppDataDirs] = useState<string[]>([]);
+  const [baseDir, setBaseDir] = useState("");
 
-  if (!autoYes) {
-    const confirm = await prompt("Are you sure you want to continue? (y/N): ");
-    if (!/^[Yy]$/.test(confirm)) {
-      info("Uninstall cancelled.");
+  function addStep(step: CompletedStep) {
+    setCompletedSteps((prev) => [...prev, step]);
+  }
+
+  useEffect(() => {
+    if (autoYes) {
+      runFullUninstall();
+    }
+  }, []);
+
+  async function runFullUninstall() {
+    setPhase("running");
+
+    // Step 1/6: Remove backup systemd units
+    setCurrentLabel("Removing backup systemd units...");
+    await step1RemoveSystemdUnits();
+    addStep({ name: "Systemd units", status: "done", message: "Removed" });
+
+    // Step 2/6: Stop Docker services
+    setCurrentLabel("Stopping Docker services...");
+    await step2StopDocker();
+    addStep({ name: "Docker services", status: "done", message: "Stopped" });
+
+    // Step 3/6: Remove Docker
+    setCurrentLabel("Removing Docker containers, images, and packages...");
+    await step3RemoveDocker();
+    addStep({ name: "Docker removal", status: "done", message: "Purged" });
+
+    // Step 4/6: Uninstall rclone
+    setCurrentLabel("Uninstalling rclone...");
+    await step4RemoveRclone();
+    addStep({ name: "rclone", status: "done", message: "Removed" });
+
+    // Step 5/6: Delete local backups
+    setCurrentLabel("Deleting local backups...");
+    await step5DeleteBackups();
+    if (existsSync(BACKUP_DIR)) {
+      addStep({ name: "Local backups", status: "done", message: `Removed ${BACKUP_DIR}` });
+    } else {
+      addStep({ name: "Local backups", status: "skipped", message: `${BACKUP_DIR} does not exist` });
+    }
+
+    // Step 6/6: Remove app data
+    await prepareAppDataStep();
+  }
+
+  async function prepareAppDataStep() {
+    const sudoUser = process.env.SUDO_USER;
+    let defaultBaseDir: string;
+    if (sudoUser) {
+      const passwd = await shell("getent", ["passwd", sudoUser], {
+        ignoreError: true,
+      });
+      if (passwd.exitCode === 0 && passwd.stdout) {
+        defaultBaseDir = passwd.stdout.split(":")[5] ?? homedir();
+      } else {
+        defaultBaseDir = homedir();
+      }
+    } else {
+      defaultBaseDir = homedir();
+    }
+
+    setBaseDir(defaultBaseDir);
+
+    if (!existsSync(defaultBaseDir)) {
+      addStep({ name: "App data", status: "skipped", message: `${defaultBaseDir} does not exist` });
+      setPhase("done");
+      setTimeout(() => {
+        exit();
+      }, 500);
       return;
+    }
+
+    const dirs = getAppDataDirs(defaultBaseDir);
+    setAppDataDirs(dirs);
+
+    if (dirs.length === 0) {
+      addStep({ name: "App data", status: "skipped", message: "No app data directories found" });
+      setPhase("done");
+      setTimeout(() => exit(), 500);
+      return;
+    }
+
+    if (autoYes) {
+      await deleteAppDataDirs(defaultBaseDir, dirs);
+    } else {
+      setPhase("confirm-appdata");
     }
   }
 
-  await step1RemoveSystemdUnits();
-  await step2StopDocker();
-  await step3RemoveDocker();
-  await step4RemoveRclone();
-  await step5DeleteBackups();
-  await step6RemoveAppData(autoYes);
+  function getAppDataDirs(dir: string): string[] {
+    try {
+      return readdirSync(dir).filter((name) => {
+        if (name.startsWith(".")) return false;
+        if (name === "homelab") return false;
+        try {
+          return statSync(`${dir}/${name}`).isDirectory();
+        } catch {
+          return false;
+        }
+      });
+    } catch {
+      return [];
+    }
+  }
 
-  console.log("");
-  console.log("============================================");
-  info("Homelab has been completely uninstalled.");
-  console.log("============================================");
-  console.log("");
+  async function deleteAppDataDirs(dir: string, dirs: string[]) {
+    setPhase("running");
+    setCurrentLabel("Removing app data directories...");
+    for (const d of dirs) {
+      await shell("rm", ["-rf", `${dir}/${d}`]);
+    }
+    addStep({ name: "App data", status: "done", message: `Removed ${dirs.length} directory(ies) from ${dir}` });
+    setPhase("done");
+    setTimeout(() => exit(), 500);
+  }
+
+  function handleConfirm() {
+    runFullUninstall();
+  }
+
+  function handleCancel() {
+    setTimeout(() => exit(), 100);
+  }
+
+  function handleConfirmAppData() {
+    deleteAppDataDirs(baseDir, appDataDirs);
+  }
+
+  function handleCancelAppData() {
+    addStep({ name: "App data", status: "skipped", message: "Kept" });
+    setPhase("done");
+    setTimeout(() => exit(), 500);
+  }
+
+  if (error) {
+    return (
+      <Box flexDirection="column">
+        <Header title="System Uninstall" />
+        {completedSteps.map((step, i) => (
+          <AppStatus
+            key={i}
+            name={step.name}
+            status={step.status}
+            message={step.message}
+          />
+        ))}
+        <StatusMessage variant="error">{error}</StatusMessage>
+      </Box>
+    );
+  }
+
+  return (
+    <Box flexDirection="column">
+      <Header title="System Uninstall" />
+
+      {completedSteps.map((step, i) => (
+        <AppStatus
+          key={i}
+          name={step.name}
+          status={step.status}
+          message={step.message}
+        />
+      ))}
+
+      {phase === "confirm" && (
+        <Box flexDirection="column">
+          <Box marginBottom={1}>
+            <Text color="yellow" bold>This will permanently remove:</Text>
+          </Box>
+          <Text>  - All running and stopped Docker containers</Text>
+          <Text>  - All Docker images, volumes, and networks</Text>
+          <Text>  - Docker Engine, CLI, containerd, and plugins</Text>
+          <Text>  - All Docker configuration files</Text>
+          <Text>  - Backup systemd timer and service ({SERVICE_NAME})</Text>
+          <Text>  - rclone and its configuration</Text>
+          <Text>  - All local backups in {BACKUP_DIR}</Text>
+          <Text>  - Backup log at {LOG_FILE}</Text>
+          <Box marginTop={1}>
+            <Text>Continue? </Text>
+            <ConfirmInput onConfirm={handleConfirm} onCancel={handleCancel} />
+          </Box>
+        </Box>
+      )}
+
+      {phase === "running" && (
+        <Text>
+          <Text color="green">
+            <Spinner type="dots" />
+          </Text>
+          {" "}{currentLabel}
+        </Text>
+      )}
+
+      {phase === "confirm-appdata" && (
+        <Box flexDirection="column" marginTop={1}>
+          <Text color="yellow" bold>The following directories in {baseDir} will be deleted:</Text>
+          {appDataDirs.map((d) => (
+            <Text key={d}>  {d}</Text>
+          ))}
+          <Text dimColor>  Hidden files/directories and 'homelab' will be kept.</Text>
+          <Box marginTop={1}>
+            <Text>Delete these directories? </Text>
+            <ConfirmInput onConfirm={handleConfirmAppData} onCancel={handleCancelAppData} />
+          </Box>
+        </Box>
+      )}
+
+      {phase === "deleting-appdata" && (
+        <Text>
+          <Text color="green">
+            <Spinner type="dots" />
+          </Text>
+          {" "}Removing app data directories...
+        </Text>
+      )}
+
+      {phase === "done" && (
+        <Box marginTop={1}>
+          <StatusMessage variant="success">
+            Homelab has been completely uninstalled
+          </StatusMessage>
+        </Box>
+      )}
+    </Box>
+  );
 }
 
 // ---------------------------------------------------------------------------
-// Step 1/6: Remove backup systemd units
+// Step implementations (unchanged logic, just no console.log)
 // ---------------------------------------------------------------------------
-async function step1RemoveSystemdUnits() {
-  section("Step 1/6: Removing backup systemd units");
 
-  // Stop timer
+async function step1RemoveSystemdUnits() {
   const timerActive = await shell(
     "systemctl",
     ["is-active", "--quiet", `${SERVICE_NAME}.timer`],
@@ -204,12 +433,8 @@ async function step1RemoveSystemdUnits() {
   );
   if (timerActive.exitCode === 0) {
     await shell("systemctl", ["stop", `${SERVICE_NAME}.timer`]);
-    info(`Stopped ${SERVICE_NAME}.timer.`);
-  } else {
-    warn(`${SERVICE_NAME}.timer is not running.`);
   }
 
-  // Disable timer
   const timerEnabled = await shell(
     "systemctl",
     ["is-enabled", "--quiet", `${SERVICE_NAME}.timer`],
@@ -217,12 +442,8 @@ async function step1RemoveSystemdUnits() {
   );
   if (timerEnabled.exitCode === 0) {
     await shell("systemctl", ["disable", `${SERVICE_NAME}.timer`]);
-    info(`Disabled ${SERVICE_NAME}.timer.`);
-  } else {
-    warn(`${SERVICE_NAME}.timer is not enabled.`);
   }
 
-  // Stop service
   const serviceActive = await shell(
     "systemctl",
     ["is-active", "--quiet", `${SERVICE_NAME}.service`],
@@ -230,46 +451,29 @@ async function step1RemoveSystemdUnits() {
   );
   if (serviceActive.exitCode === 0) {
     await shell("systemctl", ["stop", `${SERVICE_NAME}.service`]);
-    info(`Stopped ${SERVICE_NAME}.service.`);
-  } else {
-    warn(`${SERVICE_NAME}.service is not running.`);
   }
 
-  // Remove unit files
   for (const unitFile of [
     `/etc/systemd/system/${SERVICE_NAME}.timer`,
     `/etc/systemd/system/${SERVICE_NAME}.service`,
   ]) {
     if (existsSync(unitFile)) {
       await shell("rm", ["-f", unitFile]);
-      info(`Removed ${unitFile}`);
-    } else {
-      warn(`${unitFile} does not exist — skipping.`);
     }
   }
 
   await shell("systemctl", ["daemon-reload"]);
-  info("Systemd daemon reloaded.");
 
-  // Remove log file
   if (existsSync(LOG_FILE)) {
     await shell("rm", ["-f", LOG_FILE]);
-    info(`Removed backup log ${LOG_FILE}`);
   }
 
-  // Remove homelab CLI symlink
   if (existsSync("/usr/local/bin/homelab")) {
     await shell("rm", ["-f", "/usr/local/bin/homelab"]);
-    info("Removed /usr/local/bin/homelab");
   }
 }
 
-// ---------------------------------------------------------------------------
-// Step 2/6: Stop Docker services
-// ---------------------------------------------------------------------------
 async function step2StopDocker() {
-  section("Step 2/6: Stopping Docker services");
-
   const dockerActive = await shell(
     "systemctl",
     ["is-active", "--quiet", "docker"],
@@ -277,9 +481,6 @@ async function step2StopDocker() {
   );
   if (dockerActive.exitCode === 0) {
     await shell("systemctl", ["stop", "docker"]);
-    info("Docker service stopped.");
-  } else {
-    warn("Docker service is not running.");
   }
 
   const containerdActive = await shell(
@@ -289,58 +490,31 @@ async function step2StopDocker() {
   );
   if (containerdActive.exitCode === 0) {
     await shell("systemctl", ["stop", "containerd"]);
-    info("containerd service stopped.");
-  } else {
-    warn("containerd service is not running.");
   }
 }
 
-// ---------------------------------------------------------------------------
-// Step 3/6: Remove Docker containers, images, volumes, and packages
-// ---------------------------------------------------------------------------
 async function step3RemoveDocker() {
-  section("Step 3/6: Removing Docker containers, images, volumes, and packages");
-
   if (await commandExists("docker")) {
-    info("Removing all containers, images, volumes, and networks...");
-    const prune = await shell(
+    await shell(
       "docker",
       ["system", "prune", "-a", "--volumes", "-f"],
       { ignoreError: true },
     );
-    if (prune.exitCode === 0) {
-      info("Docker system prune completed.");
-    } else {
-      warn("Docker system prune encountered issues (Docker may already be stopped).");
-    }
 
-    // Remove custom networks
     const nets = await shell(
       "docker",
       ["network", "ls", "--filter", "type=custom", "-q"],
       { ignoreError: true },
     );
     if (nets.exitCode === 0 && nets.stdout.trim()) {
-      info("Removing custom Docker networks...");
       const networkIds = nets.stdout.trim().split("\n");
-      const rmResult = await shell("docker", ["network", "rm", ...networkIds], {
+      await shell("docker", ["network", "rm", ...networkIds], {
         ignoreError: true,
       });
-      if (rmResult.exitCode === 0) {
-        info("Custom networks removed.");
-      } else {
-        warn("Some networks could not be removed.");
-      }
-    } else {
-      info("No custom Docker networks to remove.");
     }
-  } else {
-    warn("Docker command not found — skipping container/image/network cleanup.");
   }
 
-  // Purge packages
-  info("Purging Docker packages...");
-  const purge = await shell(
+  await shell(
     "apt",
     [
       "purge",
@@ -353,99 +527,58 @@ async function step3RemoveDocker() {
     ],
     { ignoreError: true },
   );
-  if (purge.exitCode === 0) {
-    info("Docker packages purged.");
-  } else {
-    warn("Some Docker packages were not installed or already removed.");
-  }
 
-  info("Running autoremove to clean up unused dependencies...");
-  const autoremove = await shell("apt", ["autoremove", "-y"], {
-    ignoreError: true,
-  });
-  if (autoremove.exitCode === 0) {
-    info("Autoremove completed.");
-  } else {
-    warn("Autoremove encountered issues.");
-  }
+  await shell("apt", ["autoremove", "-y"], { ignoreError: true });
 
-  // Remove Docker data directories
-  info("Removing Docker data directories...");
   for (const dir of ["/var/lib/docker", "/var/lib/containerd", "/etc/docker"]) {
     if (existsSync(dir)) {
       await shell("rm", ["-rf", dir]);
-      info(`Removed ${dir}`);
-    } else {
-      warn(`${dir} does not exist — skipping.`);
     }
   }
 
   // Remove user .docker dirs
-  for (const pattern of ["/home", "/root"]) {
-    if (pattern === "/root") {
-      const rootDocker = "/root/.docker";
-      if (existsSync(rootDocker)) {
-        await shell("rm", ["-rf", rootDocker]);
-        info(`Removed ${rootDocker}`);
-      }
-    } else {
-      // Scan /home/*/. docker
-      if (existsSync("/home")) {
-        try {
-          const homes = readdirSync("/home");
-          for (const user of homes) {
-            const userDocker = `/home/${user}/.docker`;
-            if (existsSync(userDocker)) {
-              await shell("rm", ["-rf", userDocker]);
-              info(`Removed ${userDocker}`);
-            }
-          }
-        } catch {
-          // /home may not be readable
+  if (existsSync("/home")) {
+    try {
+      for (const user of readdirSync("/home")) {
+        const userDocker = `/home/${user}/.docker`;
+        if (existsSync(userDocker)) {
+          await shell("rm", ["-rf", userDocker]);
         }
       }
+    } catch {
+      // /home may not be readable
     }
   }
+  const rootDocker = "/root/.docker";
+  if (existsSync(rootDocker)) {
+    await shell("rm", ["-rf", rootDocker]);
+  }
 
-  // Remove APT repo and GPG key
   if (existsSync("/etc/apt/sources.list.d/docker.list")) {
     await shell("rm", ["-f", "/etc/apt/sources.list.d/docker.list"]);
-    info("Removed Docker APT repository.");
   }
 
   if (existsSync("/etc/apt/keyrings/docker.asc")) {
     await shell("rm", ["-f", "/etc/apt/keyrings/docker.asc"]);
-    info("Removed Docker GPG keyring.");
   }
 }
 
-// ---------------------------------------------------------------------------
-// Step 4/6: Uninstall rclone
-// ---------------------------------------------------------------------------
 async function step4RemoveRclone() {
-  section("Step 4/6: Uninstalling rclone");
-
   if (await commandExists("rclone")) {
     const which = await shell("which", ["rclone"]);
     const rcloneBin = which.stdout.trim();
     await shell("rm", ["-f", rcloneBin]);
-    info(`Removed rclone binary (${rcloneBin}).`);
-  } else {
-    warn("rclone is not installed — skipping binary removal.");
   }
 
-  // Remove man pages
   for (const manFile of [
     "/usr/local/share/man/man1/rclone.1",
     "/usr/share/man/man1/rclone.1",
   ]) {
     if (existsSync(manFile)) {
       await shell("rm", ["-f", manFile]);
-      info(`Removed ${manFile}`);
     }
   }
 
-  // Remove rclone config for all users
   const configDirs: string[] = [];
   if (existsSync("/home")) {
     try {
@@ -461,110 +594,43 @@ async function step4RemoveRclone() {
   for (const confDir of configDirs) {
     if (existsSync(confDir)) {
       await shell("rm", ["-rf", confDir]);
-      info(`Removed rclone config ${confDir}`);
     }
   }
 }
 
-// ---------------------------------------------------------------------------
-// Step 5/6: Delete local backups
-// ---------------------------------------------------------------------------
 async function step5DeleteBackups() {
-  section("Step 5/6: Deleting local backups");
-
   if (existsSync(BACKUP_DIR)) {
     await shell("rm", ["-rf", BACKUP_DIR]);
-    info(`Removed all local backups in ${BACKUP_DIR}`);
-  } else {
-    warn(`${BACKUP_DIR} does not exist — skipping.`);
   }
 }
 
 // ---------------------------------------------------------------------------
-// Step 6/6: Remove app data directories
+// Entry point
 // ---------------------------------------------------------------------------
-async function step6RemoveAppData(autoYes: boolean) {
-  section("Step 6/6: Removing app data directories");
+export async function runUninstall(
+  args: string[],
+  flags: { yes?: boolean },
+) {
+  ensurePath();
 
-  // Determine default base dir (invoking user's home, even under sudo)
-  let defaultBaseDir: string;
-  const sudoUser = process.env.SUDO_USER;
-  if (sudoUser) {
-    const passwd = await shell("getent", ["passwd", sudoUser], {
-      ignoreError: true,
-    });
-    if (passwd.exitCode === 0 && passwd.stdout) {
-      defaultBaseDir = passwd.stdout.split(":")[5] ?? homedir();
-    } else {
-      defaultBaseDir = homedir();
-    }
-  } else {
-    defaultBaseDir = homedir();
+  // Root check
+  if (process.getuid?.() !== 0) {
+    console.error("Error: This command must be run as root (use sudo).");
+    process.exit(1);
   }
 
-  console.log("");
-  warn("This will delete all app data directories (bazarr, sonarr, jellyfin, etc.).");
-  console.log(
-    "  Hidden files/directories (.*) and the 'homelab' project directory will be kept.",
-  );
-  console.log("");
+  const autoYes = flags.yes ?? false;
+  const appArg = args[0];
 
-  let baseDir: string;
-  if (autoYes) {
-    baseDir = defaultBaseDir;
-  } else {
-    const answer = await prompt(
-      `Enter the base directory used for the install [${defaultBaseDir}]: `,
+  if (appArg) {
+    const { waitUntilExit } = render(
+      <AppUninstallInteractive appName={appArg} autoYes={autoYes} />,
     );
-    baseDir = answer || defaultBaseDir;
-  }
-
-  if (!existsSync(baseDir)) {
-    warn(`${baseDir} does not exist — skipping app data removal.`);
-    return;
-  }
-
-  // List non-hidden, non-homelab directories
-  info(`The following directories in ${baseDir} will be deleted:`);
-
-  let dirs: string[];
-  try {
-    dirs = readdirSync(baseDir).filter((name) => {
-      if (name.startsWith(".")) return false;
-      if (name === "homelab") return false;
-      const fullPath = `${baseDir}/${name}`;
-      try {
-        return statSync(fullPath).isDirectory();
-      } catch {
-        return false;
-      }
-    });
-  } catch {
-    dirs = [];
-  }
-
-  if (dirs.length === 0) {
-    info("No app data directories found — nothing to remove.");
-    return;
-  }
-
-  for (const d of dirs) {
-    console.log(`  ${d}`);
-  }
-
-  let doDelete = autoYes;
-  if (!autoYes) {
-    console.log("");
-    const confirmApps = await prompt("Delete these directories? (y/N): ");
-    doDelete = /^[Yy]$/.test(confirmApps);
-  }
-
-  if (doDelete) {
-    for (const d of dirs) {
-      await shell("rm", ["-rf", `${baseDir}/${d}`]);
-    }
-    info(`All app data directories in ${baseDir} have been removed.`);
+    await waitUntilExit();
   } else {
-    info("Skipped app data removal.");
+    const { waitUntilExit } = render(
+      <SystemUninstallInteractive autoYes={autoYes} />,
+    );
+    await waitUntilExit();
   }
 }
