@@ -80,7 +80,9 @@ uninstall_app() {
     # Stop and remove container
     if [ -f "$app_dir/docker-compose.yml" ]; then
         echo "Stopping and removing container..."
-        run "cd \"$app_dir\" && docker compose down"
+        run "cd \"$app_dir\" && docker compose down --volumes"
+        # Prune unused networks to reclaim Docker subnet address pool
+        docker network prune -f >/dev/null 2>&1 || true
         echo "Container stopped and removed."
     else
         echo "WARNING: No docker-compose.yml found in $app_dir"

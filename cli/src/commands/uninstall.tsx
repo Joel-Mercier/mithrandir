@@ -85,7 +85,9 @@ function AppUninstallInteractive({
     if (existsSync(composePath)) {
       setPhase("stopping");
       setCurrentLabel(`Stopping ${appName} container...`);
-      await shell("docker", ["compose", "down"], { cwd: dir, ignoreError: true });
+      await shell("docker", ["compose", "down", "--volumes"], { cwd: dir, ignoreError: true });
+      // Prune unused networks to reclaim Docker subnet address pool
+      await shell("docker", ["network", "prune", "-f"], { ignoreError: true });
       addStep({ name: "Stop container", status: "done", message: "Container stopped and removed" });
     } else {
       addStep({ name: "Stop container", status: "skipped", message: "No docker-compose.yml found" });
