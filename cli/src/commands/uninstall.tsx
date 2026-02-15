@@ -7,6 +7,7 @@ import { homedir } from "os";
 import { getApp, getAppNames, getAppDir } from "../lib/apps.js";
 import { shell, commandExists } from "../lib/shell.js";
 import { loadEnvConfig } from "../lib/config.js";
+import { BACKUP_LOG_PATH } from "../lib/logger.js";
 import { Header } from "../components/Header.js";
 import { AppStatus } from "../components/AppStatus.js";
 
@@ -180,7 +181,7 @@ function AppUninstallInteractive({
 
 const BACKUP_DIR = "/backups";
 const SERVICE_NAME = "homelab-backup";
-const LOG_FILE = "/var/log/homelab-backup.log";
+const LOG_FILE = BACKUP_LOG_PATH;
 
 function SystemUninstallInteractive({ autoYes }: { autoYes: boolean }) {
   const { exit } = useApp();

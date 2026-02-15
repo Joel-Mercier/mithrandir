@@ -59,12 +59,15 @@ export class Logger {
   }
 }
 
+export const BACKUP_LOG_PATH = "/var/log/homelab-backup.log";
+export const RESTORE_LOG_PATH = "/var/log/homelab-restore.log";
+
 /** Create a backup logger */
 export function createBackupLogger(): Logger {
-  return new Logger("/var/log/homelab-backup.log");
+  return new Logger(BACKUP_LOG_PATH);
 }
 
 /** Create a restore logger */
 export function createRestoreLogger(): Logger {
-  return new Logger("/var/log/homelab-restore.log");
+  return new Logger(RESTORE_LOG_PATH);
 }

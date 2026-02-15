@@ -155,7 +155,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
           <Box flexDirection="column">
             <Text>Docker is not installed. Install it now?</Text>
             <ConfirmInput
-              onConfirm={() => { doInstall(); }}
+              onConfirm={async () => { await doInstall(); }}
               onCancel={() => {
                 setError("Docker is required. Aborting setup.");
               }}
@@ -240,7 +240,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
           <Box flexDirection="column">
             <Text>rclone is not installed. Install it now?</Text>
             <ConfirmInput
-              onConfirm={() => { doInstall(); }}
+              onConfirm={async () => { await doInstall(); }}
               onCancel={() => {
                 setError("rclone is required for backups. Aborting setup.");
               }}
@@ -483,6 +483,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
             <Text>  and media discovery and request from Jellyseerr.</Text>
           </Box>
         )}
+        <Text dimColor>Exiting...</Text>
       </Box>
     );
   }
