@@ -50,7 +50,7 @@ prompt_yes_no() {
 # Valid app names (container name = directory name under BASE_DIR)
 VALID_APPS=(
     homeassistant qbittorrent prowlarr radarr sonarr bazarr lidarr
-    jellyseerr homarr jellyfin navidrome duckdns wireguard uptime-kuma
+    jellyseerr seerr homarr jellyfin navidrome duckdns wireguard uptime-kuma
 )
 
 is_valid_app() {
@@ -222,6 +222,7 @@ INSTALL_SONARR=false
 INSTALL_BAZARR=false
 INSTALL_LIDARR=false
 INSTALL_JELLYSEERR=false
+INSTALL_SEERR=false
 INSTALL_HOMARR=false
 INSTALL_JELLYFIN=false
 INSTALL_NAVIDROME=false
@@ -812,6 +813,47 @@ EOF"
 fi
 
 # -----------------------------
+# Seerr
+# -----------------------------
+describe_app "Seerr" \
+"Request management system for Jellyfin that lets users request movies and TV shows."
+
+if prompt_yes_no "Install / manage Seerr?"; then
+    INSTALL_SEERR=true
+    SEERR_IMAGE="ghcr.io/seerr-team/seerr:latest"
+    SEERR_DIR="$BASE_DIR/seerr"
+
+    if container_running "seerr"; then
+        prompt_update_if_needed "seerr" "$SEERR_IMAGE" "$SEERR_DIR"
+    else
+        run "mkdir -p \"$SEERR_DIR/app/config\""
+        run "cat > \"$SEERR_DIR/docker-compose.yml\" <<EOF
+services:
+  seerr:
+    image: $SEERR_IMAGE
+    init: true
+    container_name: seerr
+    environment:
+      - LOG_LEVEL=debug
+      - TZ=Etc/UTC
+      - PORT=5055
+    ports:
+      - 5055:5055
+    volumes:
+      - $SEERR_DIR/app/config:/app/config
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:5055/api/v1/status || exit 1
+      start_period: 20s
+      timeout: 3s
+      interval: 15s
+      retries: 3
+    restart: unless-stopped
+EOF"
+        start_compose "$SEERR_DIR" "seerr"
+    fi
+fi
+
+# -----------------------------
 # Homarr
 # -----------------------------
 describe_app "Homarr" \
@@ -1133,6 +1175,7 @@ $INSTALL_SONARR       && print_url "Sonarr" 8989
 $INSTALL_BAZARR       && print_url "Bazarr" 6767
 $INSTALL_LIDARR       && print_url "Lidarr" 8686
 $INSTALL_JELLYSEERR   && print_url "Jellyseerr" 5055
+$INSTALL_SEERR        && print_url "Seerr" 5055
 $INSTALL_HOMARR       && print_url "Homarr" 7575
 $INSTALL_JELLYFIN     && print_url "Jellyfin" 8096
 $INSTALL_NAVIDROME    && print_url "Navidrome" 4533
@@ -1169,8 +1212,8 @@ fi
 echo
 
 if $INSTALL_JELLYFIN && $INSTALL_JELLYSEERR; then
-    echo "Jellyseerr & Jellyfin note:"
-    echo "  Wholphin is an app that allows for media playback from Jellyfin and media discovery and request from Jellyseerr. You can use it instead of the official Jellyfin app."
+    echo "Jellyseerr, Seerr & Jellyfin note:"
+    echo "  Wholphin is an app that allows for media playback from Jellyfin and media discovery and request from Jellyseerr / Seerr. You can use it instead of the official Jellyfin app."
 fi
 
 echo

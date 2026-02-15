@@ -476,11 +476,11 @@ export function SetupCommand({ flags }: SetupCommandProps) {
             <Text>   - Smart TVs (Samsung, LG)</Text>
           </Box>
         )}
-        {hasApp("jellyfin") && hasApp("jellyseerr") && (
+        {hasApp("jellyfin") && (hasApp("jellyseerr") || hasApp("seerr")) && (
           <Box flexDirection="column" marginBottom={1}>
-            <Text bold>Jellyseerr & Jellyfin note:</Text>
+            <Text bold>Jellyseerr, Seerr & Jellyfin note:</Text>
             <Text>  Wholphin is an app that allows for media playback from Jellyfin</Text>
-            <Text>  and media discovery and request from Jellyseerr.</Text>
+            <Text>  and media discovery and request from Jellyseerr / Seerr.</Text>
           </Box>
         )}
         <Text dimColor>Exiting...</Text>

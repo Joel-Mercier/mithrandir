@@ -98,6 +98,28 @@ export const APP_REGISTRY: AppDefinition[] = [
     },
   },
   {
+    name: "seerr",
+    displayName: "Seerr",
+    description: "Media request manager for Jellyfin",
+    image: "ghcr.io/seerr-team/seerr:latest",
+    port: 5055,
+    configSubdir: "app/config",
+    needsDataDir: false,
+    init: true,
+    environment: {
+      LOG_LEVEL: "debug",
+      PORT: "5055",
+    },
+    healthcheck: {
+      test:
+        "wget --no-verbose --tries=1 --spider http://localhost:5055/api/v1/status || exit 1",
+      startPeriod: "20s",
+      timeout: "3s",
+      interval: "15s",
+      retries: 3,
+    },
+  },
+  {
     name: "homarr",
     displayName: "Homarr",
     description: "Customizable dashboard for your server",

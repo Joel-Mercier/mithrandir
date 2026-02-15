@@ -189,6 +189,8 @@ function getContainerConfigPath(app: AppDefinition): string {
   switch (app.name) {
     case "jellyseerr":
       return "/app/config";
+    case "seerr":
+      return "/app/config";
     case "navidrome":
       return "/data";
     case "uptime-kuma":

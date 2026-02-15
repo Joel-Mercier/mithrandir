@@ -110,5 +110,8 @@ Uninstalls all Homelab components, including Docker, backup systemd timer, rclon
 
 ## TODO
 
+
+- [ ] Verify the Seerr addition to the CLI and the bash scripts. Make sure to make it so you can either install Seerr or Jellyseerr, but not both since they are the same app and use the same port. Here is the Seerr installation documentation https://docs.seerr.dev/getting-started/docker and make sure the step with the chown command is executed so the installation works.
+- [ ] Add local and remote backup deletion command to the CLI by invoking sudo mithrandir backup delete remote|local [date]. Without the date it deletes all backups. It should use rclone commands when the remote option is used. Make sure to update the README and CLAUDE.md.
 - [ ] Replace Uptime Kuma with Gatus which has support for file based configuration (could allow to setup alerts and monitoring directly in the script without using the UI)
 - [ ] Check if Profilarr is a good solution for quality profiles

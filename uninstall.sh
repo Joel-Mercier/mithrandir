@@ -232,7 +232,7 @@ fi
 
 echo ""
 warn "This will delete all app data directories (bazarr, sonarr, jellyfin, etc.)."
-echo "  Hidden files/directories (.*) and the 'homelab' project directory will be kept."
+echo "  Hidden files/directories (.*) and the 'mithrandir' project directory will be kept."
 echo ""
 read -rp "Enter the base directory used for the install [${default_base_dir}]: " base_dir
 base_dir="${base_dir:-$default_base_dir}"
@@ -244,7 +244,7 @@ else
     info "The following directories in $base_dir will be deleted:"
     found_dirs=$(find "$base_dir" -mindepth 1 -maxdepth 1 -type d \
         ! -name '.*' \
-        ! -name 'homelab' \
+        ! -name 'mithrandir' \
         2>/dev/null || true)
 
     if [[ -z "$found_dirs" ]]; then
@@ -259,7 +259,7 @@ else
         if [[ "$confirm_apps" =~ ^[Yy]$ ]]; then
             find "$base_dir" -mindepth 1 -maxdepth 1 -type d \
                 ! -name '.*' \
-                ! -name 'homelab' \
+                ! -name 'mithrandir' \
                 -exec rm -rf {} +
             info "All app data directories in $base_dir have been removed."
         else
