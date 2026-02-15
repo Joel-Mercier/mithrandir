@@ -264,6 +264,17 @@ EOF"
     run "apt update"
     run "apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin"
 
+    # Configure Docker to use /24 subnets instead of /16 to avoid
+    # "all predefined address pools have been fully subnetted" with many apps
+    mkdir -p /etc/docker
+    cat > /etc/docker/daemon.json << 'EOF'
+{
+  "default-address-pools": [
+    { "base": "172.17.0.0/12", "size": 24 }
+  ]
+}
+EOF
+
     if has_systemd; then
         echo "systemd detected – enabling and starting Docker services"
         run "systemctl enable docker"

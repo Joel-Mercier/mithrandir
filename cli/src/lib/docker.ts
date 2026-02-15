@@ -91,6 +91,19 @@ export async function installDocker(): Promise<void> {
     { sudo: true },
   );
 
+  // Configure Docker to use /24 subnets instead of /16 to avoid
+  // "all predefined address pools have been fully subnetted" with many apps
+  await shell("bash", [
+    "-c",
+    `mkdir -p /etc/docker && cat > /etc/docker/daemon.json << 'ENDJSON'
+{
+  "default-address-pools": [
+    { "base": "172.17.0.0/12", "size": 24 }
+  ]
+}
+ENDJSON`,
+  ], { sudo: true });
+
   // Start Docker daemon
   if (await hasSystemd()) {
     await shell("systemctl", ["enable", "docker"], { sudo: true });
