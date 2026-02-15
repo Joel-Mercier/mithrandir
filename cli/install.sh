@@ -81,6 +81,15 @@ cd "$SCRIPT_DIR"
 bun install
 
 # Build the CLI bundle
+# Ensure dist/ is writable by the current user (a previous sudo install may
+# have left it root-owned).
+mkdir -p "$SCRIPT_DIR/dist"
+if [[ ! -w "$SCRIPT_DIR/dist" ]]; then
+  sudo chown "$(id -u):$(id -g)" "$SCRIPT_DIR/dist"
+fi
+if [[ -f "$SCRIPT_DIR/dist/mithrandir.js" && ! -w "$SCRIPT_DIR/dist/mithrandir.js" ]]; then
+  sudo chown "$(id -u):$(id -g)" "$SCRIPT_DIR/dist/mithrandir.js"
+fi
 log "Building CLI..."
 bun run build
 
