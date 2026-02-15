@@ -5,7 +5,7 @@ Automated setup and backup system for Docker-based homelab applications.
 ## Quick Start
 
 ```bash
-git clone <repo> && cd homelab
+git clone <repo> && cd mithrandir
 bash cli/install.sh          # Installs Bun + dependencies
 sudo mithrandir setup
 ```

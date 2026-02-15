@@ -287,7 +287,7 @@ function SystemUninstallInteractive({ autoYes }: { autoYes: boolean }) {
     try {
       return readdirSync(dir).filter((name) => {
         if (name.startsWith(".")) return false;
-        if (name === "homelab") return false;
+        if (name === "mithrandir") return false;
         try {
           return statSync(`${dir}/${name}`).isDirectory();
         } catch {
@@ -393,7 +393,7 @@ function SystemUninstallInteractive({ autoYes }: { autoYes: boolean }) {
           {appDataDirs.map((d) => (
             <Text key={d}>  {d}</Text>
           ))}
-          <Text dimColor>  Hidden files/directories and 'homelab' will be kept.</Text>
+          <Text dimColor>  Hidden files/directories and 'mithrandir' will be kept.</Text>
           <Box marginTop={1}>
             <Text>Delete these directories? </Text>
             <ConfirmInput onConfirm={handleConfirmAppData} onCancel={handleCancelAppData} />
@@ -413,7 +413,7 @@ function SystemUninstallInteractive({ autoYes }: { autoYes: boolean }) {
       {phase === "done" && (
         <Box marginTop={1}>
           <StatusMessage variant="success">
-            Homelab has been completely uninstalled
+            Mithrandir has been completely uninstalled
           </StatusMessage>
         </Box>
       )}
