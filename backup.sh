@@ -385,10 +385,110 @@ rotate_remote_backups() {
     log "Remote backup rotation complete"
 }
 
+# Delete local backups
+delete_local_backups() {
+    local date="${1:-}"
+
+    if [ -n "$date" ]; then
+        local archive_path="${BACKUP_DIR}/archive/${date}"
+        if [ ! -d "$archive_path" ]; then
+            error "Local backup not found for date: ${date}"
+        fi
+        log "Deleting local backup for ${date}..."
+        rm -rf "$archive_path" 2>/dev/null || sudo rm -rf "$archive_path"
+        log "Deleted local backup: ${date}"
+    else
+        local archive_dirs
+        archive_dirs=$(find "${BACKUP_DIR}/archive" -mindepth 1 -maxdepth 1 -type d -name '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' | sort)
+        if [ -z "$archive_dirs" ]; then
+            log "No local backups found"
+            return 0
+        fi
+        log "Deleting all local backups..."
+        echo "$archive_dirs" | while read -r dir; do
+            local dirname
+            dirname=$(basename "$dir")
+            rm -rf "$dir" 2>/dev/null || sudo rm -rf "$dir"
+            log "Deleted local backup: ${dirname}"
+        done
+        # Clear latest symlinks
+        rm -rf "${BACKUP_DIR}/latest" 2>/dev/null || sudo rm -rf "${BACKUP_DIR}/latest"
+        mkdir -p "${BACKUP_DIR}/latest" 2>/dev/null || sudo mkdir -p "${BACKUP_DIR}/latest"
+        log "All local backups deleted"
+    fi
+}
+
+# Delete remote backups
+delete_remote_backups() {
+    local date="${1:-}"
+
+    if ! command -v rclone >/dev/null 2>&1; then
+        error "rclone is not installed"
+    fi
+
+    if ! rclone listremotes | grep -q "^${RCLONE_REMOTE}:"; then
+        error "rclone remote '${RCLONE_REMOTE}' not configured"
+    fi
+
+    if [ -n "$date" ]; then
+        log "Deleting remote backup for ${date}..."
+        rclone purge "${RCLONE_REMOTE}:/backups/archive/${date}" 2>/dev/null || {
+            error "Failed to delete remote backup: ${date}"
+        }
+        log "Deleted remote backup: ${date}"
+    else
+        local remote_dirs
+        remote_dirs=$(rclone lsd "${RCLONE_REMOTE}:/backups/archive/" 2>/dev/null | \
+            awk '/[0-9]{4}-[0-9]{2}-[0-9]{2}/ {print $NF}' | sort) || {
+            error "Failed to list remote backups"
+        }
+        if [ -z "$remote_dirs" ]; then
+            log "No remote backups found"
+            return 0
+        fi
+        log "Deleting all remote backups..."
+        echo "$remote_dirs" | while read -r dir; do
+            rclone purge "${RCLONE_REMOTE}:/backups/archive/${dir}" 2>/dev/null || {
+                warn "Failed to delete remote backup: ${dir}"
+            }
+            log "Deleted remote backup: ${dir}"
+        done
+        log "All remote backups deleted"
+    fi
+}
+
 # -----------------------------
 # Main
 # -----------------------------
 main() {
+    # Handle delete subcommand
+    if [ "${1:-}" = "delete" ]; then
+        local target="${2:-}"
+        local date="${3:-}"
+
+        if [ "$target" != "local" ] && [ "$target" != "remote" ]; then
+            echo "Usage: bash backup.sh delete <local|remote> [YYYY-MM-DD]"
+            echo ""
+            echo 'Specify "local" or "remote" as the target.'
+            exit 1
+        fi
+
+        if [ -n "$date" ] && ! [[ "$date" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+            echo "Invalid date format: ${date}"
+            echo "Expected: YYYY-MM-DD"
+            exit 1
+        fi
+
+        load_config
+
+        if [ "$target" = "local" ]; then
+            delete_local_backups "$date"
+        else
+            delete_remote_backups "$date"
+        fi
+        exit 0
+    fi
+
     log "=== Starting backup process ==="
 
     # Load configuration

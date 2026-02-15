@@ -51,6 +51,23 @@ sudo mithrandir backup
 ```
 Backs up all configured apps. In a terminal it shows spinners and colored progress; from systemd (non-TTY) it writes timestamped plaintext to stdout and `/var/log/homelab-backup.log`.
 
+**Delete backups:**
+```bash
+sudo mithrandir backup delete <local|remote> [YYYY-MM-DD] [--yes]
+```
+- `local`: Delete local backups from the archive directory
+- `remote`: Delete remote backups via rclone
+- `YYYY-MM-DD`: Optional date — deletes only that date's backup. Without a date, deletes all backups
+- `--yes`: Skip confirmation prompt
+
+Examples:
+```bash
+sudo mithrandir backup delete local                  # Delete all local backups
+sudo mithrandir backup delete local 2025-06-01       # Delete a specific local backup
+sudo mithrandir backup delete remote --yes           # Delete all remote backups (no prompt)
+sudo mithrandir backup delete remote 2025-06-01      # Delete a specific remote backup
+```
+
 **Restore:**
 ```bash
 sudo mithrandir restore <app|full> [date] [--yes]
@@ -97,6 +114,12 @@ bash backup.sh
 ```
 Backs up all configured apps automatically. No arguments required. Runs without root — uses `sudo` internally for privileged operations.
 
+**Delete backups:**
+```bash
+bash backup.sh delete <local|remote> [YYYY-MM-DD]
+```
+Deletes local or remote backups. Without a date, deletes all backups for the given target.
+
 **Restore:**
 ```bash
 bash restore.sh <app_name|full> [date] [--yes]
@@ -108,10 +131,29 @@ sudo bash uninstall.sh
 ```
 Uninstalls all Homelab components, including Docker, backup systemd timer, rclone, and local backups. Also prompts for confirmation to delete all app data directories.
 
+## Available Apps
+
+| App | Port | Description |
+|-----|------|-------------|
+| Home Assistant | 8123 | Open-source home automation platform |
+| qBittorrent | 8080 | BitTorrent client with web UI |
+| Prowlarr | 9696 | Indexer manager for the *Arr stack |
+| Radarr | 7878 | Movie collection manager |
+| Sonarr | 8989 | TV series collection manager |
+| Bazarr | 6767 | Subtitle manager for Sonarr and Radarr |
+| Lidarr | 8686 | Music collection manager |
+| Jellyseerr | 5055 | Media request manager for Jellyfin (legacy) |
+| Seerr | 5055 | Media request manager for Jellyfin (recommended, successor to Jellyseerr) |
+| Homarr | 7575 | Customizable dashboard for your server |
+| Jellyfin | 8096 | Free media streaming server |
+| Navidrome | 4533 | Modern music server and streamer |
+| DuckDNS | — | Free dynamic DNS service |
+| WireGuard | 51820/udp | Fast, modern VPN tunnel |
+| Uptime Kuma | 3001 | Self-hosted monitoring tool |
+
+Jellyseerr and Seerr conflict with each other (both use port 5055) — only one can be installed at a time.
+
 ## TODO
 
-
-- [ ] Verify the Seerr addition to the CLI and the bash scripts. Make sure to make it so you can either install Seerr or Jellyseerr, but not both since they are the same app and use the same port. Here is the Seerr installation documentation https://docs.seerr.dev/getting-started/docker and make sure the step with the chown command is executed so the installation works.
-- [ ] Add local and remote backup deletion command to the CLI by invoking sudo mithrandir backup delete remote|local [date]. Without the date it deletes all backups. It should use rclone commands when the remote option is used. Make sure to update the help command, README and CLAUDE.md.
 - [ ] Replace Uptime Kuma with Gatus which has support for file based configuration (could allow to setup alerts and monitoring directly in the script without using the UI)
 - [ ] Check if Profilarr is a good solution for quality profiles

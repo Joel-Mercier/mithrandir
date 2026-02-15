@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { render, Box, Text, useApp } from "ink";
 import Spinner from "ink-spinner";
-import { StatusMessage } from "@inkjs/ui";
+import { StatusMessage, ConfirmInput } from "@inkjs/ui";
 import { loadBackupConfig, getProjectRoot } from "../lib/config.js";
 import {
   APP_REGISTRY,
@@ -15,6 +15,8 @@ import {
   rotateRemote,
   isRcloneInstalled,
   isRcloneRemoteConfigured,
+  purgeRemote,
+  listDirs,
 } from "../lib/rclone.js";
 import { shell } from "../lib/shell.js";
 import { createBackupLogger, Logger } from "../lib/logger.js";
@@ -555,7 +557,235 @@ function BackupInteractive({ appFilter }: { appFilter?: string }) {
   );
 }
 
+// ─── Backup deletion ─────────────────────────────────────────────────────────
+
+/**
+ * List local backup dates (YYYY-MM-DD directories in archive/).
+ */
+async function listLocalBackupDates(backupDir: string): Promise<string[]> {
+  const archiveBase = `${backupDir}/archive`;
+  const result = await shell("ls", ["-1", archiveBase], { ignoreError: true });
+  if (result.exitCode !== 0 || !result.stdout.trim()) return [];
+  return result.stdout
+    .trim()
+    .split("\n")
+    .filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d))
+    .sort();
+}
+
+/**
+ * Delete local backups. If date is specified, delete only that date's backup.
+ * Otherwise delete all local backups (archive/ and latest/).
+ */
+async function deleteLocalBackups(
+  backupDir: string,
+  date?: string,
+): Promise<{ deleted: string[]; errors: string[] }> {
+  const deleted: string[] = [];
+  const errors: string[] = [];
+
+  if (date) {
+    const archivePath = `${backupDir}/archive/${date}`;
+    const result = await shell("ls", [archivePath], { ignoreError: true });
+    if (result.exitCode !== 0) {
+      errors.push(`Local backup not found for date: ${date}`);
+      return { deleted, errors };
+    }
+    await shell("rm", ["-rf", archivePath], { sudo: true });
+    deleted.push(date);
+  } else {
+    const dates = await listLocalBackupDates(backupDir);
+    if (dates.length === 0) {
+      errors.push("No local backups found");
+      return { deleted, errors };
+    }
+    for (const d of dates) {
+      await shell("rm", ["-rf", `${backupDir}/archive/${d}`], { sudo: true });
+      deleted.push(d);
+    }
+    // Also clear the latest/ symlinks
+    await shell("rm", ["-rf", `${backupDir}/latest`], { sudo: true });
+    await shell("mkdir", ["-p", `${backupDir}/latest`], { sudo: true });
+  }
+
+  return { deleted, errors };
+}
+
+/**
+ * Delete remote backups. If date is specified, delete only that date's backup.
+ * Otherwise delete all remote backups.
+ */
+async function deleteRemoteBackups(
+  rcloneRemote: string,
+  date?: string,
+): Promise<{ deleted: string[]; errors: string[] }> {
+  const deleted: string[] = [];
+  const errors: string[] = [];
+
+  if (!(await isRcloneInstalled())) {
+    errors.push("rclone is not installed");
+    return { deleted, errors };
+  }
+
+  const remoteCheck = await isRcloneRemoteConfigured(rcloneRemote);
+  if (!remoteCheck.configured) {
+    errors.push(`rclone remote '${rcloneRemote}' not configured: ${remoteCheck.reason}`);
+    return { deleted, errors };
+  }
+
+  if (date) {
+    try {
+      await purgeRemote(rcloneRemote, `/backups/archive/${date}`);
+      deleted.push(date);
+    } catch (err: any) {
+      errors.push(`Failed to delete remote backup ${date}: ${err.message}`);
+    }
+  } else {
+    const dirs = await listDirs(rcloneRemote, "/backups/archive");
+    if (dirs.length === 0) {
+      errors.push("No remote backups found");
+      return { deleted, errors };
+    }
+    for (const d of dirs) {
+      try {
+        await purgeRemote(rcloneRemote, `/backups/archive/${d}`);
+        deleted.push(d);
+      } catch (err: any) {
+        errors.push(`Failed to delete remote backup ${d}: ${err.message}`);
+      }
+    }
+  }
+
+  return { deleted, errors };
+}
+
+function BackupDelete({
+  target,
+  date,
+  skipConfirm,
+}: {
+  target: "local" | "remote";
+  date?: string;
+  skipConfirm: boolean;
+}) {
+  const { exit } = useApp();
+  const [phase, setPhase] = useState<"confirm" | "running" | "done">(
+    skipConfirm ? "running" : "confirm",
+  );
+  const [results, setResults] = useState<{ deleted: string[]; errors: string[] }>({
+    deleted: [],
+    errors: [],
+  });
+
+  const description = date
+    ? `${target} backup for ${date}`
+    : `all ${target} backups`;
+
+  useEffect(() => {
+    if (phase === "running") {
+      performDelete();
+    }
+  }, [phase]);
+
+  async function performDelete() {
+    try {
+      const config = await loadBackupConfig();
+      let result: { deleted: string[]; errors: string[] };
+      if (target === "local") {
+        result = await deleteLocalBackups(config.BACKUP_DIR, date);
+      } else {
+        result = await deleteRemoteBackups(config.RCLONE_REMOTE, date);
+      }
+      setResults(result);
+      setPhase("done");
+      setTimeout(() => {
+        process.exitCode = result.errors.length > 0 && result.deleted.length === 0 ? 1 : 0;
+        exit();
+      }, 500);
+    } catch (err: any) {
+      setResults({ deleted: [], errors: [err.message] });
+      setPhase("done");
+      setTimeout(() => {
+        process.exitCode = 1;
+        exit();
+      }, 500);
+    }
+  }
+
+  return (
+    <Box flexDirection="column">
+      <Header title="Backup Delete" />
+
+      {phase === "confirm" && (
+        <Box flexDirection="column">
+          <Text>
+            Are you sure you want to delete {description}? This cannot be undone.
+          </Text>
+          <ConfirmInput
+            onConfirm={() => setPhase("running")}
+            onCancel={() => {
+              exit();
+            }}
+          />
+        </Box>
+      )}
+
+      {phase === "running" && (
+        <Text>
+          <Text color="green">
+            <Spinner type="dots" />
+          </Text>
+          {" "}Deleting {description}...
+        </Text>
+      )}
+
+      {phase === "done" && (
+        <Box flexDirection="column">
+          {results.deleted.length > 0 && (
+            <StatusMessage variant="success">
+              Deleted {results.deleted.length} {target} backup(s): {results.deleted.join(", ")}
+            </StatusMessage>
+          )}
+          {results.errors.map((err, i) => (
+            <StatusMessage key={i} variant="error">
+              {err}
+            </StatusMessage>
+          ))}
+          {results.deleted.length === 0 && results.errors.length === 0 && (
+            <StatusMessage variant="info">Nothing to delete</StatusMessage>
+          )}
+        </Box>
+      )}
+    </Box>
+  );
+}
+
 // ─── Entry point ─────────────────────────────────────────────────────────────
+
+export async function runBackupDelete(
+  args: string[],
+  flags: { yes?: boolean },
+): Promise<void> {
+  const target = args[0];
+  const date = args[1];
+
+  if (target !== "local" && target !== "remote") {
+    console.error(
+      'Usage: mithrandir backup delete <local|remote> [YYYY-MM-DD]\n\nSpecify "local" or "remote" as the target.',
+    );
+    process.exit(1);
+  }
+
+  if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    console.error(`Invalid date format: ${date}\nExpected: YYYY-MM-DD`);
+    process.exit(1);
+  }
+
+  const { waitUntilExit } = render(
+    <BackupDelete target={target} date={date} skipConfirm={!!flags.yes} />,
+  );
+  await waitUntilExit();
+}
 
 export async function runBackup(
   flags: { yes?: boolean },

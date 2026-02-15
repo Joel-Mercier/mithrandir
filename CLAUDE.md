@@ -14,6 +14,7 @@ cd cli && bun install                    # Install dependencies
 cd cli && bun run build                  # Bundle into dist/mithrandir.js
 sudo mithrandir setup                       # Interactive setup wizard
 sudo mithrandir backup                      # Backup all apps
+sudo mithrandir backup delete <local|remote> [date] [--yes]  # Delete backups
 sudo mithrandir restore <app|full> [date] [--yes]
 sudo mithrandir uninstall <app>
 cd cli && bun run typecheck              # TypeScript type checking (tsc --noEmit)
@@ -24,6 +25,7 @@ bun run cli/src/index.tsx --help         # Dev mode (unbundled)
 ```bash
 bash setup.sh [--yes] [--uninstall <app>]
 bash backup.sh
+bash backup.sh delete <local|remote> [YYYY-MM-DD]
 bash restore.sh <app|full> [YYYY-MM-DD|latest] [--yes]
 ```
 
