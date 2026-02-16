@@ -20,6 +20,7 @@ sudo mithrandir uninstall <app>
 sudo mithrandir status                      # Check system status
 sudo mithrandir health                      # Check system health
 sudo mithrandir update [app] [--yes]        # Update container images
+sudo mithrandir log <app> [--follow] [--tail N] [--since TIME]  # View container logs
 cd cli && bun run typecheck              # TypeScript type checking (tsc --noEmit)
 bun run cli/src/index.tsx --help         # Dev mode (unbundled)
 ```

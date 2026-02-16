@@ -8,6 +8,7 @@ import { runUninstall } from "./commands/uninstall.js";
 import { runStatus } from "./commands/status.js";
 import { runHealth } from "./commands/health.js";
 import { runUpdate } from "./commands/update.js";
+import { runLog } from "./commands/log.js";
 import { ErrorBoundary } from "./components/ErrorBoundary.js";
 
 const cli = meow(
@@ -24,9 +25,13 @@ const cli = meow(
     status                             Show installed apps and system status
     health                             Check system health (Docker, disk, backups)
     update [app]                       Update all or a specific app's container
+    log <app>                          View container logs
 
   Options
     --yes, -y                 Skip confirmation prompts
+    --follow, -f              Follow log output (log command)
+    --tail, -n                Number of lines to show from end (log command)
+    --since                   Show logs since timestamp or relative (log command)
     --help                    Show this help
     --version                 Show version
 
@@ -46,6 +51,7 @@ const cli = meow(
     $ mithrandir health
     $ mithrandir update
     $ mithrandir update radarr
+    $ mithrandir log radarr --follow --tail 100
 `,
   {
     importMeta: import.meta,
@@ -54,6 +60,18 @@ const cli = meow(
         type: "boolean",
         shortFlag: "y",
         default: false,
+      },
+      follow: {
+        type: "boolean",
+        shortFlag: "f",
+        default: false,
+      },
+      tail: {
+        type: "string",
+        shortFlag: "n",
+      },
+      since: {
+        type: "string",
       },
     },
   },
@@ -96,6 +114,10 @@ switch (command) {
 
   case "update":
     runUpdate(cli.input.slice(1), cli.flags);
+    break;
+
+  case "log":
+    runLog(cli.input.slice(1), cli.flags);
     break;
 
   default:

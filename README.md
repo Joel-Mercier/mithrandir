@@ -116,6 +116,21 @@ sudo mithrandir update radarr                # Update only Radarr
 sudo mithrandir update --yes                 # Update all, skip backup prompt
 ```
 
+**View logs:**
+```bash
+sudo mithrandir log <app> [--follow] [--tail N] [--since TIME]
+```
+Streams Docker container logs to the terminal. Supports following output in real time, limiting the number of lines shown, and filtering by time.
+
+Examples:
+```bash
+sudo mithrandir log radarr                           # Show all logs
+sudo mithrandir log radarr --follow                  # Follow log output
+sudo mithrandir log radarr --tail 100                # Show last 100 lines
+sudo mithrandir log radarr --follow --tail 50        # Follow, starting from last 50 lines
+sudo mithrandir log jellyfin --since 1h              # Logs from the last hour
+```
+
 **Health check:**
 ```bash
 sudo mithrandir health
