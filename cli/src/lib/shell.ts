@@ -2,6 +2,8 @@ import { execa, type ResultPromise } from "execa";
 
 export interface ShellOptions {
   sudo?: boolean;
+  /** Run command as a specific user via sudo -u */
+  user?: string;
   cwd?: string;
   /** If true, don't throw on non-zero exit */
   ignoreError?: boolean;
@@ -24,10 +26,20 @@ export async function shell(
   args: string[] = [],
   options: ShellOptions = {},
 ): Promise<ShellResult> {
-  const { sudo = false, cwd, ignoreError = false, env } = options;
+  const { sudo = false, user, cwd, ignoreError = false, env } = options;
 
-  const cmd = sudo ? "sudo" : command;
-  const cmdArgs = sudo ? [command, ...args] : args;
+  let cmd: string;
+  let cmdArgs: string[];
+  if (user) {
+    cmd = "sudo";
+    cmdArgs = ["-u", user, command, ...args];
+  } else if (sudo) {
+    cmd = "sudo";
+    cmdArgs = [command, ...args];
+  } else {
+    cmd = command;
+    cmdArgs = args;
+  }
 
   const execaOpts: Record<string, unknown> = { reject: !ignoreError };
   if (cwd) execaOpts.cwd = cwd;

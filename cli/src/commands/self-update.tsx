@@ -50,6 +50,11 @@ function SelfUpdateCommand() {
     try {
       const cliDir = join(root, "cli");
 
+      // When running under sudo, run git/bun as the original user so
+      // SSH keys and credentials are available
+      const sudoUser = process.env.SUDO_USER;
+      const userOpts = sudoUser ? { user: sudoUser } : {};
+
       // Step 1: Check git is available
       const gitCheck = await shell("which", ["git"], { ignoreError: true });
       if (gitCheck.exitCode !== 0) {
@@ -60,14 +65,14 @@ function SelfUpdateCommand() {
 
       // Step 2: Fetch and pull latest changes
       setCurrentLabel("Pulling latest changes from git...");
-      const fetch = await shell("git", ["fetch", "--all"], { cwd: root, ignoreError: true });
+      const fetch = await shell("git", ["fetch", "--all"], { cwd: root, ignoreError: true, ...userOpts });
       if (fetch.exitCode !== 0) {
         setError(`git fetch failed: ${fetch.stderr}`);
         setPhase("error");
         return;
       }
 
-      const currentBranch = await shell("git", ["rev-parse", "--abbrev-ref", "HEAD"], { cwd: root, ignoreError: true });
+      const currentBranch = await shell("git", ["rev-parse", "--abbrev-ref", "HEAD"], { cwd: root, ignoreError: true, ...userOpts });
       if (currentBranch.exitCode !== 0) {
         setError(`Could not determine current branch: ${currentBranch.stderr}`);
         setPhase("error");
@@ -75,21 +80,21 @@ function SelfUpdateCommand() {
       }
       const branch = currentBranch.stdout.trim();
 
-      const beforeHash = await shell("git", ["rev-parse", "HEAD"], { cwd: root, ignoreError: true });
+      const beforeHash = await shell("git", ["rev-parse", "HEAD"], { cwd: root, ignoreError: true, ...userOpts });
       if (beforeHash.exitCode !== 0) {
         setError(`Could not determine current commit: ${beforeHash.stderr}`);
         setPhase("error");
         return;
       }
 
-      const pull = await shell("git", ["pull", "--ff-only"], { cwd: root, ignoreError: true });
+      const pull = await shell("git", ["pull", "--ff-only"], { cwd: root, ignoreError: true, ...userOpts });
       if (pull.exitCode !== 0) {
         setError(`git pull failed (non-fast-forward?):\n${pull.stderr}`);
         setPhase("error");
         return;
       }
 
-      const afterHash = await shell("git", ["rev-parse", "HEAD"], { cwd: root, ignoreError: true });
+      const afterHash = await shell("git", ["rev-parse", "HEAD"], { cwd: root, ignoreError: true, ...userOpts });
       const before = beforeHash.stdout.trim().slice(0, 8);
       const after = afterHash.stdout.trim().slice(0, 8);
 
@@ -101,7 +106,7 @@ function SelfUpdateCommand() {
 
       // Step 3: Install dependencies
       setCurrentLabel("Installing dependencies...");
-      const install = await shell("bun", ["install"], { cwd: cliDir, ignoreError: true });
+      const install = await shell("bun", ["install"], { cwd: cliDir, ignoreError: true, ...userOpts });
       if (install.exitCode !== 0) {
         setError(`bun install failed:\n${install.stderr}`);
         setPhase("error");
@@ -119,7 +124,7 @@ function SelfUpdateCommand() {
         await shell("chmod", ["-R", "u+w", distDir], { ignoreError: true });
       }
 
-      const build = await shell("bun", ["run", "build"], { cwd: cliDir, ignoreError: true });
+      const build = await shell("bun", ["run", "build"], { cwd: cliDir, ignoreError: true, ...userOpts });
       if (build.exitCode !== 0) {
         setError(`Build failed:\n${build.stderr}`);
         setPhase("error");
