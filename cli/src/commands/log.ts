@@ -31,5 +31,13 @@ export async function runLog(
 
   dockerArgs.push(containerName);
 
-  await execa("sudo", dockerArgs, { stdio: "inherit" });
+  try {
+    await execa("sudo", dockerArgs, { stdio: "inherit" });
+  } catch (error: any) {
+    // Exit code 130 = SIGINT (Ctrl+C) — exit cleanly
+    if (error.exitCode === 130 || error.signal === "SIGINT") {
+      process.exit(0);
+    }
+    throw error;
+  }
 }

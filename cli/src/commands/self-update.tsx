@@ -30,6 +30,13 @@ function SelfUpdateCommand() {
     run();
   }, []);
 
+  useEffect(() => {
+    if (phase === "error" || phase === "done") {
+      const timer = setTimeout(() => exit(), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [phase]);
+
   async function run() {
     let root: string;
     try {
@@ -40,87 +47,101 @@ function SelfUpdateCommand() {
       return;
     }
 
-    const cliDir = join(root, "cli");
+    try {
+      const cliDir = join(root, "cli");
 
-    // Step 1: Check git is available
-    const gitCheck = await shell("which", ["git"], { ignoreError: true });
-    if (gitCheck.exitCode !== 0) {
-      setError("git is not installed.");
+      // Step 1: Check git is available
+      const gitCheck = await shell("which", ["git"], { ignoreError: true });
+      if (gitCheck.exitCode !== 0) {
+        setError("git is not installed.");
+        setPhase("error");
+        return;
+      }
+
+      // Step 2: Fetch and pull latest changes
+      setCurrentLabel("Pulling latest changes from git...");
+      const fetch = await shell("git", ["fetch", "--all"], { cwd: root, ignoreError: true });
+      if (fetch.exitCode !== 0) {
+        setError(`git fetch failed: ${fetch.stderr}`);
+        setPhase("error");
+        return;
+      }
+
+      const currentBranch = await shell("git", ["rev-parse", "--abbrev-ref", "HEAD"], { cwd: root, ignoreError: true });
+      if (currentBranch.exitCode !== 0) {
+        setError(`Could not determine current branch: ${currentBranch.stderr}`);
+        setPhase("error");
+        return;
+      }
+      const branch = currentBranch.stdout.trim();
+
+      const beforeHash = await shell("git", ["rev-parse", "HEAD"], { cwd: root, ignoreError: true });
+      if (beforeHash.exitCode !== 0) {
+        setError(`Could not determine current commit: ${beforeHash.stderr}`);
+        setPhase("error");
+        return;
+      }
+
+      const pull = await shell("git", ["pull", "--ff-only"], { cwd: root, ignoreError: true });
+      if (pull.exitCode !== 0) {
+        setError(`git pull failed (non-fast-forward?):\n${pull.stderr}`);
+        setPhase("error");
+        return;
+      }
+
+      const afterHash = await shell("git", ["rev-parse", "HEAD"], { cwd: root, ignoreError: true });
+      const before = beforeHash.stdout.trim().slice(0, 8);
+      const after = afterHash.stdout.trim().slice(0, 8);
+
+      if (before === after) {
+        addStep({ name: "Git pull", status: "done", message: `Already up to date on ${branch} (${before})` });
+      } else {
+        addStep({ name: "Git pull", status: "done", message: `${branch}: ${before} → ${after}` });
+      }
+
+      // Step 3: Install dependencies
+      setCurrentLabel("Installing dependencies...");
+      const install = await shell("bun", ["install"], { cwd: cliDir, ignoreError: true });
+      if (install.exitCode !== 0) {
+        setError(`bun install failed:\n${install.stderr}`);
+        setPhase("error");
+        return;
+      }
+      addStep({ name: "Dependencies", status: "done", message: "bun install complete" });
+
+      // Step 4: Build CLI
+      setCurrentLabel("Building CLI...");
+
+      // Ensure dist/ and mithrandir.js are writable (may be root-owned from previous sudo install)
+      const distDir = join(cliDir, "dist");
+      const distFile = join(distDir, "mithrandir.js");
+      if (existsSync(distDir)) {
+        await shell("chmod", ["-R", "u+w", distDir], { ignoreError: true });
+      }
+
+      const build = await shell("bun", ["run", "build"], { cwd: cliDir, ignoreError: true });
+      if (build.exitCode !== 0) {
+        setError(`Build failed:\n${build.stderr}`);
+        setPhase("error");
+        return;
+      }
+      addStep({ name: "Build", status: "done", message: "dist/mithrandir.js rebuilt" });
+
+      // Step 5: Verify symlink
+      if (existsSync("/usr/local/bin/mithrandir")) {
+        addStep({ name: "Symlink", status: "done", message: "/usr/local/bin/mithrandir → cli/dist/mithrandir.js" });
+      } else {
+        // Re-create symlink if missing
+        setCurrentLabel("Installing mithrandir command...");
+        await shell("ln", ["-sf", distFile, "/usr/local/bin/mithrandir"], { sudo: true });
+        addStep({ name: "Symlink", status: "done", message: "Re-created /usr/local/bin/mithrandir" });
+      }
+
+      setPhase("done");
+    } catch (err: any) {
+      setError(err.message ?? String(err));
       setPhase("error");
-      return;
     }
-
-    // Step 2: Fetch and pull latest changes
-    setCurrentLabel("Pulling latest changes from git...");
-    const fetch = await shell("git", ["fetch", "--all"], { cwd: root, ignoreError: true });
-    if (fetch.exitCode !== 0) {
-      setError(`git fetch failed: ${fetch.stderr}`);
-      setPhase("error");
-      return;
-    }
-
-    const currentBranch = await shell("git", ["rev-parse", "--abbrev-ref", "HEAD"], { cwd: root });
-    const branch = currentBranch.stdout.trim();
-
-    const beforeHash = await shell("git", ["rev-parse", "HEAD"], { cwd: root });
-
-    const pull = await shell("git", ["pull", "--ff-only"], { cwd: root, ignoreError: true });
-    if (pull.exitCode !== 0) {
-      setError(`git pull failed (non-fast-forward?):\n${pull.stderr}`);
-      setPhase("error");
-      return;
-    }
-
-    const afterHash = await shell("git", ["rev-parse", "HEAD"], { cwd: root });
-    const before = beforeHash.stdout.trim().slice(0, 8);
-    const after = afterHash.stdout.trim().slice(0, 8);
-
-    if (before === after) {
-      addStep({ name: "Git pull", status: "done", message: `Already up to date on ${branch} (${before})` });
-    } else {
-      addStep({ name: "Git pull", status: "done", message: `${branch}: ${before} → ${after}` });
-    }
-
-    // Step 3: Install dependencies
-    setCurrentLabel("Installing dependencies...");
-    const install = await shell("bun", ["install"], { cwd: cliDir, ignoreError: true });
-    if (install.exitCode !== 0) {
-      setError(`bun install failed:\n${install.stderr}`);
-      setPhase("error");
-      return;
-    }
-    addStep({ name: "Dependencies", status: "done", message: "bun install complete" });
-
-    // Step 4: Build CLI
-    setCurrentLabel("Building CLI...");
-
-    // Ensure dist/ and mithrandir.js are writable (may be root-owned from previous sudo install)
-    const distDir = join(cliDir, "dist");
-    const distFile = join(distDir, "mithrandir.js");
-    if (existsSync(distDir)) {
-      await shell("chmod", ["-R", "u+w", distDir], { ignoreError: true });
-    }
-
-    const build = await shell("bun", ["run", "build"], { cwd: cliDir, ignoreError: true });
-    if (build.exitCode !== 0) {
-      setError(`Build failed:\n${build.stderr}`);
-      setPhase("error");
-      return;
-    }
-    addStep({ name: "Build", status: "done", message: "dist/mithrandir.js rebuilt" });
-
-    // Step 5: Verify symlink
-    if (existsSync("/usr/local/bin/mithrandir")) {
-      addStep({ name: "Symlink", status: "done", message: "/usr/local/bin/mithrandir → cli/dist/mithrandir.js" });
-    } else {
-      // Re-create symlink if missing
-      setCurrentLabel("Installing mithrandir command...");
-      await shell("ln", ["-sf", distFile, "/usr/local/bin/mithrandir"], { sudo: true });
-      addStep({ name: "Symlink", status: "done", message: "Re-created /usr/local/bin/mithrandir" });
-    }
-
-    setPhase("done");
-    setTimeout(() => exit(), 500);
   }
 
   if (error) {
