@@ -680,7 +680,7 @@ function InstallAppsStep({ selectedApps, envConfig, autoYes, onComplete }: Insta
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 /** Write docker-compose.yml and start the container */
-async function writeComposeAndStart(
+export async function writeComposeAndStart(
   app: AppDefinition,
   envConfig: EnvConfig,
 ): Promise<void> {

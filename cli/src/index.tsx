@@ -9,6 +9,10 @@ import { runStatus } from "./commands/status.js";
 import { runHealth } from "./commands/health.js";
 import { runUpdate } from "./commands/update.js";
 import { runLog } from "./commands/log.js";
+import { runStart } from "./commands/start.js";
+import { runStop } from "./commands/stop.js";
+import { runRestart } from "./commands/restart.js";
+import { runReinstall } from "./commands/reinstall.js";
 import { ErrorBoundary } from "./components/ErrorBoundary.js";
 
 const cli = meow(
@@ -22,6 +26,10 @@ const cli = meow(
     backup list [local|remote]          List local and/or remote backups
     backup delete <local|remote> [date] Delete local or remote backups
     restore <app|full> [date]          Restore app(s) from backup
+    start <app>                        Start a stopped app container
+    stop <app>                         Stop a running app container
+    restart <app>                      Restart a running app container
+    reinstall <app>                    Reinstall an app (stop, remove, recreate)
     uninstall [app]                    Uninstall an app, or full system uninstall
     status                             Show installed apps and system status
     health                             Check system health (Docker, disk, backups)
@@ -54,6 +62,11 @@ const cli = meow(
     $ mithrandir health
     $ mithrandir update
     $ mithrandir update radarr
+    $ mithrandir start radarr
+    $ mithrandir stop radarr
+    $ mithrandir restart radarr
+    $ mithrandir reinstall radarr
+    $ mithrandir reinstall radarr --yes
     $ mithrandir log radarr --follow --tail 100
 `,
   {
@@ -123,6 +136,22 @@ switch (command) {
 
   case "log":
     runLog(cli.input.slice(1), cli.flags);
+    break;
+
+  case "start":
+    runStart(cli.input.slice(1));
+    break;
+
+  case "stop":
+    runStop(cli.input.slice(1));
+    break;
+
+  case "restart":
+    runRestart(cli.input.slice(1));
+    break;
+
+  case "reinstall":
+    runReinstall(cli.input.slice(1), cli.flags);
     break;
 
   default:

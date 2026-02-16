@@ -17,6 +17,10 @@ sudo mithrandir backup                      # Backup all apps
 sudo mithrandir backup list [local|remote]     # List existing backups
 sudo mithrandir backup delete <local|remote> [date] [--yes]  # Delete backups
 sudo mithrandir restore <app|full> [date] [--yes]
+sudo mithrandir start <app>                    # Start a stopped app
+sudo mithrandir stop <app>                     # Stop a running app
+sudo mithrandir restart <app>                  # Restart a running app
+sudo mithrandir reinstall <app> [--yes]        # Reinstall an app from scratch
 sudo mithrandir uninstall <app>
 sudo mithrandir status                      # Check system status
 sudo mithrandir health                      # Check system health
