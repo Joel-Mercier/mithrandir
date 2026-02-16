@@ -25,6 +25,9 @@ Backup configuration file:
 - `RCLONE_REMOTE`: rclone remote name for Google Drive (default: `gdrive`)
 - `APPS`: Apps to backup - `"auto"` to detect installed apps, or comma-separated list
 
+### Rclone configuration
+You can setup remote backups by running `rclone config` in the terminal after running the setup wizard. This will set up the remote connection to your Google Drive. Make sure the remote name matches the `RCLONE_REMOTE` setting in `backup.conf`. If you run a desktopless linux server, you'll need to execute a rclone command on another device with a browser to complete the remote setup. The documentation to setup a Google Drive remote with rclone is [here](https://rclone.org/drive/#making-your-own-client-id).
+
 ### Systemd Service
 
 Automatically generated and installed by setup to `/etc/systemd/system/`:
