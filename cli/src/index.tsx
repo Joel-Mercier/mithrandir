@@ -5,6 +5,7 @@ import { runBackup, runBackupDelete } from "./commands/backup.js";
 import { runRestore } from "./commands/restore.js";
 import { SetupCommand } from "./commands/setup.js";
 import { runUninstall } from "./commands/uninstall.js";
+import { runStatus } from "./commands/status.js";
 import { ErrorBoundary } from "./components/ErrorBoundary.js";
 
 const cli = meow(
@@ -18,6 +19,7 @@ const cli = meow(
     backup delete <local|remote> [date] Delete local or remote backups
     restore <app|full> [date]          Restore app(s) from backup
     uninstall [app]                    Uninstall an app, or full system uninstall
+    status                             Show installed apps and system status
 
   Options
     --yes, -y                 Skip confirmation prompts
@@ -36,6 +38,7 @@ const cli = meow(
     $ mithrandir restore full latest --yes
     $ mithrandir uninstall radarr
     $ mithrandir uninstall
+    $ mithrandir status
 `,
   {
     importMeta: import.meta,
@@ -74,6 +77,10 @@ switch (command) {
 
   case "uninstall":
     runUninstall(cli.input.slice(1), cli.flags);
+    break;
+
+  case "status":
+    runStatus();
     break;
 
   default:
