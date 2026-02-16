@@ -97,6 +97,25 @@ sudo mithrandir uninstall
 ```
 Removes all Homelab components: Docker, backup systemd timer, rclone, local backups, and app data directories. Equivalent to `sudo bash uninstall.sh`.
 
+**Stauts check:**
+```bash
+sudo mithrandir status
+```
+Displays the status of all Homelab components: Docker, backup systemd timer, rclone, local backups, and app data directories.
+
+**Update containers:**
+```bash
+sudo mithrandir update [app] [--yes]
+```
+Pulls the latest Docker images for installed apps and recreates containers that have newer images available. Optionally backs up apps before updating. Without an app name, updates all installed apps. `--yes` skips the backup confirmation prompt.
+
+Examples:
+```bash
+sudo mithrandir update                       # Update all installed apps
+sudo mithrandir update radarr                # Update only Radarr
+sudo mithrandir update --yes                 # Update all, skip backup prompt
+```
+
 **Health check:**
 ```bash
 sudo mithrandir health

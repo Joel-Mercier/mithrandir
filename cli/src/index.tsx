@@ -7,6 +7,7 @@ import { SetupCommand } from "./commands/setup.js";
 import { runUninstall } from "./commands/uninstall.js";
 import { runStatus } from "./commands/status.js";
 import { runHealth } from "./commands/health.js";
+import { runUpdate } from "./commands/update.js";
 import { ErrorBoundary } from "./components/ErrorBoundary.js";
 
 const cli = meow(
@@ -22,6 +23,7 @@ const cli = meow(
     uninstall [app]                    Uninstall an app, or full system uninstall
     status                             Show installed apps and system status
     health                             Check system health (Docker, disk, backups)
+    update [app]                       Update all or a specific app's container
 
   Options
     --yes, -y                 Skip confirmation prompts
@@ -41,6 +43,9 @@ const cli = meow(
     $ mithrandir uninstall radarr
     $ mithrandir uninstall
     $ mithrandir status
+    $ mithrandir health
+    $ mithrandir update
+    $ mithrandir update radarr
 `,
   {
     importMeta: import.meta,
@@ -87,6 +92,10 @@ switch (command) {
 
   case "health":
     runHealth();
+    break;
+
+  case "update":
+    runUpdate(cli.input.slice(1), cli.flags);
     break;
 
   default:

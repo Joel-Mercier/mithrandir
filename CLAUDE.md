@@ -17,7 +17,9 @@ sudo mithrandir backup                      # Backup all apps
 sudo mithrandir backup delete <local|remote> [date] [--yes]  # Delete backups
 sudo mithrandir restore <app|full> [date] [--yes]
 sudo mithrandir uninstall <app>
+sudo mithrandir status                      # Check system status
 sudo mithrandir health                      # Check system health
+sudo mithrandir update [app] [--yes]        # Update container images
 cd cli && bun run typecheck              # TypeScript type checking (tsc --noEmit)
 bun run cli/src/index.tsx --help         # Dev mode (unbundled)
 ```
