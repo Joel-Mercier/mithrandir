@@ -6,6 +6,7 @@ import { runRestore } from "./commands/restore.js";
 import { SetupCommand } from "./commands/setup.js";
 import { runUninstall } from "./commands/uninstall.js";
 import { runStatus } from "./commands/status.js";
+import { runHealth } from "./commands/health.js";
 import { ErrorBoundary } from "./components/ErrorBoundary.js";
 
 const cli = meow(
@@ -20,6 +21,7 @@ const cli = meow(
     restore <app|full> [date]          Restore app(s) from backup
     uninstall [app]                    Uninstall an app, or full system uninstall
     status                             Show installed apps and system status
+    health                             Check system health (Docker, disk, backups)
 
   Options
     --yes, -y                 Skip confirmation prompts
@@ -81,6 +83,10 @@ switch (command) {
 
   case "status":
     runStatus();
+    break;
+
+  case "health":
+    runHealth();
     break;
 
   default:

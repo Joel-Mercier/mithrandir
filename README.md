@@ -97,6 +97,12 @@ sudo mithrandir uninstall
 ```
 Removes all Homelab components: Docker, backup systemd timer, rclone, local backups, and app data directories. Equivalent to `sudo bash uninstall.sh`.
 
+**Health check:**
+```bash
+sudo mithrandir health
+```
+Validates system health across five dimensions: Docker daemon, disk space (warn at 80%, fail at 95%), backup age (warn >2 days, fail >7 days), container restart loops (fail if RestartCount >5 or status "restarting"), and remote backup connectivity via rclone. Exit code 0 if all pass/warn, 1 if any fail — useful for monitoring and automation.
+
 ## Usage (Bash — legacy)
 
 The original bash scripts remain as a fallback until the CLI is proven stable.
