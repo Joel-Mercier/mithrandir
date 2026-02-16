@@ -17,11 +17,17 @@ import {
   composeDown,
   composeUp,
 } from "../lib/docker.js";
+import { shell } from "../lib/shell.js";
+import {
+  upload,
+  isRcloneInstalled,
+  isRcloneRemoteConfigured,
+} from "../lib/rclone.js";
 import { Header } from "../components/Header.js";
 import { AppStatus } from "../components/AppStatus.js";
 import type { BackupConfig } from "../types.js";
 import type { AppDefinition } from "../types.js";
-import { existsSync, mkdirSync } from "fs";
+import { existsSync } from "fs";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -139,15 +145,29 @@ function UpdateInteractive({
       try {
         const today = new Date().toISOString().slice(0, 10);
         const archiveDir = `${config.BACKUP_DIR}/archive/${today}`;
+        const latestDir = `${config.BACKUP_DIR}/latest`;
 
-        // Ensure archive directory exists before writing backups
-        mkdirSync(archiveDir, { recursive: true });
+        // Ensure backup directory structure exists (matches backup command)
+        await shell(
+          "mkdir",
+          ["-p", archiveDir, latestDir],
+          { sudo: true },
+        );
+        const { stdout: user } = await shell("id", ["-un"]);
+        const { stdout: group } = await shell("id", ["-gn"]);
+        await shell(
+          "chown",
+          ["-R", `${user.trim()}:${group.trim()}`, config.BACKUP_DIR],
+          { sudo: true },
+        );
 
         for (const app of apps) {
           setCurrentLabel(`Backing up ${app.displayName}...`);
           try {
             const outputPath = `${archiveDir}/${app.name}.tar.zst`;
             await createBackup(app, config.BASE_DIR, outputPath);
+            // Update latest symlink
+            await shell("ln", ["-sf", outputPath, `${latestDir}/${app.name}.tar.zst`]);
             addStep({ name: `Backup ${app.displayName}`, status: "done" });
           } catch (err: any) {
             addStep({
@@ -155,6 +175,28 @@ function UpdateInteractive({
               status: "error",
               message: err.message,
             });
+          }
+        }
+
+        // Upload to remote if rclone is configured
+        if (await isRcloneInstalled()) {
+          const remoteCheck = await isRcloneRemoteConfigured(config.RCLONE_REMOTE);
+          if (remoteCheck.configured) {
+            setCurrentLabel(`Uploading backup to ${config.RCLONE_REMOTE}...`);
+            try {
+              await upload(
+                archiveDir,
+                config.RCLONE_REMOTE,
+                `/backups/archive/${today}`,
+              );
+              addStep({ name: "Remote upload", status: "done" });
+            } catch (err: any) {
+              addStep({
+                name: "Remote upload",
+                status: "error",
+                message: err.stderr?.trim() || err.message,
+              });
+            }
           }
         }
 
@@ -310,6 +352,11 @@ export async function runUpdate(
   args: string[],
   flags: { yes?: boolean },
 ): Promise<void> {
+  if (process.getuid?.() !== 0) {
+    console.error("Error: This command must be run as root (use sudo).");
+    process.exit(1);
+  }
+
   const appFilter = args[0];
 
   if (appFilter) {
