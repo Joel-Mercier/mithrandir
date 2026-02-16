@@ -21,7 +21,7 @@ import { Header } from "../components/Header.js";
 import { AppStatus } from "../components/AppStatus.js";
 import type { BackupConfig } from "../types.js";
 import type { AppDefinition } from "../types.js";
-import { existsSync } from "fs";
+import { existsSync, mkdirSync } from "fs";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -139,6 +139,9 @@ function UpdateInteractive({
       try {
         const today = new Date().toISOString().slice(0, 10);
         const archiveDir = `${config.BACKUP_DIR}/archive/${today}`;
+
+        // Ensure archive directory exists before writing backups
+        mkdirSync(archiveDir, { recursive: true });
 
         for (const app of apps) {
           setCurrentLabel(`Backing up ${app.displayName}...`);
