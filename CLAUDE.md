@@ -16,6 +16,7 @@ sudo mithrandir setup                       # Interactive setup wizard
 sudo mithrandir backup                      # Backup all apps
 sudo mithrandir backup list [local|remote]     # List existing backups
 sudo mithrandir backup delete <local|remote> [date] [--yes]  # Delete backups
+sudo mithrandir backup verify [date] [--remote] [--extract]  # Verify backup integrity
 sudo mithrandir restore <app|full> [date] [--yes]
 sudo mithrandir start <app>                    # Start a stopped app
 sudo mithrandir stop <app>                     # Stop a running app

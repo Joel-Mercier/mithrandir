@@ -81,6 +81,22 @@ sudo mithrandir backup delete remote --yes           # Delete all remote backups
 sudo mithrandir backup delete remote 2025-06-01      # Delete a specific remote backup
 ```
 
+**Verify backups:**
+```bash
+sudo mithrandir backup verify [YYYY-MM-DD] [--remote] [--extract]
+```
+Checks archive integrity, validates expected files are present (docker-compose.yml, config dirs), and reports file sizes. Without a date, verifies the most recent backup.
+- `--remote`: Verify remote backups (downloads to temp dir, verifies, cleans up)
+- `--extract`: Also perform a test extraction to a temp directory
+
+Examples:
+```bash
+sudo mithrandir backup verify                              # Verify most recent local backup
+sudo mithrandir backup verify 2025-06-01                   # Verify a specific date
+sudo mithrandir backup verify --remote                     # Verify most recent remote backup
+sudo mithrandir backup verify --remote --extract           # Verify remote with extract test
+```
+
 **Restore:**
 ```bash
 sudo mithrandir restore <app|full> [date] [--yes]

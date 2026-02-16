@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 import meow from "meow";
 import { render } from "ink";
-import { runBackup, runBackupDelete, runBackupList } from "./commands/backup.js";
+import { runBackup, runBackupDelete, runBackupList, runBackupVerify } from "./commands/backup.js";
 import { runRestore } from "./commands/restore.js";
 import { SetupCommand } from "./commands/setup.js";
 import { runUninstall } from "./commands/uninstall.js";
@@ -26,6 +26,7 @@ const cli = meow(
     backup [app]                       Backup all or a specific app
     backup list [local|remote]          List local and/or remote backups
     backup delete <local|remote> [date] Delete local or remote backups
+    backup verify [date]               Verify backup archive integrity
     restore <app|full> [date]          Restore app(s) from backup
     start <app>                        Start a stopped app container
     stop <app>                         Stop a running app container
@@ -43,6 +44,8 @@ const cli = meow(
     --follow, -f              Follow log output (log command)
     --tail, -n                Number of lines to show from end (log command)
     --since                   Show logs since timestamp or relative (log command)
+    --remote                  Verify remote backups (backup verify)
+    --extract                 Test extraction during verify (backup verify)
     --help                    Show this help
     --version                 Show version
 
@@ -55,6 +58,8 @@ const cli = meow(
     $ mithrandir backup list local
     $ mithrandir backup delete local
     $ mithrandir backup delete remote 2025-01-01
+    $ mithrandir backup verify
+    $ mithrandir backup verify 2025-01-01 --remote --extract
     $ mithrandir restore jellyfin
     $ mithrandir restore full 2025-01-01
     $ mithrandir restore full latest --yes
@@ -92,6 +97,14 @@ const cli = meow(
       since: {
         type: "string",
       },
+      remote: {
+        type: "boolean",
+        default: false,
+      },
+      extract: {
+        type: "boolean",
+        default: false,
+      },
     },
   },
 );
@@ -112,6 +125,8 @@ switch (command) {
       runBackupList(cli.input.slice(2));
     } else if (cli.input[1] === "delete") {
       runBackupDelete(cli.input.slice(2), cli.flags);
+    } else if (cli.input[1] === "verify") {
+      runBackupVerify(cli.input.slice(2), cli.flags);
     } else {
       runBackup(cli.flags, cli.input[1]);
     }

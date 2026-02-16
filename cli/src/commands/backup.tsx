@@ -12,6 +12,7 @@ import {
 import { createBackup, createSecretsBackup } from "../lib/tar.js";
 import {
   upload,
+  download,
   rotateRemote,
   isRcloneInstalled,
   isRcloneRemoteConfigured,
@@ -890,5 +891,498 @@ export async function runBackup(
     await waitUntilExit();
   } else {
     await runHeadlessBackup(appFilter);
+  }
+}
+
+// ─── Backup verification ──────────────────────────────────────────────────────
+
+interface VerifyResult {
+  file: string;
+  appName: string;
+  status: "ok" | "error";
+  checks: string[];
+  errors: string[];
+}
+
+/**
+ * Verify a single .tar.zst archive:
+ * 1. Size > 0
+ * 2. Archive integrity (tar --zstd -tf)
+ * 3. Expected files present
+ * 4. Optional extract test
+ */
+async function verifyArchive(
+  archivePath: string,
+  doExtract: boolean,
+): Promise<VerifyResult> {
+  const filename = archivePath.split("/").pop()!;
+  const appName = stripArchiveSuffix(filename);
+  const checks: string[] = [];
+  const errors: string[] = [];
+
+  // 1. Size check
+  const statResult = await shell("stat", ["-c", "%s", archivePath], {
+    ignoreError: true,
+  });
+  if (statResult.exitCode !== 0) {
+    errors.push("Could not stat file");
+    return { file: filename, appName, status: "error", checks, errors };
+  }
+  const size = parseInt(statResult.stdout.trim(), 10);
+  if (size === 0) {
+    errors.push("File is empty (0 bytes)");
+    return { file: filename, appName, status: "error", checks, errors };
+  }
+  checks.push(`Size: ${formatBytes(size)}`);
+
+  // 2. Archive integrity — list contents
+  const listResult = await shell("tar", ["--zstd", "-tf", archivePath], {
+    ignoreError: true,
+  });
+  if (listResult.exitCode !== 0) {
+    errors.push(
+      `Archive corrupt: tar -tf failed (exit ${listResult.exitCode})`,
+    );
+    return { file: filename, appName, status: "error", checks, errors };
+  }
+  checks.push("Archive integrity OK");
+
+  const contents = listResult.stdout
+    .trim()
+    .split("\n")
+    .filter(Boolean);
+
+  // 3. Expected file presence
+  if (appName === "secrets") {
+    // Secrets archive should contain .env
+    if (contents.some((f) => f === ".env" || f.endsWith("/.env"))) {
+      checks.push("Contains .env");
+    } else {
+      errors.push("Missing .env in secrets archive");
+    }
+  } else {
+    const app = getApp(appName);
+    if (app) {
+      // Check for docker-compose.yml
+      const composeEntry = `${app.name}/docker-compose.yml`;
+      if (contents.some((f) => f === composeEntry)) {
+        checks.push("Contains docker-compose.yml");
+      } else {
+        errors.push(`Missing ${composeEntry}`);
+      }
+
+      // Check for config dir(s)
+      if (app.configSubdir === "multiple" && app.multipleConfigDirs) {
+        for (const dir of app.multipleConfigDirs) {
+          const prefix = `${app.name}/${dir}/`;
+          if (contents.some((f) => f === `${app.name}/${dir}` || f.startsWith(prefix))) {
+            checks.push(`Contains ${dir}/`);
+          } else {
+            errors.push(`Missing config dir: ${dir}/`);
+          }
+        }
+      } else {
+        const prefix = `${app.name}/${app.configSubdir}/`;
+        if (contents.some((f) => f === `${app.name}/${app.configSubdir}` || f.startsWith(prefix))) {
+          checks.push(`Contains ${app.configSubdir}/`);
+        } else {
+          errors.push(`Missing config dir: ${app.configSubdir}/`);
+        }
+      }
+    } else {
+      checks.push(`Unknown app "${appName}", skipping file checks`);
+    }
+  }
+
+  // 4. Extract test
+  if (doExtract) {
+    const tmpResult = await shell("mktemp", ["-d", "/tmp/mithrandir-extract-XXXXXX"]);
+    const tmpDir = tmpResult.stdout.trim();
+    try {
+      const extractResult = await shell(
+        "tar",
+        ["--zstd", "-xf", archivePath, "-C", tmpDir],
+        { ignoreError: true },
+      );
+      if (extractResult.exitCode !== 0) {
+        errors.push(
+          `Extract test failed (exit ${extractResult.exitCode})`,
+        );
+      } else {
+        checks.push("Extract test OK");
+      }
+    } finally {
+      await shell("rm", ["-rf", tmpDir], { ignoreError: true });
+    }
+  }
+
+  return {
+    file: filename,
+    appName,
+    status: errors.length > 0 ? "error" : "ok",
+    checks,
+    errors,
+  };
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024 * 1024 * 1024)
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+}
+
+function BackupVerify({
+  date,
+  remote,
+  doExtract,
+}: {
+  date?: string;
+  remote: boolean;
+  doExtract: boolean;
+}) {
+  const { exit } = useApp();
+  const [completedSteps, setCompletedSteps] = useState<CompletedStep[]>([]);
+  const [phase, setPhase] = useState<"running" | "done">("running");
+  const [currentLabel, setCurrentLabel] = useState("Loading configuration...");
+  const [errorCount, setErrorCount] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+
+  function addStep(step: CompletedStep) {
+    setCompletedSteps((prev) => [...prev, step]);
+  }
+
+  useEffect(() => {
+    runVerify();
+  }, []);
+
+  async function runVerify() {
+    try {
+      const config = await loadBackupConfig();
+      let resolvedDate = date;
+      let archiveDir: string;
+      let tmpDir: string | undefined;
+
+      if (remote) {
+        // Remote verification
+        if (!(await isRcloneInstalled())) {
+          setError("rclone is not installed");
+          return;
+        }
+        const remoteCheck = await isRcloneRemoteConfigured(config.RCLONE_REMOTE);
+        if (!remoteCheck.configured) {
+          setError(`rclone remote '${config.RCLONE_REMOTE}' not configured: ${remoteCheck.reason}`);
+          return;
+        }
+
+        if (!resolvedDate) {
+          setCurrentLabel("Finding most recent remote backup...");
+          const dates = await listDirs(config.RCLONE_REMOTE, "/backups/archive");
+          if (dates.length === 0) {
+            setError("No remote backups found");
+            return;
+          }
+          resolvedDate = dates[dates.length - 1];
+        }
+
+        setCurrentLabel(`Downloading remote backup ${resolvedDate}...`);
+        const mkResult = await shell("mktemp", ["-d", "/tmp/mithrandir-verify-XXXXXX"]);
+        tmpDir = mkResult.stdout.trim();
+        archiveDir = tmpDir;
+
+        try {
+          await download(
+            config.RCLONE_REMOTE,
+            `/backups/archive/${resolvedDate}`,
+            tmpDir,
+          );
+        } catch (err: any) {
+          await shell("rm", ["-rf", tmpDir], { ignoreError: true });
+          setError(`Failed to download remote backup: ${err.message}`);
+          return;
+        }
+
+        addStep({
+          name: "Download",
+          status: "done",
+          message: `Downloaded ${resolvedDate} from ${config.RCLONE_REMOTE}`,
+        });
+      } else {
+        // Local verification
+        if (!resolvedDate) {
+          setCurrentLabel("Finding most recent local backup...");
+          const dates = await listLocalBackupDates(config.BACKUP_DIR);
+          if (dates.length === 0) {
+            setError("No local backups found");
+            return;
+          }
+          resolvedDate = dates[dates.length - 1];
+        }
+
+        archiveDir = `${config.BACKUP_DIR}/archive/${resolvedDate}`;
+        const checkResult = await shell("ls", [archiveDir], { ignoreError: true });
+        if (checkResult.exitCode !== 0) {
+          setError(`Backup not found for date: ${resolvedDate}`);
+          return;
+        }
+      }
+
+      addStep({
+        name: "Date",
+        status: "done",
+        message: `Verifying ${remote ? "remote" : "local"} backup: ${resolvedDate}`,
+      });
+
+      // Find all .tar.zst files
+      const lsResult = await shell("ls", ["-1", archiveDir], { ignoreError: true });
+      if (lsResult.exitCode !== 0 || !lsResult.stdout.trim()) {
+        setError(`No files found in ${archiveDir}`);
+        if (tmpDir) await shell("rm", ["-rf", tmpDir], { ignoreError: true });
+        return;
+      }
+
+      const archives = lsResult.stdout
+        .trim()
+        .split("\n")
+        .filter((f) => f.endsWith(".tar.zst"));
+
+      if (archives.length === 0) {
+        setError("No .tar.zst archives found");
+        if (tmpDir) await shell("rm", ["-rf", tmpDir], { ignoreError: true });
+        return;
+      }
+
+      // Verify each archive
+      let errors = 0;
+      for (const archive of archives) {
+        const appName = stripArchiveSuffix(archive);
+        setCurrentLabel(`Verifying ${appName}...`);
+        const result = await verifyArchive(
+          `${archiveDir}/${archive}`,
+          doExtract,
+        );
+
+        if (result.status === "ok") {
+          addStep({
+            name: result.appName,
+            status: "done",
+            message: result.checks.join(", "),
+          });
+        } else {
+          addStep({
+            name: result.appName,
+            status: "error",
+            message: [...result.errors, ...result.checks].join(", "),
+          });
+          errors++;
+        }
+      }
+
+      // Clean up temp dir
+      if (tmpDir) {
+        await shell("rm", ["-rf", tmpDir], { ignoreError: true });
+      }
+
+      setErrorCount(errors);
+      setPhase("done");
+      setTimeout(() => {
+        process.exitCode = errors > 0 ? 1 : 0;
+        exit();
+      }, 500);
+    } catch (err: any) {
+      setError(err.message);
+      setTimeout(() => {
+        process.exitCode = 1;
+        exit();
+      }, 500);
+    }
+  }
+
+  if (error) {
+    return (
+      <Box flexDirection="column">
+        <Header title="Backup Verify" />
+        <StatusMessage variant="error">Verification failed: {error}</StatusMessage>
+      </Box>
+    );
+  }
+
+  return (
+    <Box flexDirection="column">
+      <Header title="Backup Verify" />
+
+      {completedSteps.map((step, i) => (
+        <AppStatus
+          key={i}
+          name={step.name}
+          status={step.status}
+          message={step.message}
+        />
+      ))}
+
+      {phase === "running" && (
+        <Text>
+          <Text color="green">
+            <Spinner type="dots" />
+          </Text>
+          {" "}{currentLabel}
+        </Text>
+      )}
+
+      {phase === "done" && (
+        <Box marginTop={1}>
+          {errorCount > 0 ? (
+            <StatusMessage variant="warning">
+              Verification completed with {errorCount} error(s)
+            </StatusMessage>
+          ) : (
+            <StatusMessage variant="success">
+              All archives verified successfully
+            </StatusMessage>
+          )}
+        </Box>
+      )}
+    </Box>
+  );
+}
+
+async function runHeadlessVerify(
+  date?: string,
+  remote?: boolean,
+  doExtract?: boolean,
+): Promise<void> {
+  const config = await loadBackupConfig();
+  let resolvedDate = date;
+  let archiveDir: string;
+  let tmpDir: string | undefined;
+
+  if (remote) {
+    if (!(await isRcloneInstalled())) {
+      console.error("Error: rclone is not installed");
+      process.exit(1);
+    }
+    const remoteCheck = await isRcloneRemoteConfigured(config.RCLONE_REMOTE);
+    if (!remoteCheck.configured) {
+      console.error(
+        `Error: rclone remote '${config.RCLONE_REMOTE}' not configured: ${remoteCheck.reason}`,
+      );
+      process.exit(1);
+    }
+
+    if (!resolvedDate) {
+      const dates = await listDirs(config.RCLONE_REMOTE, "/backups/archive");
+      if (dates.length === 0) {
+        console.error("Error: No remote backups found");
+        process.exit(1);
+      }
+      resolvedDate = dates[dates.length - 1];
+    }
+
+    console.log(`Downloading remote backup ${resolvedDate}...`);
+    const mkResult = await shell("mktemp", ["-d", "/tmp/mithrandir-verify-XXXXXX"]);
+    tmpDir = mkResult.stdout.trim();
+    archiveDir = tmpDir;
+
+    try {
+      await download(
+        config.RCLONE_REMOTE,
+        `/backups/archive/${resolvedDate}`,
+        tmpDir,
+      );
+    } catch (err: any) {
+      await shell("rm", ["-rf", tmpDir], { ignoreError: true });
+      console.error(`Error: Failed to download remote backup: ${err.message}`);
+      process.exit(1);
+    }
+  } else {
+    if (!resolvedDate) {
+      const dates = await listLocalBackupDates(config.BACKUP_DIR);
+      if (dates.length === 0) {
+        console.error("Error: No local backups found");
+        process.exit(1);
+      }
+      resolvedDate = dates[dates.length - 1];
+    }
+    archiveDir = `${config.BACKUP_DIR}/archive/${resolvedDate}`;
+    const checkResult = await shell("ls", [archiveDir], { ignoreError: true });
+    if (checkResult.exitCode !== 0) {
+      console.error(`Error: Backup not found for date: ${resolvedDate}`);
+      process.exit(1);
+    }
+  }
+
+  console.log(
+    `Verifying ${remote ? "remote" : "local"} backup: ${resolvedDate}`,
+  );
+
+  const lsResult = await shell("ls", ["-1", archiveDir], { ignoreError: true });
+  if (lsResult.exitCode !== 0 || !lsResult.stdout.trim()) {
+    console.error(`Error: No files found in ${archiveDir}`);
+    if (tmpDir) await shell("rm", ["-rf", tmpDir], { ignoreError: true });
+    process.exit(1);
+  }
+
+  const archives = lsResult.stdout
+    .trim()
+    .split("\n")
+    .filter((f) => f.endsWith(".tar.zst"));
+
+  if (archives.length === 0) {
+    console.error("Error: No .tar.zst archives found");
+    if (tmpDir) await shell("rm", ["-rf", tmpDir], { ignoreError: true });
+    process.exit(1);
+  }
+
+  let errors = 0;
+  for (const archive of archives) {
+    const result = await verifyArchive(
+      `${archiveDir}/${archive}`,
+      !!doExtract,
+    );
+    if (result.status === "ok") {
+      console.log(`  ✓ ${result.appName}: ${result.checks.join(", ")}`);
+    } else {
+      console.log(
+        `  ✗ ${result.appName}: ${[...result.errors, ...result.checks].join(", ")}`,
+      );
+      errors++;
+    }
+  }
+
+  if (tmpDir) {
+    await shell("rm", ["-rf", tmpDir], { ignoreError: true });
+  }
+
+  if (errors > 0) {
+    console.log(`\nVerification completed with ${errors} error(s)`);
+    process.exit(1);
+  } else {
+    console.log("\nAll archives verified successfully");
+  }
+}
+
+export async function runBackupVerify(
+  args: string[],
+  flags: { remote?: boolean; extract?: boolean },
+): Promise<void> {
+  const date = args[0];
+
+  if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    console.error(`Invalid date format: ${date}\nExpected: YYYY-MM-DD`);
+    process.exit(1);
+  }
+
+  if (process.stdout.isTTY) {
+    const { waitUntilExit } = render(
+      <BackupVerify
+        date={date}
+        remote={!!flags.remote}
+        doExtract={!!flags.extract}
+      />,
+    );
+    await waitUntilExit();
+  } else {
+    await runHeadlessVerify(date, flags.remote, flags.extract);
   }
 }
