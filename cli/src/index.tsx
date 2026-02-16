@@ -13,6 +13,7 @@ import { runStart } from "./commands/start.js";
 import { runStop } from "./commands/stop.js";
 import { runRestart } from "./commands/restart.js";
 import { runReinstall } from "./commands/reinstall.js";
+import { runSelfUpdate } from "./commands/self-update.js";
 import { ErrorBoundary } from "./components/ErrorBoundary.js";
 
 const cli = meow(
@@ -35,6 +36,7 @@ const cli = meow(
     health                             Check system health (Docker, disk, backups)
     update [app]                       Update all or a specific app's container
     log <app>                          View container logs
+    self-update                        Update the CLI itself from git
 
   Options
     --yes, -y                 Skip confirmation prompts
@@ -68,6 +70,7 @@ const cli = meow(
     $ mithrandir reinstall radarr
     $ mithrandir reinstall radarr --yes
     $ mithrandir log radarr --follow --tail 100
+    $ mithrandir self-update
 `,
   {
     importMeta: import.meta,
@@ -152,6 +155,10 @@ switch (command) {
 
   case "reinstall":
     runReinstall(cli.input.slice(1), cli.flags);
+    break;
+
+  case "self-update":
+    runSelfUpdate();
     break;
 
   default:

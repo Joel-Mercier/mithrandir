@@ -168,6 +168,12 @@ sudo mithrandir reinstall radarr             # Reinstall, prompt before deleting
 sudo mithrandir reinstall radarr --yes       # Reinstall, delete data without prompting
 ```
 
+**Self-update:**
+```bash
+sudo mithrandir self-update
+```
+Pulls the latest code from git, installs any new dependencies, and rebuilds the CLI. Since `/usr/local/bin/mithrandir` is a symlink to the built file, no reinstall is needed.
+
 **Status check:**
 ```bash
 sudo mithrandir status
