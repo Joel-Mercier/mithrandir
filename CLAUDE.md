@@ -21,6 +21,7 @@ sudo mithrandir restore <app|full> [date] [--yes]
 sudo mithrandir start <app>                    # Start a stopped app
 sudo mithrandir stop <app>                     # Stop a running app
 sudo mithrandir restart <app>                  # Restart a running app
+sudo mithrandir install <app>                    # Install a single app
 sudo mithrandir reinstall <app> [--yes]        # Reinstall an app from scratch
 sudo mithrandir uninstall <app>
 sudo mithrandir status                      # Check system status

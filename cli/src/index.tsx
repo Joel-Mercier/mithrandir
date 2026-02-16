@@ -13,6 +13,7 @@ import { runStart } from "./commands/start.js";
 import { runStop } from "./commands/stop.js";
 import { runRestart } from "./commands/restart.js";
 import { runReinstall } from "./commands/reinstall.js";
+import { runInstall } from "./commands/install.js";
 import { runSelfUpdate } from "./commands/self-update.js";
 import { ErrorBoundary } from "./components/ErrorBoundary.js";
 
@@ -31,6 +32,7 @@ const cli = meow(
     start <app>                        Start a stopped app container
     stop <app>                         Stop a running app container
     restart <app>                      Restart a running app container
+    install <app>                      Install a single app
     reinstall <app>                    Reinstall an app (stop, remove, recreate)
     uninstall [app]                    Uninstall an app, or full system uninstall
     status                             Show installed apps and system status
@@ -72,6 +74,7 @@ const cli = meow(
     $ mithrandir start radarr
     $ mithrandir stop radarr
     $ mithrandir restart radarr
+    $ mithrandir install radarr
     $ mithrandir reinstall radarr
     $ mithrandir reinstall radarr --yes
     $ mithrandir log radarr --follow --tail 100
@@ -166,6 +169,10 @@ switch (command) {
 
   case "restart":
     runRestart(cli.input.slice(1));
+    break;
+
+  case "install":
+    runInstall(cli.input.slice(1));
     break;
 
   case "reinstall":

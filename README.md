@@ -172,6 +172,12 @@ sudo mithrandir restart <app>
 ```
 Stops and restarts a running app container.
 
+**Install an app:**
+```bash
+sudo mithrandir install <app>
+```
+Installs a single app: pulls the Docker image, creates directories, generates docker-compose.yml, and starts the container. The app must not already be installed.
+
 **Reinstall an app:**
 ```bash
 sudo mithrandir reinstall <app> [--yes]
