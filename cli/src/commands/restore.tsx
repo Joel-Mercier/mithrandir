@@ -298,6 +298,9 @@ async function runHeadlessSingleRestore(
   }
 
   await logger.info(`Found backup: ${found.path}`);
+  await logger.info(
+    "Note: Media files in the data directory are not included in backups (too large). Only app configs and databases are restored.",
+  );
 
   if (!autoYes) {
     await logger.info("Skipping restore — run with --yes to proceed non-interactively");
@@ -340,6 +343,9 @@ async function runHeadlessFullRestore(
 
   const appNames = availableApps.filter((a) => a !== "secrets");
   await logger.info(`Found ${availableApps.length} backup(s): ${availableApps.join(", ")}`);
+  await logger.info(
+    "Note: Media files in the data directory are not included in backups (too large). Only app configs and databases are restored.",
+  );
 
   if (!autoYes) {
     await logger.info("Skipping restore — run with --yes to proceed non-interactively");
@@ -552,6 +558,11 @@ function SingleRestoreInteractive({
             <Text bold>{backupFile?.path}</Text>
           </Text>
           <Text>  4. Start the container</Text>
+          <Text />
+          <Text dimColor>
+            Note: Media files in the data directory are not included in backups
+            (too large). Only app configs and databases are restored.
+          </Text>
           <Box marginTop={1}>
             <Text>Continue? </Text>
             <ConfirmInput onConfirm={handleConfirm} onCancel={handleCancel} />
@@ -756,6 +767,11 @@ function FullRestoreInteractive({
           </Text>
           <Text />
           <Text>Each app will be stopped, config deleted, and restored.</Text>
+          <Text />
+          <Text dimColor>
+            Note: Media files in the data directory are not included in backups
+            (too large). Only app configs and databases are restored.
+          </Text>
           <Box marginTop={1}>
             <Text>Continue? </Text>
             <ConfirmInput onConfirm={handleConfirm} onCancel={handleCancel} />

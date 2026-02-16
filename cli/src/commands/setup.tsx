@@ -488,7 +488,11 @@ export function SetupCommand({ flags }: SetupCommandProps) {
             <Text>  and media discovery and request from Jellyseerr / Seerr.</Text>
           </Box>
         )}
-        <Text dimColor>Exiting...</Text>
+        <Box flexDirection="column" marginBottom={1}>
+          <Text bold>Remote backups note:</Text>
+          <Text>  To configure rclone for Google Drive, run: rclone config,</Text>
+          <Text>  This will set up the remote connection to your Google Drive.</Text>
+        </Box>
       </Box>
     );
   }

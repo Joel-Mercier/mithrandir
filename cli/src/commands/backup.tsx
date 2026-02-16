@@ -185,6 +185,10 @@ async function runHeadlessBackup(appFilter?: string): Promise<void> {
       }
     }
 
+    await logger.info(
+      "Note: Media files in the data directory are not included in backups by design (too large). Only app configs and databases are saved.",
+    );
+
     // Backup each app
     const failed: string[] = [];
     for (const app of apps) {
@@ -362,6 +366,13 @@ function BackupInteractive({ appFilter }: { appFilter?: string }) {
           message: `Found ${apps.length} app(s): ${apps.map((a) => a.name).join(", ")}`,
         });
       }
+
+      addStep({
+        name: "Note",
+        status: "skipped",
+        message:
+          "Media files in the data directory are not included (too large). Only app configs and databases are saved.",
+      });
 
       let failed = 0;
 
