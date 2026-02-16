@@ -145,6 +145,32 @@ export async function remoteFileExists(
   return result.exitCode === 0 && result.stdout.trim().length > 0;
 }
 
+/** List files at a remote path. Returns filenames (without size). */
+export async function listFiles(
+  remote: string,
+  remotePath: string,
+): Promise<string[]> {
+  const configArgs = await resolveRcloneConfigArgs();
+  const result = await shell(
+    "rclone",
+    [...configArgs, "ls", `${remote}:${remotePath}`],
+    { ignoreError: true },
+  );
+
+  if (result.exitCode !== 0 || !result.stdout.trim()) return [];
+
+  // rclone ls output: "    <size> <filename>"
+  return result.stdout
+    .trim()
+    .split("\n")
+    .map((line) => {
+      const parts = line.trim().split(/\s+/);
+      return parts.slice(1).join(" ");
+    })
+    .filter(Boolean)
+    .sort();
+}
+
 /** Delete a remote directory */
 export async function purgeRemote(
   remote: string,

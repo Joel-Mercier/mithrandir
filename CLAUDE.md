@@ -14,6 +14,7 @@ cd cli && bun install                    # Install dependencies
 cd cli && bun run build                  # Bundle into dist/mithrandir.js
 sudo mithrandir setup                       # Interactive setup wizard
 sudo mithrandir backup                      # Backup all apps
+sudo mithrandir backup list [local|remote]     # List existing backups
 sudo mithrandir backup delete <local|remote> [date] [--yes]  # Delete backups
 sudo mithrandir restore <app|full> [date] [--yes]
 sudo mithrandir uninstall <app>

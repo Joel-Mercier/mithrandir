@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 import meow from "meow";
 import { render } from "ink";
-import { runBackup, runBackupDelete } from "./commands/backup.js";
+import { runBackup, runBackupDelete, runBackupList } from "./commands/backup.js";
 import { runRestore } from "./commands/restore.js";
 import { SetupCommand } from "./commands/setup.js";
 import { runUninstall } from "./commands/uninstall.js";
@@ -19,6 +19,7 @@ const cli = meow(
   Commands
     setup                              Interactive setup wizard
     backup [app]                       Backup all or a specific app
+    backup list [local|remote]          List local and/or remote backups
     backup delete <local|remote> [date] Delete local or remote backups
     restore <app|full> [date]          Restore app(s) from backup
     uninstall [app]                    Uninstall an app, or full system uninstall
@@ -40,6 +41,8 @@ const cli = meow(
     $ mithrandir setup --yes
     $ mithrandir backup
     $ mithrandir backup radarr
+    $ mithrandir backup list
+    $ mithrandir backup list local
     $ mithrandir backup delete local
     $ mithrandir backup delete remote 2025-01-01
     $ mithrandir restore jellyfin
@@ -89,7 +92,9 @@ switch (command) {
     break;
 
   case "backup":
-    if (cli.input[1] === "delete") {
+    if (cli.input[1] === "list") {
+      runBackupList(cli.input.slice(2));
+    } else if (cli.input[1] === "delete") {
       runBackupDelete(cli.input.slice(2), cli.flags);
     } else {
       runBackup(cli.flags, cli.input[1]);

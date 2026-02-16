@@ -17,6 +17,7 @@ import {
   isRcloneRemoteConfigured,
   purgeRemote,
   listDirs,
+  listFiles,
 } from "../lib/rclone.js";
 import { shell } from "../lib/shell.js";
 import { createBackupLogger, Logger } from "../lib/logger.js";
@@ -785,6 +786,97 @@ export async function runBackupDelete(
     <BackupDelete target={target} date={date} skipConfirm={!!flags.yes} />,
   );
   await waitUntilExit();
+}
+
+// ─── Backup listing ──────────────────────────────────────────────────────────
+
+/** Strip .tar.zst suffix for display */
+function stripArchiveSuffix(filename: string): string {
+  return filename.replace(/\.tar\.zst$/, "");
+}
+
+/** List contents of local backup date directories */
+async function listLocalBackupContents(
+  backupDir: string,
+  date: string,
+): Promise<string[]> {
+  const dir = `${backupDir}/archive/${date}`;
+  const result = await shell("ls", ["-1", dir], { ignoreError: true });
+  if (result.exitCode !== 0 || !result.stdout.trim()) return [];
+  return result.stdout
+    .trim()
+    .split("\n")
+    .filter((f) => f.endsWith(".tar.zst"))
+    .map(stripArchiveSuffix)
+    .sort();
+}
+
+export async function runBackupList(args: string[]): Promise<void> {
+  const filter = args[0];
+
+  if (filter !== undefined && filter !== "local" && filter !== "remote") {
+    console.error(
+      'Usage: mithrandir backup list [local|remote]\n\nOptionally specify "local" or "remote" to filter.',
+    );
+    process.exit(1);
+  }
+
+  const config = await loadBackupConfig();
+  const showLocal = !filter || filter === "local";
+  const showRemote = !filter || filter === "remote";
+
+  if (showLocal) {
+    console.log("Local backups:");
+    const dates = await listLocalBackupDates(config.BACKUP_DIR);
+    if (dates.length === 0) {
+      console.log("  No local backups found.\n");
+    } else {
+      for (const date of dates) {
+        console.log(`  ${date}`);
+        const contents = await listLocalBackupContents(config.BACKUP_DIR, date);
+        if (contents.length > 0) {
+          console.log(`    ${contents.join(", ")}`);
+        }
+      }
+      console.log();
+    }
+  }
+
+  if (showRemote) {
+    console.log(`Remote backups (${config.RCLONE_REMOTE}):`);
+
+    if (!(await isRcloneInstalled())) {
+      console.log("  rclone is not installed.\n");
+      return;
+    }
+
+    const remoteCheck = await isRcloneRemoteConfigured(config.RCLONE_REMOTE);
+    if (!remoteCheck.configured) {
+      console.log(`  rclone remote '${config.RCLONE_REMOTE}' not configured.\n`);
+      return;
+    }
+
+    const dates = await listDirs(config.RCLONE_REMOTE, "/backups/archive");
+    if (dates.length === 0) {
+      console.log("  No remote backups found.\n");
+    } else {
+      for (const date of dates) {
+        console.log(`  ${date}`);
+        const files = await listFiles(
+          config.RCLONE_REMOTE,
+          `/backups/archive/${date}`,
+        );
+        const contents = files
+          .filter((f) => f.endsWith(".tar.zst"))
+          .map(stripArchiveSuffix)
+          .sort();
+        if (contents.length > 0) {
+          console.log(`    ${contents.join(", ")}`);
+        }
+      }
+      console.log();
+    }
+  }
 }
 
 export async function runBackup(

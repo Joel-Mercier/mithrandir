@@ -51,6 +51,19 @@ sudo mithrandir backup
 ```
 Backs up all configured apps. In a terminal it shows spinners and colored progress; from systemd (non-TTY) it writes timestamped plaintext to stdout and `/var/log/homelab-backup.log`.
 
+**List backups:**
+```bash
+sudo mithrandir backup list [local|remote]
+```
+Lists existing backups with their contents. Without an argument, shows both local and remote backups.
+
+Examples:
+```bash
+sudo mithrandir backup list                # List both local and remote backups
+sudo mithrandir backup list local          # List only local backups
+sudo mithrandir backup list remote         # List only remote backups
+```
+
 **Delete backups:**
 ```bash
 sudo mithrandir backup delete <local|remote> [YYYY-MM-DD] [--yes]
