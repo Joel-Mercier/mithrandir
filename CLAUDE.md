@@ -29,6 +29,9 @@ sudo mithrandir health                      # Check system health
 sudo mithrandir update [app] [--yes]        # Update container images
 sudo mithrandir log <app> [--follow] [--tail N] [--since TIME]  # View container logs
 sudo mithrandir self-update                # Update CLI from git and rebuild
+mithrandir version                         # Show version and git commit hash
+mithrandir config                          # Show current .env and backup.conf settings
+mithrandir completions <bash|zsh|fish>     # Generate shell completion script
 cd cli && bun run typecheck              # TypeScript type checking (tsc --noEmit)
 bun run cli/src/index.tsx --help         # Dev mode (unbundled)
 ```

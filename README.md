@@ -199,6 +199,31 @@ sudo mithrandir self-update
 ```
 Pulls the latest code from git, installs any new dependencies, and rebuilds the CLI. Since `/usr/local/bin/mithrandir` is a symlink to the built file, no reinstall is needed.
 
+**Version:**
+```bash
+mithrandir version
+```
+Prints the CLI version and short git commit hash, e.g. `mithrandir v1.0.0 (abc1234)`. Also available via `mithrandir --version` (version number only).
+
+**Config:**
+```bash
+mithrandir config
+```
+Pretty-prints the current `.env` and `backup.conf` settings. Shows file paths so you know where to edit. Tokens and secrets are masked.
+
+**Shell completions:**
+```bash
+mithrandir completions <bash|zsh|fish>
+```
+Generates a shell completion script for the specified shell. Covers all subcommands, app names, flags, and backup/restore sub-arguments.
+
+Examples:
+```bash
+eval "$(mithrandir completions bash)"                  # Bash (add to ~/.bashrc)
+eval "$(mithrandir completions zsh)"                   # Zsh (add to ~/.zshrc)
+mithrandir completions fish | source                   # Fish (add to config.fish)
+```
+
 **Status check:**
 ```bash
 sudo mithrandir status

@@ -15,6 +15,9 @@ import { runRestart } from "./commands/restart.js";
 import { runReinstall } from "./commands/reinstall.js";
 import { runInstall } from "./commands/install.js";
 import { runSelfUpdate } from "./commands/self-update.js";
+import { runVersion } from "./commands/version.js";
+import { runConfig } from "./commands/config.js";
+import { runCompletions } from "./commands/completions.js";
 import { ErrorBoundary } from "./components/ErrorBoundary.js";
 
 const cli = meow(
@@ -40,6 +43,9 @@ const cli = meow(
     update [app]                       Update all or a specific app's container
     log <app>                          View container logs
     self-update                        Update the CLI itself from git
+    version                            Show version and git commit
+    config                             Show current configuration
+    completions <bash|zsh|fish>        Generate shell completions
 
   Options
     --yes, -y                 Skip confirmation prompts
@@ -79,6 +85,10 @@ const cli = meow(
     $ mithrandir reinstall radarr --yes
     $ mithrandir log radarr --follow --tail 100
     $ mithrandir self-update
+    $ mithrandir version
+    $ mithrandir config
+    $ mithrandir completions bash
+    $ mithrandir completions zsh
 `,
   {
     importMeta: import.meta,
@@ -181,6 +191,18 @@ switch (command) {
 
   case "self-update":
     runSelfUpdate();
+    break;
+
+  case "version":
+    runVersion();
+    break;
+
+  case "config":
+    runConfig();
+    break;
+
+  case "completions":
+    runCompletions(cli.input.slice(1));
     break;
 
   default:
