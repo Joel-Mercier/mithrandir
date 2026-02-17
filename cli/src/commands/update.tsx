@@ -14,6 +14,7 @@ import { createBackup } from "../lib/tar.js";
 import {
   getRunningImageId,
   pullImage,
+  pullImageWithProgress,
   composeDown,
   composeUp,
 } from "../lib/docker.js";
@@ -25,6 +26,7 @@ import {
 } from "../lib/rclone.js";
 import { Header } from "../components/Header.js";
 import { AppStatus } from "../components/AppStatus.js";
+import { ProgressBar } from "../components/ProgressBar.js";
 import type { BackupConfig } from "../types.js";
 import type { AppDefinition } from "../types.js";
 import { existsSync } from "fs";
@@ -80,6 +82,7 @@ function UpdateInteractive({
   const [config, setConfig] = useState<BackupConfig | null>(null);
   const [apps, setApps] = useState<AppDefinition[]>([]);
   const [doBackup, setDoBackup] = useState(false);
+  const [pullProgress, setPullProgress] = useState(0);
 
   function addStep(step: CompletedStep) {
     setCompletedSteps((prev) => [...prev, step]);
@@ -220,12 +223,16 @@ function UpdateInteractive({
           const composePath = getComposePath(app, config.BASE_DIR);
 
           setCurrentLabel(`Pulling ${app.displayName}...`);
+          setPullProgress(0);
           try {
             // Get current image ID (empty string if container not running)
             const oldImageId = await getRunningImageId(containerName);
 
-            // Pull the new image
-            const newImageId = await pullImage(app.image);
+            // Pull the new image with progress
+            const newImageId = await pullImageWithProgress(
+              app.image,
+              (pct) => setPullProgress(pct),
+            );
 
             if (oldImageId && oldImageId === newImageId) {
               addStep({
@@ -315,13 +322,26 @@ function UpdateInteractive({
       )}
 
       {/* Spinner for active phases */}
-      {(phase === "backing-up" || phase === "updating") && (
+      {phase === "backing-up" && (
         <Text>
           <Text color="green">
             <Spinner type="dots" />
           </Text>
           {" "}{currentLabel}
         </Text>
+      )}
+      {phase === "updating" && (
+        <Box flexDirection="column">
+          <Text>
+            <Text color="green">
+              <Spinner type="dots" />
+            </Text>
+            {" "}{currentLabel}
+          </Text>
+          {currentLabel.startsWith("Pulling") && pullProgress > 0 && pullProgress < 100 && (
+            <ProgressBar percent={pullProgress} label={currentLabel.replace("Pulling ", "").replace("...", "")} />
+          )}
+        </Box>
       )}
 
       {/* Summary */}

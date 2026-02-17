@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
-import { render, Box, Text, useApp } from "ink";
+import { Box, render, Text, useApp } from "ink";
 import Spinner from "ink-spinner";
 import { StatusMessage } from "@inkjs/ui";
 import { existsSync } from "fs";
 import { getApp, getAppNames, getComposePath } from "../lib/apps.js";
 import { loadEnvConfig } from "../lib/config.js";
-import { pullImage } from "../lib/docker.js";
+import { pullImageWithProgress } from "../lib/docker.js";
 import { Header } from "../components/Header.js";
 import { AppStatus } from "../components/AppStatus.js";
+import { ProgressBar } from "../components/ProgressBar.js";
 import { writeComposeAndStart } from "./setup.js";
 
 interface CompletedStep {
@@ -22,6 +23,7 @@ function InstallApp({ appName }: { appName: string }) {
   const [phase, setPhase] = useState<"init" | "pulling" | "installing" | "done">("init");
   const [currentLabel, setCurrentLabel] = useState("Initializing...");
   const [error, setError] = useState<string | null>(null);
+  const [pullProgress, setPullProgress] = useState(0);
 
   function addStep(step: CompletedStep) {
     setCompletedSteps((prev) => [...prev, step]);
@@ -49,7 +51,8 @@ function InstallApp({ appName }: { appName: string }) {
     // Pull image
     setPhase("pulling");
     setCurrentLabel(`Pulling ${app.image}...`);
-    await pullImage(app.image);
+    setPullProgress(0);
+    await pullImageWithProgress(app.image, (pct) => setPullProgress(pct));
     addStep({ name: "Pull image", status: "done", message: app.image });
 
     // Install
@@ -85,12 +88,17 @@ function InstallApp({ appName }: { appName: string }) {
       ))}
 
       {(phase === "init" || phase === "pulling" || phase === "installing") && (
-        <Text>
-          <Text color="green">
-            <Spinner type="dots" />
+        <Box flexDirection="column">
+          <Text>
+            <Text color="green">
+              <Spinner type="dots" />
+            </Text>
+            {" "}{currentLabel}
           </Text>
-          {" "}{currentLabel}
-        </Text>
+          {phase === "pulling" && pullProgress > 0 && pullProgress < 100 && (
+            <ProgressBar percent={pullProgress} />
+          )}
+        </Box>
       )}
 
       {phase === "done" && (

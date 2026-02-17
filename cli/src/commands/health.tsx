@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { render, Box, Text, useApp } from "ink";
 import Spinner from "ink-spinner";
 import { StatusMessage } from "@inkjs/ui";
+import { DataTable } from "../components/DataTable.js";
 import { loadEnvConfig, loadBackupConfig } from "../lib/config.js";
 import {
   APP_REGISTRY,
@@ -258,10 +259,6 @@ function statusIcon(status: CheckStatus): { char: string; color: string } {
   }
 }
 
-function pad(str: string, width: number): string {
-  return str + " ".repeat(Math.max(0, width - str.length));
-}
-
 // ─── Interactive (TTY) component ─────────────────────────────────────────────
 
 function HealthCommand() {
@@ -314,28 +311,22 @@ function HealthCommand() {
     );
   }
 
-  const nameWidth = Math.max(...results.map((r) => r.name.length));
   const hasFail = results.some((r) => r.status === "fail");
   const hasWarn = results.some((r) => r.status === "warn");
+
+  const tableData = results.map((r) => {
+    const icon = statusIcon(r.status);
+    return {
+      Check: r.name,
+      Status: `${icon.char} ${r.status.toUpperCase()}`,
+      Details: r.message,
+    };
+  });
 
   return (
     <Box flexDirection="column">
       <Header title="Health Check" />
-      <Box flexDirection="column">
-        {results.map((r, i) => {
-          const icon = statusIcon(r.status);
-          return (
-            <Text key={i}>
-              {"  "}
-              <Text>{pad(r.name, nameWidth)}</Text>
-              {"  "}
-              <Text color={icon.color}>{icon.char}</Text>
-              {" "}
-              <Text>{r.message}</Text>
-            </Text>
-          );
-        })}
-      </Box>
+      <DataTable data={tableData} />
       <Box marginTop={1}>
         <Text dimColor>
           {"  "}
@@ -348,6 +339,10 @@ function HealthCommand() {
       </Box>
     </Box>
   );
+}
+
+function pad(str: string, width: number): string {
+  return str + " ".repeat(Math.max(0, width - str.length));
 }
 
 // ─── Headless (non-TTY) ──────────────────────────────────────────────────────

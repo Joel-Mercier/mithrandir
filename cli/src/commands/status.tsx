@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { render, Box, Text, useApp } from "ink";
 import Spinner from "ink-spinner";
 import { StatusMessage } from "@inkjs/ui";
+import { DataTable } from "../components/DataTable.js";
+import Link from "ink-link";
+import { Divider } from "../components/Divider.js";
 import { loadEnvConfig, loadBackupConfig } from "../lib/config.js";
 import {
   APP_REGISTRY,
@@ -165,59 +168,22 @@ async function gatherSystemInfo(): Promise<SystemInfo> {
   return { dockerRunning, timerActive, timerNext, apps };
 }
 
-// ─── Table rendering ─────────────────────────────────────────────────────────
+// ─── Table helpers ───────────────────────────────────────────────────────────
+
+function statusDotChar(status: string): string {
+  const dot =
+    status === "running"
+      ? "● "
+      : status === "restarting"
+        ? "● "
+        : status === "not found" || status === "unknown"
+          ? "● "
+          : "● ";
+  return dot + status;
+}
 
 function pad(str: string, width: number): string {
   return str + " ".repeat(Math.max(0, width - str.length));
-}
-
-function StatusDot({ status }: { status: string }) {
-  const color =
-    status === "running"
-      ? "green"
-      : status === "restarting"
-        ? "yellow"
-        : status === "not found" || status === "unknown"
-          ? "gray"
-          : "red";
-  return <Text color={color}>●</Text>;
-}
-
-function TableRow({
-  name,
-  status,
-  url,
-  backup,
-  disk,
-  colWidths,
-}: {
-  name: string;
-  status: string;
-  url: string | null;
-  backup: string | null;
-  disk: string;
-  colWidths: number[];
-}) {
-  return (
-    <Text>
-      {"  │ "}
-      <Text>{pad(name, colWidths[0])}</Text>
-      {"│ "}
-      <StatusDot status={status} />
-      <Text> {pad(status, colWidths[1] - 2)}</Text>
-      {"│ "}
-      <Text color="cyan">{pad(url ?? "—", colWidths[2])}</Text>
-      {"│ "}
-      {backup ? (
-        <Text>{pad(backup, colWidths[3])}</Text>
-      ) : (
-        <Text dimColor>{pad("none", colWidths[3])}</Text>
-      )}
-      {"│ "}
-      <Text>{pad(disk, colWidths[4])}</Text>
-      {"│"}
-    </Text>
-  );
 }
 
 // ─── Interactive (TTY) component ─────────────────────────────────────────────
@@ -268,22 +234,16 @@ function StatusCommand() {
     );
   }
 
-  // Calculate column widths
-  const headers = ["App", "Status", "URL", "Backup", "Disk"];
-  const colWidths = [
-    Math.max(headers[0].length, ...info.apps.map((a) => a.app.displayName.length)),
-    Math.max(headers[1].length, ...info.apps.map((a) => a.containerStatus.length + 2)),
-    Math.max(headers[2].length, ...info.apps.map((a) => (a.url ?? "—").length)),
-    Math.max(headers[3].length, 10),
-    Math.max(headers[4].length, ...info.apps.map((a) => a.diskUsage.length)),
-  ];
-
-  const totalWidth = colWidths.reduce((a, b) => a + b, 0) + colWidths.length * 3 + 1;
-  const divider = (left: string, mid: string, right: string, fill: string) =>
-    `  ${left}${colWidths.map((w) => fill.repeat(w + 2)).join(mid)}${right}`;
-
   const runningCount = info.apps.filter((a) => a.containerStatus === "running").length;
   const stoppedCount = info.apps.length - runningCount;
+
+  const tableData = info.apps.map((a) => ({
+    App: a.app.displayName,
+    Status: statusDotChar(a.containerStatus),
+    URL: a.url ?? "—",
+    Backup: a.lastBackup ?? "none",
+    Disk: a.diskUsage,
+  }));
 
   return (
     <Box flexDirection="column">
@@ -314,42 +274,28 @@ function StatusCommand() {
         )}
       </Box>
 
+      <Divider title="Services" titleColor="yellow" dividerColor="gray" />
+
       {info.apps.length === 0 ? (
         <Text dimColor>  No apps installed.</Text>
       ) : (
         <Box flexDirection="column">
-          {/* Table header */}
-          <Text>{divider("┌", "┬", "┐", "─")}</Text>
-          <Text>
-            {"  │ "}
-            <Text bold>{pad(headers[0], colWidths[0])}</Text>
-            {"│ "}
-            <Text bold>{pad(headers[1], colWidths[1])}</Text>
-            {"│ "}
-            <Text bold>{pad(headers[2], colWidths[2])}</Text>
-            {"│ "}
-            <Text bold>{pad(headers[3], colWidths[3])}</Text>
-            {"│ "}
-            <Text bold>{pad(headers[4], colWidths[4])}</Text>
-            {"│"}
-          </Text>
-          <Text>{divider("├", "┼", "┤", "─")}</Text>
+          <DataTable data={tableData} />
 
-          {/* Table rows */}
-          {info.apps.map((a) => (
-            <TableRow
-              key={a.app.name}
-              name={a.app.displayName}
-              status={a.containerStatus}
-              url={a.url}
-              backup={a.lastBackup}
-              disk={a.diskUsage}
-              colWidths={colWidths}
-            />
-          ))}
-
-          {/* Table footer */}
-          <Text>{divider("└", "┴", "┘", "─")}</Text>
+          {/* Clickable URLs */}
+          <Box flexDirection="column" marginTop={1}>
+            <Text bold>  Quick Links:</Text>
+            {info.apps
+              .filter((a) => a.url)
+              .map((a) => (
+                <Text key={a.app.name}>
+                  {"    "}{a.app.displayName.padEnd(18)}
+                  <Link url={a.url!}>
+                    <Text color="cyan">{a.url}</Text>
+                  </Link>
+                </Text>
+              ))}
+          </Box>
         </Box>
       )}
 

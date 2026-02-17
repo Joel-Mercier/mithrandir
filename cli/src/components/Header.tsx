@@ -1,4 +1,5 @@
 import { Box, Text } from "ink";
+import { Divider } from "./Divider.js";
 
 interface HeaderProps {
   title?: string;
@@ -38,8 +39,6 @@ function makeBanner(text: string): string[] {
 }
 
 export function Header({ title }: HeaderProps) {
-  const divider = "⚜ ═══════════════════════════════ ⚜";
-
   return (
     <Box flexDirection="column" marginBottom={1}>
       <Box flexDirection="column" alignItems="center">
@@ -49,7 +48,7 @@ export function Header({ title }: HeaderProps) {
           ))}
         </Box>
         <Box flexDirection="column" alignItems="center" marginTop={1}>
-          <Text color="yellow">{divider}</Text>
+          <Divider dividerChar="═" dividerColor="yellow" width={40} />
           <Text bold color="yellow">
             {"╔╦╗╦╔╦╗╦ ╦╦═╗╔═╗╔╗╔╔╦╗╦╦═╗"}
           </Text>
@@ -59,7 +58,7 @@ export function Header({ title }: HeaderProps) {
           <Text bold color="yellow">
             {"╩ ╩╩ ╩ ╩ ╩╩╚═╩ ╩╝╚╝═╩╝╩╩╚═"}
           </Text>
-          <Text color="yellow">{divider}</Text>
+          <Divider dividerChar="═" dividerColor="yellow" width={40} />
         </Box>
       </Box>
       {title && (

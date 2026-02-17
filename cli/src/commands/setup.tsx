@@ -18,6 +18,7 @@ import {
   isContainerRunning,
   getRunningImageId,
   pullImage,
+  pullImageWithProgress,
   removeContainer,
   composeUp,
   composeDown,
@@ -35,6 +36,9 @@ import { shell } from "../lib/shell.js";
 import { Header } from "../components/Header.js";
 import { StepIndicator } from "../components/StepIndicator.js";
 import { AppStatus } from "../components/AppStatus.js";
+import { ProgressBar } from "../components/ProgressBar.js";
+import { Divider } from "../components/Divider.js";
+import Link from "ink-link";
 import type { AppDefinition, EnvConfig, SecretDefinition } from "../types.js";
 import { homedir } from "os";
 
@@ -446,14 +450,16 @@ export function SetupCommand({ flags }: SetupCommandProps) {
         <Box marginBottom={1}>
           <Text bold color="green">All services are running!</Text>
         </Box>
+        <Divider title="Service URLs" titleColor="yellow" dividerColor="gray" />
         <Box flexDirection="column" marginBottom={1}>
-          <Text bold>Service URLs:</Text>
           {selectedApps
             .filter((app) => app.port)
             .map((app) => (
               <Text key={app.name}>
                 {"  "}{app.displayName.padEnd(20)}
-                <Text color="cyan">http://{localIp}:{app.port}</Text>
+                <Link url={`http://${localIp}:${app.port}`}>
+                  <Text color="cyan">http://{localIp}:{app.port}</Text>
+                </Link>
               </Text>
             ))}
           {hasApp("duckdns") && (
@@ -463,6 +469,9 @@ export function SetupCommand({ flags }: SetupCommandProps) {
             <Text>{"  "}{"WireGuard".padEnd(20)}<Text dimColor>VPN service active on UDP port 51820</Text></Text>
           )}
         </Box>
+        {(hasApp("wireguard") || hasApp("jellyfin") || (hasApp("jellyfin") && (hasApp("jellyseerr") || hasApp("seerr")))) && (
+          <Divider title="Notes" titleColor="yellow" dividerColor="gray" />
+        )}
         {hasApp("wireguard") && (
           <Box flexDirection="column" marginBottom={1}>
             <Text bold>WireGuard note:</Text>
@@ -564,6 +573,7 @@ function InstallAppsStep({ selectedApps, envConfig, autoYes, onComplete }: Insta
   const [appResults, setAppResults] = useState<
     Array<{ app: AppDefinition; status: "done" | "error" | "updated"; error?: string }>
   >([]);
+  const [pullProgress, setPullProgress] = useState(0);
 
   useEffect(() => {
     if (selectedApps.length > 0 && !loopStarted.current) {
@@ -597,6 +607,7 @@ function InstallAppsStep({ selectedApps, envConfig, autoYes, onComplete }: Insta
         }
 
         setInstallPhase("pulling");
+        setPullProgress(0);
 
         // Check if container already exists (running)
         const containerName = getContainerName(app);
@@ -605,7 +616,10 @@ function InstallAppsStep({ selectedApps, envConfig, autoYes, onComplete }: Insta
         if (running) {
           // Check for updates
           const currentId = await getRunningImageId(containerName);
-          const latestId = await pullImage(app.image);
+          const latestId = await pullImageWithProgress(
+            app.image,
+            (pct) => setPullProgress(pct),
+          );
           if (currentId !== latestId) {
             // Update: write new compose, down, up (matches setup.sh update path)
             setInstallPhase("composing");
@@ -616,7 +630,10 @@ function InstallAppsStep({ selectedApps, envConfig, autoYes, onComplete }: Insta
           }
         } else {
           // Fresh install: pull image first, then compose up
-          await pullImage(app.image);
+          await pullImageWithProgress(
+            app.image,
+            (pct) => setPullProgress(pct),
+          );
           setInstallPhase("composing");
           await writeComposeAndStart(app, envConfig);
           results.push({ app, status: "done" });
@@ -670,12 +687,17 @@ function InstallAppsStep({ selectedApps, envConfig, autoYes, onComplete }: Insta
 
       {/* Current app */}
       {installIdx < selectedApps.length && (
-        <Text>
-          <Text color="yellow"><Spinner type="dots" /></Text>
-          {" "}{currentApp.displayName}
-          {installPhase === "pulling" && " — pulling image..."}
-          {installPhase === "composing" && " — starting container..."}
-        </Text>
+        <Box flexDirection="column">
+          <Text>
+            <Text color="yellow"><Spinner type="dots" /></Text>
+            {" "}{currentApp.displayName}
+            {installPhase === "pulling" && " — pulling image..."}
+            {installPhase === "composing" && " — starting container..."}
+          </Text>
+          {installPhase === "pulling" && pullProgress > 0 && pullProgress < 100 && (
+            <ProgressBar percent={pullProgress} />
+          )}
+        </Box>
       )}
     </Box>
   );

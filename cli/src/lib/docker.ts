@@ -170,6 +170,105 @@ export async function pullImage(image: string): Promise<string> {
   return result.stdout.trim();
 }
 
+/**
+ * Pull an image with progress tracking.
+ * Calls onProgress(percent) as layers download/extract.
+ * Returns the image ID when done.
+ */
+export async function pullImageWithProgress(
+  image: string,
+  onProgress: (percent: number) => void,
+): Promise<string> {
+  const { execa } = await import("execa");
+
+  const proc = execa("sudo", ["docker", "pull", image], {
+    stdout: "pipe",
+    stderr: "pipe",
+    reject: false,
+  });
+
+  // Track per-layer progress
+  const layers = new Map<string, { current: number; total: number }>();
+  let buffer = "";
+
+  proc.stdout?.on("data", (chunk: Buffer) => {
+    buffer += chunk.toString();
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? "";
+
+    for (const line of lines) {
+      // Match: "<id>: Downloading [====>    ]  1.23MB/4.56MB"
+      // Match: "<id>: Extracting [====>    ]  1.23MB/4.56MB"
+      const match = line.match(
+        /^([a-f0-9]+):\s+(?:Downloading|Extracting)\s+\[.*?\]\s+([0-9.]+[a-zA-Z]*B?)\/([0-9.]+[a-zA-Z]*B?)/,
+      );
+      if (match) {
+        const [, id, currentStr, totalStr] = match;
+        const current = parseSize(currentStr);
+        const total = parseSize(totalStr);
+        if (total > 0) {
+          layers.set(id, { current, total });
+        }
+      }
+
+      // Match: "<id>: Pull complete" or "<id>: Already exists"
+      const completeMatch = line.match(
+        /^([a-f0-9]+):\s+(?:Pull complete|Already exists)/,
+      );
+      if (completeMatch) {
+        const id = completeMatch[1];
+        const existing = layers.get(id);
+        if (existing) {
+          layers.set(id, { current: existing.total, total: existing.total });
+        } else {
+          layers.set(id, { current: 1, total: 1 });
+        }
+      }
+
+      // Calculate overall progress
+      if (layers.size > 0) {
+        let totalBytes = 0;
+        let currentBytes = 0;
+        for (const { current, total } of layers.values()) {
+          totalBytes += total;
+          currentBytes += current;
+        }
+        if (totalBytes > 0) {
+          onProgress(Math.min(99, Math.round((currentBytes / totalBytes) * 100)));
+        }
+      }
+    }
+  });
+
+  const result = await proc;
+  if ((result.exitCode ?? 0) !== 0) {
+    throw new Error(
+      `docker pull failed: ${result.stderr?.trim() || result.stdout?.trim() || "unknown error"}`,
+    );
+  }
+
+  onProgress(100);
+
+  const inspectResult = await shell(
+    "docker",
+    ["inspect", "--format", "{{.Id}}", image],
+    { sudo: true },
+  );
+  return inspectResult.stdout.trim();
+}
+
+/** Parse Docker size strings like "1.23MB", "456kB", "789B" to bytes */
+function parseSize(s: string): number {
+  const match = s.match(/^([0-9.]+)\s*([a-zA-Z]*)/);
+  if (!match) return 0;
+  const num = parseFloat(match[1]);
+  const unit = match[2].toUpperCase();
+  if (unit === "GB") return num * 1024 * 1024 * 1024;
+  if (unit === "MB") return num * 1024 * 1024;
+  if (unit === "KB") return num * 1024;
+  return num;
+}
+
 /** Start a container using docker compose (runs from app dir, matching setup.sh) */
 export async function composeUp(
   composePath: string,

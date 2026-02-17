@@ -24,6 +24,7 @@ import { shell } from "../lib/shell.js";
 import { createBackupLogger, Logger } from "../lib/logger.js";
 import { Header } from "../components/Header.js";
 import { AppStatus } from "../components/AppStatus.js";
+import { ProgressBar } from "../components/ProgressBar.js";
 import type { BackupConfig } from "../types.js";
 import type { AppDefinition } from "../types.js";
 import { existsSync } from "fs";
@@ -315,6 +316,7 @@ function BackupInteractive({ appFilter }: { appFilter?: string }) {
   const [currentLabel, setCurrentLabel] = useState("Loading configuration...");
   const [failedCount, setFailedCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [appProgress, setAppProgress] = useState({ current: 0, total: 0 });
 
   function addStep(step: CompletedStep) {
     setCompletedSteps((prev) => [...prev, step]);
@@ -375,9 +377,12 @@ function BackupInteractive({ appFilter }: { appFilter?: string }) {
       });
 
       let failed = 0;
+      setAppProgress({ current: 0, total: apps.length });
 
       // Backup each app
-      for (const app of apps) {
+      for (let i = 0; i < apps.length; i++) {
+        const app = apps[i];
+        setAppProgress({ current: i, total: apps.length });
         setCurrentLabel(`Backing up ${app.displayName}...`);
         try {
           const outputPath = `${archiveDir}/${app.name}.tar.zst`;
@@ -544,12 +549,20 @@ function BackupInteractive({ appFilter }: { appFilter?: string }) {
 
       {/* Current active phase with spinner */}
       {phase === "running" && (
-        <Text>
-          <Text color="green">
-            <Spinner type="dots" />
+        <Box flexDirection="column">
+          <Text>
+            <Text color="green">
+              <Spinner type="dots" />
+            </Text>
+            {" "}{currentLabel}
           </Text>
-          {" "}{currentLabel}
-        </Text>
+          {appProgress.total > 1 && (
+            <ProgressBar
+              percent={(appProgress.current / appProgress.total) * 100}
+              label={`${appProgress.current}/${appProgress.total} apps`}
+            />
+          )}
+        </Box>
       )}
 
       {/* Final summary */}

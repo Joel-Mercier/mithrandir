@@ -25,6 +25,7 @@ import { shell } from "../lib/shell.js";
 import { createRestoreLogger, Logger } from "../lib/logger.js";
 import { Header } from "../components/Header.js";
 import { AppStatus } from "../components/AppStatus.js";
+import { ProgressBar } from "../components/ProgressBar.js";
 import type { AppDefinition, BackupConfig } from "../types.js";
 import { existsSync } from "fs";
 
@@ -611,6 +612,7 @@ function FullRestoreInteractive({
   const [failedCount, setFailedCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [availableApps, setAvailableApps] = useState<string[]>([]);
+  const [restoreProgress, setRestoreProgress] = useState({ current: 0, total: 0 });
 
   function addStep(step: CompletedStep) {
     setCompletedSteps((prev) => [...prev, step]);
@@ -679,10 +681,13 @@ function FullRestoreInteractive({
 
     // Restore each app
     const appNames = apps.filter((a) => a !== "secrets");
-    for (const appName of appNames) {
+    setRestoreProgress({ current: 0, total: appNames.length });
+    for (let i = 0; i < appNames.length; i++) {
+      const appName = appNames[i];
       const app = getApp(appName);
       if (!app) continue;
 
+      setRestoreProgress({ current: i, total: appNames.length });
       setCurrentLabel(`Restoring ${app.displayName}...`);
       try {
         const found = await findBackupFile(appName, dateArg, config);
@@ -781,13 +786,21 @@ function FullRestoreInteractive({
 
       {/* Current active phase with spinner */}
       {(phase === "init" || phase === "running") && (
-        <Text>
-          <Text color="green">
-            <Spinner type="dots" />
+        <Box flexDirection="column">
+          <Text>
+            <Text color="green">
+              <Spinner type="dots" />
+            </Text>
+            {" "}
+            {currentLabel}
           </Text>
-          {" "}
-          {currentLabel}
-        </Text>
+          {phase === "running" && restoreProgress.total > 1 && (
+            <ProgressBar
+              percent={(restoreProgress.current / restoreProgress.total) * 100}
+              label={`${restoreProgress.current}/${restoreProgress.total} apps`}
+            />
+          )}
+        </Box>
       )}
 
       {/* Final summary */}
