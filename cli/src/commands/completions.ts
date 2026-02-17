@@ -64,14 +64,10 @@ function generateZsh(): string {
   const cmds = SUBCOMMANDS.join(" ");
   const backupSubs = BACKUP_SUBCOMMANDS.join(" ");
 
-  return `#compdef mithrandir
-# mithrandir zsh completions
+  return `# mithrandir zsh completions
 # Add to ~/.zshrc: eval "$(mithrandir completions zsh)"
 _mithrandir() {
-  local -a commands apps backup_subs
-  commands=(${cmds})
-  apps=(${apps})
-  backup_subs=(${backupSubs})
+  local state
 
   _arguments -C \\
     '1:command:->command' \\
@@ -79,37 +75,35 @@ _mithrandir() {
 
   case $state in
     command)
-      _describe 'command' commands
+      compadd -- ${cmds}
       ;;
     args)
       case \${words[2]} in
         start|stop|restart|install|reinstall|uninstall|update|log)
-          _describe 'app' apps
+          compadd -- ${apps}
           ;;
         backup)
           if (( CURRENT == 3 )); then
-            local -a backup_opts
-            backup_opts=($backup_subs \${apps[@]})
-            _describe 'backup subcommand or app' backup_opts
+            compadd -- ${backupSubs} ${apps}
           elif [[ \${words[3]} == "list" || \${words[3]} == "delete" ]]; then
-            _describe 'location' '(local remote)'
+            compadd -- local remote
+          elif [[ \${words[3]} == "verify" ]]; then
+            compadd -- --remote --extract
           fi
           ;;
         restore)
           if (( CURRENT == 3 )); then
-            local -a restore_opts
-            restore_opts=(full \${apps[@]})
-            _describe 'target' restore_opts
+            compadd -- full ${apps}
           fi
           ;;
         completions)
-          _describe 'shell' '(bash zsh fish)'
+          compadd -- bash zsh fish
           ;;
       esac
       ;;
   esac
 }
-_mithrandir
+compdef _mithrandir mithrandir
 `;
 }
 

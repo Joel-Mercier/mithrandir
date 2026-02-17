@@ -1,11 +1,19 @@
-import { createRequire } from "module";
+import { readFileSync } from "fs";
 import { execSync } from "child_process";
+import { resolve } from "path";
 import { getProjectRoot } from "../lib/config.js";
 
 export async function runVersion(): Promise<void> {
-  const require = createRequire(import.meta.url);
-  const pkg = require("../../package.json");
-  const version = pkg.version ?? "unknown";
+  let version = "unknown";
+  try {
+    const root = getProjectRoot();
+    const pkg = JSON.parse(
+      readFileSync(resolve(root, "cli", "package.json"), "utf-8"),
+    );
+    version = pkg.version ?? "unknown";
+  } catch {
+    // package.json not found
+  }
 
   let gitHash = "";
   try {
