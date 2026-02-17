@@ -199,6 +199,12 @@ sudo mithrandir self-update
 ```
 Pulls the latest code from git, installs any new dependencies, and rebuilds the CLI. Since `/usr/local/bin/mithrandir` is a symlink to the built file, no reinstall is needed.
 
+The CLI also checks for updates automatically once every 24 hours. When a newer version is available on the remote, a yellow notice is printed after the command output:
+```
+Update available (3 commits behind). Run `mithrandir self-update` to update.
+```
+The check runs concurrently with the command so it doesn't add latency. The last check timestamp is cached in `~/.cache/mithrandir/last-update-check`. The check is skipped for `self-update`, `version`, and `completions` commands.
+
 **Version:**
 ```bash
 mithrandir version

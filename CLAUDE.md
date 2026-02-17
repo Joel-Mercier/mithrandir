@@ -65,6 +65,9 @@ The backup command runs from systemd timer (non-TTY) daily. `commands/backup.tsx
 ### Config Loading (`cli/src/lib/config.ts`)
 `getProjectRoot()` resolves the repo root by walking up from `cli/src/lib/`. `.env` and `backup.conf` live at repo root, not inside `cli/`.
 
+### Auto Update Check (`cli/src/lib/update-check.ts`)
+On every CLI invocation (except `self-update`, `version`, `completions`), an update check runs concurrently with the command. It compares local `HEAD` with `origin/<branch>` via `git fetch --quiet`, caching the last check timestamp in `~/.cache/mithrandir/last-update-check` (24-hour interval). If behind, a yellow notice is printed after command output. The check is wrapped in try/catch so it never breaks the CLI.
+
 ## Configuration
 
 - **.env** — `BASE_DIR`, `PUID`/`PGID`, `TZ`, plus per-app secrets (DuckDNS, WireGuard, Spotify). Not in git.

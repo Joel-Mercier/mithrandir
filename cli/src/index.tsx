@@ -19,6 +19,7 @@ import { runVersion } from "./commands/version.js";
 import { runConfig } from "./commands/config.js";
 import { runCompletions } from "./commands/completions.js";
 import { ErrorBoundary } from "./components/ErrorBoundary.js";
+import { checkForUpdate } from "./lib/update-check.js";
 
 const cli = meow(
   `
@@ -124,6 +125,10 @@ const cli = meow(
 
 const command = cli.input[0];
 
+// Start update check in background (skip for self-update/version/completions)
+const skipUpdateCheck = ["self-update", "version", "completions"].includes(command ?? "");
+const updateCheckPromise = skipUpdateCheck ? null : checkForUpdate();
+
 switch (command) {
   case "setup":
     render(
@@ -207,4 +212,11 @@ switch (command) {
 
   default:
     cli.showHelp();
+}
+
+// Print update notice if available (non-blocking, after command completes)
+if (updateCheckPromise) {
+  updateCheckPromise.then((notice) => {
+    if (notice) console.log(`\n\x1b[33m${notice}\x1b[0m`);
+  });
 }
