@@ -240,7 +240,6 @@ function StatusCommand() {
   const tableData = info.apps.map((a) => ({
     App: a.app.displayName,
     Status: statusDotChar(a.containerStatus),
-    URL: a.url ?? "—",
     Backup: a.lastBackup ?? "none",
     Disk: a.diskUsage,
   }));
