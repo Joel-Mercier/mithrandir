@@ -105,9 +105,6 @@ get_app_config() {
         lidarr)
             echo "$BASE_DIR/lidarr:config:docker-compose.yml"
             ;;
-        jellyseerr)
-            echo "$BASE_DIR/jellyseerr:app/config:docker-compose.yml"
-            ;;
         seerr)
             echo "$BASE_DIR/seerr:app/config:docker-compose.yml"
             ;;
@@ -139,7 +136,7 @@ get_app_config() {
 detect_apps() {
     local apps=()
     local known_apps=("homeassistant" "qbittorrent" "prowlarr" "radarr" "sonarr" "bazarr" "lidarr" 
-                      "jellyseerr" "seerr" "homarr" "jellyfin" "navidrome" "duckdns" "wireguard" "uptime-kuma")
+                      "seerr" "homarr" "jellyfin" "navidrome" "duckdns" "wireguard" "uptime-kuma")
 
     for app in "${known_apps[@]}"; do
         local app_config

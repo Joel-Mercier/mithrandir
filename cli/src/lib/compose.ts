@@ -187,8 +187,6 @@ export function generateCompose(
 /** Map container config mount path based on app type */
 function getContainerConfigPath(app: AppDefinition): string {
   switch (app.name) {
-    case "jellyseerr":
-      return "/app/config";
     case "seerr":
       return "/app/config";
     case "navidrome":

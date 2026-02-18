@@ -76,29 +76,6 @@ export const APP_REGISTRY: AppDefinition[] = [
     needsDataDir: true,
   },
   {
-    name: "jellyseerr",
-    displayName: "Jellyseerr",
-    description: "Media request manager for Jellyfin (legacy)",
-    image: "ghcr.io/fallenbagel/jellyseerr:latest",
-    port: 5055,
-    configSubdir: "app/config",
-    needsDataDir: false,
-    init: true,
-    conflictsWith: ["seerr"],
-    environment: {
-      LOG_LEVEL: "debug",
-      PORT: "5055",
-    },
-    healthcheck: {
-      test:
-        "wget --no-verbose --tries=1 --spider http://localhost:5055/api/v1/status || exit 1",
-      startPeriod: "20s",
-      timeout: "3s",
-      interval: "15s",
-      retries: 3,
-    },
-  },
-  {
     name: "seerr",
     displayName: "Seerr",
     description: "Media request manager for Jellyfin (recommended, successor to Jellyseerr)",
@@ -107,7 +84,6 @@ export const APP_REGISTRY: AppDefinition[] = [
     configSubdir: "app/config",
     needsDataDir: false,
     init: true,
-    conflictsWith: ["jellyseerr"],
     environment: {
       LOG_LEVEL: "debug",
       PORT: "5055",

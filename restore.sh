@@ -90,9 +90,6 @@ get_app_config() {
         lidarr)
             echo "$BASE_DIR/lidarr:config:docker-compose.yml"
             ;;
-        jellyseerr)
-            echo "$BASE_DIR/jellyseerr:app/config:docker-compose.yml"
-            ;;
         seerr)
             echo "$BASE_DIR/seerr:app/config:docker-compose.yml"
             ;;
@@ -380,7 +377,7 @@ restore_full() {
 
     # Detect which apps have backups available (without downloading)
     local known_apps=("homeassistant" "qbittorrent" "prowlarr" "radarr" "sonarr" "bazarr" "lidarr"
-                      "jellyseerr" "seerr" "homarr" "jellyfin" "navidrome" "duckdns" "wireguard" "uptime-kuma")
+                      "seerr" "homarr" "jellyfin" "navidrome" "duckdns" "wireguard" "uptime-kuma")
 
     # Resolve "latest" to an actual date for remote lookups
     local resolved_date="$archive_date"
@@ -492,7 +489,7 @@ Examples:
 
 Available apps:
   homeassistant, qbittorrent, prowlarr, radarr, sonarr, bazarr, lidarr,
-  jellyseerr, seerr, homarr, jellyfin, navidrome, duckdns, wireguard, uptime-kuma
+  seerr, homarr, jellyfin, navidrome, duckdns, wireguard, uptime-kuma
 EOF
 }
 

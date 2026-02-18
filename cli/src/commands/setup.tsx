@@ -331,8 +331,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
   function AppSelectStep() {
     useEffect(() => {
       if (autoYes) {
-        // In auto mode, select all apps but filter conflicts (prefer Seerr over Jellyseerr)
-        const allApps = APP_REGISTRY.filter((a) => a.name !== "jellyseerr");
+        const allApps = APP_REGISTRY
         setSelectedApps(filterConflicts(allApps));
         setStep("install-apps");
       }
@@ -358,7 +357,6 @@ export function SetupCommand({ flags }: SetupCommandProps) {
       <Box flexDirection="column">
         <StepIndicator current={4} total={7} label="Select Apps" />
         <Text>Choose services to install (space to toggle, enter to confirm):</Text>
-        <Text dimColor>Note: Seerr and Jellyseerr conflict (same port). Only the first selected will be installed.</Text>
         <MultiSelect options={options} onSubmit={handleSubmit} />
       </Box>
     );
@@ -469,7 +467,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
             <Text>{"  "}{"WireGuard".padEnd(20)}<Text dimColor>VPN service active on UDP port 51820</Text></Text>
           )}
         </Box>
-        {(hasApp("wireguard") || hasApp("jellyfin") || (hasApp("jellyfin") && (hasApp("jellyseerr") || hasApp("seerr")))) && (
+        {(hasApp("wireguard") || hasApp("jellyfin") || (hasApp("jellyfin") && hasApp("seerr"))) && (
           <Divider title="Notes" titleColor="yellow" dividerColor="gray" />
         )}
         {hasApp("wireguard") && (
@@ -490,11 +488,11 @@ export function SetupCommand({ flags }: SetupCommandProps) {
             <Text>   - Smart TVs (Samsung, LG)</Text>
           </Box>
         )}
-        {hasApp("jellyfin") && (hasApp("jellyseerr") || hasApp("seerr")) && (
+        {hasApp("jellyfin") && hasApp("seerr") && (
           <Box flexDirection="column" marginBottom={1}>
-            <Text bold>Jellyseerr, Seerr & Jellyfin note:</Text>
+            <Text bold>Seerr & Jellyfin note:</Text>
             <Text>  Wholphin is an app that allows for media playback from Jellyfin</Text>
-            <Text>  and media discovery and request from Jellyseerr / Seerr.</Text>
+            <Text>  and media discovery and request from Seerr.</Text>
           </Box>
         )}
         <Box flexDirection="column" marginBottom={1}>
@@ -739,7 +737,7 @@ export async function writeComposeAndStart(
   ], { sudo: true });
 
   // Set ownership for config dirs BEFORE starting the container.
-  // Seerr (and Jellyseerr) run as the node user (UID 1000) inside the
+  // Seerr runs as the node user (UID 1000) inside the
   // container, so the config dir must be writable before first start.
   for (const p of configPaths) {
     await shell("chown", ["-R", `${envConfig.PUID}:${envConfig.PGID}`, p], {

@@ -50,7 +50,7 @@ prompt_yes_no() {
 # Valid app names (container name = directory name under BASE_DIR)
 VALID_APPS=(
     homeassistant qbittorrent prowlarr radarr sonarr bazarr lidarr
-    jellyseerr seerr homarr jellyfin navidrome duckdns wireguard uptime-kuma
+    seerr homarr jellyfin navidrome duckdns wireguard uptime-kuma
 )
 
 is_valid_app() {
@@ -223,7 +223,6 @@ INSTALL_RADARR=false
 INSTALL_SONARR=false
 INSTALL_BAZARR=false
 INSTALL_LIDARR=false
-INSTALL_JELLYSEERR=false
 INSTALL_SEERR=false
 INSTALL_HOMARR=false
 INSTALL_JELLYFIN=false
@@ -785,69 +784,22 @@ EOF"
 fi
 
 # -----------------------------
-# Jellyseerr (legacy — conflicts with Seerr, same port 5055)
+# Seerr
 # -----------------------------
-describe_app "Jellyseerr (legacy)" \
-"Request management system for Jellyfin. NOTE: Seerr is the recommended successor."
+describe_app "Seerr (recommended)" \
+"Request management system for Jellyfin. Successor to Jellyseerr."
 
-if prompt_yes_no "Install / manage Jellyseerr?"; then
-    INSTALL_JELLYSEERR=true
-    JELLYSEERR_IMAGE="ghcr.io/fallenbagel/jellyseerr:latest"
-    JELLYSEERR_DIR="$BASE_DIR/jellyseerr"
+if prompt_yes_no "Install / manage Seerr?"; then
+    INSTALL_SEERR=true
+    SEERR_IMAGE="ghcr.io/seerr-team/seerr:latest"
+    SEERR_DIR="$BASE_DIR/seerr"
 
-    if container_running "jellyseerr"; then
-        prompt_update_if_needed "jellyseerr" "$JELLYSEERR_IMAGE" "$JELLYSEERR_DIR"
+    if container_running "seerr"; then
+        prompt_update_if_needed "seerr" "$SEERR_IMAGE" "$SEERR_DIR"
     else
-        run "mkdir -p \"$JELLYSEERR_DIR/app/config\""
-        run "chown -R ${PUID:-1000}:${PGID:-1000} \"$JELLYSEERR_DIR/app/config\""
-        run "cat > \"$JELLYSEERR_DIR/docker-compose.yml\" <<EOF
-services:
-  jellyseerr:
-    image: $JELLYSEERR_IMAGE
-    init: true
-    container_name: jellyseerr
-    environment:
-      - LOG_LEVEL=debug
-      - TZ=Etc/UTC
-      - PORT=5055
-    ports:
-      - 5055:5055
-    volumes:
-      - $JELLYSEERR_DIR/app/config:/app/config
-    healthcheck:
-      test: wget --no-verbose --tries=1 --spider http://localhost:5055/api/v1/status || exit 1
-      start_period: 20s
-      timeout: 3s
-      interval: 15s
-      retries: 3
-    restart: unless-stopped
-EOF"
-        start_compose "$JELLYSEERR_DIR" "jellyseerr"
-    fi
-fi
-
-# -----------------------------
-# Seerr (recommended — conflicts with Jellyseerr, same port 5055)
-# -----------------------------
-if $INSTALL_JELLYSEERR; then
-    echo
-    echo "Skipping Seerr — Jellyseerr is already selected (both use port 5055)."
-    echo
-else
-    describe_app "Seerr (recommended)" \
-    "Request management system for Jellyfin. Successor to Jellyseerr."
-
-    if prompt_yes_no "Install / manage Seerr?"; then
-        INSTALL_SEERR=true
-        SEERR_IMAGE="ghcr.io/seerr-team/seerr:latest"
-        SEERR_DIR="$BASE_DIR/seerr"
-
-        if container_running "seerr"; then
-            prompt_update_if_needed "seerr" "$SEERR_IMAGE" "$SEERR_DIR"
-        else
-            run "mkdir -p \"$SEERR_DIR/app/config\""
-            run "chown -R ${PUID:-1000}:${PGID:-1000} \"$SEERR_DIR/app/config\""
-            run "cat > \"$SEERR_DIR/docker-compose.yml\" <<EOF
+        run "mkdir -p \"$SEERR_DIR/app/config\""
+        run "chown -R ${PUID:-1000}:${PGID:-1000} \"$SEERR_DIR/app/config\""
+        run "cat > \"$SEERR_DIR/docker-compose.yml\" <<EOF
 services:
   seerr:
     image: $SEERR_IMAGE
@@ -869,8 +821,7 @@ services:
       retries: 3
     restart: unless-stopped
 EOF"
-            start_compose "$SEERR_DIR" "seerr"
-        fi
+        start_compose "$SEERR_DIR" "seerr"
     fi
 fi
 
@@ -1160,7 +1111,6 @@ $INSTALL_RADARR || echo "- Radarr"
 $INSTALL_SONARR || echo "- Sonarr"
 $INSTALL_BAZARR || echo "- Bazarr"
 $INSTALL_LIDARR || echo "- Lidarr"
-$INSTALL_JELLYSEERR || echo "- Jellyseerr"
 $INSTALL_SEERR || echo "- Seerr"
 $INSTALL_HOMARR || echo "- Homarr"
 $INSTALL_JELLYFIN || echo "- Jellyfin"
@@ -1196,7 +1146,6 @@ $INSTALL_RADARR       && print_url "Radarr" 7878
 $INSTALL_SONARR       && print_url "Sonarr" 8989
 $INSTALL_BAZARR       && print_url "Bazarr" 6767
 $INSTALL_LIDARR       && print_url "Lidarr" 8686
-$INSTALL_JELLYSEERR   && print_url "Jellyseerr" 5055
 $INSTALL_SEERR        && print_url "Seerr" 5055
 $INSTALL_HOMARR       && print_url "Homarr" 7575
 $INSTALL_JELLYFIN     && print_url "Jellyfin" 8096
@@ -1233,9 +1182,9 @@ fi
 
 echo
 
-if $INSTALL_JELLYFIN && ($INSTALL_JELLYSEERR || $INSTALL_SEERR); then
-    echo "Jellyseerr / Seerr & Jellyfin note:"
-    echo "  Wholphin is an app that allows for media playback from Jellyfin and media discovery and request from Jellyseerr / Seerr. You can use it instead of the official Jellyfin app."
+if $INSTALL_JELLYFIN && $INSTALL_SEERR; then
+    echo "Seerr & Jellyfin note:"
+    echo "  Wholphin is an app that allows for media playback from Jellyfin and media discovery and request from Seerr. You can use it instead of the official Jellyfin app."
 fi
 
 echo

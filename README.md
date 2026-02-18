@@ -287,8 +287,7 @@ Uninstalls all Homelab components, including Docker, backup systemd timer, rclon
 | Sonarr | 8989 | TV series collection manager |
 | Bazarr | 6767 | Subtitle manager for Sonarr and Radarr |
 | Lidarr | 8686 | Music collection manager |
-| Jellyseerr | 5055 | Media request manager for Jellyfin (legacy) |
-| Seerr | 5055 | Media request manager for Jellyfin (recommended, successor to Jellyseerr) |
+| Seerr | 5055 | Media request manager for Jellyfin |
 | Homarr | 7575 | Customizable dashboard for your server |
 | Jellyfin | 8096 | Free media streaming server |
 | Navidrome | 4533 | Modern music server and streamer |
@@ -296,9 +295,8 @@ Uninstalls all Homelab components, including Docker, backup systemd timer, rclon
 | WireGuard | 51820/udp | Fast, modern VPN tunnel |
 | Uptime Kuma | 3001 | Self-hosted monitoring tool |
 
-Jellyseerr and Seerr conflict with each other (both use port 5055) — only one can be installed at a time.
-
 ## TODO
 
+- [ ] Use all the apps APIs to preconfigure the setup when running the setup wizard. Create a API wrapper for each app with the necessary methods to configure the app. For that to work, things like the API keys need to be retrieved from the apps config files. Some things like the admin passwords need to be prompted for.
 - [ ] Replace Uptime Kuma with Gatus which has support for file based configuration (could allow to setup alerts and monitoring directly in the script without using the UI)
 - [ ] Check if Profilarr is a good solution for quality profiles
