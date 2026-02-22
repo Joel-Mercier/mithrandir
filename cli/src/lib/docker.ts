@@ -191,9 +191,11 @@ export async function pullImageWithProgress(
   const layers = new Map<string, { current: number; total: number }>();
   let buffer = "";
 
-  proc.stdout?.on("data", (chunk: Buffer) => {
+  // Docker pull writes progress to stderr using \r for in-place line updates
+  proc.stderr?.on("data", (chunk: Buffer) => {
     buffer += chunk.toString();
-    const lines = buffer.split("\n");
+    // Split on both \r and \n since Docker uses \r for progress updates
+    const lines = buffer.split(/\r?\n|\r/);
     buffer = lines.pop() ?? "";
 
     for (const line of lines) {

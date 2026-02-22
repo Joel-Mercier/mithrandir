@@ -297,7 +297,5 @@ Uninstalls all Homelab components, including Docker, backup systemd timer, rclon
 
 ## TODO
 
-- [ ] The progress bars during the app installation step in the setup wizard are not working properly. They immediatly display 99% and don't update. @cli/src/components/ProgressBar.tsx
-- [ ] Show the CLI version in the header component @cli/src/components/Header.tsx
 - [ ] Replace Uptime Kuma with Gatus which has support for file based configuration (could allow to setup alerts and monitoring directly in the script without using the UI)
 - [ ] Check if Profilarr is a good solution for quality profiles
