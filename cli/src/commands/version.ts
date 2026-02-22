@@ -3,7 +3,7 @@ import { execSync } from "child_process";
 import { resolve } from "path";
 import { getProjectRoot } from "@/lib/config.js";
 
-export async function runVersion(): Promise<void> {
+export function getVersionString(): string {
   let version = "unknown";
   try {
     const root = getProjectRoot();
@@ -28,5 +28,9 @@ export async function runVersion(): Promise<void> {
   }
 
   const suffix = gitHash ? ` (${gitHash})` : "";
-  console.log(`mithrandir v${version}${suffix}`);
+  return `v${version}${suffix}`;
+}
+
+export async function runVersion(): Promise<void> {
+  console.log(`mithrandir ${getVersionString()}`);
 }

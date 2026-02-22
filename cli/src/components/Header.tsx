@@ -1,5 +1,6 @@
 import { Box, Text } from "ink";
 import { Divider } from "@/components/Divider.js";
+import { getVersionString } from "@/commands/version.js";
 
 interface HeaderProps {
   title?: string;
@@ -59,6 +60,7 @@ export function Header({ title }: HeaderProps) {
             {"╩ ╩╩ ╩ ╩ ╩╩╚═╩ ╩╝╚╝═╩╝╩╩╚═"}
           </Text>
           <Divider dividerChar="═" dividerColor="yellow" width={40} />
+          <Text dimColor>{getVersionString()}</Text>
         </Box>
       </Box>
       {title && (
