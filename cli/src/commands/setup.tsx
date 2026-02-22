@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Box, Text, useApp } from "ink";
-import { MultiSelect, TextInput, ConfirmInput } from "@inkjs/ui";
+import { MultiSelect, TextInput, PasswordInput, ConfirmInput } from "@inkjs/ui";
 import Spinner from "ink-spinner";
 import {
   APP_REGISTRY,
@@ -842,8 +842,11 @@ function AutoSetupAppsStep({ selectedApps, envConfig, localIp, autoYes, onComple
   function handlePromptSubmit(value: string) {
     const resolver = promptResolver.current;
     promptResolver.current = null;
+    const currentState = promptState;
     setPromptState(null);
-    resolver?.(value);
+    // PasswordInput has no defaultValue — use the default if submitted empty
+    const resolved = (currentState === "password" && !value) ? promptDefault : value;
+    resolver?.(resolved);
   }
 
   function hasApp(name: string): boolean {
@@ -922,6 +925,7 @@ function AutoSetupAppsStep({ selectedApps, envConfig, localIp, autoYes, onComple
             authenticationMethod: "forms",
             username,
             password,
+            passwordConfirmation: password,
           }));
           // Register *arr apps as applications in Prowlarr
           const arrApps: Array<{ name: string; impl: string; contract: string; port: number; getKey: () => Promise<string | null> }> = [];
@@ -960,6 +964,7 @@ function AutoSetupAppsStep({ selectedApps, envConfig, localIp, autoYes, onComple
             authenticationMethod: "forms",
             username,
             password,
+            passwordConfirmation: password,
           }));
           if (hasApp("qbittorrent")) {
             try {
@@ -1001,6 +1006,7 @@ function AutoSetupAppsStep({ selectedApps, envConfig, localIp, autoYes, onComple
             authenticationMethod: "forms",
             username,
             password,
+            passwordConfirmation: password,
           }));
           if (hasApp("qbittorrent")) {
             try {
@@ -1042,6 +1048,7 @@ function AutoSetupAppsStep({ selectedApps, envConfig, localIp, autoYes, onComple
             authenticationMethod: "forms",
             username,
             password,
+            passwordConfirmation: password,
           }));
           if (hasApp("qbittorrent")) {
             try {
@@ -1074,6 +1081,9 @@ function AutoSetupAppsStep({ selectedApps, envConfig, localIp, autoYes, onComple
 
         // ── Jellyfin ─────────────────────────────────────────────────
         if (app.name === "jellyfin") {
+          // Store credentials early so Seerr can use them even if the wizard partially fails
+          jellyfinUsername = username;
+          jellyfinPassword = password;
           const client = createJellyfinClient({ baseUrl });
           const info = await apiCall("Check startup wizard status", () => client.system.getPublicInfo());
           if (!info.StartupWizardCompleted) {
@@ -1083,7 +1093,9 @@ function AutoSetupAppsStep({ selectedApps, envConfig, localIp, autoYes, onComple
               MetadataCountryCode: country,
               PreferredMetadataLanguage: language,
             }));
-            await apiCall("Create admin user", () => client.startup.updateUser({ Name: username, Password: password }));
+            // Initialize the first user record before updating it
+            await apiCall("Get initial user record", () => client.startup.getFirstUser());
+            await apiCall("Set admin user credentials", () => client.startup.updateUser({ Name: username, Password: password }));
             await apiCall("Enable remote access", () => client.startup.setRemoteAccess({ EnableRemoteAccess: true, EnableAutomaticPortMapping: false }));
             await apiCall("Complete startup wizard", () => client.startup.complete());
           }
@@ -1093,8 +1105,6 @@ function AutoSetupAppsStep({ selectedApps, envConfig, localIp, autoYes, onComple
           } catch (err: any) {
             warnings.push(err.message);
           }
-          jellyfinUsername = username;
-          jellyfinPassword = password;
         }
 
         // ── Seerr ────────────────────────────────────────────────────
@@ -1104,12 +1114,20 @@ function AutoSetupAppsStep({ selectedApps, envConfig, localIp, autoYes, onComple
           const client = createSeerrClient({ apiKey, baseUrl });
           const jellyfinUrl = `http://${localIp}:8096`;
 
-          // Configure Jellyfin connection
+          // Configure Jellyfin connection and initialize Seerr admin via Jellyfin login
           if (hasApp("jellyfin") && jellyfinUsername) {
             await apiCall("Configure Jellyfin connection", () => client.jellyfinSettings.update({
               hostname: jellyfinUrl,
               adminUser: jellyfinUsername,
               adminPass: jellyfinPassword,
+            }));
+
+            // Login via Jellyfin to create the admin user in Seerr — required
+            // before settings endpoints (radarr/sonarr) accept requests.
+            await apiCall("Initialize Seerr admin via Jellyfin login", () => client.auth.loginJellyfin({
+              username: jellyfinUsername,
+              password: jellyfinPassword,
+              hostname: jellyfinUrl,
             }));
 
             // Sync and enable libraries
@@ -1256,7 +1274,20 @@ function AutoSetupAppsStep({ selectedApps, envConfig, localIp, autoYes, onComple
       )}
 
       {/* User prompts */}
-      {promptState && promptLabel && (
+      {promptState && promptLabel && promptState === "password" && (
+        <Box flexDirection="column">
+          <Text>{promptLabel}</Text>
+          <Box>
+            <Text color="blue">{">"} </Text>
+            <PasswordInput
+              key={`${currentApp?.name}-${promptState}`}
+              placeholder={promptDefault}
+              onSubmit={handlePromptSubmit}
+            />
+          </Box>
+        </Box>
+      )}
+      {promptState && promptLabel && promptState !== "password" && (
         <Box flexDirection="column">
           <Text>{promptLabel}</Text>
           <Box>
