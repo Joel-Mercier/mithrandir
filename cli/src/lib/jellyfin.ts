@@ -73,9 +73,18 @@ export interface PublicSystemInfo {
 // Library
 export interface VirtualFolderDto {
   name: string;
-  collectionType: "movies" | "tvshows" | "music" | "musicvideos" | "homevideos" | "boxsets" | "books" | "mixed";
+  collectionType: CollectionTypeOptions;
   paths: string[];
   refreshLibrary?: boolean;
+}
+
+export type CollectionTypeOptions = "movies" | "tvshows" | "music" | "musicvideos" | "homevideos" | "boxsets" | "books" | "mixed";
+
+export interface VirtualFolderInfo {
+  Name?: string | null;
+  Locations?: string[] | null;
+  CollectionType?: CollectionTypeOptions | null;
+  ItemId?: string | null;
 }
 
 // ---------------------------------------------------------------------------

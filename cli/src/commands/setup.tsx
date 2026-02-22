@@ -1125,18 +1125,6 @@ function AutoSetupAppsStep({ selectedApps, envConfig, localIp, autoYes, onComple
             } catch (err: any) {
               warnings.push(err.message);
             }
-            if (hasApp("lidarr")) {
-              try {
-                await apiCall("Create Music library", () => authClient.library.addVirtualFolder({
-                  name: "Music",
-                  collectionType: "music",
-                  paths: ["/data/media/music"],
-                  refreshLibrary: false,
-                }));
-              } catch (err: any) {
-                warnings.push(err.message);
-              }
-            }
           }
         }
 
