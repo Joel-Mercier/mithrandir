@@ -1,25 +1,25 @@
 #!/usr/bin/env bun
 import meow from "meow";
 import { render } from "ink";
-import { runBackup, runBackupDelete, runBackupList, runBackupVerify } from "./commands/backup.js";
-import { runRestore } from "./commands/restore.js";
-import { SetupCommand } from "./commands/setup.js";
-import { runUninstall } from "./commands/uninstall.js";
-import { runStatus } from "./commands/status.js";
-import { runHealth } from "./commands/health.js";
-import { runUpdate } from "./commands/update.js";
-import { runLog } from "./commands/log.js";
-import { runStart } from "./commands/start.js";
-import { runStop } from "./commands/stop.js";
-import { runRestart } from "./commands/restart.js";
-import { runReinstall } from "./commands/reinstall.js";
-import { runInstall } from "./commands/install.js";
-import { runSelfUpdate } from "./commands/self-update.js";
-import { runVersion } from "./commands/version.js";
-import { runConfig } from "./commands/config.js";
-import { runCompletions } from "./commands/completions.js";
-import { ErrorBoundary } from "./components/ErrorBoundary.js";
-import { checkForUpdate } from "./lib/update-check.js";
+import { runBackup, runBackupDelete, runBackupList, runBackupVerify } from "@/commands/backup.js";
+import { runRestore } from "@/commands/restore.js";
+import { SetupCommand } from "@/commands/setup.js";
+import { runUninstall } from "@/commands/uninstall.js";
+import { runStatus } from "@/commands/status.js";
+import { runHealth } from "@/commands/health.js";
+import { runUpdate } from "@/commands/update.js";
+import { runLog } from "@/commands/log.js";
+import { runStart } from "@/commands/start.js";
+import { runStop } from "@/commands/stop.js";
+import { runRestart } from "@/commands/restart.js";
+import { runReinstall } from "@/commands/reinstall.js";
+import { runInstall } from "@/commands/install.js";
+import { runSelfUpdate } from "@/commands/self-update.js";
+import { runVersion } from "@/commands/version.js";
+import { runConfig } from "@/commands/config.js";
+import { runCompletions } from "@/commands/completions.js";
+import { ErrorBoundary } from "@/components/ErrorBoundary.js";
+import { checkForUpdate } from "@/lib/update-check.js";
 
 const cli = meow(
   `

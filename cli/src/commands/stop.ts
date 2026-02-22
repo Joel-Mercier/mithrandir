@@ -1,6 +1,6 @@
-import { getApp, getAppNames, getContainerName, getComposePath } from "../lib/apps.js";
-import { isContainerRunning, composeDown } from "../lib/docker.js";
-import { loadEnvConfig } from "../lib/config.js";
+import { getApp, getAppNames, getContainerName, getComposePath } from "@/lib/apps.js";
+import { isContainerRunning, composeDown } from "@/lib/docker.js";
+import { loadEnvConfig } from "@/lib/config.js";
 
 export async function runStop(args: string[]): Promise<void> {
   const appName = args[0];

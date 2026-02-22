@@ -1,4 +1,4 @@
-import { shell, commandExists } from "./shell.js";
+import { shell, commandExists } from "@/lib/shell.js";
 import { existsSync } from "fs";
 
 /** Check if rclone is installed */

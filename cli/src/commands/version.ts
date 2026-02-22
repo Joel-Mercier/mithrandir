@@ -1,7 +1,7 @@
 import { readFileSync } from "fs";
 import { execSync } from "child_process";
 import { resolve } from "path";
-import { getProjectRoot } from "../lib/config.js";
+import { getProjectRoot } from "@/lib/config.js";
 
 export async function runVersion(): Promise<void> {
   let version = "unknown";

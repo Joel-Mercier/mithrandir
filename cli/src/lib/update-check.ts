@@ -1,8 +1,8 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
-import { getProjectRoot } from "./config.js";
-import { shell } from "./shell.js";
+import { getProjectRoot } from "@/lib/config.js";
+import { shell } from "@/lib/shell.js";
 
 const CACHE_DIR = join(homedir(), ".cache", "mithrandir");
 const CACHE_FILE = join(CACHE_DIR, "last-update-check");

@@ -1,6 +1,6 @@
-import { shell } from "./shell.js";
-import type { AppDefinition } from "../types.js";
-import { getAppDir } from "./apps.js";
+import { shell } from "@/lib/shell.js";
+import type { AppDefinition } from "@/types.js";
+import { getAppDir } from "@/lib/apps.js";
 
 /**
  * Create a zstd-compressed tarball of an app's config.

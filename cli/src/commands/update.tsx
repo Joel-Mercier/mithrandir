@@ -2,33 +2,32 @@ import { useState, useEffect } from "react";
 import { render, Box, Text, useApp } from "ink";
 import Spinner from "ink-spinner";
 import { StatusMessage, ConfirmInput } from "@inkjs/ui";
-import { loadBackupConfig } from "../lib/config.js";
+import { loadBackupConfig } from "@/lib/config.js";
 import {
   APP_REGISTRY,
   getApp,
   getConfigPaths,
   getComposePath,
   getContainerName,
-} from "../lib/apps.js";
-import { createBackup } from "../lib/tar.js";
+} from "@/lib/apps.js";
+import { createBackup } from "@/lib/tar.js";
 import {
   getRunningImageId,
-  pullImage,
   pullImageWithProgress,
   composeDown,
   composeUp,
-} from "../lib/docker.js";
-import { shell } from "../lib/shell.js";
+} from "@/lib/docker.js";
+import { shell } from "@/lib/shell.js";
 import {
   upload,
   isRcloneInstalled,
   isRcloneRemoteConfigured,
-} from "../lib/rclone.js";
-import { Header } from "../components/Header.js";
-import { AppStatus } from "../components/AppStatus.js";
-import { ProgressBar } from "../components/ProgressBar.js";
-import type { BackupConfig } from "../types.js";
-import type { AppDefinition } from "../types.js";
+} from "@/lib/rclone.js";
+import { Header } from "@/components/Header.js";
+import { AppStatus } from "@/components/AppStatus.js";
+import { ProgressBar } from "@/components/ProgressBar.js";
+import type { BackupConfig } from "@/types.js";
+import type { AppDefinition } from "@/types.js";
 import { existsSync } from "fs";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────

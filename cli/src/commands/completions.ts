@@ -1,4 +1,4 @@
-import { getAppNames } from "../lib/apps.js";
+import { getAppNames } from "@/lib/apps.js";
 
 const SUBCOMMANDS = [
   "setup", "backup", "restore", "start", "stop", "restart",

@@ -2,17 +2,17 @@ import { useState, useEffect } from "react";
 import { render, Box, Text, useApp } from "ink";
 import Spinner from "ink-spinner";
 import { StatusMessage } from "@inkjs/ui";
-import { DataTable } from "../components/DataTable.js";
-import { loadEnvConfig, loadBackupConfig } from "../lib/config.js";
+import { DataTable } from "@/components/DataTable.js";
+import { loadEnvConfig, loadBackupConfig } from "@/lib/config.js";
 import {
   APP_REGISTRY,
   getContainerName,
   getComposePath,
-} from "../lib/apps.js";
-import { isDockerInstalled } from "../lib/docker.js";
-import { isRcloneInstalled, isRcloneRemoteConfigured } from "../lib/rclone.js";
-import { shell } from "../lib/shell.js";
-import { Header } from "../components/Header.js";
+} from "@/lib/apps.js";
+import { isDockerInstalled } from "@/lib/docker.js";
+import { isRcloneInstalled, isRcloneRemoteConfigured } from "@/lib/rclone.js";
+import { shell } from "@/lib/shell.js";
+import { Header } from "@/components/Header.js";
 import { existsSync } from "fs";
 
 // ─── Types ───────────────────────────────────────────────────────────────────

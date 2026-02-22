@@ -2,22 +2,22 @@ import { useState, useEffect } from "react";
 import { render, Box, Text, useApp } from "ink";
 import Spinner from "ink-spinner";
 import { StatusMessage } from "@inkjs/ui";
-import { DataTable } from "../components/DataTable.js";
+import { DataTable } from "@/components/DataTable.js";
 import Link from "ink-link";
-import { Divider } from "../components/Divider.js";
-import { loadEnvConfig, loadBackupConfig } from "../lib/config.js";
+import { Divider } from "@/components/Divider.js";
+import { loadEnvConfig, loadBackupConfig } from "@/lib/config.js";
 import {
   APP_REGISTRY,
   getContainerName,
   getComposePath,
   getAppDir,
-} from "../lib/apps.js";
-import { isDockerInstalled } from "../lib/docker.js";
-import { shell } from "../lib/shell.js";
-import { isTimerActive, hasSystemd } from "../lib/systemd.js";
-import { getLocalIp } from "../lib/distro.js";
-import { Header } from "../components/Header.js";
-import type { AppDefinition } from "../types.js";
+} from "@/lib/apps.js";
+import { isDockerInstalled } from "@/lib/docker.js";
+import { shell } from "@/lib/shell.js";
+import { isTimerActive, hasSystemd } from "@/lib/systemd.js";
+import { getLocalIp } from "@/lib/distro.js";
+import { Header } from "@/components/Header.js";
+import type { AppDefinition } from "@/types.js";
 import { existsSync } from "fs";
 
 // ─── Types ───────────────────────────────────────────────────────────────────

@@ -1,4 +1,4 @@
-import { shell } from "./shell.js";
+import { shell } from "@/lib/shell.js";
 
 export type SupportedDistro = "debian" | "ubuntu";
 

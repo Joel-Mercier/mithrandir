@@ -1,4 +1,4 @@
-import type { AppDefinition } from "../types.js";
+import type { AppDefinition } from "@/types.js";
 
 /**
  * Single source of truth for all mithrandir services.

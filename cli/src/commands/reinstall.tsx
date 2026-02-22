@@ -3,13 +3,13 @@ import { render, Box, Text, useApp } from "ink";
 import Spinner from "ink-spinner";
 import { ConfirmInput, StatusMessage } from "@inkjs/ui";
 import { existsSync } from "fs";
-import { getApp, getAppNames, getAppDir, getComposePath, getContainerName } from "../lib/apps.js";
-import { shell } from "../lib/shell.js";
-import { loadEnvConfig } from "../lib/config.js";
-import { Header } from "../components/Header.js";
-import { AppStatus } from "../components/AppStatus.js";
-import { writeComposeAndStart } from "./setup.js";
-import type { EnvConfig } from "../types.js";
+import { getApp, getAppNames, getAppDir, getComposePath, getContainerName } from "@/lib/apps.js";
+import { shell } from "@/lib/shell.js";
+import { loadEnvConfig } from "@/lib/config.js";
+import { Header } from "@/components/Header.js";
+import { AppStatus } from "@/components/AppStatus.js";
+import { writeComposeAndStart } from "@/commands/setup.js";
+import type { EnvConfig } from "@/types.js";
 
 interface CompletedStep {
   name: string;

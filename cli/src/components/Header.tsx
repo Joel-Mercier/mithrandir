@@ -1,5 +1,5 @@
 import { Box, Text } from "ink";
-import { Divider } from "./Divider.js";
+import { Divider } from "@/components/Divider.js";
 
 interface HeaderProps {
   title?: string;

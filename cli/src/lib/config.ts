@@ -2,7 +2,7 @@ import { readFile } from "fs/promises";
 import { existsSync } from "fs";
 import { resolve, dirname, join } from "path";
 import { homedir } from "os";
-import type { EnvConfig, BackupConfig } from "../types.js";
+import type { EnvConfig, BackupConfig } from "@/types.js";
 
 /** Find the project root (where .env / backup.conf live) */
 export function getProjectRoot(): string {

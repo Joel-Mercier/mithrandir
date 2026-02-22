@@ -1,5 +1,5 @@
 import { execa } from "execa";
-import { getApp, getContainerName, getAppNames } from "../lib/apps.js";
+import { getApp, getContainerName, getAppNames } from "@/lib/apps.js";
 
 export async function runLog(
   args: string[],

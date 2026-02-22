@@ -1,8 +1,8 @@
 import { dirname } from "path";
-import { shell, commandExists } from "./shell.js";
-import { hasSystemd } from "./systemd.js";
-import type { AppDefinition } from "../types.js";
-import { getContainerName, getComposePath } from "./apps.js";
+import { shell, commandExists } from "@/lib/shell.js";
+import { hasSystemd } from "@/lib/systemd.js";
+import type { AppDefinition } from "@/types.js";
+import { getContainerName, getComposePath } from "@/lib/apps.js";
 
 /** Check if Docker is installed */
 export async function isDockerInstalled(): Promise<boolean> {

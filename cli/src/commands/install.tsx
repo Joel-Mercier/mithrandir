@@ -3,13 +3,13 @@ import { Box, render, Text, useApp } from "ink";
 import Spinner from "ink-spinner";
 import { StatusMessage } from "@inkjs/ui";
 import { existsSync } from "fs";
-import { getApp, getAppNames, getComposePath } from "../lib/apps.js";
-import { loadEnvConfig } from "../lib/config.js";
-import { pullImageWithProgress } from "../lib/docker.js";
-import { Header } from "../components/Header.js";
-import { AppStatus } from "../components/AppStatus.js";
-import { ProgressBar } from "../components/ProgressBar.js";
-import { writeComposeAndStart } from "./setup.js";
+import { getApp, getAppNames, getComposePath } from "@/lib/apps.js";
+import { loadEnvConfig } from "@/lib/config.js";
+import { pullImageWithProgress } from "@/lib/docker.js";
+import { Header } from "@/components/Header.js";
+import { AppStatus } from "@/components/AppStatus.js";
+import { ProgressBar } from "@/components/ProgressBar.js";
+import { writeComposeAndStart } from "@/commands/setup.js";
 
 interface CompletedStep {
   name: string;

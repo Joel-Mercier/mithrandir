@@ -3,7 +3,7 @@ import { render, Box, Text, useApp } from "ink";
 import Spinner from "ink-spinner";
 import { ConfirmInput } from "@inkjs/ui";
 import { StatusMessage } from "@inkjs/ui";
-import { loadBackupConfig, getProjectRoot } from "../lib/config.js";
+import { loadBackupConfig, getProjectRoot } from "@/lib/config.js";
 import {
   APP_REGISTRY,
   getApp,
@@ -11,22 +11,22 @@ import {
   getConfigPaths,
   getComposePath,
   getContainerName,
-} from "../lib/apps.js";
-import { extractBackup } from "../lib/tar.js";
-import { stopContainer, composeUp } from "../lib/docker.js";
+} from "@/lib/apps.js";
+import { extractBackup } from "@/lib/tar.js";
+import { stopContainer, composeUp } from "@/lib/docker.js";
 import {
   download,
   listDirs,
   remoteFileExists,
   isRcloneInstalled,
   isRcloneRemoteConfigured,
-} from "../lib/rclone.js";
-import { shell } from "../lib/shell.js";
-import { createRestoreLogger, Logger } from "../lib/logger.js";
-import { Header } from "../components/Header.js";
-import { AppStatus } from "../components/AppStatus.js";
-import { ProgressBar } from "../components/ProgressBar.js";
-import type { AppDefinition, BackupConfig } from "../types.js";
+} from "@/lib/rclone.js";
+import { shell } from "@/lib/shell.js";
+import { createRestoreLogger, Logger } from "@/lib/logger.js";
+import { Header } from "@/components/Header.js";
+import { AppStatus } from "@/components/AppStatus.js";
+import { ProgressBar } from "@/components/ProgressBar.js";
+import type { AppDefinition, BackupConfig } from "@/types.js";
 import { existsSync } from "fs";
 
 // ─── Shared helpers ──────────────────────────────────────────────────────────

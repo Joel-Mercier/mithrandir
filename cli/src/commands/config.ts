@@ -1,5 +1,5 @@
 import { resolve } from "path";
-import { getProjectRoot, loadEnvConfig, loadBackupConfig } from "../lib/config.js";
+import { getProjectRoot, loadEnvConfig, loadBackupConfig } from "@/lib/config.js";
 
 export async function runConfig(): Promise<void> {
   const root = getProjectRoot();

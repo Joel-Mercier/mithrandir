@@ -1,5 +1,5 @@
-import type { AppDefinition, EnvConfig } from "../types.js";
-import { getAppDir } from "./apps.js";
+import type { AppDefinition, EnvConfig } from "@/types.js";
+import { getAppDir } from "@/lib/apps.js";
 
 /**
  * Generate a docker-compose.yml string for an app.

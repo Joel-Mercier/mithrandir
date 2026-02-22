@@ -4,10 +4,10 @@ import Spinner from "ink-spinner";
 import { StatusMessage } from "@inkjs/ui";
 import { existsSync } from "fs";
 import { join } from "path";
-import { shell } from "../lib/shell.js";
-import { getProjectRoot } from "../lib/config.js";
-import { Header } from "../components/Header.js";
-import { AppStatus } from "../components/AppStatus.js";
+import { shell } from "@/lib/shell.js";
+import { getProjectRoot } from "@/lib/config.js";
+import { Header } from "@/components/Header.js";
+import { AppStatus } from "@/components/AppStatus.js";
 
 interface CompletedStep {
   name: string;

@@ -2,14 +2,14 @@ import { useState, useEffect } from "react";
 import { render, Box, Text, useApp } from "ink";
 import Spinner from "ink-spinner";
 import { StatusMessage, ConfirmInput } from "@inkjs/ui";
-import { loadBackupConfig, getProjectRoot } from "../lib/config.js";
+import { loadBackupConfig, getProjectRoot } from "@/lib/config.js";
 import {
   APP_REGISTRY,
   getApp,
   getConfigPaths,
   getComposePath,
-} from "../lib/apps.js";
-import { createBackup, createSecretsBackup } from "../lib/tar.js";
+} from "@/lib/apps.js";
+import { createBackup, createSecretsBackup } from "@/lib/tar.js";
 import {
   upload,
   download,
@@ -19,14 +19,14 @@ import {
   purgeRemote,
   listDirs,
   listFiles,
-} from "../lib/rclone.js";
-import { shell } from "../lib/shell.js";
-import { createBackupLogger, Logger } from "../lib/logger.js";
-import { Header } from "../components/Header.js";
-import { AppStatus } from "../components/AppStatus.js";
-import { ProgressBar } from "../components/ProgressBar.js";
-import type { BackupConfig } from "../types.js";
-import type { AppDefinition } from "../types.js";
+} from "@/lib/rclone.js";
+import { shell } from "@/lib/shell.js";
+import { createBackupLogger, Logger } from "@/lib/logger.js";
+import { Header } from "@/components/Header.js";
+import { AppStatus } from "@/components/AppStatus.js";
+import { ProgressBar } from "@/components/ProgressBar.js";
+import type { BackupConfig } from "@/types.js";
+import type { AppDefinition } from "@/types.js";
 import { existsSync } from "fs";
 
 // ─── Shared helpers ──────────────────────────────────────────────────────────

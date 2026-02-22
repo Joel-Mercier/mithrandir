@@ -1,7 +1,7 @@
 import { existsSync } from "fs";
-import { getApp, getAppNames, getContainerName, getComposePath } from "../lib/apps.js";
-import { isContainerRunning, composeUp } from "../lib/docker.js";
-import { loadEnvConfig } from "../lib/config.js";
+import { getApp, getAppNames, getContainerName, getComposePath } from "@/lib/apps.js";
+import { isContainerRunning, composeUp } from "@/lib/docker.js";
+import { loadEnvConfig } from "@/lib/config.js";
 
 export async function runStart(args: string[]): Promise<void> {
   const appName = args[0];

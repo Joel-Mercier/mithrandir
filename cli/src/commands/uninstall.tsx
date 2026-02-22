@@ -4,12 +4,12 @@ import Spinner from "ink-spinner";
 import { ConfirmInput, StatusMessage } from "@inkjs/ui";
 import { existsSync, readdirSync, statSync } from "fs";
 import { homedir } from "os";
-import { getApp, getAppNames, getAppDir } from "../lib/apps.js";
-import { shell, commandExists } from "../lib/shell.js";
-import { loadEnvConfig } from "../lib/config.js";
-import { BACKUP_LOG_PATH } from "../lib/logger.js";
-import { Header } from "../components/Header.js";
-import { AppStatus } from "../components/AppStatus.js";
+import { getApp, getAppNames, getAppDir } from "@/lib/apps.js";
+import { shell, commandExists } from "@/lib/shell.js";
+import { loadEnvConfig } from "@/lib/config.js";
+import { BACKUP_LOG_PATH } from "@/lib/logger.js";
+import { Header } from "@/components/Header.js";
+import { AppStatus } from "@/components/AppStatus.js";
 
 // ---------------------------------------------------------------------------
 // PATH safety — ensure standard paths exist when running under sudo/systemd
