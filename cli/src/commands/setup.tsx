@@ -10,37 +10,43 @@ import {
   getComposePath,
   getConfigPaths,
   filterConflicts,
-} from "../lib/apps.js";
+} from "@/lib/apps.js";
 import {
   isDockerInstalled,
   waitForDocker,
   installDocker,
   isContainerRunning,
   getRunningImageId,
-  pullImage,
   pullImageWithProgress,
   removeContainer,
   composeUp,
   composeDown,
-} from "../lib/docker.js";
-import { isRcloneInstalled, installRclone } from "../lib/rclone.js";
-import { generateCompose } from "../lib/compose.js";
+} from "@/lib/docker.js";
+import { isRcloneInstalled, installRclone } from "@/lib/rclone.js";
+import { generateCompose } from "@/lib/compose.js";
 import {
   hasSystemd,
   isWsl,
   installSystemdUnits,
-} from "../lib/systemd.js";
-import { detectDistro, getLocalIp } from "../lib/distro.js";
-import { loadEnvConfig, saveEnvConfig } from "../lib/config.js";
-import { shell } from "../lib/shell.js";
-import { Header } from "../components/Header.js";
-import { StepIndicator } from "../components/StepIndicator.js";
-import { AppStatus } from "../components/AppStatus.js";
-import { ProgressBar } from "../components/ProgressBar.js";
-import { Divider } from "../components/Divider.js";
+} from "@/lib/systemd.js";
+import { detectDistro, getLocalIp } from "@/lib/distro.js";
+import { loadEnvConfig, saveEnvConfig } from "@/lib/config.js";
+import { shell } from "@/lib/shell.js";
+import { Header } from "@/components/Header.js";
+import { StepIndicator } from "@/components/StepIndicator.js";
+import { AppStatus } from "@/components/AppStatus.js";
+import { ProgressBar } from "@/components/ProgressBar.js";
+import { Divider } from "@/components/Divider.js";
 import Link from "ink-link";
-import type { AppDefinition, EnvConfig, SecretDefinition } from "../types.js";
+import type { AppDefinition, EnvConfig, SecretDefinition } from "@/types.js";
 import { homedir } from "os";
+import { createQBittorrentClient, getQBittorrentCredentials } from "@/lib/qbittorrent.js";
+import { createProwlarrClient, getProwlarrApiKey } from "@/lib/prowlarr.js";
+import { createRadarrClient, getRadarrApiKey } from "@/lib/radarr.js";
+import { createSonarrClient, getSonarrApiKey } from "@/lib/sonarr.js";
+import { createLidarrClient, getLidarrApiKey } from "@/lib/lidarr.js";
+import { createJellyfinClient, getJellyfinApiKey } from "@/lib/jellyfin.js";
+import { createSeerrClient, getSeerrApiKey } from "@/lib/seerr.js";
 
 interface SetupCommandProps {
   flags: { yes?: boolean };
@@ -53,6 +59,8 @@ type SetupStep =
   | "base-dir"
   | "app-select"
   | "install-apps"
+  | "confirm-autosetup"
+  | "autosetup-apps"
   | "backup-service"
   | "summary";
 
@@ -149,7 +157,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
 
     return (
       <Box flexDirection="column">
-        <StepIndicator current={1} total={7} label="Docker" />
+        <StepIndicator current={1} total={8} label="Docker" />
         {status === "checking" && (
           <Text>
             <Text color="green"><Spinner type="dots" /></Text>
@@ -162,7 +170,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
             <ConfirmInput
               onConfirm={async () => { await doInstall(); }}
               onCancel={() => {
-                setError("Docker is required. Aborting setup.");
+                setError("Docker is required. Abortin | gsetup.");
               }}
             />
           </Box>
@@ -234,7 +242,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
 
     return (
       <Box flexDirection="column">
-        <StepIndicator current={2} total={7} label="rclone" />
+        <StepIndicator current={2} total={8} label="rclone" />
         {status === "checking" && (
           <Text>
             <Text color="green"><Spinner type="dots" /></Text>
@@ -247,7 +255,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
             <ConfirmInput
               onConfirm={async () => { await doInstall(); }}
               onCancel={() => {
-                setError("rclone is required for backups. Aborting setup.");
+                setError("rclone is required for backups. Abortin | gsetup.");
               }}
             />
           </Box>
@@ -313,7 +321,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
 
     return (
       <Box flexDirection="column">
-        <StepIndicator current={3} total={7} label="Base Directory" />
+        <StepIndicator current={3} total={8} label="Base Directory" />
         <Text>Enter the base directory where all Docker app folders should be created:</Text>
         <Box>
           <Text color="blue">{">"} </Text>
@@ -355,7 +363,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
 
     return (
       <Box flexDirection="column">
-        <StepIndicator current={4} total={7} label="Select Apps" />
+        <StepIndicator current={4} total={8} label="Select Apps" />
         <Text>Choose services to install (space to toggle, enter to confirm):</Text>
         <MultiSelect options={options} onSubmit={handleSubmit} />
       </Box>
@@ -405,7 +413,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
 
     return (
       <Box flexDirection="column">
-        <StepIndicator current={6} total={7} label="Backup Service" />
+        <StepIndicator current={7} total={8} label="Backup Service" />
         {status === "checking" && (
           <Text>
             <Text color="green"><Spinner type="dots" /></Text>
@@ -444,7 +452,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
 
     return (
       <Box flexDirection="column">
-        <StepIndicator current={7} total={7} label="Setup Complete" />
+        <StepIndicator current={8} total={8} label="Setup Complete" />
         <Box marginBottom={1}>
           <Text bold color="green">All services are running!</Text>
         </Box>
@@ -543,6 +551,35 @@ export function SetupCommand({ flags }: SetupCommandProps) {
           autoYes={autoYes}
           onComplete={async () => {
             await saveEnvConfig(envConfig);
+            setStep("confirm-autosetup");
+          }}
+        />
+      )}
+      {step === "confirm-autosetup" && (
+        <ConfirmAutoSetupStep
+          selectedApps={selectedApps}
+          autoYes={autoYes}
+          onYes={() => setStep("autosetup-apps")}
+          onNo={() => setStep("backup-service")}
+        />
+      )}
+      {step === "autosetup-apps" && (
+        <AutoSetupAppsStep
+          selectedApps={selectedApps}
+          envConfig={envConfig}
+          localIp={localIp}
+          autoYes={autoYes}
+          onComplete={(results) => {
+            for (const r of results) {
+              addCompletedStep({
+                name: `  ${r.displayName} setup`,
+                status: r.status === "done" ? "done" : "skipped",
+                message: r.status === "done"
+                  ? (r.warnings.length > 0 ? `Done (${r.warnings.length} warning${r.warnings.length > 1 ? "s" : ""})` : "Configured")
+                  : r.error ?? "Failed",
+                notes: r.warnings.length > 0 ? r.warnings.map((w) => `  ⚠ ${w}`) : undefined,
+              });
+            }
             setStep("backup-service");
           }}
         />
@@ -619,7 +656,7 @@ function InstallAppsStep({ selectedApps, envConfig, autoYes, onComplete }: Insta
             (pct) => setPullProgress(pct),
           );
           if (currentId !== latestId) {
-            // Update: write new compose, down, up (matches setup.sh update path)
+            // Update: write new compose, down, up (matche | ssetup.sh update path)
             setInstallPhase("composing");
             await writeComposeAndStart(app, envConfig);
             results.push({ app, status: "updated" });
@@ -663,7 +700,7 @@ function InstallAppsStep({ selectedApps, envConfig, autoYes, onComplete }: Insta
     <Box flexDirection="column">
       <StepIndicator
         current={5}
-        total={7}
+        total={8}
         label={`Installing Apps (${installIdx + 1}/${selectedApps.length})`}
       />
 
@@ -695,6 +732,541 @@ function InstallAppsStep({ selectedApps, envConfig, autoYes, onComplete }: Insta
           {installPhase === "pulling" && pullProgress > 0 && pullProgress < 100 && (
             <ProgressBar percent={pullProgress} />
           )}
+        </Box>
+      )}
+    </Box>
+  );
+}
+
+// ─── Confirm Auto Setup Step ──────────────────────────────────────────────────
+
+interface ConfirmAutoSetupStepProps {
+  selectedApps: AppDefinition[];
+  autoYes: boolean;
+  onYes: () => void;
+  onNo: () => void;
+}
+
+function ConfirmAutoSetupStep({ selectedApps, autoYes, onYes, onNo }: ConfirmAutoSetupStepProps) {
+  const hasSetupableApps = selectedApps.some((app) => AUTO_SETUP_APPS_ORDER.includes(app.name));
+
+  useEffect(() => {
+    if (!hasSetupableApps) {
+      onNo();
+      return;
+    }
+    if (autoYes) {
+      onYes();
+    }
+  }, []);
+
+  if (autoYes || !hasSetupableApps) return null;
+
+  return (
+    <Box flexDirection="column">
+      <StepIndicator current={6} total={8} label="Automatic Setup" />
+      <Text>Would you like to automatically configure your apps (credentials, download clients, etc.)?</Text>
+      <ConfirmInput onConfirm={onYes} onCancel={onNo} />
+    </Box>
+  );
+}
+
+// ─── Auto Setup Apps Step ─────────────────────────────────────────────────────
+
+interface AutoSetupResult {
+  appName: string;
+  displayName: string;
+  status: "done" | "error";
+  error?: string;
+  warnings: string[];
+}
+
+interface AutoSetupAppsStepProps {
+  selectedApps: AppDefinition[];
+  envConfig: EnvConfig;
+  localIp: string;
+  autoYes: boolean;
+  onComplete: (results: AutoSetupResult[]) => void;
+}
+
+const AUTO_SETUP_APPS_ORDER = ["qbittorrent", "prowlarr", "radarr", "sonarr", "lidarr", "jellyfin", "seerr"];
+
+type PromptState =
+  | "username"
+  | "password"
+  | "jellyfin-server-name"
+  | "jellyfin-language"
+  | "jellyfin-country"
+  | null;
+
+/** Wrap an API call with a descriptive label for error context. */
+async function apiCall<T>(label: string, fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (err: any) {
+    const detail = err.stderr?.trim() || err.message;
+    throw new Error(`${label}: ${detail}`);
+  }
+}
+
+function AutoSetupAppsStep({ selectedApps, envConfig, localIp, autoYes, onComplete }: AutoSetupAppsStepProps) {
+  const loopStarted = useRef(false);
+  const promptResolver = useRef<((value: string) => void) | null>(null);
+
+  const [setupIdx, setSetupIdx] = useState(0);
+  const [setupPhase, setSetupPhase] = useState<"credentials" | "setting-up" | "done">("credentials");
+  const [promptState, setPromptState] = useState<PromptState>(null);
+  const [promptDefault, setPromptDefault] = useState("");
+  const [appResults, setAppResults] = useState<AutoSetupResult[]>([]);
+
+  const setupableApps = selectedApps
+    .filter((app) => AUTO_SETUP_APPS_ORDER.includes(app.name))
+    .sort((a, b) => AUTO_SETUP_APPS_ORDER.indexOf(a.name) - AUTO_SETUP_APPS_ORDER.indexOf(b.name));
+
+  useEffect(() => {
+    if (setupableApps.length > 0 && !loopStarted.current) {
+      loopStarted.current = true;
+      startSetupLoop();
+    }
+  }, []);
+
+  function promptUser(state: PromptState, defaultValue: string): Promise<string> {
+    if (autoYes) return Promise.resolve(defaultValue);
+    return new Promise((resolve) => {
+      promptResolver.current = resolve;
+      setPromptDefault(defaultValue);
+      setPromptState(state);
+    });
+  }
+
+  function handlePromptSubmit(value: string) {
+    const resolver = promptResolver.current;
+    promptResolver.current = null;
+    setPromptState(null);
+    resolver?.(value);
+  }
+
+  function hasApp(name: string): boolean {
+    return selectedApps.some((a) => a.name === name);
+  }
+
+  async function startSetupLoop() {
+    const results: AutoSetupResult[] = [];
+    let defaultUsername = autoYes ? "admin" : "";
+    let defaultPassword = autoYes ? "admin" : "";
+    let jellyfinServerName = "Jellyfin";
+    let jellyfinLanguage = "en";
+    let jellyfinCountry = "US";
+
+    // Cross-app credential store
+    let qbtUsername = "";
+    let qbtPassword = "";
+    let jellyfinApiKey = "";
+    let jellyfinUsername = "";
+    let jellyfinPassword = "";
+
+    for (let i = 0; i < setupableApps.length; i++) {
+      const app = setupableApps[i];
+      const baseUrl = app.port ? `http://${localIp}:${app.port}` : undefined;
+      setSetupIdx(i);
+      setSetupPhase("credentials");
+      const warnings: string[] = [];
+
+      try {
+        // Prompt for username/password (Jellyfin gets extra prompts)
+        const username = await promptUser("username", defaultUsername || "admin");
+        defaultUsername = username;
+
+        const password = await promptUser("password", defaultPassword || "admin");
+        defaultPassword = password;
+
+        let serverName = jellyfinServerName;
+        let language = jellyfinLanguage;
+        let country = jellyfinCountry;
+        if (app.name === "jellyfin") {
+          serverName = await promptUser("jellyfin-server-name", jellyfinServerName);
+          jellyfinServerName = serverName;
+          language = await promptUser("jellyfin-language", jellyfinLanguage);
+          jellyfinLanguage = language;
+          country = await promptUser("jellyfin-country", jellyfinCountry);
+          jellyfinCountry = country;
+        }
+
+        setSetupPhase("setting-up");
+
+        // ── qBittorrent ──────────────────────────────────────────────
+        if (app.name === "qbittorrent") {
+          const creds = await apiCall("Read temporary credentials", () => getQBittorrentCredentials(envConfig.BASE_DIR));
+          if (!creds) throw new Error("Read temporary credentials: no temporary password found in container logs");
+          const client = createQBittorrentClient({ baseUrl });
+          const login = await apiCall("Login with temporary credentials", () => client.auth.login(creds.username, creds.password));
+          if (!login.success) throw new Error("Login with temporary credentials: login failed (IP may be banned after too many attempts)");
+          await apiCall("Set download path and credentials", () => client.app.setPreferences({
+            save_path: "/data/downloads",
+            auto_tmm_enabled: true,
+            web_ui_username: username,
+            web_ui_password: password,
+          }));
+          qbtUsername = username;
+          qbtPassword = password;
+        }
+
+        // ── Prowlarr ─────────────────────────────────────────────────
+        if (app.name === "prowlarr") {
+          const apiKey = await apiCall("Read API key from config.xml", () => getProwlarrApiKey(envConfig.BASE_DIR));
+          if (!apiKey) throw new Error("Read API key from config.xml: file missing or key not found");
+          const client = createProwlarrClient({ apiKey, baseUrl });
+          const hostConfig = await apiCall("Get host configuration", () => client.hostConfig.get());
+          await apiCall("Set authentication to forms-based", () => client.hostConfig.update(hostConfig.id!, {
+            ...hostConfig,
+            authenticationMethod: "forms",
+            username,
+            password,
+          }));
+          // Register *arr apps as applications in Prowlarr
+          const arrApps: Array<{ name: string; impl: string; contract: string; port: number; getKey: () => Promise<string | null> }> = [];
+          if (hasApp("radarr")) arrApps.push({ name: "Radarr", impl: "Radarr", contract: "RadarrSettings", port: 7878, getKey: () => getRadarrApiKey(envConfig.BASE_DIR) });
+          if (hasApp("sonarr")) arrApps.push({ name: "Sonarr", impl: "Sonarr", contract: "SonarrSettings", port: 8989, getKey: () => getSonarrApiKey(envConfig.BASE_DIR) });
+          if (hasApp("lidarr")) arrApps.push({ name: "Lidarr", impl: "Lidarr", contract: "LidarrSettings", port: 8686, getKey: () => getLidarrApiKey(envConfig.BASE_DIR) });
+          for (const arr of arrApps) {
+            try {
+              const arrApiKey = await arr.getKey();
+              if (!arrApiKey) { warnings.push(`Register ${arr.name}: could not read API key`); continue; }
+              await apiCall(`Register ${arr.name} application`, () => client.application.create({
+                name: arr.name,
+                implementation: arr.impl,
+                configContract: arr.contract,
+                syncLevel: "fullSync",
+                fields: [
+                  { order: 0, name: "prowlarrUrl", label: "Prowlarr URL", value: `http://${localIp}:9696` },
+                  { order: 1, name: "baseUrl", label: "Base URL", value: `http://${localIp}:${arr.port}` },
+                  { order: 2, name: "apiKey", label: "API Key", value: arrApiKey },
+                ],
+              }));
+            } catch (err: any) {
+              warnings.push(err.message);
+            }
+          }
+        }
+
+        // ── Radarr ───────────────────────────────────────────────────
+        if (app.name === "radarr") {
+          const apiKey = await apiCall("Read API key from config.xml", () => getRadarrApiKey(envConfig.BASE_DIR));
+          if (!apiKey) throw new Error("Read API key from config.xml: file missing or key not found");
+          const client = createRadarrClient({ apiKey, baseUrl });
+          const hostConfig = await apiCall("Get host configuration", () => client.hostConfig.get());
+          await apiCall("Set authentication to forms-based", () => client.hostConfig.update(hostConfig.id!, {
+            ...hostConfig,
+            authenticationMethod: "forms",
+            username,
+            password,
+          }));
+          if (hasApp("qbittorrent")) {
+            try {
+              await apiCall("Add qBittorrent download client", () => client.downloadClient.create({
+                name: "qBittorrent",
+                implementation: "QBittorrent",
+                configContract: "QBittorrentSettings",
+                protocol: "torrent",
+                enable: true,
+                priority: 1,
+                removeCompletedDownloads: true,
+                removeFailedDownloads: true,
+                fields: [
+                  { order: 0, name: "host", label: "Host", value: localIp },
+                  { order: 1, name: "port", label: "Port", value: 8080 },
+                  { order: 2, name: "username", label: "Username", value: qbtUsername },
+                  { order: 3, name: "password", label: "Password", value: qbtPassword },
+                ],
+              }));
+            } catch (err: any) {
+              warnings.push(err.message);
+            }
+          }
+          try {
+            await apiCall("Create movies root folder", () => client.rootFolder.create({ path: "/data/media/movies" }));
+          } catch (err: any) {
+            warnings.push(err.message);
+          }
+        }
+
+        // ── Sonarr ───────────────────────────────────────────────────
+        if (app.name === "sonarr") {
+          const apiKey = await apiCall("Read API key from config.xml", () => getSonarrApiKey(envConfig.BASE_DIR));
+          if (!apiKey) throw new Error("Read API key from config.xml: file missing or key not found");
+          const client = createSonarrClient({ apiKey, baseUrl });
+          const hostConfig = await apiCall("Get host configuration", () => client.hostConfig.get());
+          await apiCall("Set authentication to forms-based", () => client.hostConfig.update(hostConfig.id!, {
+            ...hostConfig,
+            authenticationMethod: "forms",
+            username,
+            password,
+          }));
+          if (hasApp("qbittorrent")) {
+            try {
+              await apiCall("Add qBittorrent download client", () => client.downloadClient.create({
+                name: "qBittorrent",
+                implementation: "QBittorrent",
+                configContract: "QBittorrentSettings",
+                protocol: "torrent",
+                enable: true,
+                priority: 1,
+                removeCompletedDownloads: true,
+                removeFailedDownloads: true,
+                fields: [
+                  { order: 0, name: "host", label: "Host", value: localIp },
+                  { order: 1, name: "port", label: "Port", value: 8080 },
+                  { order: 2, name: "username", label: "Username", value: qbtUsername },
+                  { order: 3, name: "password", label: "Password", value: qbtPassword },
+                ],
+              }));
+            } catch (err: any) {
+              warnings.push(err.message);
+            }
+          }
+          try {
+            await apiCall("Create TV root folder", () => client.rootFolder.create({ path: "/data/media/tv" }));
+          } catch (err: any) {
+            warnings.push(err.message);
+          }
+        }
+
+        // ── Lidarr ───────────────────────────────────────────────────
+        if (app.name === "lidarr") {
+          const apiKey = await apiCall("Read API key from config.xml", () => getLidarrApiKey(envConfig.BASE_DIR));
+          if (!apiKey) throw new Error("Read API key from config.xml: file missing or key not found");
+          const client = createLidarrClient({ apiKey, baseUrl });
+          const hostConfig = await apiCall("Get host configuration", () => client.hostConfig.get());
+          await apiCall("Set authentication to forms-based", () => client.hostConfig.update(hostConfig.id!, {
+            ...hostConfig,
+            authenticationMethod: "forms",
+            username,
+            password,
+          }));
+          if (hasApp("qbittorrent")) {
+            try {
+              await apiCall("Add qBittorrent download client", () => client.downloadClient.create({
+                name: "qBittorrent",
+                implementation: "QBittorrent",
+                configContract: "QBittorrentSettings",
+                protocol: "torrent",
+                enable: true,
+                priority: 1,
+                removeCompletedDownloads: true,
+                removeFailedDownloads: true,
+                fields: [
+                  { order: 0, name: "host", label: "Host", value: localIp },
+                  { order: 1, name: "port", label: "Port", value: 8080 },
+                  { order: 2, name: "username", label: "Username", value: qbtUsername },
+                  { order: 3, name: "password", label: "Password", value: qbtPassword },
+                ],
+              }));
+            } catch (err: any) {
+              warnings.push(err.message);
+            }
+          }
+          try {
+            await apiCall("Create music root folder", () => client.rootFolder.create({ path: "/data/media/music", name: "Music", defaultMetadataProfileId: 1, defaultQualityProfileId: 1 }));
+          } catch (err: any) {
+            warnings.push(err.message);
+          }
+        }
+
+        // ── Jellyfin ─────────────────────────────────────────────────
+        if (app.name === "jellyfin") {
+          const client = createJellyfinClient({ baseUrl });
+          const info = await apiCall("Check startup wizard status", () => client.system.getPublicInfo());
+          if (!info.StartupWizardCompleted) {
+            await apiCall("Set server configuration", () => client.startup.updateConfiguration({
+              ServerName: serverName,
+              UICulture: language,
+              MetadataCountryCode: country,
+              PreferredMetadataLanguage: language,
+            }));
+            await apiCall("Create admin user", () => client.startup.updateUser({ Name: username, Password: password }));
+            await apiCall("Enable remote access", () => client.startup.setRemoteAccess({ EnableRemoteAccess: true, EnableAutomaticPortMapping: false }));
+            await apiCall("Complete startup wizard", () => client.startup.complete());
+          }
+          try {
+            const apiKeyResult = await apiCall("Create API key", () => getJellyfinApiKey(baseUrl!, username, password));
+            jellyfinApiKey = apiKeyResult ?? "";
+          } catch (err: any) {
+            warnings.push(err.message);
+          }
+          jellyfinUsername = username;
+          jellyfinPassword = password;
+        }
+
+        // ── Seerr ────────────────────────────────────────────────────
+        if (app.name === "seerr") {
+          const apiKey = await apiCall("Read API key from settings.json", () => getSeerrApiKey(envConfig.BASE_DIR));
+          if (!apiKey) throw new Error("Read API key from settings.json: file missing or key not found");
+          const client = createSeerrClient({ apiKey, baseUrl });
+          const jellyfinUrl = `http://${localIp}:8096`;
+
+          // Configure Jellyfin connection
+          if (hasApp("jellyfin") && jellyfinUsername) {
+            await apiCall("Configure Jellyfin connection", () => client.jellyfinSettings.update({
+              hostname: jellyfinUrl,
+              adminUser: jellyfinUsername,
+              adminPass: jellyfinPassword,
+            }));
+
+            // Sync and enable libraries
+            try {
+              const libs = await apiCall("Sync Jellyfin libraries", () => client.jellyfinSettings.getLibraries({ sync: true }));
+              const movieLib = libs.find((l) => l.name.toLowerCase().includes("movie"));
+              const tvLib = libs.find((l) => l.name.toLowerCase().includes("tv") || l.name.toLowerCase().includes("show"));
+              const enableIds = [movieLib?.id, tvLib?.id].filter(Boolean).join(",");
+              if (enableIds) {
+                await apiCall("Enable media libraries", () => client.jellyfinSettings.getLibraries({ enable: enableIds }));
+              }
+            } catch (err: any) {
+              warnings.push(err.message);
+            }
+
+            // Import Jellyfin admin user
+            try {
+              const jellyfinUsers = await apiCall("Get Jellyfin users", () => client.jellyfinSettings.getJellyfinUsers());
+              const adminUser = jellyfinUsers.find((u) => u.username === jellyfinUsername);
+              if (adminUser) {
+                await apiCall("Import Jellyfin admin user", () => client.users.importFromJellyfin([adminUser.id]));
+              }
+            } catch (err: any) {
+              warnings.push(err.message);
+            }
+          }
+
+          // Connect Radarr
+          if (hasApp("radarr")) {
+            try {
+              const radarrApiKey = await getRadarrApiKey(envConfig.BASE_DIR);
+              if (radarrApiKey) {
+                await apiCall("Connect Radarr", () => client.radarr.create({
+                  name: "Radarr",
+                  hostname: localIp,
+                  port: 7878,
+                  apiKey: radarrApiKey,
+                  useSsl: false,
+                  activeProfileId: 1,
+                  activeProfileName: "Any",
+                  activeDirectory: "/data/media/movies",
+                  is4k: false,
+                  minimumAvailability: "released",
+                  isDefault: true,
+                }));
+              } else {
+                warnings.push("Connect Radarr: could not read API key");
+              }
+            } catch (err: any) {
+              warnings.push(err.message);
+            }
+          }
+
+          // Connect Sonarr
+          if (hasApp("sonarr")) {
+            try {
+              const sonarrApiKey = await getSonarrApiKey(envConfig.BASE_DIR);
+              if (sonarrApiKey) {
+                await apiCall("Connect Sonarr", () => client.sonarr.create({
+                  name: "Sonarr",
+                  hostname: localIp,
+                  port: 8989,
+                  apiKey: sonarrApiKey,
+                  useSsl: false,
+                  activeProfileId: 1,
+                  activeProfileName: "Any",
+                  activeDirectory: "/data/media/tv",
+                  is4k: false,
+                  enableSeasonFolders: true,
+                  isDefault: true,
+                }));
+              } else {
+                warnings.push("Connect Sonarr: could not read API key");
+              }
+            } catch (err: any) {
+              warnings.push(err.message);
+            }
+          }
+        }
+
+        results.push({ appName: app.name, displayName: app.displayName, status: "done", warnings: [...warnings] });
+      } catch (err: any) {
+        const detail = err.message;
+        results.push({ appName: app.name, displayName: app.displayName, status: "error", error: detail, warnings: [...warnings] });
+      }
+
+      setAppResults([...results]);
+    }
+
+    setSetupPhase("done");
+    onComplete(results);
+  }
+
+  if (setupableApps.length === 0) {
+    useEffect(() => { onComplete([]); }, []);
+    return null;
+  }
+
+  const currentApp = setupableApps[setupIdx];
+  const promptLabel =
+    promptState === "username" ? `Enter username for ${currentApp?.displayName ?? "app"}:` :
+    promptState === "password" ? `Enter password for ${currentApp?.displayName ?? "app"}:` :
+    promptState === "jellyfin-server-name" ? "Enter Jellyfin server name:" :
+    promptState === "jellyfin-language" ? "Enter preferred metadata language (e.g. en):" :
+    promptState === "jellyfin-country" ? "Enter metadata country code (e.g. US):" :
+    null;
+
+  return (
+    <Box flexDirection="column">
+      <StepIndicator
+        current={6}
+        total={8}
+        label={`Auto-Setup (${setupIdx + 1}/${setupableApps.length})`}
+      />
+
+      {/* Completed apps */}
+      {appResults.map((r) => (
+        <Box key={r.appName} flexDirection="column">
+          <AppStatus
+            name={r.displayName}
+            status={r.status === "error" ? "error" : "done"}
+            message={
+              r.status === "error"
+                ? r.error
+                : r.warnings.length > 0
+                  ? `Done (${r.warnings.length} warning${r.warnings.length > 1 ? "s" : ""})`
+                  : undefined
+            }
+          />
+          {r.warnings.map((w, j) => (
+            <Text key={j} color="yellow">    ⚠ {w}</Text>
+          ))}
+        </Box>
+      ))}
+
+      {/* Current app */}
+      {setupPhase !== "done" && currentApp && !promptState && (
+        <Text>
+          <Text color="yellow"><Spinner type="dots" /></Text>
+          {" "}{currentApp.displayName}
+          {setupPhase === "credentials" && " — collecting credentials..."}
+          {setupPhase === "setting-up" && " — configuring..."}
+        </Text>
+      )}
+
+      {/* User prompts */}
+      {promptState && promptLabel && (
+        <Box flexDirection="column">
+          <Text>{promptLabel}</Text>
+          <Box>
+            <Text color="blue">{">"} </Text>
+            <TextInput
+              key={`${currentApp?.name}-${promptState}`}
+              defaultValue={promptDefault}
+              onSubmit={handlePromptSubmit}
+            />
+          </Box>
         </Box>
       )}
     </Box>
