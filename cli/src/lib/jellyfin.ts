@@ -69,6 +69,24 @@ export interface PublicSystemInfo {
   StartupWizardCompleted?: boolean | null;
 }
 
+
+// Library
+export interface VirtualFolderDto {
+  name: string;
+  collectionType: CollectionTypeOptions;
+  paths: string[];
+  refreshLibrary?: boolean;
+}
+
+export type CollectionTypeOptions = "movies" | "tvshows" | "music" | "musicvideos" | "homevideos" | "boxsets" | "books" | "mixed";
+
+export interface VirtualFolderInfo {
+  Name?: string | null;
+  Locations?: string[] | null;
+  CollectionType?: CollectionTypeOptions | null;
+  ItemId?: string | null;
+}
+
 // ---------------------------------------------------------------------------
 // Internal HTTP helpers
 // ---------------------------------------------------------------------------
@@ -283,6 +301,28 @@ export function createJellyfinClient(options: JellyfinClientOptions = {}) {
 
       /** Lists all users (requires DefaultAuthorization). */
       getAll: () => get<UserDto[]>("/Users"),
+    },
+
+    // -----------------------------------------------------------------------
+    // Library  /Library
+    // Requires admin authentication.
+    // -----------------------------------------------------------------------
+    library: {
+      /**
+       * Creates a media library (virtual folder).
+       * name, collectionType, refreshLibrary are query params; paths go in the body.
+       */
+      addVirtualFolder: (resource: VirtualFolderDto) => {
+        const qs = new URLSearchParams({
+          name: resource.name,
+          collectionType: resource.collectionType,
+          refreshLibrary: String(resource.refreshLibrary ?? false),
+        }).toString();
+        return post<void>(`/Library/VirtualFolders?${qs}`, {
+          LibraryOptions: {},
+          Paths: resource.paths,
+        });
+      },
     },
   };
 }

@@ -46,7 +46,7 @@ The CLI requires Bun. Run `bash cli/install.sh` first to install Bun, build the 
 ```bash
 sudo mithrandir setup [--yes]
 ```
-Interactive multi-step wizard: installs Docker and rclone, prompts for base directory, lets you pick services to install, configures the systemd backup timer, and prints a summary with service URLs. `--yes` skips all prompts, selects all apps, and uses defaults from `.env`.
+Interactive multi-step wizard: installs Docker and rclone, prompts for base directory, lets you pick services to install, auto configures the installed services, configures the systemd backup timer, and prints a summary with service URLs. `--yes` skips all prompts, selects all apps, and uses defaults from `.env`.
 
 **Backup:**
 ```bash
@@ -297,6 +297,7 @@ Uninstalls all Homelab components, including Docker, backup systemd timer, rclon
 
 ## TODO
 
-- [ ] Use all the apps APIs to preconfigure the setup when running the setup wizard. Create a API wrapper for each app with the necessary methods to configure the app. For that to work, things like the API keys need to be retrieved from the apps config files. Some things like the admin passwords need to be prompted for.
+- [ ] The progress bars during the app installation step in the setup wizard are not working properly. They immediatly display 99% and don't update. @cli/src/components/ProgressBar.tsx
+- [ ] Show the CLI version in the header component @cli/src/components/Header.tsx
 - [ ] Replace Uptime Kuma with Gatus which has support for file based configuration (could allow to setup alerts and monitoring directly in the script without using the UI)
 - [ ] Check if Profilarr is a good solution for quality profiles
