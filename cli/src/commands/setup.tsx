@@ -1099,11 +1099,44 @@ function AutoSetupAppsStep({ selectedApps, envConfig, localIp, autoYes, onComple
             await apiCall("Enable remote access", () => client.startup.setRemoteAccess({ EnableRemoteAccess: true, EnableAutomaticPortMapping: false }));
             await apiCall("Complete startup wizard", () => client.startup.complete());
           }
-          try {
-            const apiKeyResult = await apiCall("Create API key", () => getJellyfinApiKey(baseUrl!, username, password));
-            jellyfinApiKey = apiKeyResult ?? "";
-          } catch (err: any) {
-            warnings.push(err.message);
+          // Authenticate and create an API key for subsequent calls
+          const apiKeyResult = await apiCall("Create API key", () => getJellyfinApiKey(baseUrl!, username, password));
+          jellyfinApiKey = apiKeyResult ?? "";
+          // Create an authenticated client for library setup
+          if (jellyfinApiKey) {
+            const authClient = createJellyfinClient({ baseUrl, apiKey: jellyfinApiKey });
+            try {
+              await apiCall("Create Movies library", () => authClient.library.addVirtualFolder({
+                name: "Movies",
+                collectionType: "movies",
+                paths: ["/data/media/movies"],
+                refreshLibrary: false,
+              }));
+            } catch (err: any) {
+              warnings.push(err.message);
+            }
+            try {
+              await apiCall("Create Series library", () => authClient.library.addVirtualFolder({
+                name: "Series",
+                collectionType: "tvshows",
+                paths: ["/data/media/tv"],
+                refreshLibrary: false,
+              }));
+            } catch (err: any) {
+              warnings.push(err.message);
+            }
+            if (hasApp("lidarr")) {
+              try {
+                await apiCall("Create Music library", () => authClient.library.addVirtualFolder({
+                  name: "Music",
+                  collectionType: "music",
+                  paths: ["/data/media/music"],
+                  refreshLibrary: false,
+                }));
+              } catch (err: any) {
+                warnings.push(err.message);
+              }
+            }
           }
         }
 
@@ -1114,27 +1147,29 @@ function AutoSetupAppsStep({ selectedApps, envConfig, localIp, autoYes, onComple
           const client = createSeerrClient({ apiKey, baseUrl });
           const jellyfinUrl = `http://${localIp}:8096`;
 
-          // Configure Jellyfin connection and initialize Seerr admin via Jellyfin login
+          // Initialize Seerr admin via Jellyfin login — this must happen first
+          // on a fresh install because all other endpoints return 403 until an
+          // admin user exists.  loginJellyfin also configures the Jellyfin
+          // connection, so jellyfinSettings.update afterwards ensures the
+          // admin credentials are explicitly persisted.
           if (hasApp("jellyfin") && jellyfinUsername) {
-            await apiCall("Configure Jellyfin connection", () => client.jellyfinSettings.update({
-              hostname: jellyfinUrl,
-              adminUser: jellyfinUsername,
-              adminPass: jellyfinPassword,
-            }));
-
-            // Login via Jellyfin to create the admin user in Seerr — required
-            // before settings endpoints (radarr/sonarr) accept requests.
             await apiCall("Initialize Seerr admin via Jellyfin login", () => client.auth.loginJellyfin({
               username: jellyfinUsername,
               password: jellyfinPassword,
               hostname: jellyfinUrl,
             }));
 
+            await apiCall("Configure Jellyfin connection", () => client.jellyfinSettings.update({
+              hostname: jellyfinUrl,
+              adminUser: jellyfinUsername,
+              adminPass: jellyfinPassword,
+            }));
+
             // Sync and enable libraries
             try {
               const libs = await apiCall("Sync Jellyfin libraries", () => client.jellyfinSettings.getLibraries({ sync: true }));
               const movieLib = libs.find((l) => l.name.toLowerCase().includes("movie"));
-              const tvLib = libs.find((l) => l.name.toLowerCase().includes("tv") || l.name.toLowerCase().includes("show"));
+              const tvLib = libs.find((l) => l.name.toLowerCase().includes("tv") || l.name.toLowerCase().includes("show") || l.name.toLowerCase().includes("series"));
               const enableIds = [movieLib?.id, tvLib?.id].filter(Boolean).join(",");
               if (enableIds) {
                 await apiCall("Enable media libraries", () => client.jellyfinSettings.getLibraries({ enable: enableIds }));
