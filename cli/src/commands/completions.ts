@@ -7,7 +7,7 @@ const SUBCOMMANDS = [
 ];
 
 const APP_COMMANDS = [
-  "start", "stop", "restart", "install", "reinstall", "uninstall",
+  "start", "stop", "restart", "reinstall", "uninstall",
   "update", "log",
 ];
 
@@ -18,6 +18,7 @@ function generateBash(): string {
   const cmds = SUBCOMMANDS.join(" ");
   const appCmds = APP_COMMANDS.join("|");
   const backupSubs = BACKUP_SUBCOMMANDS.join(" ");
+  const installTargets = `docker backup ${apps}`;
 
   return `# mithrandir bash completions
 # Add to ~/.bashrc: eval "$(mithrandir completions bash)"
@@ -31,6 +32,9 @@ _mithrandir() {
   fi
 
   case "\${words[1]}" in
+    install)
+      COMPREPLY=( $(compgen -W "${installTargets}" -- "$cur") )
+      ;;
     ${appCmds})
       COMPREPLY=( $(compgen -W "${apps}" -- "$cur") )
       ;;
@@ -79,7 +83,10 @@ _mithrandir() {
       ;;
     args)
       case \${words[2]} in
-        start|stop|restart|install|reinstall|uninstall|update|log)
+        install)
+          compadd -- docker backup ${apps}
+          ;;
+        start|stop|restart|reinstall|uninstall|update|log)
           compadd -- ${apps}
           ;;
         backup)
@@ -125,8 +132,17 @@ function generateFish(): string {
     );
   }
 
+  lines.push("", "# Install targets (docker, backup, and app names)");
+  lines.push(`complete -c mithrandir -n '__fish_seen_subcommand_from install' -a 'docker'`);
+  lines.push(`complete -c mithrandir -n '__fish_seen_subcommand_from install' -a 'backup'`);
+  for (const app of apps) {
+    lines.push(
+      `complete -c mithrandir -n '__fish_seen_subcommand_from install' -a '${app}'`,
+    );
+  }
+
   lines.push("", "# App names for app commands");
-  const appCmds = ["start", "stop", "restart", "install", "reinstall", "uninstall", "update", "log"];
+  const appCmds = ["start", "stop", "restart", "reinstall", "uninstall", "update", "log"];
   for (const cmd of appCmds) {
     for (const app of apps) {
       lines.push(

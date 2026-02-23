@@ -181,6 +181,18 @@ sudo mithrandir install <app>
 ```
 Installs a single app: pulls the Docker image, creates directories, generates docker-compose.yml, and starts the container. The app must not already be installed.
 
+**Install Docker:**
+```bash
+sudo mithrandir install docker
+```
+Installs Docker engine on the host. If Docker is already installed and running, reports the existing installation. Equivalent to the Docker installation step in the setup wizard.
+
+**Install backup system:**
+```bash
+sudo mithrandir install backup
+```
+Installs rclone (for remote backups to Google Drive) and sets up the systemd backup timer (daily at 2:00 AM). Skips components that are already installed. Equivalent to the rclone and backup timer steps in the setup wizard.
+
 **Reinstall an app:**
 ```bash
 sudo mithrandir reinstall <app> [--yes]

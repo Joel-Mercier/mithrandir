@@ -37,6 +37,8 @@ const cli = meow(
     stop <app>                         Stop a running app container
     restart <app>                      Restart a running app container
     install <app>                      Install a single app
+    install docker                     Install Docker engine on the host
+    install backup                     Install rclone and backup systemd timer
     reinstall <app>                    Reinstall an app (stop, remove, recreate)
     uninstall [app]                    Uninstall an app, or full system uninstall
     status                             Show installed apps and system status

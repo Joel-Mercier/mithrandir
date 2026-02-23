@@ -22,6 +22,8 @@ sudo mithrandir start <app>                    # Start a stopped app
 sudo mithrandir stop <app>                     # Stop a running app
 sudo mithrandir restart <app>                  # Restart a running app
 sudo mithrandir install <app>                    # Install a single app
+sudo mithrandir install docker                   # Install Docker engine
+sudo mithrandir install backup                   # Install rclone + backup systemd timer
 sudo mithrandir reinstall <app> [--yes]        # Reinstall an app from scratch
 sudo mithrandir uninstall <app>
 sudo mithrandir status                      # Check system status
