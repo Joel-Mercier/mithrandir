@@ -508,6 +508,13 @@ export function SetupCommand({ flags }: SetupCommandProps) {
           <Text>  To configure rclone for Google Drive, run: rclone config,</Text>
           <Text>  This will set up the remote connection to your Google Drive.</Text>
         </Box>
+        {completedSteps.some(cs => cs.name.includes("setup")) && (
+          <Box flexDirection="column" marginBottom={1}>
+            <Text bold>Credentials note:</Text>
+            <Text>  Make sure to save your username(s) and password(s) somewhere</Text>
+            <Text>  where you'll always have access to them.</Text>
+          </Box>
+        )}
       </Box>
     );
   }
@@ -877,12 +884,16 @@ function AutoSetupAppsStep({ selectedApps, envConfig, localIp, autoYes, onComple
       const warnings: string[] = [];
 
       try {
-        // Prompt for username/password (Jellyfin gets extra prompts)
-        const username = await promptUser("username", defaultUsername || "admin");
-        defaultUsername = username;
+        // Prompt for username/password (Gatus reuses shared credentials, skip prompts)
+        let username = defaultUsername;
+        let password = defaultPassword;
+        if (app.name !== "gatus") {
+          username = await promptUser("username", defaultUsername || "admin");
+          defaultUsername = username;
 
-        const password = await promptUser("password", defaultPassword || "admin");
-        defaultPassword = password;
+          password = await promptUser("password", defaultPassword || "admin");
+          defaultPassword = password;
+        }
 
         let serverName = jellyfinServerName;
         let language = jellyfinLanguage;
