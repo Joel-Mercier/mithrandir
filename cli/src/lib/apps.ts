@@ -197,16 +197,14 @@ export const APP_REGISTRY: AppDefinition[] = [
     ],
   },
   {
-    name: "uptime-kuma",
-    displayName: "Uptime Kuma",
-    description: "Self-hosted monitoring tool",
-    image: "louislam/uptime-kuma:2",
-    containerName: "uptime-kuma",
+    name: "gatus",
+    displayName: "Gatus",
+    description: "Automated service health monitoring",
+    image: "twinproduction/gatus:latest",
     port: 3001,
-    configSubdir: "data",
+    configSubdir: "multiple",
+    multipleConfigDirs: ["config", "data"],
     needsDataDir: false,
-    mountDockerSocket: true,
-    restartPolicy: "always",
   },
 ];
 

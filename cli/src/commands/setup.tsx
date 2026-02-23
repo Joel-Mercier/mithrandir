@@ -789,7 +789,7 @@ interface AutoSetupAppsStepProps {
   onComplete: (results: AutoSetupResult[]) => void;
 }
 
-const AUTO_SETUP_APPS_ORDER = ["qbittorrent", "prowlarr", "radarr", "sonarr", "lidarr", "jellyfin", "seerr"];
+const AUTO_SETUP_APPS_ORDER = ["qbittorrent", "prowlarr", "radarr", "sonarr", "lidarr", "jellyfin", "seerr", "gatus"];
 
 type PromptState =
   | "username"
@@ -797,6 +797,7 @@ type PromptState =
   | "jellyfin-server-name"
   | "jellyfin-language"
   | "jellyfin-country"
+  | "discord-webhook"
   | null;
 
 /** Wrap an API call with a descriptive label for error context. */
@@ -1231,6 +1232,75 @@ function AutoSetupAppsStep({ selectedApps, envConfig, localIp, autoYes, onComple
           }
         }
 
+        // ── Gatus ──────────────────────────────────────────────────
+        if (app.name === "gatus") {
+          const discordWebhook = await promptUser("discord-webhook", "");
+
+          // Hash password: bcrypt (cost 9), then base64-encode
+          const bcryptHash = await Bun.password.hash(defaultPassword, { algorithm: "bcrypt", cost: 9 });
+          const b64Hash = btoa(bcryptHash);
+
+          // Build endpoints for all installed apps that have a port
+          const endpoints: string[] = [];
+          for (const installed of selectedApps) {
+            if (!installed.port || installed.name === "gatus") continue;
+            endpoints.push(`  - name: ${installed.displayName}`);
+            endpoints.push(`    url: http://${localIp}:${installed.port}`);
+            endpoints.push(`    interval: 1m`);
+            endpoints.push(`    conditions:`);
+            endpoints.push(`      - "[STATUS] == 200"`);
+            if (discordWebhook) {
+              endpoints.push(`    alerts:`);
+              endpoints.push(`      - type: discord`);
+              endpoints.push(`        description: "healthcheck failed"`);
+              endpoints.push(`        send-on-resolved: true`);
+            }
+          }
+
+          // Build config.yaml
+          const configLines: string[] = [];
+          configLines.push(`web:`);
+          configLines.push(`  port: 3001`);
+          configLines.push(``);
+          configLines.push(`storage:`);
+          configLines.push(`  type: sqlite`);
+          configLines.push(`  path: /data/data.db`);
+          configLines.push(``);
+          configLines.push(`security:`);
+          configLines.push(`  basic:`);
+          configLines.push(`    username: ${defaultUsername}`);
+          configLines.push(`    password-bcrypt-base64: ${b64Hash}`);
+
+          if (discordWebhook) {
+            configLines.push(``);
+            configLines.push(`alerting:`);
+            configLines.push(`  discord:`);
+            configLines.push(`    webhook-url: ${discordWebhook}`);
+          }
+
+          if (endpoints.length > 0) {
+            configLines.push(``);
+            configLines.push(`endpoints:`);
+            configLines.push(...endpoints);
+          }
+
+          const configYaml = configLines.join("\n") + "\n";
+          const gatusConfigDir = `${envConfig.BASE_DIR}/gatus/config`;
+          await shell("mkdir", ["-p", gatusConfigDir], { sudo: true });
+          await shell("bash", [
+            "-c",
+            `cat > "${gatusConfigDir}/config.yaml" << 'GATUS_EOF'\n${configYaml}GATUS_EOF`,
+          ], { sudo: true });
+
+          // Restart gatus to pick up the new config
+          const gatusApp = getApp("gatus");
+          if (gatusApp) {
+            const composePath = getComposePath(gatusApp, envConfig.BASE_DIR);
+            await composeDown(composePath).catch(() => {});
+            await composeUp(composePath);
+          }
+        }
+
         results.push({ appName: app.name, displayName: app.displayName, status: "done", warnings: [...warnings] });
       } catch (err: any) {
         const detail = err.message;
@@ -1256,6 +1326,7 @@ function AutoSetupAppsStep({ selectedApps, envConfig, localIp, autoYes, onComple
     promptState === "jellyfin-server-name" ? "Enter Jellyfin server name:" :
     promptState === "jellyfin-language" ? "Enter preferred metadata language (e.g. en):" :
     promptState === "jellyfin-country" ? "Enter metadata country code (e.g. US):" :
+    promptState === "discord-webhook" ? "Enter Discord webhook URL for alerts (leave empty to skip — create one in Discord > Server Settings > Integrations > Webhooks):" :
     null;
 
   return (

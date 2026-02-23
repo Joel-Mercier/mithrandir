@@ -319,9 +319,8 @@ Uninstalls all Homelab components, including Docker, backup systemd timer, rclon
 | Navidrome | 4533 | Modern music server and streamer |
 | DuckDNS | — | Free dynamic DNS service |
 | WireGuard | 51820/udp | Fast, modern VPN tunnel |
-| Uptime Kuma | 3001 | Self-hosted monitoring tool |
+| Gatus | 3001 | Automated service health monitoring |
 
 ## TODO
 
-- [ ] Replace Uptime Kuma with Gatus which has support for file based configuration (could allow to setup alerts and monitoring directly in the script without using the UI)
 - [ ] Check if Profilarr is a good solution for quality profiles

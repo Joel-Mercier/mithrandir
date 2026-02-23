@@ -117,7 +117,7 @@ export function generateCompose(
 
   // Config volumes
   if (app.configSubdir === "multiple" && app.multipleConfigDirs) {
-    // Homarr special case
+    // App-specific container path overrides for multipleConfigDirs
     const volumeMap: Record<string, string> = {
       configs: "/app/data/configs",
       icons: "/app/public/icons",
@@ -191,8 +191,6 @@ function getContainerConfigPath(app: AppDefinition): string {
       return "/app/config";
     case "navidrome":
       return "/data";
-    case "uptime-kuma":
-      return "/app/data";
     default:
       return "/config";
   }
