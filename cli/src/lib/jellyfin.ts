@@ -310,17 +310,19 @@ export function createJellyfinClient(options: JellyfinClientOptions = {}) {
     library: {
       /**
        * Creates a media library (virtual folder).
-       * name, collectionType, refreshLibrary are query params; paths go in the body.
+       * name, collectionType, paths, refreshLibrary are all query params;
+       * body contains only LibraryOptions.
        */
       addVirtualFolder: (resource: VirtualFolderDto) => {
-        const qs = new URLSearchParams({
-          name: resource.name,
-          collectionType: resource.collectionType,
-          refreshLibrary: String(resource.refreshLibrary ?? false),
-        }).toString();
-        return post<void>(`/Library/VirtualFolders?${qs}`, {
+        const qs = new URLSearchParams();
+        qs.set("name", resource.name);
+        qs.set("collectionType", resource.collectionType);
+        qs.set("refreshLibrary", String(resource.refreshLibrary ?? false));
+        for (const p of resource.paths) {
+          qs.append("paths", p);
+        }
+        return post<void>(`/Library/VirtualFolders?${qs.toString()}`, {
           LibraryOptions: {},
-          Paths: resource.paths,
         });
       },
     },

@@ -1156,7 +1156,11 @@ function AutoSetupAppsStep({ selectedApps, envConfig, localIp, autoYes, onComple
             await apiCall("Initialize Seerr admin via Jellyfin login", () => client.auth.loginJellyfin({
               username: jellyfinUsername,
               password: jellyfinPassword,
-              hostname: jellyfinUrl,
+              hostname: localIp,
+              port: 8096,
+              useSsl: false,
+              urlBase: "",
+              serverType: 1, // 1 = Jellyfin
             }));
 
             await apiCall("Configure Jellyfin connection", () => client.jellyfinSettings.update({

@@ -15,9 +15,16 @@ export interface LocalLoginInput {
 export interface JellyfinLoginInput {
   username: string;
   password: string;
-  /** Override the Jellyfin hostname for this auth attempt. */
+  /** Bare IP or domain of the Jellyfin server (NOT a full URL). */
   hostname?: string;
+  /** Jellyfin port (default 8096). */
+  port?: number;
+  /** Whether Jellyfin uses SSL. */
+  useSsl?: boolean;
+  /** URL base path (e.g. "" or "/jellyfin"). */
+  urlBase?: string;
   email?: string;
+  /** 1 = Jellyfin, 2 = Emby. Required for first-time setup. */
   serverType?: number;
 }
 
