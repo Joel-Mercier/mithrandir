@@ -117,6 +117,20 @@ sudo mithrandir restore full
 sudo mithrandir restore full 2025-01-01 --yes
 ```
 
+**Disaster recovery:**
+```bash
+sudo mithrandir recover [--yes]
+```
+Full disaster recovery for a fresh system (new server, reinstalled OS). Automates the entire process: installs Docker and rclone, verifies the rclone remote is configured, sets up the base directory, discovers the latest remote backup, restores secrets and all app configs, regenerates docker-compose files, starts all containers, and installs the backup timer. Unlike `restore` (which assumes Docker and compose files already exist), `recover` bootstraps everything from scratch.
+
+In interactive mode, prompts for confirmation at each step. In `--yes` mode, uses all defaults and fails if the rclone remote isn't configured.
+
+Examples:
+```bash
+sudo mithrandir recover                  # Interactive recovery
+sudo mithrandir recover --yes            # Automated recovery with defaults
+```
+
 **Uninstall an app:**
 ```bash
 sudo mithrandir uninstall <app>

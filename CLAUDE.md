@@ -18,6 +18,7 @@ sudo mithrandir backup list [local|remote]     # List existing backups
 sudo mithrandir backup delete <local|remote> [date] [--yes]  # Delete backups
 sudo mithrandir backup verify [date] [--remote] [--extract]  # Verify backup integrity
 sudo mithrandir restore <app|full> [date] [--yes]
+sudo mithrandir recover [--yes]              # Full disaster recovery from remote backup
 sudo mithrandir start <app>                    # Start a stopped app
 sudo mithrandir stop <app>                     # Stop a running app
 sudo mithrandir restart <app>                  # Restart a running app

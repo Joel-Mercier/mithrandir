@@ -18,6 +18,7 @@ import { runSelfUpdate } from "@/commands/self-update.js";
 import { runVersion } from "@/commands/version.js";
 import { runConfig } from "@/commands/config.js";
 import { runCompletions } from "@/commands/completions.js";
+import { runRecover } from "@/commands/recover.js";
 import { ErrorBoundary } from "@/components/ErrorBoundary.js";
 import { checkForUpdate } from "@/lib/update-check.js";
 
@@ -33,6 +34,7 @@ const cli = meow(
     backup delete <local|remote> [date] Delete local or remote backups
     backup verify [date]               Verify backup archive integrity
     restore <app|full> [date]          Restore app(s) from backup
+    recover                            Recover full system from remote backup
     start <app>                        Start a stopped app container
     stop <app>                         Stop a running app container
     restart <app>                      Restart a running app container
@@ -74,6 +76,8 @@ const cli = meow(
     $ mithrandir restore jellyfin
     $ mithrandir restore full 2025-01-01
     $ mithrandir restore full latest --yes
+    $ mithrandir recover
+    $ mithrandir recover --yes
     $ mithrandir uninstall radarr
     $ mithrandir uninstall
     $ mithrandir status
@@ -154,6 +158,10 @@ switch (command) {
 
   case "restore":
     runRestore(cli.input.slice(1), cli.flags);
+    break;
+
+  case "recover":
+    runRecover(cli.input.slice(1), cli.flags);
     break;
 
   case "uninstall":
