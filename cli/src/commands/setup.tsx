@@ -281,7 +281,8 @@ export function SetupCommand({ flags }: SetupCommandProps) {
       }
     }, []);
 
-    async function confirmBaseDir(dir: string) {
+    async function confirmBaseDir(rawDir: string) {
+      const dir = rawDir.trim();
       const updated = { ...envConfig, BASE_DIR: dir };
       setEnvConfig(updated);
 
@@ -849,12 +850,24 @@ function AutoSetupAppsStep({ selectedApps, envConfig, localIp, autoYes, onComple
 
   function handlePromptSubmit(value: string) {
     const resolver = promptResolver.current;
+    if (!resolver) return;
     promptResolver.current = null;
     const currentState = promptState;
-    setPromptState(null);
     // PasswordInput has no defaultValue — use the default if submitted empty
-    const resolved = (currentState === "password" && !value) ? promptDefault : value;
-    resolver?.(resolved);
+    const trimmed = value.trim();
+    const resolved = (currentState === "password" && !trimmed) ? promptDefault : trimmed;
+    // Resolve the promise first so the async loop can call promptUser() and set
+    // the next promptState before we clear the current one.  This avoids a
+    // render gap where no TextInput is mounted and keystrokes are swallowed.
+    resolver(resolved);
+    // Defer clearing promptState: the await continuation runs as a microtask
+    // and may call promptUser() which sets a new promptState.  By deferring,
+    // we let that happen first and only clear if no new prompt was requested.
+    queueMicrotask(() => {
+      if (promptResolver.current === null) {
+        setPromptState(null);
+      }
+    });
   }
 
   function hasApp(name: string): boolean {

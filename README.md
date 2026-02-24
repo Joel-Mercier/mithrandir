@@ -323,4 +323,7 @@ Uninstalls all Homelab components, including Docker, backup systemd timer, rclon
 
 ## TODO
 
+- [ ] Merge backup.conf in .env and check env file when running the setup command. Warn user if secrets are missing.
+- [ ] Setup auto config for Bazarr
+- [ ] Add a doctor command to check for issues with the setup and with helpful messages.
 - [ ] Check if Profilarr is a good solution for quality profiles
