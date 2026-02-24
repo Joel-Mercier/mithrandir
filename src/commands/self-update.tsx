@@ -103,8 +103,14 @@ function SelfUpdateCommand() {
       }
 
       // Step 3: Install dependencies
+      // Ensure the project directory is writable by the original user
+      // (files may be root-owned from a previous sudo install/build)
+      if (sudoUser) {
+        await shell("chown", ["-R", `${sudoUser}:`, root], { ignoreError: true });
+      }
+
       setCurrentLabel("Installing dependencies...");
-      const install = await shell("bun", ["install"], { cwd: root, ignoreError: true });
+      const install = await shell("bun", ["install"], { cwd: root, ignoreError: true, ...userOpts });
       if (install.exitCode !== 0) {
         setError(`bun install failed:\n${install.stderr}`);
         setPhase("error");
@@ -115,14 +121,10 @@ function SelfUpdateCommand() {
       // Step 4: Build CLI
       setCurrentLabel("Building CLI...");
 
-      // Ensure dist/ and mithrandir.js are writable (may be root-owned from previous sudo install)
       const distDir = join(root, "dist");
       const distFile = join(distDir, "mithrandir.js");
-      if (existsSync(distDir)) {
-        await shell("chmod", ["-R", "u+w", distDir], { ignoreError: true });
-      }
 
-      const build = await shell("bun", ["run", "build"], { cwd: root, ignoreError: true });
+      const build = await shell("bun", ["run", "build"], { cwd: root, ignoreError: true, ...userOpts });
       if (build.exitCode !== 0) {
         setError(`Build failed:\n${build.stderr}`);
         setPhase("error");
