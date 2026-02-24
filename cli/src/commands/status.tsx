@@ -5,7 +5,7 @@ import { StatusMessage } from "@inkjs/ui";
 import { DataTable } from "@/components/DataTable.js";
 import Link from "ink-link";
 import { Divider } from "@/components/Divider.js";
-import { loadEnvConfig, loadBackupConfig } from "@/lib/config.js";
+import { loadEnvConfig, getBackupConfig } from "@/lib/config.js";
 import {
   APP_REGISTRY,
   getContainerName,
@@ -118,7 +118,7 @@ async function getTimerNextRun(): Promise<string | null> {
 /** Gather all system info */
 async function gatherSystemInfo(): Promise<SystemInfo> {
   const envConfig = await loadEnvConfig();
-  const backupConfig = await loadBackupConfig();
+  const backupConfig = getBackupConfig(envConfig);
   const baseDir = envConfig.BASE_DIR;
   const backupDir = backupConfig.BACKUP_DIR;
 

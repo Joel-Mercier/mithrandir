@@ -33,7 +33,7 @@ sudo mithrandir update [app] [--yes]        # Update container images
 sudo mithrandir log <app> [--follow] [--tail N] [--since TIME]  # View container logs
 sudo mithrandir self-update                # Update CLI from git and rebuild
 mithrandir version                         # Show version and git commit hash
-mithrandir config                          # Show current .env and backup.conf settings
+mithrandir config                          # Show current .env settings
 mithrandir completions <bash|zsh|fish>     # Generate shell completion script
 cd cli && bun run typecheck              # TypeScript type checking (tsc --noEmit)
 bun run cli/src/index.tsx --help         # Dev mode (unbundled)
@@ -52,7 +52,7 @@ No test suite exists. Validate changes by reading script logic and type-checking
 ## Architecture
 
 ### Dual-Interface Design
-The bash scripts remain as the stable fallback. The Ink CLI (`cli/`) is the migration target. Both operate on the same `.env`, `backup.conf`, and `BASE_DIR` directory structure. The CLI generates identical docker-compose.yml files and zstd tarballs.
+The bash scripts remain as the stable fallback. The Ink CLI (`cli/`) is the migration target. Both operate on the same `.env` and `BASE_DIR` directory structure. The CLI generates identical docker-compose.yml files and zstd tarballs.
 
 ### App Registry Pattern (`cli/src/lib/apps.ts`)
 Single source of truth for all 14 services. Each `AppDefinition` encodes everything needed across all commands: Docker image, ports, config paths, volume mounts, secrets, capabilities. This replaces the duplicated `get_app_config()` case statements in backup.sh/restore.sh and per-app compose blocks in setup.sh. **Any new service must be added here.**
@@ -66,7 +66,7 @@ Secret env var names are mapped between .env and compose: `DUCKDNS_SUBDOMAINS` �
 The backup command runs from systemd timer (non-TTY) daily. `commands/backup.tsx` checks `process.stdout.isTTY` — TTY renders Ink components with spinners and progress, non-TTY writes timestamped plaintext to stdout + `/var/log/homelab-backup.log`. Both paths call the same `lib/` functions.
 
 ### Config Loading (`cli/src/lib/config.ts`)
-`getProjectRoot()` resolves the repo root by walking up from `cli/src/lib/`. `.env` and `backup.conf` live at repo root, not inside `cli/`.
+`getProjectRoot()` resolves the repo root by walking up from `cli/src/lib/`. `.env` lives at repo root, not inside `cli/`. `loadEnvConfig()` loads all settings (including backup config) from `.env`. `getBackupConfig(env)` extracts and parses backup-related fields from an `EnvConfig` into a typed `BackupConfig` with number retention values.
 
 ### Auto Update Check (`cli/src/lib/update-check.ts`)
 On every CLI invocation (except `self-update`, `version`, `completions`), an update check runs concurrently with the command. It compares local `HEAD` with `origin/<branch>` via `git fetch --quiet`, caching the last check timestamp in `~/.cache/mithrandir/last-update-check` (24-hour interval). If behind, a yellow notice is printed after command output. The check is wrapped in try/catch so it never breaks the CLI.
@@ -85,8 +85,7 @@ These allow programmatic access to the APIs of the above services.
 
 ## Configuration
 
-- **.env** — `BASE_DIR`, `PUID`/`PGID`, `TZ`, plus per-app secrets (DuckDNS, WireGuard, Spotify). Not in git.
-- **backup.conf** — `BACKUP_DIR` (default `/backups`), `LOCAL_RETENTION` (5), `REMOTE_RETENTION` (10), `RCLONE_REMOTE` (gdrive), `APPS` (auto or comma-separated).
+- **.env** — All configuration lives here. Core settings: `BASE_DIR`, `PUID`/`PGID`, `TZ`. Per-app secrets: DuckDNS, WireGuard, Spotify. Backup settings: `BACKUP_DIR` (default `/backups`), `LOCAL_RETENTION` (5), `REMOTE_RETENTION` (10), `RCLONE_REMOTE` (gdrive), `APPS` (auto or comma-separated). Not in git.
 
 ## Key Constraints
 

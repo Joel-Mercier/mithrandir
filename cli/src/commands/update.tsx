@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { render, Box, Text, useApp } from "ink";
 import Spinner from "ink-spinner";
 import { StatusMessage, ConfirmInput } from "@inkjs/ui";
-import { loadBackupConfig } from "@/lib/config.js";
+import { loadEnvConfig, getBackupConfig } from "@/lib/config.js";
 import {
   APP_REGISTRY,
   getApp,
@@ -26,8 +26,7 @@ import {
 import { Header } from "@/components/Header.js";
 import { AppStatus } from "@/components/AppStatus.js";
 import { ProgressBar } from "@/components/ProgressBar.js";
-import type { BackupConfig } from "@/types.js";
-import type { AppDefinition } from "@/types.js";
+import type { BackupConfig, AppDefinition } from "@/types.js";
 import { existsSync } from "fs";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -92,7 +91,7 @@ function UpdateInteractive({
     if (phase !== "init") return;
     (async () => {
       try {
-        const cfg = await loadBackupConfig();
+        const cfg = getBackupConfig(await loadEnvConfig());
         setConfig(cfg);
 
         let detected: AppDefinition[];

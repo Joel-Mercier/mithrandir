@@ -58,6 +58,7 @@ type SetupStep =
   | "rclone"
   | "base-dir"
   | "app-select"
+  | "check-secrets"
   | "install-apps"
   | "confirm-autosetup"
   | "autosetup-apps"
@@ -205,7 +206,15 @@ export function SetupCommand({ flags }: SetupCommandProps) {
     async function checkRclone() {
       if (await isRcloneInstalled()) {
         setStatus("done");
-        addCompletedStep({ name: "rclone", status: "done", message: "Ready" });
+        addCompletedStep({
+          name: "rclone",
+          status: "done",
+          message: "Ready",
+          notes: [
+            `Backup defaults: BACKUP_DIR=/backups, LOCAL_RETENTION=5, REMOTE_RETENTION=10, RCLONE_REMOTE=gdrive`,
+            `These can be changed in .env`,
+          ],
+        });
         setStep("base-dir");
         return;
       }
@@ -228,6 +237,8 @@ export function SetupCommand({ flags }: SetupCommandProps) {
           notes: [
             "NOTE: To configure rclone for Google Drive, run: rclone config",
             "      This will set up the remote connection to your Google Drive.",
+            `Backup defaults: BACKUP_DIR=/backups, LOCAL_RETENTION=5, REMOTE_RETENTION=10, RCLONE_REMOTE=gdrive`,
+            `These can be changed in .env`,
           ],
         });
         setStep("base-dir");
@@ -342,7 +353,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
       if (autoYes) {
         const allApps = APP_REGISTRY
         setSelectedApps(filterConflicts(allApps));
-        setStep("install-apps");
+        setStep("check-secrets");
       }
     }, []);
 
@@ -359,7 +370,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
         .filter((a): a is AppDefinition => a !== undefined);
       const filtered = filterConflicts(apps);
       setSelectedApps(filtered);
-      setStep("install-apps");
+      setStep("check-secrets");
     }
 
     return (
@@ -367,6 +378,87 @@ export function SetupCommand({ flags }: SetupCommandProps) {
         <StepIndicator current={4} total={8} label="Select Apps" />
         <Text>Choose services to install (space to toggle, enter to confirm):</Text>
         <MultiSelect options={options} onSubmit={handleSubmit} />
+      </Box>
+    );
+  }
+
+  // ─── Step: Check required secrets ──────────────────────────────────────────
+
+  function CheckSecretsStep() {
+    const [missingSecrets, setMissingSecrets] = useState<
+      Array<{ app: AppDefinition; secret: SecretDefinition }>
+    >([]);
+    const [currentIdx, setCurrentIdx] = useState(0);
+    const [phase, setPhase] = useState<"scanning" | "prompting" | "done">("scanning");
+
+    useEffect(() => {
+      // Find all required secrets that are missing
+      const missing: Array<{ app: AppDefinition; secret: SecretDefinition }> = [];
+      for (const app of selectedApps) {
+        if (!app.secrets) continue;
+        for (const secret of app.secrets) {
+          if (secret.required && !envConfig[secret.envVar]) {
+            missing.push({ app, secret });
+          }
+        }
+      }
+
+      if (missing.length === 0 || autoYes) {
+        setPhase("done");
+        setStep("install-apps");
+        return;
+      }
+
+      setMissingSecrets(missing);
+      setPhase("prompting");
+    }, []);
+
+    function handleSecretSubmit(value: string) {
+      const trimmed = value.trim();
+      if (!trimmed) return; // Don't accept empty for required secrets
+
+      const current = missingSecrets[currentIdx];
+      setEnvConfig(prev => ({ ...prev, [current.secret.envVar]: trimmed }));
+
+      if (currentIdx + 1 < missingSecrets.length) {
+        setCurrentIdx(currentIdx + 1);
+      } else {
+        addCompletedStep({ name: "Secrets", status: "done", message: `${missingSecrets.length} required secret(s) configured` });
+        setPhase("done");
+        setStep("install-apps");
+      }
+    }
+
+    if (phase === "done" || phase === "scanning") return null;
+
+    const current = missingSecrets[currentIdx];
+    if (!current) return null;
+
+    return (
+      <Box flexDirection="column">
+        <StepIndicator current={5} total={8} label="Required Secrets" />
+        <Text>
+          <Text bold>{current.app.displayName}</Text> requires{" "}
+          <Text bold>{current.secret.envVar}</Text>
+        </Text>
+        <Text>{current.secret.prompt}:</Text>
+        <Box>
+          <Text color="blue">{">"} </Text>
+          {current.secret.sensitive ? (
+            <PasswordInput
+              key={`secret-${currentIdx}`}
+              onSubmit={handleSecretSubmit}
+            />
+          ) : (
+            <TextInput
+              key={`secret-${currentIdx}`}
+              onSubmit={handleSecretSubmit}
+            />
+          )}
+        </Box>
+        {missingSecrets.length > 1 && (
+          <Text dimColor>({currentIdx + 1}/{missingSecrets.length})</Text>
+        )}
       </Box>
     );
   }
@@ -552,6 +644,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
       {step === "rclone" && <RcloneStep />}
       {step === "base-dir" && <BaseDirStep />}
       {step === "app-select" && <AppSelectStep />}
+      {step === "check-secrets" && <CheckSecretsStep />}
       {step === "install-apps" && (
         <InstallAppsStep
           selectedApps={selectedApps}

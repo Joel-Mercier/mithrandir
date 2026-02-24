@@ -163,11 +163,13 @@ export const APP_REGISTRY: AppDefinition[] = [
       {
         envVar: "DUCKDNS_SUBDOMAINS",
         prompt: "DuckDNS subdomain(s) (comma-separated)",
+        required: true,
       },
       {
         envVar: "DUCKDNS_TOKEN",
         prompt: "DuckDNS token",
         sensitive: true,
+        required: true,
       },
     ],
   },
@@ -192,7 +194,7 @@ export const APP_REGISTRY: AppDefinition[] = [
       LOG_CONFS: "true",
     },
     secrets: [
-      { envVar: "WG_SERVERURL", prompt: "WireGuard server URL or public IP" },
+      { envVar: "WG_SERVERURL", prompt: "WireGuard server URL or public IP", required: true },
       { envVar: "WG_PEERS", prompt: "Number of VPN client peers" },
     ],
   },

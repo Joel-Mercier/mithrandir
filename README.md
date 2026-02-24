@@ -13,20 +13,28 @@ sudo mithrandir setup
 ## Configuration
 
 ### .env File
-Contains environment variables for the setup script:
-- `BASE_DIR`: Base directory where Docker app folders are located (e.g., `/opt/docker`)
+All configuration lives in a single `.env` file at the project root.
 
-### backup.conf
-Backup configuration file:
-- `BASE_DIR`: Docker app folders location (falls back to .env if not set)
+**Core settings:**
+- `BASE_DIR`: Base directory where Docker app folders are located (e.g., `/opt/docker`)
+- `PUID`/`PGID`: User/group IDs for Docker containers (default: `1000`)
+- `TZ`: Timezone (default: `Etc/UTC`)
+
+**Backup settings:**
 - `BACKUP_DIR`: Local backup storage directory (default: `/backups`)
 - `LOCAL_RETENTION`: Number of local backups to keep (default: `5`)
 - `REMOTE_RETENTION`: Number of Google Drive backups to keep (default: `10`)
 - `RCLONE_REMOTE`: rclone remote name for Google Drive (default: `gdrive`)
 - `APPS`: Apps to backup - `"auto"` to detect installed apps, or comma-separated list
 
+**Per-app secrets:**
+- `DUCKDNS_SUBDOMAINS`, `DUCKDNS_TOKEN`: Required for DuckDNS
+- `WG_SERVERURL`: Required for WireGuard
+- `WG_PEERS`: Number of WireGuard peers (default: `1`)
+- `ND_SPOTIFY_ID`, `ND_SPOTIFY_SECRET`: Optional for Navidrome artist images
+
 ### Rclone configuration
-You can setup remote backups by running `rclone config` in the terminal after running the setup wizard. This will set up the remote connection to your Google Drive. Make sure the remote name matches the `RCLONE_REMOTE` setting in `backup.conf`. If you run a desktopless linux server, you'll need to execute a rclone command on another device with a browser to complete the remote setup. The documentation to setup a Google Drive remote with rclone is [here](https://rclone.org/drive/#making-your-own-client-id).
+You can setup remote backups by running `rclone config` in the terminal after running the setup wizard. This will set up the remote connection to your Google Drive. Make sure the remote name matches the `RCLONE_REMOTE` setting in `.env`. If you run a desktopless linux server, you'll need to execute a rclone command on another device with a browser to complete the remote setup. The documentation to setup a Google Drive remote with rclone is [here](https://rclone.org/drive/#making-your-own-client-id).
 
 ### Systemd Service
 
@@ -241,7 +249,7 @@ Prints the CLI version and short git commit hash, e.g. `mithrandir v1.0.0 (abc12
 ```bash
 mithrandir config
 ```
-Pretty-prints the current `.env` and `backup.conf` settings. Shows file paths so you know where to edit. Tokens and secrets are masked.
+Pretty-prints the current `.env` settings. Shows the file path so you know where to edit. Tokens and secrets are masked.
 
 **Shell completions:**
 ```bash
@@ -323,7 +331,6 @@ Uninstalls all Homelab components, including Docker, backup systemd timer, rclon
 
 ## TODO
 
-- [ ] Merge backup.conf in .env and check env file when running the setup command. Warn user if secrets are missing.
 - [ ] Setup auto config for Bazarr
 - [ ] Add a doctor command to check for issues with the setup and with helpful messages.
 - [ ] Check if Profilarr is a good solution for quality profiles

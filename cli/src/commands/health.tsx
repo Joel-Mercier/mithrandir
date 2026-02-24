@@ -3,7 +3,7 @@ import { render, Box, Text, useApp } from "ink";
 import Spinner from "ink-spinner";
 import { StatusMessage } from "@inkjs/ui";
 import { DataTable } from "@/components/DataTable.js";
-import { loadEnvConfig, loadBackupConfig } from "@/lib/config.js";
+import { loadEnvConfig, getBackupConfig } from "@/lib/config.js";
 import {
   APP_REGISTRY,
   getContainerName,
@@ -229,7 +229,7 @@ async function checkRemoteBackup(
 /** Run all health checks and return results */
 async function runChecks(): Promise<CheckResult[]> {
   const envConfig = await loadEnvConfig();
-  const backupConfig = await loadBackupConfig();
+  const backupConfig = getBackupConfig(envConfig);
   const baseDir = envConfig.BASE_DIR;
   const backupDir = backupConfig.BACKUP_DIR;
 

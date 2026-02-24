@@ -30,7 +30,6 @@ import {
 } from "@/lib/systemd.js";
 import {
   loadEnvConfig,
-  loadBackupConfig,
   saveEnvConfig,
   getProjectRoot,
 } from "@/lib/config.js";
@@ -43,7 +42,7 @@ import { StepIndicator } from "@/components/StepIndicator.js";
 import { AppStatus } from "@/components/AppStatus.js";
 import { ProgressBar } from "@/components/ProgressBar.js";
 import { ErrorBoundary } from "@/components/ErrorBoundary.js";
-import type { EnvConfig, BackupConfig } from "@/types.js";
+import type { EnvConfig } from "@/types.js";
 import { homedir } from "os";
 import { existsSync } from "fs";
 
@@ -201,9 +200,8 @@ async function runHeadlessRecover(autoYes: boolean): Promise<void> {
     }
   }
 
-  // Reload config after secrets restore (may have .env/backup.conf)
+  // Reload config after secrets restore (may have updated .env)
   const reloadedEnv = await loadEnvConfig();
-  const reloadedBackup = await loadBackupConfig();
 
   // 9. Restore each app
   const appNames = discovered.apps.filter((a) => a !== "secrets");

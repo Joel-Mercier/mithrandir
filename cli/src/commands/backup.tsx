@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { render, Box, Text, useApp } from "ink";
 import Spinner from "ink-spinner";
 import { StatusMessage, ConfirmInput } from "@inkjs/ui";
-import { loadBackupConfig, getProjectRoot } from "@/lib/config.js";
+import { loadEnvConfig, getBackupConfig, getProjectRoot } from "@/lib/config.js";
 import {
   APP_REGISTRY,
   getApp,
@@ -25,8 +25,7 @@ import { createBackupLogger, Logger } from "@/lib/logger.js";
 import { Header } from "@/components/Header.js";
 import { AppStatus } from "@/components/AppStatus.js";
 import { ProgressBar } from "@/components/ProgressBar.js";
-import type { BackupConfig } from "@/types.js";
-import type { AppDefinition } from "@/types.js";
+import type { AppDefinition, BackupConfig } from "@/types.js";
 import { existsSync } from "fs";
 
 // ─── Shared helpers ──────────────────────────────────────────────────────────
@@ -149,7 +148,7 @@ async function runHeadlessBackup(appFilter?: string): Promise<void> {
   await logger.info("=== Starting backup process ===");
 
   try {
-    const config = await loadBackupConfig();
+    const config = getBackupConfig(await loadEnvConfig());
     const projectRoot = getProjectRoot();
     const today = new Date().toISOString().slice(0, 10);
     const archiveDir = `${config.BACKUP_DIR}/archive/${today}`;
@@ -328,7 +327,7 @@ function BackupInteractive({ appFilter }: { appFilter?: string }) {
 
   async function runInteractiveBackup() {
     try {
-      const config = await loadBackupConfig();
+      const config = getBackupConfig(await loadEnvConfig());
       const projectRoot = getProjectRoot();
       const today = new Date().toISOString().slice(0, 10);
       const archiveDir = `${config.BACKUP_DIR}/archive/${today}`;
@@ -715,7 +714,7 @@ function BackupDelete({
 
   async function performDelete() {
     try {
-      const config = await loadBackupConfig();
+      const config = getBackupConfig(await loadEnvConfig());
       let result: { deleted: string[]; errors: string[] };
       if (target === "local") {
         result = await deleteLocalBackups(config.BACKUP_DIR, date);
@@ -846,7 +845,7 @@ export async function runBackupList(args: string[]): Promise<void> {
     process.exit(1);
   }
 
-  const config = await loadBackupConfig();
+  const config = getBackupConfig(await loadEnvConfig());
   const showLocal = !filter || filter === "local";
   const showRemote = !filter || filter === "remote";
 
@@ -1083,7 +1082,7 @@ function BackupVerify({
 
   async function runVerify() {
     try {
-      const config = await loadBackupConfig();
+      const config = getBackupConfig(await loadEnvConfig());
       let resolvedDate = date;
       let archiveDir: string;
       let tmpDir: string | undefined;
@@ -1276,7 +1275,7 @@ async function runHeadlessVerify(
   remote?: boolean,
   doExtract?: boolean,
 ): Promise<void> {
-  const config = await loadBackupConfig();
+  const config = getBackupConfig(await loadEnvConfig());
   let resolvedDate = date;
   let archiveDir: string;
   let tmpDir: string | undefined;

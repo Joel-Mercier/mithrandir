@@ -47,13 +47,13 @@ export async function createBackup(
 
 /**
  * Create a secrets backup tarball.
- * Includes .env, setup.sh, backup.sh, restore.sh, backup.conf
+ * Includes .env, setup.sh, backup.sh, restore.sh
  */
 export async function createSecretsBackup(
   projectRoot: string,
   outputPath: string,
 ): Promise<void> {
-  const files = [".env", "setup.sh", "backup.sh", "restore.sh", "backup.conf"];
+  const files = [".env", "setup.sh", "backup.sh", "restore.sh"];
   const existing: string[] = [];
 
   for (const file of files) {

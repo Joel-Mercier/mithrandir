@@ -3,7 +3,7 @@ import { render, Box, Text, useApp } from "ink";
 import Spinner from "ink-spinner";
 import { ConfirmInput } from "@inkjs/ui";
 import { StatusMessage } from "@inkjs/ui";
-import { loadBackupConfig, getProjectRoot } from "@/lib/config.js";
+import { loadEnvConfig, getBackupConfig, getProjectRoot } from "@/lib/config.js";
 import {
   APP_REGISTRY,
   getApp,
@@ -116,7 +116,7 @@ async function resolveArchiveDir(
   config: BackupConfig | null,
 ): Promise<string | null> {
   if (!config) {
-    config = await loadBackupConfig();
+    config = getBackupConfig(await loadEnvConfig());
   }
 
   if (date !== "latest") {
@@ -281,7 +281,7 @@ async function runHeadlessSingleRestore(
   const logger = createRestoreLogger();
   await logger.info(`=== Restoring ${app.displayName} ===`);
 
-  const config = await loadBackupConfig();
+  const config = getBackupConfig(await loadEnvConfig());
   const date = dateArg ?? "latest";
 
   // Validate date
@@ -324,7 +324,7 @@ async function runHeadlessFullRestore(
   const logger = createRestoreLogger();
   await logger.info("=== Starting full restore ===");
 
-  const config = await loadBackupConfig();
+  const config = getBackupConfig(await loadEnvConfig());
   const date = dateArg ?? "latest";
 
   // Validate date
@@ -440,7 +440,7 @@ function SingleRestoreInteractive({
 
   async function findBackup() {
     try {
-      const config = await loadBackupConfig();
+      const config = getBackupConfig(await loadEnvConfig());
       const found = await findBackupFile(app.name, dateArg, config);
       if (!found) {
         setError(`No backup found for ${app.displayName}`);
@@ -466,7 +466,7 @@ function SingleRestoreInteractive({
   async function doRestore(found: FoundBackup) {
     setPhase("running");
     try {
-      const config = await loadBackupConfig();
+      const config = getBackupConfig(await loadEnvConfig());
       const logger = createRestoreLogger();
 
       // Stop container
@@ -624,7 +624,7 @@ function FullRestoreInteractive({
 
   async function discoverBackups() {
     try {
-      const config = await loadBackupConfig();
+      const config = getBackupConfig(await loadEnvConfig());
       const { apps } = await findAvailableBackups(dateArg, config);
 
       if (apps.length === 0) {
@@ -652,7 +652,7 @@ function FullRestoreInteractive({
 
   async function doFullRestore(apps: string[]) {
     setPhase("running");
-    const config = await loadBackupConfig();
+    const config = getBackupConfig(await loadEnvConfig());
     const logger = createRestoreLogger();
     let failed = 0;
 

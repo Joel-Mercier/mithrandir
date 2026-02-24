@@ -64,6 +64,8 @@ export interface SecretDefinition {
   prompt: string;
   /** Whether to use masked input */
   sensitive?: boolean;
+  /** Whether this secret is required for the app to function */
+  required?: boolean;
 }
 
 export interface EnvConfig {
@@ -77,6 +79,11 @@ export interface EnvConfig {
   WG_PEERS?: string;
   ND_SPOTIFY_ID?: string;
   ND_SPOTIFY_SECRET?: string;
+  BACKUP_DIR?: string;
+  LOCAL_RETENTION?: string;
+  REMOTE_RETENTION?: string;
+  RCLONE_REMOTE?: string;
+  APPS?: string;
   [key: string]: string | undefined;
 }
 
