@@ -276,6 +276,12 @@ sudo mithrandir health
 ```
 Validates system health across five dimensions: Docker daemon, disk space (warn at 80%, fail at 95%), backup age (warn >2 days, fail >7 days), container restart loops (fail if RestartCount >5 or status "restarting"), and remote backup connectivity via rclone. Exit code 0 if all pass/warn, 1 if any fail — useful for monitoring and automation.
 
+**Doctor (diagnose setup issues):**
+```bash
+sudo mithrandir doctor
+```
+Checks configuration correctness across three categories: System (.env file, Docker installation and daemon), Apps (stopped containers, missing config directories, missing required/optional secrets), and Backup (backup directory, systemd service and timer, rclone installation and remote configuration). Each failing or warning check includes an actionable hint with the command to fix it. Backup checks are skipped if no apps are installed. Exit code 1 if any check fails.
+
 ## Usage (Bash — legacy)
 
 The original bash scripts remain as a fallback until the CLI is proven stable.
@@ -331,6 +337,4 @@ Uninstalls all Homelab components, including Docker, backup systemd timer, rclon
 
 ## TODO
 
-- [ ] Setup auto config for Bazarr
-- [ ] Add a doctor command to check for issues with the setup and with helpful messages.
 - [ ] Check if Profilarr is a good solution for quality profiles

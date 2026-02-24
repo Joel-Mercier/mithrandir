@@ -7,6 +7,7 @@ import { SetupCommand } from "@/commands/setup.js";
 import { runUninstall } from "@/commands/uninstall.js";
 import { runStatus } from "@/commands/status.js";
 import { runHealth } from "@/commands/health.js";
+import { runDoctor } from "@/commands/doctor.js";
 import { runUpdate } from "@/commands/update.js";
 import { runLog } from "@/commands/log.js";
 import { runStart } from "@/commands/start.js";
@@ -45,6 +46,7 @@ const cli = meow(
     uninstall [app]                    Uninstall an app, or full system uninstall
     status                             Show installed apps and system status
     health                             Check system health (Docker, disk, backups)
+    doctor                             Diagnose setup issues with fix suggestions
     update [app]                       Update all or a specific app's container
     log <app>                          View container logs
     self-update                        Update the CLI itself from git
@@ -82,6 +84,7 @@ const cli = meow(
     $ mithrandir uninstall
     $ mithrandir status
     $ mithrandir health
+    $ mithrandir doctor
     $ mithrandir update
     $ mithrandir update radarr
     $ mithrandir start radarr
@@ -174,6 +177,10 @@ switch (command) {
 
   case "health":
     runHealth();
+    break;
+
+  case "doctor":
+    runDoctor();
     break;
 
   case "update":

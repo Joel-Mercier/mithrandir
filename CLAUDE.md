@@ -29,6 +29,7 @@ sudo mithrandir reinstall <app> [--yes]        # Reinstall an app from scratch
 sudo mithrandir uninstall <app>
 sudo mithrandir status                      # Check system status
 sudo mithrandir health                      # Check system health
+sudo mithrandir doctor                     # Diagnose setup issues
 sudo mithrandir update [app] [--yes]        # Update container images
 sudo mithrandir log <app> [--follow] [--tail N] [--since TIME]  # View container logs
 sudo mithrandir self-update                # Update CLI from git and rebuild
