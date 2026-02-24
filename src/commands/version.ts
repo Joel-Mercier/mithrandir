@@ -8,7 +8,7 @@ export function getVersionString(): string {
   try {
     const root = getProjectRoot();
     const pkg = JSON.parse(
-      readFileSync(resolve(root, "cli", "package.json"), "utf-8"),
+      readFileSync(resolve(root, "package.json"), "utf-8"),
     );
     version = pkg.version ?? "unknown";
   } catch {

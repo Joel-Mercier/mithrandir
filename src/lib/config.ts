@@ -6,11 +6,11 @@ import type { EnvConfig, BackupConfig } from "@/types.js";
 
 /** Find the project root (where .env lives) */
 export function getProjectRoot(): string {
-  // Walk up until we find the directory containing cli/package.json.
-  // Works from both source (cli/src/lib/) and bundled (cli/dist/) locations.
+  // Walk up until we find the directory containing package.json.
+  // Works from both source (src/lib/) and bundled (dist/) locations.
   let dir = dirname(new URL(import.meta.url).pathname);
   while (dir !== dirname(dir)) {
-    if (existsSync(join(dir, "cli", "package.json"))) return dir;
+    if (existsSync(join(dir, "package.json"))) return dir;
     dir = dirname(dir);
   }
   throw new Error("Could not find mithrandir project root");

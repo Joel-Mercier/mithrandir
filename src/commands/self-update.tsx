@@ -48,8 +48,6 @@ function SelfUpdateCommand() {
     }
 
     try {
-      const cliDir = join(root, "cli");
-
       // When running under sudo, run git/bun as the original user so
       // SSH keys and credentials are available
       const sudoUser = process.env.SUDO_USER;
@@ -106,7 +104,7 @@ function SelfUpdateCommand() {
 
       // Step 3: Install dependencies
       setCurrentLabel("Installing dependencies...");
-      const install = await shell("bun", ["install"], { cwd: cliDir, ignoreError: true, ...userOpts });
+      const install = await shell("bun", ["install"], { cwd: root, ignoreError: true, ...userOpts });
       if (install.exitCode !== 0) {
         setError(`bun install failed:\n${install.stderr}`);
         setPhase("error");
@@ -118,13 +116,13 @@ function SelfUpdateCommand() {
       setCurrentLabel("Building CLI...");
 
       // Ensure dist/ and mithrandir.js are writable (may be root-owned from previous sudo install)
-      const distDir = join(cliDir, "dist");
+      const distDir = join(root, "dist");
       const distFile = join(distDir, "mithrandir.js");
       if (existsSync(distDir)) {
         await shell("chmod", ["-R", "u+w", distDir], { ignoreError: true });
       }
 
-      const build = await shell("bun", ["run", "build"], { cwd: cliDir, ignoreError: true, ...userOpts });
+      const build = await shell("bun", ["run", "build"], { cwd: root, ignoreError: true, ...userOpts });
       if (build.exitCode !== 0) {
         setError(`Build failed:\n${build.stderr}`);
         setPhase("error");
@@ -134,7 +132,7 @@ function SelfUpdateCommand() {
 
       // Step 5: Verify symlink
       if (existsSync("/usr/local/bin/mithrandir")) {
-        addStep({ name: "Symlink", status: "done", message: "/usr/local/bin/mithrandir → cli/dist/mithrandir.js" });
+        addStep({ name: "Symlink", status: "done", message: "/usr/local/bin/mithrandir → dist/mithrandir.js" });
       } else {
         // Re-create symlink if missing
         setCurrentLabel("Installing mithrandir command...");

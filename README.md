@@ -6,7 +6,7 @@ Automated setup and backup system for Docker-based homelab applications.
 
 ```bash
 git clone <repo> && cd mithrandir
-bash cli/install.sh          # Installs Bun + dependencies
+sudo bash install.sh          # Installs Bun + dependencies
 sudo mithrandir setup
 ```
 
@@ -46,9 +46,9 @@ Automatically generated and installed by setup to `/etc/systemd/system/`:
   - Runs daily at 2:00 AM with 0-30 minute randomization
   - Persistent: runs immediately if system was off during scheduled time
 
-## Usage (CLI)
+## Usage
 
-The CLI requires Bun. Run `bash cli/install.sh` first to install Bun, build the CLI, and install the `mithrandir` command on a bare Debian/Ubuntu server.
+The CLI requires Bun. Run `sudo bash install.sh` first to install Bun, build the CLI, and install the `mithrandir` command on a bare Debian/Ubuntu server.
 
 **Setup wizard:**
 ```bash
@@ -149,7 +149,7 @@ Stops and removes the container. Prompts whether to also delete the app's data a
 ```bash
 sudo mithrandir uninstall
 ```
-Removes all Homelab components: Docker, backup systemd timer, rclone, local backups, and app data directories. Equivalent to `sudo bash uninstall.sh`.
+Removes all Homelab components: Docker, backup systemd timer, rclone, local backups, and app data directories.
 
 **Update containers:**
 ```bash
@@ -281,40 +281,6 @@ Validates system health across five dimensions: Docker daemon, disk space (warn 
 sudo mithrandir doctor
 ```
 Checks configuration correctness across three categories: System (.env file, Docker installation and daemon), Apps (stopped containers, missing config directories, missing required/optional secrets), and Backup (backup directory, systemd service and timer, rclone installation and remote configuration). Each failing or warning check includes an actionable hint with the command to fix it. Backup checks are skipped if no apps are installed. Exit code 1 if any check fails.
-
-## Usage (Bash — legacy)
-
-The original bash scripts remain as a fallback until the CLI is proven stable.
-
-**Initial setup and updates:**
-```bash
-bash setup.sh [--yes] [--uninstall <app>]
-```
-- `--yes`: Skip confirmation prompts
-- `--uninstall <app>`: Remove an individual app (stops container, removes config and compose file)
-
-**Backup:**
-```bash
-bash backup.sh
-```
-Backs up all configured apps automatically. No arguments required. Runs without root — uses `sudo` internally for privileged operations.
-
-**Delete backups:**
-```bash
-bash backup.sh delete <local|remote> [YYYY-MM-DD]
-```
-Deletes local or remote backups. Without a date, deletes all backups for the given target.
-
-**Restore:**
-```bash
-bash restore.sh <app_name|full> [date] [--yes]
-```
-
-**Uninstall:**
-```bash
-sudo bash uninstall.sh
-```
-Uninstalls all Homelab components, including Docker, backup systemd timer, rclone, and local backups. Also prompts for confirmation to delete all app data directories.
 
 ## Available Apps
 
