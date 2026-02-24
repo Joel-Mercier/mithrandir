@@ -1443,7 +1443,7 @@ function AutoSetupAppsStep({ selectedApps, envConfig, localIp, autoYes, onComple
   const currentApp = setupableApps[setupIdx];
   const promptLabel =
     promptState === "username" ? `Enter username for ${currentApp?.displayName ?? "app"}:` :
-    promptState === "password" ? `Enter password for ${currentApp?.displayName ?? "app"}:` :
+    promptState === "password" ? `Enter password for ${currentApp?.displayName ?? "app"}${promptDefault ? " (enter to reuse previous)" : ""}:` :
     promptState === "jellyfin-server-name" ? "Enter Jellyfin server name:" :
     promptState === "jellyfin-language" ? "Enter preferred metadata language (e.g. en):" :
     promptState === "jellyfin-country" ? "Enter metadata country code (e.g. US):" :
@@ -1496,7 +1496,7 @@ function AutoSetupAppsStep({ selectedApps, envConfig, localIp, autoYes, onComple
             <Text color="blue">{">"} </Text>
             <PasswordInput
               key={`${currentApp?.name}-${promptState}`}
-              placeholder={promptDefault}
+              placeholder={promptDefault ? "••••••••" : ""}
               onSubmit={handlePromptSubmit}
             />
           </Box>
