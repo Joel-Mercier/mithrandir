@@ -104,7 +104,7 @@ function SelfUpdateCommand() {
 
       // Step 3: Install dependencies
       setCurrentLabel("Installing dependencies...");
-      const install = await shell("bun", ["install"], { cwd: root, ignoreError: true, ...userOpts });
+      const install = await shell("bun", ["install"], { cwd: root, ignoreError: true });
       if (install.exitCode !== 0) {
         setError(`bun install failed:\n${install.stderr}`);
         setPhase("error");
@@ -122,7 +122,7 @@ function SelfUpdateCommand() {
         await shell("chmod", ["-R", "u+w", distDir], { ignoreError: true });
       }
 
-      const build = await shell("bun", ["run", "build"], { cwd: root, ignoreError: true, ...userOpts });
+      const build = await shell("bun", ["run", "build"], { cwd: root, ignoreError: true });
       if (build.exitCode !== 0) {
         setError(`Build failed:\n${build.stderr}`);
         setPhase("error");
