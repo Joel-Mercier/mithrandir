@@ -191,6 +191,8 @@ function getContainerConfigPath(app: AppDefinition): string {
       return "/app/config";
     case "navidrome":
       return "/data";
+    case "pihole":
+      return "/etc/pihole";
     default:
       return "/config";
   }
@@ -206,6 +208,7 @@ function mapSecretToComposeVar(appName: string, envVar: string): string {
     DUCKDNS_TOKEN: "TOKEN",
     WG_SERVERURL: "SERVERURL",
     WG_PEERS: "PEERS",
+    PIHOLE_PASSWORD: "FTLCONF_webserver_api_password",
   };
   return mapping[envVar] ?? envVar;
 }

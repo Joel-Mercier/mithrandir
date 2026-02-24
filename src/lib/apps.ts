@@ -208,6 +208,31 @@ export const APP_REGISTRY: AppDefinition[] = [
     multipleConfigDirs: ["config", "data"],
     needsDataDir: false,
   },
+  {
+    name: "pihole",
+    displayName: "Pi-hole",
+    description: "Network-wide ad blocker and DNS server",
+    image: "pihole/pihole:latest",
+    port: 80,
+    configSubdir: "etc-pihole",
+    needsDataDir: false,
+    capAdd: ["NET_ADMIN", "SYS_TIME", "SYS_NICE"],
+    extraPorts: [
+      { host: 53, container: 53, protocol: "tcp" },
+      { host: 53, container: 53, protocol: "udp" },
+      { host: 443, container: 443, protocol: "tcp" },
+    ],
+    environment: {
+      FTLCONF_dns_listeningMode: "ALL",
+    },
+    secrets: [
+      {
+        envVar: "PIHOLE_PASSWORD",
+        prompt: "Pi-hole web interface password",
+        sensitive: true,
+      },
+    ],
+  },
 ];
 
 /** Get an app definition by name */

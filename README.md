@@ -32,6 +32,7 @@ All configuration lives in a single `.env` file at the project root.
 - `WG_SERVERURL`: Required for WireGuard
 - `WG_PEERS`: Number of WireGuard peers (default: `1`)
 - `ND_SPOTIFY_ID`, `ND_SPOTIFY_SECRET`: Optional for Navidrome artist images
+- `PIHOLE_PASSWORD`: Optional web interface password for Pi-hole
 
 ### Rclone configuration
 You can setup remote backups by running `rclone config` in the terminal after running the setup wizard. This will set up the remote connection to your Google Drive. Make sure the remote name matches the `RCLONE_REMOTE` setting in `.env`. If you run a desktopless linux server, you'll need to execute a rclone command on another device with a browser to complete the remote setup. The documentation to setup a Google Drive remote with rclone is [here](https://rclone.org/drive/#making-your-own-client-id).
@@ -300,6 +301,7 @@ Checks configuration correctness across three categories: System (.env file, Doc
 | DuckDNS | — | Free dynamic DNS service |
 | WireGuard | 51820/udp | Fast, modern VPN tunnel |
 | Gatus | 3001 | Automated service health monitoring |
+| Pi-hole | 80 | Network-wide ad blocker and DNS server |
 
 ## TODO
 
