@@ -1,4 +1,4 @@
-import type { AppDefinition } from "@/types.js";
+import type { AppDefinition, EnvConfig } from "@/types.js";
 
 /**
  * Single source of truth for all mithrandir services.
@@ -209,6 +209,93 @@ export const APP_REGISTRY: AppDefinition[] = [
     needsDataDir: false,
   },
   {
+    name: "immich",
+    displayName: "Immich",
+    description: "Self-hosted photo and video management",
+    image: "ghcr.io/immich-app/immich-server:release",
+    containerName: "immich_server",
+    additionalContainers: ["immich_machine_learning", "immich_redis", "immich_postgres"],
+    port: 2283,
+    configSubdir: "postgres",
+    needsDataDir: false,
+    rawCompose: (envConfig: EnvConfig) => {
+      const baseDir = envConfig.BASE_DIR;
+      const dbPassword = envConfig.IMMICH_DB_PASSWORD ?? "postgres";
+      const lines = [
+        `services:`,
+        `  immich_server:`,
+        `    image: ghcr.io/immich-app/immich-server:release`,
+        `    container_name: immich_server`,
+        `    environment:`,
+        `      - DB_PASSWORD=${dbPassword}`,
+        `      - DB_USERNAME=postgres`,
+        `      - DB_DATABASE_NAME=immich`,
+        `      - DB_HOSTNAME=immich_postgres`,
+        `      - REDIS_HOSTNAME=immich_redis`,
+        `      - TZ=${envConfig.TZ}`,
+        `    ports:`,
+        `      - 2283:2283`,
+        `    volumes:`,
+        `      - ${baseDir}/data/media/pictures:/data`,
+        `      - /etc/localtime:/etc/localtime:ro`,
+        `    depends_on:`,
+        `      - immich_redis`,
+        `      - immich_postgres`,
+        `    restart: unless-stopped`,
+        `    healthcheck:`,
+        `      disable: false`,
+        ``,
+        `  immich_machine_learning:`,
+        `    image: ghcr.io/immich-app/immich-machine-learning:release`,
+        `    container_name: immich_machine_learning`,
+        `    volumes:`,
+        `      - immich-model-cache:/cache`,
+        `    environment:`,
+        `      - DB_PASSWORD=${dbPassword}`,
+        `      - DB_USERNAME=postgres`,
+        `      - DB_DATABASE_NAME=immich`,
+        `      - DB_HOSTNAME=immich_postgres`,
+        `      - REDIS_HOSTNAME=immich_redis`,
+        `    restart: unless-stopped`,
+        `    healthcheck:`,
+        `      disable: false`,
+        ``,
+        `  immich_redis:`,
+        `    image: docker.io/valkey/valkey:9`,
+        `    container_name: immich_redis`,
+        `    healthcheck:`,
+        `      test: redis-cli ping || exit 1`,
+        `    restart: unless-stopped`,
+        ``,
+        `  immich_postgres:`,
+        `    image: ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0`,
+        `    container_name: immich_postgres`,
+        `    environment:`,
+        `      - POSTGRES_PASSWORD=${dbPassword}`,
+        `      - POSTGRES_USER=postgres`,
+        `      - POSTGRES_DB=immich`,
+        `      - POSTGRES_INITDB_ARGS=--data-checksums`,
+        `    volumes:`,
+        `      - ${baseDir}/immich/postgres:/var/lib/postgresql/data`,
+        `    shm_size: 128mb`,
+        `    restart: unless-stopped`,
+        `    healthcheck:`,
+        `      disable: false`,
+        ``,
+        `volumes:`,
+        `  immich-model-cache:`,
+      ];
+      return lines.join("\n") + "\n";
+    },
+    secrets: [
+      {
+        envVar: "IMMICH_DB_PASSWORD",
+        prompt: "Immich database password",
+        sensitive: true,
+      },
+    ],
+  },
+  {
     name: "pihole",
     displayName: "Pi-hole",
     description: "Network-wide ad blocker and DNS server",
@@ -248,6 +335,14 @@ export function getAppNames(): string[] {
 /** Get the container name for an app */
 export function getContainerName(app: AppDefinition): string {
   return app.containerName ?? app.name;
+}
+
+/** Get all container names for an app (primary + additional for multi-container apps) */
+export function getAllContainerNames(app: AppDefinition): string[] {
+  const primary = getContainerName(app);
+  return app.additionalContainers
+    ? [primary, ...app.additionalContainers]
+    : [primary];
 }
 
 /** Get the app directory path */

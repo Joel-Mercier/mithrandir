@@ -55,6 +55,10 @@ export interface AppDefinition {
   mountMusicDir?: boolean;
   /** Names of apps that conflict with this one (e.g. same port) */
   conflictsWith?: string[];
+  /** Additional container names for multi-container apps (for orphan cleanup during reinstall/install) */
+  additionalContainers?: string[];
+  /** Custom compose generator for multi-container apps (bypasses generateCompose) */
+  rawCompose?: (envConfig: EnvConfig) => string;
 }
 
 export interface SecretDefinition {

@@ -3,7 +3,7 @@ import { render, Box, Text, useApp } from "ink";
 import Spinner from "ink-spinner";
 import { ConfirmInput, StatusMessage } from "@inkjs/ui";
 import { existsSync } from "fs";
-import { getApp, getAppNames, getAppDir, getComposePath, getContainerName } from "@/lib/apps.js";
+import { getApp, getAppNames, getAppDir, getComposePath, getAllContainerNames } from "@/lib/apps.js";
 import { shell } from "@/lib/shell.js";
 import { loadEnvConfig } from "@/lib/config.js";
 import { Header } from "@/components/Header.js";
@@ -65,9 +65,10 @@ function ReinstallInteractive({
     setCurrentLabel(`Stopping ${appName} container...`);
     await shell("docker", ["compose", "down", "--volumes"], { cwd: dir, ignoreError: true });
 
-    // Remove the docker image for this app
-    const containerName = getContainerName(app);
-    await shell("docker", ["rm", "-f", containerName], { sudo: true, ignoreError: true });
+    // Remove orphaned containers and docker images for this app
+    for (const name of getAllContainerNames(app)) {
+      await shell("docker", ["rm", "-f", name], { sudo: true, ignoreError: true });
+    }
     await shell("docker", ["image", "rm", "-f", app.image], { sudo: true, ignoreError: true });
     await shell("docker", ["network", "prune", "-f"], { sudo: true, ignoreError: true });
     addStep({ name: "Stop container", status: "done", message: "Container stopped and image removed" });

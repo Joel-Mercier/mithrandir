@@ -9,6 +9,10 @@ export function generateCompose(
   app: AppDefinition,
   envConfig: EnvConfig,
 ): string {
+  if (app.rawCompose) {
+    return app.rawCompose(envConfig);
+  }
+
   const baseDir = envConfig.BASE_DIR;
   const appDir = getAppDir(app, baseDir);
   const dataDir = `${baseDir}/data`;

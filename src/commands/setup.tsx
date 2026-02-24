@@ -7,6 +7,7 @@ import {
   getApp,
   getAppDir,
   getContainerName,
+  getAllContainerNames,
   getComposePath,
   getConfigPaths,
   filterConflicts,
@@ -306,6 +307,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
         `${dataDir}/media/movies`,
         `${dataDir}/media/tv`,
         `${dataDir}/media/music`,
+        `${dataDir}/media/pictures`,
       ];
       for (const d of dirs) {
         await shell("mkdir", ["-p", d], { sudo: true });
@@ -587,6 +589,9 @@ export function SetupCommand({ flags }: SetupCommandProps) {
             <Text>   - Android TV</Text>
             <Text>   - Apple TV</Text>
             <Text>   - Smart TVs (Samsung, LG)</Text>
+            <Text>  Some good plugins for Jellyfin are:</Text>
+            <Text>   - Opensubtitles (downloads subtitles, requires a opensubtitles.com account)</Text>
+            
           </Box>
         )}
         {hasApp("jellyfin") && hasApp("seerr") && (
@@ -1569,8 +1574,9 @@ export async function writeComposeAndStart(
   // 2) docker rm -f: catches orphaned containers from prior CLI runs
   //    (old -f flag created different project labels) or docker run
   await composeDown(composePath).catch(() => {});
-  const containerName = app.containerName ?? app.name;
-  await removeContainer(containerName);
+  for (const name of getAllContainerNames(app)) {
+    await removeContainer(name);
+  }
 
   // Start container
   await composeUp(composePath);
