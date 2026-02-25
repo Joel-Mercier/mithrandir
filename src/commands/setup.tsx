@@ -33,6 +33,7 @@ import {
 import { detectDistro, getLocalIp } from "@/lib/distro.js";
 import { loadEnvConfig, saveEnvConfig } from "@/lib/config.js";
 import { shell } from "@/lib/shell.js";
+import { getSwapInfo, ensureSwap, formatSwapSize } from "@/lib/swap.js";
 import { Header } from "@/components/Header.js";
 import { StepIndicator } from "@/components/StepIndicator.js";
 import { AppStatus } from "@/components/AppStatus.js";
@@ -56,6 +57,7 @@ interface SetupCommandProps {
 type SetupStep =
   | "init"
   | "docker"
+  | "swap"
   | "rclone"
   | "base-dir"
   | "app-select"
@@ -123,7 +125,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
         if (await waitForDocker(5, 1000)) {
           setStatus("done");
           addCompletedStep({ name: "Docker", status: "done", message: "Ready" });
-          setStep("rclone");
+          setStep("swap");
           return;
         }
       }
@@ -147,7 +149,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
         }
         setStatus("done");
         addCompletedStep({ name: "Docker", status: "done", message: "Installed" });
-        setStep("rclone");
+        setStep("swap");
       } catch (err: any) {
         setError(`Docker install failed: ${err.message}`);
       }
@@ -159,7 +161,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
 
     return (
       <Box flexDirection="column">
-        <StepIndicator current={1} total={8} label="Docker" />
+        <StepIndicator current={1} total={9} label="Docker" />
         {status === "checking" && (
           <Text>
             <Text color="green"><Spinner type="dots" /></Text>
@@ -187,6 +189,80 @@ export function SetupCommand({ flags }: SetupCommandProps) {
           <Text>
             <Text color="green"><Spinner type="dots" /></Text>
             {" "}Waiting for Docker daemon...
+          </Text>
+        )}
+      </Box>
+    );
+  }
+
+  // ─── Step: Swap ─────────────────────────────────────────────────────────────
+
+  function SwapStep() {
+    const [status, setStatus] = useState<"checking" | "confirm" | "configuring" | "done">("checking");
+    const [currentSize, setCurrentSize] = useState<string>("");
+
+    useEffect(() => {
+      checkSwap();
+    }, []);
+
+    async function checkSwap() {
+      const info = await getSwapInfo();
+      const twoGB = 2 * 1024 * 1024 * 1024;
+      if (info && info.totalBytes >= twoGB) {
+        setStatus("done");
+        addCompletedStep({ name: "Swap", status: "done", message: `${formatSwapSize(info.totalBytes)} configured` });
+        setStep("rclone");
+        return;
+      }
+      setCurrentSize(info ? formatSwapSize(info.totalBytes) : "none");
+      if (autoYes) {
+        await doConfigure();
+      } else {
+        setStatus("confirm");
+      }
+    }
+
+    async function doConfigure() {
+      setStatus("configuring");
+      try {
+        await ensureSwap(2);
+        setStatus("done");
+        addCompletedStep({ name: "Swap", status: "done", message: "Configured 2 GB" });
+        setStep("rclone");
+      } catch (err: any) {
+        setError(`Swap configuration failed: ${err.message}`);
+      }
+    }
+
+    if (status === "done") {
+      return <AppStatus name="Swap" status="done" message="Ready" />;
+    }
+
+    return (
+      <Box flexDirection="column">
+        <StepIndicator current={2} total={9} label="Swap" />
+        {status === "checking" && (
+          <Text>
+            <Text color="green"><Spinner type="dots" /></Text>
+            {" "}Checking swap...
+          </Text>
+        )}
+        {status === "confirm" && (
+          <Box flexDirection="column">
+            <Text>Current swap: {currentSize}. Configure 2 GB swap for running containers?</Text>
+            <ConfirmInput
+              onConfirm={async () => { await doConfigure(); }}
+              onCancel={() => {
+                addCompletedStep({ name: "Swap", status: "skipped", message: `Kept at ${currentSize}` });
+                setStep("rclone");
+              }}
+            />
+          </Box>
+        )}
+        {status === "configuring" && (
+          <Text>
+            <Text color="yellow"><Spinner type="dots" /></Text>
+            {" "}Configuring 2 GB swap...
           </Text>
         )}
       </Box>
@@ -254,7 +330,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
 
     return (
       <Box flexDirection="column">
-        <StepIndicator current={2} total={8} label="rclone" />
+        <StepIndicator current={3} total={9} label="rclone" />
         {status === "checking" && (
           <Text>
             <Text color="green"><Spinner type="dots" /></Text>
@@ -335,7 +411,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
 
     return (
       <Box flexDirection="column">
-        <StepIndicator current={3} total={8} label="Base Directory" />
+        <StepIndicator current={4} total={9} label="Base Directory" />
         <Text>Enter the base directory where all Docker app folders should be created:</Text>
         <Box>
           <Text color="blue">{">"} </Text>
@@ -377,7 +453,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
 
     return (
       <Box flexDirection="column">
-        <StepIndicator current={4} total={8} label="Select Apps" />
+        <StepIndicator current={5} total={9} label="Select Apps" />
         <Text>Choose services to install (space to toggle, enter to confirm):</Text>
         <MultiSelect options={options} onSubmit={handleSubmit} />
       </Box>
@@ -438,7 +514,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
 
     return (
       <Box flexDirection="column">
-        <StepIndicator current={5} total={8} label="Required Secrets" />
+        <StepIndicator current={6} total={9} label="Required Secrets" />
         <Text>
           <Text bold>{current.app.displayName}</Text> requires{" "}
           <Text bold>{current.secret.envVar}</Text>
@@ -508,7 +584,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
 
     return (
       <Box flexDirection="column">
-        <StepIndicator current={7} total={8} label="Backup Service" />
+        <StepIndicator current={8} total={9} label="Backup Service" />
         {status === "checking" && (
           <Text>
             <Text color="green"><Spinner type="dots" /></Text>
@@ -547,7 +623,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
 
     return (
       <Box flexDirection="column">
-        <StepIndicator current={8} total={8} label="Setup Complete" />
+        <StepIndicator current={9} total={9} label="Setup Complete" />
         <Box marginBottom={1}>
           <Text bold color="green">All services are running!</Text>
         </Box>
@@ -646,6 +722,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
         </Text>
       )}
       {step === "docker" && <DockerStep />}
+      {step === "swap" && <SwapStep />}
       {step === "rclone" && <RcloneStep />}
       {step === "base-dir" && <BaseDirStep />}
       {step === "app-select" && <AppSelectStep />}
@@ -805,8 +882,8 @@ function InstallAppsStep({ selectedApps, envConfig, autoYes, onComplete }: Insta
   return (
     <Box flexDirection="column">
       <StepIndicator
-        current={5}
-        total={8}
+        current={6}
+        total={9}
         label={`Installing Apps (${installIdx + 1}/${selectedApps.length})`}
       />
 
@@ -870,7 +947,7 @@ function ConfirmAutoSetupStep({ selectedApps, autoYes, onYes, onNo }: ConfirmAut
 
   return (
     <Box flexDirection="column">
-      <StepIndicator current={6} total={8} label="Automatic Setup" />
+      <StepIndicator current={7} total={9} label="Automatic Setup" />
       <Text>Would you like to automatically configure your apps (credentials, download clients, etc.)?</Text>
       <ConfirmInput onConfirm={onYes} onCancel={onNo} />
     </Box>
@@ -1458,8 +1535,8 @@ function AutoSetupAppsStep({ selectedApps, envConfig, localIp, autoYes, onComple
   return (
     <Box flexDirection="column">
       <StepIndicator
-        current={6}
-        total={8}
+        current={7}
+        total={9}
         label={`Auto-Setup (${setupIdx + 1}/${setupableApps.length})`}
       />
 

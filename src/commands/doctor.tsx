@@ -13,6 +13,7 @@ import { isDockerInstalled } from "@/lib/docker.js";
 import { isRcloneInstalled, isRcloneRemoteConfigured } from "@/lib/rclone.js";
 import { isTimerActive } from "@/lib/systemd.js";
 import { shell } from "@/lib/shell.js";
+import { getSwapInfo, formatSwapSize } from "@/lib/swap.js";
 import { existsSync } from "fs";
 import type { EnvConfig } from "@/types.js";
 
@@ -72,6 +73,36 @@ async function checkDocker(): Promise<CheckResult[]> {
     status: "pass",
     message: "Installed and running",
   }];
+}
+
+async function checkSwap(): Promise<CheckResult> {
+  const info = await getSwapInfo();
+  if (!info) {
+    return {
+      category: "System",
+      name: "Swap",
+      status: "fail",
+      message: "No swap configured",
+      hint: "Run `mithrandir install docker` or `sudo fallocate -l 2G /var/swap && sudo mkswap /var/swap && sudo swapon /var/swap`",
+    };
+  }
+  const sizeStr = formatSwapSize(info.totalBytes);
+  const oneGB = 1024 * 1024 * 1024;
+  if (info.totalBytes < oneGB) {
+    return {
+      category: "System",
+      name: "Swap",
+      status: "warn",
+      message: `${sizeStr} configured (recommend >= 2 GB for running containers)`,
+      hint: "Run `mithrandir install docker` to automatically configure 2 GB swap",
+    };
+  }
+  return {
+    category: "System",
+    name: "Swap",
+    status: "pass",
+    message: `${sizeStr} configured`,
+  };
 }
 
 async function checkStoppedContainers(baseDir: string): Promise<CheckResult> {
@@ -295,8 +326,9 @@ async function runChecks(): Promise<CheckResult[]> {
   // System checks
   const envCheck = checkEnvFile();
   const dockerChecks = await checkDocker();
+  const swapCheck = await checkSwap();
 
-  const results: CheckResult[] = [envCheck, ...dockerChecks];
+  const results: CheckResult[] = [envCheck, ...dockerChecks, swapCheck];
 
   // App checks
   const stoppedCheck = await checkStoppedContainers(baseDir);

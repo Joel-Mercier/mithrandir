@@ -11,6 +11,7 @@ import {
   installDocker,
   pullImageWithProgress,
 } from "@/lib/docker.js";
+import { getSwapInfo, ensureSwap, formatSwapSize } from "@/lib/swap.js";
 import { isRcloneInstalled, installRclone } from "@/lib/rclone.js";
 import {
   hasSystemd,
@@ -34,11 +35,27 @@ interface CompletedStep {
 function InstallDocker() {
   const { exit } = useApp();
   const [completedSteps, setCompletedSteps] = useState<CompletedStep[]>([]);
-  const [phase, setPhase] = useState<"checking" | "installing" | "waiting" | "done">("checking");
+  const [phase, setPhase] = useState<"checking" | "installing" | "waiting" | "swap" | "done">("checking");
   const [error, setError] = useState<string | null>(null);
 
   function addStep(step: CompletedStep) {
     setCompletedSteps((prev) => [...prev, step]);
+  }
+
+  async function configureSwap() {
+    setPhase("swap");
+    const twoGB = 2 * 1024 * 1024 * 1024;
+    const info = await getSwapInfo();
+    if (info && info.totalBytes >= twoGB) {
+      addStep({ name: "Swap", status: "done", message: `Already sufficient (${formatSwapSize(info.totalBytes)})` });
+      return;
+    }
+    try {
+      await ensureSwap(2);
+      addStep({ name: "Swap", status: "done", message: "Configured 2 GB" });
+    } catch {
+      addStep({ name: "Swap", status: "error", message: "Failed to configure (non-fatal)" });
+    }
   }
 
   useEffect(() => {
@@ -51,6 +68,7 @@ function InstallDocker() {
       setPhase("waiting");
       if (await waitForDocker(5, 1000)) {
         addStep({ name: "Docker", status: "done", message: "Already installed and running" });
+        await configureSwap();
         setPhase("done");
         setTimeout(() => exit(), 500);
         return;
@@ -76,6 +94,7 @@ function InstallDocker() {
     }
     addStep({ name: "Docker daemon", status: "done", message: "Ready" });
 
+    await configureSwap();
     setPhase("done");
     setTimeout(() => exit(), 500);
   }
@@ -118,6 +137,12 @@ function InstallDocker() {
         <Text>
           <Text color="green"><Spinner type="dots" /></Text>
           {" "}Waiting for Docker daemon...
+        </Text>
+      )}
+      {phase === "swap" && (
+        <Text>
+          <Text color="green"><Spinner type="dots" /></Text>
+          {" "}Checking swap configuration...
         </Text>
       )}
 
