@@ -324,6 +324,7 @@ export const APP_REGISTRY: AppDefinition[] = [
     configSubdir: "config",
     needsDataDir: false,
     hidden: true,
+    additionalContainers: ["caddy-dns"],
     rawCompose: (envConfig: EnvConfig) => {
       const baseDir = envConfig.BASE_DIR;
       const appDir = `${baseDir}/caddy`;
@@ -344,6 +345,17 @@ export const APP_REGISTRY: AppDefinition[] = [
         `      - ${appDir}/config:/config`,
         "    restart: unless-stopped",
         "",
+        "  caddy-dns:",
+        "    image: mithrandir/caddy-duckdns:latest",
+        "    container_name: caddy-dns",
+        '    entrypoint: ["dnsmasq", "-k", "-C", "/etc/dnsmasq.conf"]',
+        "    network_mode: host",
+        "    volumes:",
+        `      - ${appDir}/dnsmasq.conf:/etc/dnsmasq.conf:ro`,
+        "    profiles:",
+        '      - "dns"',
+        "    restart: unless-stopped",
+        "",
       ].join("\n") + "\n";
     },
   },
@@ -360,6 +372,9 @@ export const APP_REGISTRY: AppDefinition[] = [
       { host: 53, container: 53, protocol: "tcp" },
       { host: 53, container: 53, protocol: "udp" },
       { host: 443, container: 443, protocol: "tcp" },
+    ],
+    extraVolumes: [
+      { host: "etc-dnsmasq.d", container: "/etc/dnsmasq.d" },
     ],
     environment: {
       FTLCONF_dns_listeningMode: "ALL",

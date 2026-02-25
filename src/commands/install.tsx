@@ -24,7 +24,8 @@ import {
 } from "@/lib/systemd.js";
 import { shell } from "@/lib/shell.js";
 import { generateCompose } from "@/lib/compose.js";
-import { generateCaddyfile, generateCaddyDockerfile, getDuckDnsDomain, regenerateCaddyfile } from "@/lib/caddy.js";
+import { generateCaddyfile, generateCaddyDockerfile, generateDnsmasqConfig, getDuckDnsDomain, regenerateCaddyfile } from "@/lib/caddy.js";
+import { getLocalIp } from "@/lib/distro.js";
 import { Header } from "@/components/Header.js";
 import { AppStatus } from "@/components/AppStatus.js";
 import { ProgressBar } from "@/components/ProgressBar.js";
@@ -282,7 +283,7 @@ function InstallHttps() {
   const { exit } = useApp();
   const [completedSteps, setCompletedSteps] = useState<CompletedStep[]>([]);
   const [phase, setPhase] = useState<
-    "checking" | "prompt-email" | "building" | "starting" | "pihole" | "done"
+    "checking" | "prompt-email" | "building" | "starting" | "dns" | "pihole" | "done"
   >("checking");
   const [error, setError] = useState<string | null>(null);
   const [domain, setDomain] = useState("");
@@ -356,13 +357,15 @@ function InstallHttps() {
   }
 
   async function doInstall(env: Awaited<ReturnType<typeof loadEnvConfig>>, acmeEmail: string) {
+    const derivedDomain = getDuckDnsDomain(env)!;
+
     // Save to .env
     env.ENABLE_HTTPS = "true";
     env.ACME_EMAIL = acmeEmail;
     await saveEnvConfig(env);
     addStep({ name: "Config", status: "done", message: `Email: ${acmeEmail}` });
 
-    // Build custom Caddy image with DuckDNS DNS module
+    // Build custom Caddy image with DuckDNS DNS module + dnsmasq
     setPhase("building");
     const baseDir = env.BASE_DIR;
     const caddyDir = `${baseDir}/caddy`;
@@ -374,7 +377,7 @@ function InstallHttps() {
     await Bun.write(`${caddyDir}/Dockerfile`, dockerfile);
 
     await shell("docker", ["build", "-t", "mithrandir/caddy-duckdns:latest", caddyDir], { sudo: true });
-    addStep({ name: "Build image", status: "done", message: "Built Caddy with DuckDNS module" });
+    addStep({ name: "Build image", status: "done", message: "Built Caddy with DuckDNS + dnsmasq" });
 
     // Generate Caddyfile from all currently installed apps
     const installedApps = APP_REGISTRY.filter((app) =>
@@ -385,26 +388,54 @@ function InstallHttps() {
     const proxyCount = installedApps.filter((a) => a.port && a.name !== "caddy").length;
     addStep({ name: "Caddyfile", status: "done", message: `${proxyCount} app${proxyCount !== 1 ? "s" : ""} configured` });
 
+    // Write dnsmasq config for wildcard DNS resolution
+    const lanIp = await getLocalIp();
+    const dnsmasqConf = generateDnsmasqConfig(derivedDomain, lanIp);
+    await Bun.write(`${caddyDir}/dnsmasq.conf`, dnsmasqConf);
+
     // Generate compose and start Caddy
     setPhase("starting");
     const caddyApp = getApp("caddy")!;
     const compose = caddyApp.rawCompose!(env);
     const caddyComposePath = `${caddyDir}/docker-compose.yml`;
     await Bun.write(caddyComposePath, compose);
-    await composeUp(caddyComposePath);
-    addStep({ name: "Caddy", status: "done", message: "Container started on port 443" });
 
-    // Handle Pi-hole port 443 conflict
-    setPhase("pihole");
+    // Check if Pi-hole owns DNS (port 53)
     const piholeDir = `${baseDir}/pihole`;
     const piholeComposePath = `${piholeDir}/docker-compose.yml`;
-    if (existsSync(piholeComposePath)) {
+    const piholeInstalled = existsSync(piholeComposePath);
+
+    if (piholeInstalled) {
+      // Pi-hole owns DNS — start only Caddy, configure Pi-hole for wildcard
+      await composeUp(caddyComposePath);
+      addStep({ name: "Caddy", status: "done", message: "Container started on port 443" });
+
+      // Write wildcard DNS config for Pi-hole's dnsmasq
+      setPhase("dns");
+      const dnsmasqDir = `${piholeDir}/etc-dnsmasq.d`;
+      await shell("mkdir", ["-p", dnsmasqDir], { sudo: true });
+      await Bun.write(
+        `${dnsmasqDir}/99-caddy-wildcard.conf`,
+        `address=/${derivedDomain}/${lanIp}\n`,
+      );
+
+      // Regenerate Pi-hole compose (adds dnsmasq.d volume, removes port 443) and restart
+      setPhase("pihole");
       const piholeApp = getApp("pihole")!;
       const piholeCompose = generateCompose(piholeApp, env);
       await Bun.write(piholeComposePath, piholeCompose);
       await composeDown(piholeComposePath);
       await composeUp(piholeComposePath);
-      addStep({ name: "Pi-hole", status: "done", message: "Restarted without port 443" });
+      addStep({ name: "Pi-hole", status: "done", message: `Wildcard DNS for *.${derivedDomain} → ${lanIp}` });
+    } else {
+      // No Pi-hole — start Caddy + dnsmasq sidecar for wildcard DNS
+      await shell(
+        "docker",
+        ["compose", "--profile", "dns", "up", "-d"],
+        { sudo: true, cwd: caddyDir },
+      );
+      addStep({ name: "Caddy", status: "done", message: "Container started on port 443" });
+      addStep({ name: "DNS", status: "done", message: `Wildcard DNS for *.${derivedDomain} → ${lanIp}` });
     }
 
     setPhase("done");
@@ -466,10 +497,17 @@ function InstallHttps() {
         </Text>
       )}
 
+      {phase === "dns" && (
+        <Text>
+          <Text color="green"><Spinner type="dots" /></Text>
+          {" "}Configuring wildcard DNS...
+        </Text>
+      )}
+
       {phase === "pihole" && (
         <Text>
           <Text color="green"><Spinner type="dots" /></Text>
-          {" "}Checking Pi-hole port conflict...
+          {" "}Configuring Pi-hole for wildcard DNS...
         </Text>
       )}
 
@@ -479,8 +517,11 @@ function InstallHttps() {
             HTTPS is enabled via Caddy reverse proxy
           </StatusMessage>
           <Text dimColor>  Your apps are now available at https://appname.{domain}</Text>
-          <Text dimColor>  Ensure *.{domain} DNS resolves to this server's LAN IP.</Text>
           <Text dimColor>  Certificates are issued automatically via DNS-01 challenge.</Text>
+          <Text />
+          <Text bold>  DNS setup:</Text>
+          <Text dimColor>  Set your router or device DNS to this server's IP so that</Text>
+          <Text dimColor>  *.{domain} resolves correctly on your network.</Text>
         </Box>
       )}
     </Box>
