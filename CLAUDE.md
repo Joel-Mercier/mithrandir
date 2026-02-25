@@ -25,6 +25,7 @@ sudo mithrandir restart <app>                  # Restart a running app
 sudo mithrandir install <app>                    # Install a single app
 sudo mithrandir install docker                   # Install Docker engine
 sudo mithrandir install backup                   # Install rclone + backup systemd timer
+sudo mithrandir install https                    # Install Caddy HTTPS reverse proxy
 sudo mithrandir reinstall <app> [--yes]        # Reinstall an app from scratch
 sudo mithrandir uninstall <app>
 sudo mithrandir status                      # Check system status
@@ -43,12 +44,17 @@ bun run src/index.tsx --help         # Dev mode (unbundled)
 ## Architecture
 
 ### App Registry Pattern (`src/lib/apps.ts`)
-Single source of truth for all 14 services. Each `AppDefinition` encodes everything needed across all commands: Docker image, ports, config paths, volume mounts, secrets, capabilities. This replaces the duplicated `get_app_config()` case statements in backup.sh/restore.sh and per-app compose blocks in setup.sh. **Any new service must be added here.**
+Single source of truth for all services. Each `AppDefinition` encodes everything needed across all commands: Docker image, ports, config paths, volume mounts, secrets, capabilities. This replaces the duplicated `get_app_config()` case statements in backup.sh/restore.sh and per-app compose blocks in setup.sh. **Any new service must be added here.**
 
 ### Compose Generation (`src/lib/compose.ts`)
 Generates docker-compose.yml deterministically from an `AppDefinition` + `EnvConfig`. Handles special cases: host networking (Home Assistant, DuckDNS), multiple config dirs (Homarr), non-standard container paths (Seerr → `/app/config`, Uptime Kuma → `/app/data`), capabilities/sysctls (WireGuard), healthchecks (Seerr).
 
 Secret env var names are mapped between .env and compose: `DUCKDNS_SUBDOMAINS` → `SUBDOMAINS`, `DUCKDNS_TOKEN` → `TOKEN`, `WG_SERVERURL` → `SERVERURL`, `WG_PEERS` → `PEERS`.
+
+When `ENABLE_HTTPS=true`, compose generation filters port 443 from Pi-hole's extra ports (Caddy owns 443).
+
+### HTTPS / Caddy (`src/lib/caddy.ts`)
+`mithrandir install https` sets up Caddy as a wildcard HTTPS reverse proxy using DuckDNS DNS-01 challenge. Caddy is a hidden app in the registry (not shown in setup app-select) with a `rawCompose` generator. Domain is derived from `DUCKDNS_SUBDOMAINS` via `getDuckDnsDomain()` — no separate `PRIMARY_DOMAIN` env var. `generateCaddyfile()` creates reverse proxy blocks for all installed apps with ports. `regenerateCaddyfile()` is called after app install/uninstall to keep the Caddyfile in sync. The Caddy Docker image is built locally with `xcaddy` + `caddy-dns/duckdns` module. Requires DuckDNS app to be installed and running. Users must configure wildcard DNS on their router (`*.domain.duckdns.org → LAN IP`).
 
 ### TTY / Non-TTY Branching (Backup)
 The backup command runs from systemd timer (non-TTY) daily. `commands/backup.tsx` checks `process.stdout.isTTY` — TTY renders Ink components with spinners and progress, non-TTY writes timestamped plaintext to stdout + `/var/log/homelab-backup.log`. Both paths call the same `lib/` functions.
@@ -73,7 +79,7 @@ These allow programmatic access to the APIs of the above services.
 
 ## Configuration
 
-- **.env** — All configuration lives here. Core settings: `BASE_DIR`, `PUID`/`PGID`, `TZ`. Per-app secrets: DuckDNS, WireGuard, Spotify. Backup settings: `BACKUP_DIR` (default `/backups`), `LOCAL_RETENTION` (5), `REMOTE_RETENTION` (10), `RCLONE_REMOTE` (gdrive), `APPS` (auto or comma-separated). Not in git.
+- **.env** — All configuration lives here. Core settings: `BASE_DIR`, `PUID`/`PGID`, `TZ`. Per-app secrets: DuckDNS, WireGuard, Spotify. Backup settings: `BACKUP_DIR` (default `/backups`), `LOCAL_RETENTION` (5), `REMOTE_RETENTION` (10), `RCLONE_REMOTE` (gdrive), `APPS` (auto or comma-separated). HTTPS settings: `ENABLE_HTTPS`, `ACME_EMAIL`. Not in git.
 
 ## Key Constraints
 
@@ -81,4 +87,6 @@ These allow programmatic access to the APIs of the above services.
 - `execa` v9: `result.exitCode` can be `undefined`, needs `?? 0` fallback
 - Docker operations require sudo/root
 - Homarr is the only app with `configSubdir: "multiple"` (3 dirs: configs, icons, data)
+- Caddy is a hidden app (`hidden: true`) — excluded from setup app-select but included in backup/restore/status
+- `composeUp`/`composeDown` expect a compose **file path** (not directory) — they derive `cwd` via `dirname()`
 - Systemd unit uses `/usr/local/bin/mithrandir` directly; only needs `PATH` set (no `BUN_INSTALL`)

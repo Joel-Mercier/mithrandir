@@ -27,6 +27,10 @@ All configuration lives in a single `.env` file at the project root.
 - `RCLONE_REMOTE`: rclone remote name for Google Drive (default: `gdrive`)
 - `APPS`: Apps to backup - `"auto"` to detect installed apps, or comma-separated list
 
+**HTTPS settings (Caddy reverse proxy):**
+- `ENABLE_HTTPS`: Set to `true` when HTTPS is installed (managed by `install https`)
+- `ACME_EMAIL`: Email for Let's Encrypt certificate notifications
+
 **Per-app secrets:**
 - `DUCKDNS_SUBDOMAINS`, `DUCKDNS_TOKEN`: Required for DuckDNS
 - `WG_SERVERURL`: Required for WireGuard
@@ -216,6 +220,23 @@ sudo mithrandir install backup
 ```
 Installs rclone (for remote backups to Google Drive) and sets up the systemd backup timer (daily at 2:00 AM). Skips components that are already installed. Equivalent to the rclone and backup timer steps in the setup wizard.
 
+**Install HTTPS:**
+```bash
+sudo mithrandir install https
+```
+Sets up HTTPS for all installed apps using Caddy as a reverse proxy with automatic Let's Encrypt certificates via DuckDNS DNS-01 challenge. Requires the DuckDNS app to be installed and running first.
+
+What it does:
+1. Prompts for an ACME email (used by Let's Encrypt for certificate expiry warnings)
+2. Builds a custom Caddy Docker image with the DuckDNS DNS module
+3. Generates a Caddyfile with reverse proxy entries for all installed apps
+4. Starts the Caddy container on port 443
+5. If Pi-hole is installed, restarts it without port 443 (Caddy takes over)
+
+After installation, apps are accessible at `https://appname.yourdomain.duckdns.org`. The Caddyfile is automatically regenerated whenever you install or uninstall an app.
+
+**DNS setup required:** DuckDNS only creates an A record for the base domain (e.g. `yourdomain.duckdns.org`), not wildcard subdomains. You need to add a wildcard DNS entry on your router pointing `*.yourdomain.duckdns.org` to your server's LAN IP. How to do this depends on your router (OpenWrt, pfSense, UniFi all support custom DNS entries).
+
 **Reinstall an app:**
 ```bash
 sudo mithrandir reinstall <app> [--yes]
@@ -302,6 +323,7 @@ Checks configuration correctness across three categories: System (.env file, Doc
 | WireGuard | 51820/udp | Fast, modern VPN tunnel |
 | Gatus | 3001 | Automated service health monitoring |
 | Immich | 2283 | Self-hosted photo and video management |
+| Caddy | — | HTTPS reverse proxy with automatic certificates (hidden, installed via `install https`) |
 | Pi-hole | 80 | Network-wide ad blocker and DNS server |
 | Excalidraw | 5000 | Virtual whiteboard for sketching |
 | Open WebUI | 3000 | Self-hosted AI chat interface |
