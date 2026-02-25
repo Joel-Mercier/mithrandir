@@ -8,6 +8,15 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 log() { echo "[mithrandir] $*"; }
 error() { echo "[mithrandir] ERROR: $*" >&2; exit 1; }
 
+# Detect the real (non-root) user when running under sudo
+if [[ "${EUID:-$(id -u)}" -eq 0 ]] && [[ -n "${SUDO_USER:-}" ]]; then
+  REAL_USER="$SUDO_USER"
+  REAL_HOME="$(getent passwd "$REAL_USER" | cut -d: -f6)"
+else
+  REAL_USER="$(id -un)"
+  REAL_HOME="$HOME"
+fi
+
 # Check for Debian/Ubuntu
 if [[ -f /etc/os-release ]]; then
   . /etc/os-release
@@ -26,36 +35,37 @@ if ! command -v curl &>/dev/null || ! command -v unzip &>/dev/null; then
   sudo apt-get install -y -qq curl unzip
 fi
 
-# Determine the user's login shell and its rc file
-USER_SHELL="$(basename "${SHELL:-/bin/bash}")"
+# Determine the real user's login shell and its rc file
+USER_SHELL="$(basename "$(getent passwd "$REAL_USER" | cut -d: -f7)" 2>/dev/null || echo "bash")"
 case "$USER_SHELL" in
-  zsh)  SHELL_RC="$HOME/.zshrc" ;;
-  bash) SHELL_RC="$HOME/.bashrc" ;;
-  *)    SHELL_RC="$HOME/.bashrc" ;;
+  zsh)  SHELL_RC="$REAL_HOME/.zshrc" ;;
+  bash) SHELL_RC="$REAL_HOME/.bashrc" ;;
+  *)    SHELL_RC="$REAL_HOME/.bashrc" ;;
 esac
 
-# Install Bun
-export BUN_INSTALL="$HOME/.bun"
+# Install Bun — always install to the real user's home, not /root
+BUN_INSTALL="$REAL_HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
 
 if command -v bun &>/dev/null; then
   log "Bun already installed: $(bun --version)"
 else
   log "Installing Bun..."
-  curl -fsSL https://bun.com/install | bash
+  # Run the installer as the real user so it installs to ~realuser/.bun
+  curl -fsSL https://bun.com/install | sudo -u "$REAL_USER" BUN_INSTALL="$BUN_INSTALL" bash
 
   # The installer targets ~/.bashrc by default. If the user's shell is
   # different, ensure their rc file also has the PATH entries.
-  if [[ "$SHELL_RC" != "$HOME/.bashrc" ]]; then
+  if [[ "$SHELL_RC" != "$REAL_HOME/.bashrc" ]]; then
     BUN_PATH_LINE='export BUN_INSTALL="$HOME/.bun"'
     if ! grep -qF "$BUN_PATH_LINE" "$SHELL_RC" 2>/dev/null; then
       log "Adding Bun to $SHELL_RC..."
-      {
-        echo ""
-        echo "# bun"
-        echo 'export BUN_INSTALL="$HOME/.bun"'
-        echo 'export PATH="$BUN_INSTALL/bin:$PATH"'
-      } >> "$SHELL_RC"
+      sudo -u "$REAL_USER" tee -a "$SHELL_RC" > /dev/null <<'BUNRC'
+
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+BUNRC
     fi
   fi
 
@@ -75,23 +85,20 @@ if [[ ! -L /usr/local/bin/bun ]]; then
   sudo ln -sf "$BUN_INSTALL/bin/bunx" /usr/local/bin/bunx
 fi
 
-# Install Node dependencies
+# Ensure project dir is writable by the real user
+if [[ "$REAL_USER" != "root" ]]; then
+  sudo chown -R "$REAL_USER:" "$SCRIPT_DIR"
+fi
+
+# Install Node dependencies (as real user)
 log "Installing dependencies..."
 cd "$SCRIPT_DIR"
-bun install
+sudo -u "$REAL_USER" "$BUN_INSTALL/bin/bun" install
 
-# Build the CLI bundle
-# Ensure dist/ is writable by the current user (a previous sudo install may
-# have left it root-owned).
+# Build the CLI bundle (as real user)
 mkdir -p "$SCRIPT_DIR/dist"
-if [[ ! -w "$SCRIPT_DIR/dist" ]]; then
-  sudo chown "$(id -u):$(id -g)" "$SCRIPT_DIR/dist"
-fi
-if [[ -f "$SCRIPT_DIR/dist/mithrandir.js" && ! -w "$SCRIPT_DIR/dist/mithrandir.js" ]]; then
-  sudo chown "$(id -u):$(id -g)" "$SCRIPT_DIR/dist/mithrandir.js"
-fi
 log "Building CLI..."
-bun run build
+sudo -u "$REAL_USER" "$BUN_INSTALL/bin/bun" run build
 
 # Install the mithrandir command
 log "Installing mithrandir command..."

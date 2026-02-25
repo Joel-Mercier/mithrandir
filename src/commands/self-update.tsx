@@ -109,8 +109,30 @@ function SelfUpdateCommand() {
         await shell("chown", ["-R", `${sudoUser}:`, root], { ignoreError: true });
       }
 
+      // Resolve the user's bun binary path — /usr/local/bin/bun may point to
+      // /root/.bun which is inaccessible via sudo -u. Look up the real user's
+      // home and use their ~/.bun/bin/bun directly.
+      let bunPath = "bun";
+      if (sudoUser) {
+        const passwd = await shell("getent", ["passwd", sudoUser], { ignoreError: true });
+        if (passwd.exitCode === 0 && passwd.stdout.trim()) {
+          const userHome = passwd.stdout.split(":")[5];
+          if (userHome) {
+            const userBun = `${userHome}/.bun/bin/bun`;
+            const bunExists = await shell("test", ["-x", userBun], { ignoreError: true });
+            if (bunExists.exitCode === 0) {
+              bunPath = userBun;
+
+              // Fix the /usr/local/bin symlink to point to the correct bun
+              await shell("ln", ["-sf", userBun, "/usr/local/bin/bun"], { sudo: true, ignoreError: true });
+              await shell("ln", ["-sf", `${userHome}/.bun/bin/bunx`, "/usr/local/bin/bunx"], { sudo: true, ignoreError: true });
+            }
+          }
+        }
+      }
+
       setCurrentLabel("Installing dependencies...");
-      const install = await shell("bun", ["install"], { cwd: root, ignoreError: true, ...userOpts });
+      const install = await shell(bunPath, ["install"], { cwd: root, ignoreError: true, ...userOpts });
       if (install.exitCode !== 0) {
         setError(`bun install failed:\n${install.stderr}`);
         setPhase("error");
@@ -124,7 +146,7 @@ function SelfUpdateCommand() {
       const distDir = join(root, "dist");
       const distFile = join(distDir, "mithrandir.js");
 
-      const build = await shell("bun", ["run", "build"], { cwd: root, ignoreError: true, ...userOpts });
+      const build = await shell(bunPath, ["run", "build"], { cwd: root, ignoreError: true, ...userOpts });
       if (build.exitCode !== 0) {
         setError(`Build failed:\n${build.stderr}`);
         setPhase("error");

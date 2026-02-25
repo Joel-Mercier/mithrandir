@@ -1,3 +1,6 @@
+import { writeFileSync } from "fs";
+import { tmpdir } from "os";
+import { join } from "path";
 import { shell } from "@/lib/shell.js";
 
 const SERVICE_NAME = "homelab-backup";
@@ -55,15 +58,15 @@ export async function installSystemdUnits(): Promise<void> {
   const serviceContent = generateServiceUnit();
   const timerContent = generateTimerUnit();
 
-  // Write unit files
-  await shell("bash", [
-    "-c",
-    `echo '${serviceContent.replace(/'/g, "'\\''")}' | sudo tee ${paths.service} > /dev/null`,
-  ]);
-  await shell("bash", [
-    "-c",
-    `echo '${timerContent.replace(/'/g, "'\\''")}' | sudo tee ${paths.timer} > /dev/null`,
-  ]);
+  // Write unit files via temp files + sudo mv
+  const tmpService = join(tmpdir(), `${SERVICE_NAME}.service.tmp`);
+  const tmpTimer = join(tmpdir(), `${SERVICE_NAME}.timer.tmp`);
+  writeFileSync(tmpService, serviceContent);
+  writeFileSync(tmpTimer, timerContent);
+
+  await shell("mv", [tmpService, paths.service], { sudo: true });
+  await shell("mv", [tmpTimer, paths.timer], { sudo: true });
+  await shell("chmod", ["644", paths.service, paths.timer], { sudo: true });
 
   // Reload and enable
   await shell("systemctl", ["daemon-reload"], { sudo: true });
@@ -111,9 +114,8 @@ export async function hasSystemd(): Promise<boolean> {
 
 /** Check if running in WSL */
 export async function isWsl(): Promise<boolean> {
-  const result = await shell("bash", [
-    "-c",
-    'grep -qi "microsoft" /proc/version 2>/dev/null',
-  ], { ignoreError: true });
+  const result = await shell("grep", ["-qi", "microsoft", "/proc/version"], {
+    ignoreError: true,
+  });
   return result.exitCode === 0;
 }

@@ -1,6 +1,9 @@
-import { dirname } from "path";
+import { dirname, join } from "path";
+import { writeFileSync } from "fs";
+import { tmpdir } from "os";
 import { shell, commandExists } from "@/lib/shell.js";
 import { hasSystemd } from "@/lib/systemd.js";
+import { detectDistro } from "@/lib/distro.js";
 import type { AppDefinition } from "@/types.js";
 import { getContainerName, getComposePath } from "@/lib/apps.js";
 
@@ -56,20 +59,14 @@ export async function installDocker(): Promise<void> {
   });
 
   // Detect distro for the correct repo URL
-  const { stdout: distroId } = await shell("bash", [
-    "-c",
-    '. /etc/os-release && echo "$ID"',
-  ]);
-  const { stdout: versionCodename } = await shell("bash", [
-    "-c",
-    '. /etc/os-release && echo "$VERSION_CODENAME"',
-  ]);
-  const distro = distroId.trim();
-  const codename = versionCodename.trim();
+  const distroInfo = await detectDistro();
+  const distro = distroInfo.id;
+  const codename = distroInfo.versionCodename;
 
-  await shell("bash", [
-    "-c",
-    `curl -fsSL https://download.docker.com/linux/${distro}/gpg -o /etc/apt/keyrings/docker.asc`,
+  await shell("curl", [
+    "-fsSL",
+    `https://download.docker.com/linux/${distro}/gpg`,
+    "-o", "/etc/apt/keyrings/docker.asc",
   ], { sudo: true });
   await shell("chmod", ["a+r", "/etc/apt/keyrings/docker.asc"], {
     sudo: true,
@@ -79,10 +76,9 @@ export async function installDocker(): Promise<void> {
     await shell("dpkg", ["--print-architecture"])
   ).stdout.trim();
   const repoLine = `deb [arch=${arch} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/${distro} ${codename} stable`;
-  await shell("bash", [
-    "-c",
-    `echo "${repoLine}" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null`,
-  ]);
+  const tmpRepoFile = join(tmpdir(), "docker.list.tmp");
+  writeFileSync(tmpRepoFile, repoLine + "\n");
+  await shell("mv", [tmpRepoFile, "/etc/apt/sources.list.d/docker.list"], { sudo: true });
 
   await shell("apt-get", ["update", "-qq"], { sudo: true });
   await shell(
@@ -93,16 +89,15 @@ export async function installDocker(): Promise<void> {
 
   // Configure Docker to use /24 subnets instead of /16 to avoid
   // "all predefined address pools have been fully subnetted" with many apps
-  await shell("bash", [
-    "-c",
-    `mkdir -p /etc/docker && cat > /etc/docker/daemon.json << 'ENDJSON'
-{
-  "default-address-pools": [
-    { "base": "172.17.0.0/12", "size": 24 }
-  ]
-}
-ENDJSON`,
-  ], { sudo: true });
+  await shell("mkdir", ["-p", "/etc/docker"], { sudo: true });
+  const daemonJson = JSON.stringify({
+    "default-address-pools": [
+      { base: "172.17.0.0/12", size: 24 },
+    ],
+  }, null, 2) + "\n";
+  const tmpDaemon = join(tmpdir(), "daemon.json.tmp");
+  writeFileSync(tmpDaemon, daemonJson);
+  await shell("mv", [tmpDaemon, "/etc/docker/daemon.json"], { sudo: true });
 
   // Start Docker daemon
   if (await hasSystemd()) {
@@ -112,10 +107,11 @@ ENDJSON`,
     await shell("systemctl", ["start", "docker"], { sudo: true });
   } else {
     // WSL or non-systemd: start dockerd manually if not already running
-    const pgrep = await shell("bash", ["-c", "pgrep -x dockerd"], {
+    const pgrep = await shell("pgrep", ["-x", "dockerd"], {
       ignoreError: true,
     });
     if (pgrep.exitCode !== 0) {
+      // Need bash for background process + redirection
       await shell("bash", ["-c", "dockerd > /var/log/dockerd.log 2>&1 &"], {
         sudo: true,
       });

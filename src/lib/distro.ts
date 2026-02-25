@@ -1,3 +1,4 @@
+import { readFileSync, existsSync } from "fs";
 import { shell } from "@/lib/shell.js";
 
 export type SupportedDistro = "debian" | "ubuntu";
@@ -8,49 +9,55 @@ export interface DistroInfo {
   prettyName: string;
 }
 
+/**
+ * Parse /etc/os-release into a key-value map.
+ * Handles both quoted and unquoted values.
+ */
+function parseOsRelease(): Record<string, string> {
+  const content = readFileSync("/etc/os-release", "utf-8");
+  const result: Record<string, string> = {};
+  for (const line of content.split("\n")) {
+    const match = line.match(/^([A-Z_]+)=(.*)$/);
+    if (match) {
+      // Strip surrounding quotes if present
+      result[match[1]] = match[2].replace(/^["']|["']$/g, "");
+    }
+  }
+  return result;
+}
+
 /** Detect the Linux distribution. Throws if unsupported. */
 export async function detectDistro(): Promise<DistroInfo> {
-  const { exitCode } = await shell("test", ["-f", "/etc/os-release"], {
-    ignoreError: true,
-  });
-
-  if (exitCode !== 0) {
+  if (!existsSync("/etc/os-release")) {
     throw new Error("Cannot detect distro: /etc/os-release not found");
   }
 
-  const { stdout: id } = await shell("bash", [
-    "-c",
-    '. /etc/os-release && echo "$ID"',
-  ]);
-  const { stdout: codename } = await shell("bash", [
-    "-c",
-    '. /etc/os-release && echo "$VERSION_CODENAME"',
-  ]);
-  const { stdout: prettyName } = await shell("bash", [
-    "-c",
-    '. /etc/os-release && echo "$PRETTY_NAME"',
-  ]);
+  const osRelease = parseOsRelease();
 
-  const distroId = id.trim().toLowerCase();
+  const distroId = (osRelease.ID ?? "").toLowerCase();
   if (distroId !== "debian" && distroId !== "ubuntu") {
     throw new Error(
-      `Unsupported distro: ${distroId}. Only Debian and Ubuntu are supported.`,
+      `Unsupported distro: ${distroId || "unknown"}. Only Debian and Ubuntu are supported.`,
     );
   }
 
   return {
     id: distroId as SupportedDistro,
-    versionCodename: codename.trim(),
-    prettyName: prettyName.trim(),
+    versionCodename: osRelease.VERSION_CODENAME ?? "",
+    prettyName: osRelease.PRETTY_NAME ?? "",
   };
 }
 
 /** Get the local IP address */
 export async function getLocalIp(): Promise<string> {
-  const result = await shell("bash", [
-    "-c",
-    "ip route get 1.1.1.1 2>/dev/null | awk '{print $7; exit}'",
-  ], { ignoreError: true });
+  const result = await shell("ip", ["route", "get", "1.1.1.1"], {
+    ignoreError: true,
+  });
 
-  return result.stdout.trim() || "localhost";
+  if (result.exitCode !== 0 || !result.stdout) return "localhost";
+
+  // Output looks like: "1.1.1.1 via 192.168.1.1 dev eth0 src 192.168.1.100 uid 1000"
+  // Extract the IP after "src"
+  const match = result.stdout.match(/\bsrc\s+(\S+)/);
+  return match?.[1] ?? "localhost";
 }

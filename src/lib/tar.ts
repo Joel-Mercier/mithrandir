@@ -3,6 +3,31 @@ import type { AppDefinition } from "@/types.js";
 import { getAppDir } from "@/lib/apps.js";
 
 /**
+ * Resolve the real (non-root) user and group for file ownership.
+ * Uses SUDO_USER + getent when running under sudo, falls back to id.
+ */
+async function resolveOwnership(): Promise<string> {
+  const sudoUser = process.env.SUDO_USER;
+  if (sudoUser) {
+    // Look up the user's primary group via getent (same pattern as rclone.ts)
+    const result = await shell("getent", ["passwd", sudoUser], { ignoreError: true });
+    if (result.exitCode === 0 && result.stdout.trim()) {
+      const gid = result.stdout.split(":")[3];
+      if (gid) {
+        const grpResult = await shell("getent", ["group", gid], { ignoreError: true });
+        const groupName = grpResult.exitCode === 0 ? grpResult.stdout.split(":")[0] : gid;
+        return `${sudoUser}:${groupName}`;
+      }
+    }
+    return `${sudoUser}:${sudoUser}`;
+  }
+
+  const { stdout: user } = await shell("id", ["-un"]);
+  const { stdout: group } = await shell("id", ["-gn"]);
+  return `${user.trim()}:${group.trim()}`;
+}
+
+/**
  * Create a zstd-compressed tarball of an app's config.
  * Mirrors backup.sh behavior: archives config dir + docker-compose.yml
  * relative to the app directory so extraction restores the full path.
@@ -36,13 +61,8 @@ export async function createBackup(
   );
 
   // Fix ownership so non-root user can manage the file
-  const { stdout: user } = await shell("id", ["-un"]);
-  const { stdout: group } = await shell("id", ["-gn"]);
-  await shell(
-    "chown",
-    [`${user.trim()}:${group.trim()}`, outputPath],
-    { sudo: true },
-  );
+  const ownership = await resolveOwnership();
+  await shell("chown", [ownership, outputPath], { sudo: true });
 }
 
 /**
@@ -71,13 +91,8 @@ export async function createSecretsBackup(
     { sudo: true },
   );
 
-  const { stdout: user } = await shell("id", ["-un"]);
-  const { stdout: group } = await shell("id", ["-gn"]);
-  await shell(
-    "chown",
-    [`${user.trim()}:${group.trim()}`, outputPath],
-    { sudo: true },
-  );
+  const ownership = await resolveOwnership();
+  await shell("chown", [ownership, outputPath], { sudo: true });
 }
 
 /**
