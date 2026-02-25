@@ -67,8 +67,7 @@ export function generateCaddyfile(
 }
 
 /**
- * Generate a Dockerfile that builds Caddy with the DuckDNS DNS module
- * and includes dnsmasq for local wildcard DNS resolution.
+ * Generate a Dockerfile that builds Caddy with the DuckDNS DNS module.
  */
 export function generateCaddyDockerfile(): string {
   return [
@@ -77,25 +76,7 @@ export function generateCaddyDockerfile(): string {
     "",
     "FROM caddy:latest",
     "COPY --from=builder /usr/bin/caddy /usr/bin/caddy",
-    "RUN apk add --no-cache dnsmasq",
     "",
-  ].join("\n");
-}
-
-/**
- * Generate dnsmasq config that resolves *.domain to the server's LAN IP
- * and forwards everything else to upstream DNS.
- */
-export function generateDnsmasqConfig(domain: string, lanIp: string): string {
-  return [
-    `# Wildcard DNS for Caddy HTTPS reverse proxy`,
-    `# Resolves *.${domain} to this server's LAN IP`,
-    `address=/${domain}/${lanIp}`,
-    ``,
-    `# Forward all other queries to upstream DNS`,
-    `server=1.1.1.1`,
-    `server=1.0.0.1`,
-    ``,
   ].join("\n");
 }
 
