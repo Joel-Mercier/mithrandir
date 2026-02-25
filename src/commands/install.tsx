@@ -389,8 +389,9 @@ function InstallHttps() {
     setPhase("starting");
     const caddyApp = getApp("caddy")!;
     const compose = caddyApp.rawCompose!(env);
-    await Bun.write(`${caddyDir}/docker-compose.yml`, compose);
-    await composeUp(caddyDir);
+    const caddyComposePath = `${caddyDir}/docker-compose.yml`;
+    await Bun.write(caddyComposePath, compose);
+    await composeUp(caddyComposePath);
     addStep({ name: "Caddy", status: "done", message: "Container started on port 443" });
 
     // Handle Pi-hole port 443 conflict
@@ -401,8 +402,8 @@ function InstallHttps() {
       const piholeApp = getApp("pihole")!;
       const piholeCompose = generateCompose(piholeApp, env);
       await Bun.write(piholeComposePath, piholeCompose);
-      await composeDown(piholeDir);
-      await composeUp(piholeDir);
+      await composeDown(piholeComposePath);
+      await composeUp(piholeComposePath);
       addStep({ name: "Pi-hole", status: "done", message: "Restarted without port 443" });
     }
 
