@@ -16,6 +16,7 @@ import { isDockerInstalled } from "@/lib/docker.js";
 import { shell } from "@/lib/shell.js";
 import { isTimerActive, hasSystemd } from "@/lib/systemd.js";
 import { getLocalIp } from "@/lib/distro.js";
+import { getDuckDnsDomain } from "@/lib/caddy.js";
 import { Header } from "@/components/Header.js";
 import type { AppDefinition } from "@/types.js";
 import { existsSync } from "fs";
@@ -150,6 +151,10 @@ async function gatherSystemInfo(): Promise<SystemInfo> {
   // Get local IP for URLs
   const localIp = await getLocalIp();
 
+  // HTTPS config
+  const httpsEnabled = envConfig.ENABLE_HTTPS === "true";
+  const primaryDomain = httpsEnabled ? getDuckDnsDomain(envConfig) : null;
+
   // Gather per-app info in parallel
   const apps = await Promise.all(
     installedApps.map(async (app): Promise<AppInfo> => {
@@ -159,7 +164,12 @@ async function gatherSystemInfo(): Promise<SystemInfo> {
         getDiskUsage(app, baseDir),
       ]);
 
-      const url = app.port ? `http://${localIp}:${app.port}` : null;
+      let url: string | null = null;
+      if (app.port) {
+        url = httpsEnabled && primaryDomain
+          ? `https://${app.name}.${primaryDomain}`
+          : `http://${localIp}:${app.port}`;
+      }
 
       return { app, containerStatus, url, lastBackup, diskUsage };
     }),

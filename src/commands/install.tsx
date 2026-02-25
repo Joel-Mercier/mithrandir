@@ -1,15 +1,18 @@
 import { useState, useEffect } from "react";
 import { Box, render, Text, useApp } from "ink";
 import Spinner from "ink-spinner";
-import { StatusMessage } from "@inkjs/ui";
+import { StatusMessage, TextInput } from "@inkjs/ui";
 import { existsSync } from "fs";
-import { getApp, getAppNames, getComposePath } from "@/lib/apps.js";
-import { loadEnvConfig } from "@/lib/config.js";
+import { getApp, getAppNames, getAppDir, getComposePath, APP_REGISTRY } from "@/lib/apps.js";
+import { loadEnvConfig, saveEnvConfig } from "@/lib/config.js";
 import {
   isDockerInstalled,
   waitForDocker,
   installDocker,
+  isContainerRunning,
   pullImageWithProgress,
+  composeDown,
+  composeUp,
 } from "@/lib/docker.js";
 import { getSwapInfo, ensureSwap, formatSwapSize } from "@/lib/swap.js";
 import { isRcloneInstalled, installRclone } from "@/lib/rclone.js";
@@ -19,6 +22,9 @@ import {
   installSystemdUnits,
   isTimerActive,
 } from "@/lib/systemd.js";
+import { shell } from "@/lib/shell.js";
+import { generateCompose } from "@/lib/compose.js";
+import { generateCaddyfile, generateCaddyDockerfile, getDuckDnsDomain, regenerateCaddyfile } from "@/lib/caddy.js";
 import { Header } from "@/components/Header.js";
 import { AppStatus } from "@/components/AppStatus.js";
 import { ProgressBar } from "@/components/ProgressBar.js";
@@ -270,12 +276,222 @@ function InstallBackup() {
   );
 }
 
+// ─── Install HTTPS (Caddy reverse proxy) ─────────────────────────────────────
+
+function InstallHttps() {
+  const { exit } = useApp();
+  const [completedSteps, setCompletedSteps] = useState<CompletedStep[]>([]);
+  const [phase, setPhase] = useState<
+    "checking" | "prompt-email" | "building" | "starting" | "pihole" | "done"
+  >("checking");
+  const [error, setError] = useState<string | null>(null);
+  const [domain, setDomain] = useState("");
+  const [envConfig, setEnvConfig] = useState<Awaited<ReturnType<typeof loadEnvConfig>> | null>(null);
+
+  function addStep(step: CompletedStep) {
+    setCompletedSteps((prev) => [...prev, step]);
+  }
+
+  useEffect(() => {
+    checkPrerequisites();
+  }, []);
+
+  async function checkPrerequisites() {
+    const env = await loadEnvConfig();
+    setEnvConfig(env);
+
+    // Check DuckDNS secrets exist in .env
+    if (!env.DUCKDNS_TOKEN || !env.DUCKDNS_SUBDOMAINS) {
+      setError(
+        "DuckDNS is not configured.\nInstall the DuckDNS app first: mithrandir install duckdns",
+      );
+      return;
+    }
+
+    // Check DuckDNS container is actually installed and running
+    const duckdnsCompose = getComposePath(getApp("duckdns")!, env.BASE_DIR);
+    if (!existsSync(duckdnsCompose)) {
+      setError(
+        "DuckDNS app is not installed.\nHTTPS requires DuckDNS for DNS-01 certificate validation.\nInstall it first: mithrandir install duckdns",
+      );
+      return;
+    }
+
+    const duckdnsRunning = await isContainerRunning("duckdns");
+    if (!duckdnsRunning) {
+      setError(
+        "DuckDNS container is not running.\nStart it first: mithrandir start duckdns",
+      );
+      return;
+    }
+
+    // Derive and validate domain
+    const derivedDomain = getDuckDnsDomain(env);
+    if (!derivedDomain) {
+      setError("Could not derive domain from DUCKDNS_SUBDOMAINS.");
+      return;
+    }
+    setDomain(derivedDomain);
+    addStep({ name: "DuckDNS", status: "done", message: `Domain: ${derivedDomain}` });
+
+    // Check if already enabled
+    if (env.ENABLE_HTTPS === "true") {
+      const caddyCompose = getComposePath(getApp("caddy")!, env.BASE_DIR);
+      if (existsSync(caddyCompose)) {
+        setError(
+          "HTTPS is already enabled.\nTo reconfigure, run: mithrandir reinstall caddy",
+        );
+        return;
+      }
+    }
+
+    // Prompt for email (always prompt even if set, so user can verify)
+    setPhase("prompt-email");
+  }
+
+  async function handleEmailSubmit(value: string) {
+    const trimmed = value.trim();
+    if (!trimmed || !trimmed.includes("@")) return;
+    await doInstall(envConfig!, trimmed);
+  }
+
+  async function doInstall(env: Awaited<ReturnType<typeof loadEnvConfig>>, acmeEmail: string) {
+    // Save to .env
+    env.ENABLE_HTTPS = "true";
+    env.ACME_EMAIL = acmeEmail;
+    await saveEnvConfig(env);
+    addStep({ name: "Config", status: "done", message: `Email: ${acmeEmail}` });
+
+    // Build custom Caddy image with DuckDNS DNS module
+    setPhase("building");
+    const baseDir = env.BASE_DIR;
+    const caddyDir = `${baseDir}/caddy`;
+    await shell("mkdir", ["-p", caddyDir], { sudo: true });
+    await shell("mkdir", ["-p", `${caddyDir}/config`], { sudo: true });
+    await shell("mkdir", ["-p", `${caddyDir}/data`], { sudo: true });
+
+    const dockerfile = generateCaddyDockerfile();
+    await Bun.write(`${caddyDir}/Dockerfile`, dockerfile);
+
+    await shell("docker", ["build", "-t", "mithrandir/caddy-duckdns:latest", caddyDir], { sudo: true });
+    addStep({ name: "Build image", status: "done", message: "Built Caddy with DuckDNS module" });
+
+    // Generate Caddyfile from all currently installed apps
+    const installedApps = APP_REGISTRY.filter((app) =>
+      existsSync(getComposePath(app, baseDir)),
+    );
+    const caddyfile = generateCaddyfile(installedApps, env);
+    await Bun.write(`${caddyDir}/Caddyfile`, caddyfile);
+    const proxyCount = installedApps.filter((a) => a.port && a.name !== "caddy").length;
+    addStep({ name: "Caddyfile", status: "done", message: `${proxyCount} app${proxyCount !== 1 ? "s" : ""} configured` });
+
+    // Generate compose and start Caddy
+    setPhase("starting");
+    const caddyApp = getApp("caddy")!;
+    const compose = caddyApp.rawCompose!(env);
+    await Bun.write(`${caddyDir}/docker-compose.yml`, compose);
+    await composeUp(caddyDir);
+    addStep({ name: "Caddy", status: "done", message: "Container started on port 443" });
+
+    // Handle Pi-hole port 443 conflict
+    setPhase("pihole");
+    const piholeDir = `${baseDir}/pihole`;
+    const piholeComposePath = `${piholeDir}/docker-compose.yml`;
+    if (existsSync(piholeComposePath)) {
+      const piholeApp = getApp("pihole")!;
+      const piholeCompose = generateCompose(piholeApp, env);
+      await Bun.write(piholeComposePath, piholeCompose);
+      await composeDown(piholeDir);
+      await composeUp(piholeDir);
+      addStep({ name: "Pi-hole", status: "done", message: "Restarted without port 443" });
+    }
+
+    setPhase("done");
+    setTimeout(() => exit(), 500);
+  }
+
+  if (error) {
+    return (
+      <Box flexDirection="column">
+        <Header title="Install: https" />
+        <StatusMessage variant="error">{error}</StatusMessage>
+      </Box>
+    );
+  }
+
+  return (
+    <Box flexDirection="column">
+      <Header title="Install: https" />
+
+      {completedSteps.map((step, i) => (
+        <AppStatus
+          key={i}
+          name={step.name}
+          status={step.status}
+          message={step.message}
+        />
+      ))}
+
+      {phase === "checking" && (
+        <Text>
+          <Text color="green"><Spinner type="dots" /></Text>
+          {" "}Checking prerequisites...
+        </Text>
+      )}
+
+      {phase === "prompt-email" && (
+        <Box flexDirection="column">
+          <Text bold>ACME Email</Text>
+          <Text dimColor>  Let's Encrypt requires an email to issue TLS certificates.</Text>
+          <Text dimColor>  Used for expiry warnings and account recovery — not shared publicly.</Text>
+          <Box marginTop={1}>
+            <Text color="cyan">{"  Email: "}</Text>
+            <TextInput defaultValue={envConfig?.ACME_EMAIL ?? ""} onSubmit={handleEmailSubmit} />
+          </Box>
+        </Box>
+      )}
+
+      {phase === "building" && (
+        <Text>
+          <Text color="yellow"><Spinner type="dots" /></Text>
+          {" "}Building Caddy image with DuckDNS module (this may take a minute)...
+        </Text>
+      )}
+
+      {phase === "starting" && (
+        <Text>
+          <Text color="green"><Spinner type="dots" /></Text>
+          {" "}Starting Caddy container...
+        </Text>
+      )}
+
+      {phase === "pihole" && (
+        <Text>
+          <Text color="green"><Spinner type="dots" /></Text>
+          {" "}Checking Pi-hole port conflict...
+        </Text>
+      )}
+
+      {phase === "done" && (
+        <Box flexDirection="column" marginTop={1}>
+          <StatusMessage variant="success">
+            HTTPS is enabled via Caddy reverse proxy
+          </StatusMessage>
+          <Text dimColor>  Your apps are now available at https://appname.{domain}</Text>
+          <Text dimColor>  Ensure *.{domain} DNS resolves to this server's LAN IP.</Text>
+          <Text dimColor>  Certificates are issued automatically via DNS-01 challenge.</Text>
+        </Box>
+      )}
+    </Box>
+  );
+}
+
 // ─── Install App ─────────────────────────────────────────────────────────────
 
 function InstallApp({ appName }: { appName: string }) {
   const { exit } = useApp();
   const [completedSteps, setCompletedSteps] = useState<CompletedStep[]>([]);
-  const [phase, setPhase] = useState<"init" | "pulling" | "installing" | "done">("init");
+  const [phase, setPhase] = useState<"init" | "pulling" | "installing" | "caddy" | "done">("init");
   const [currentLabel, setCurrentLabel] = useState("Initializing...");
   const [error, setError] = useState<string | null>(null);
   const [pullProgress, setPullProgress] = useState(0);
@@ -316,6 +532,18 @@ function InstallApp({ appName }: { appName: string }) {
     await writeComposeAndStart(app, env);
     addStep({ name: "Install", status: "done", message: `${appName} is running` });
 
+    // Regenerate Caddyfile if HTTPS is enabled
+    if (env.ENABLE_HTTPS === "true") {
+      setPhase("caddy");
+      setCurrentLabel("Updating HTTPS configuration...");
+      try {
+        await regenerateCaddyfile(env);
+        addStep({ name: "HTTPS", status: "done", message: "Caddyfile updated" });
+      } catch {
+        addStep({ name: "HTTPS", status: "skipped", message: "Failed to update Caddyfile" });
+      }
+    }
+
     setPhase("done");
     setTimeout(() => exit(), 500);
   }
@@ -342,7 +570,7 @@ function InstallApp({ appName }: { appName: string }) {
         />
       ))}
 
-      {(phase === "init" || phase === "pulling" || phase === "installing") && (
+      {(phase === "init" || phase === "pulling" || phase === "installing" || phase === "caddy") && (
         <Box flexDirection="column">
           <Text>
             <Text color="green">
@@ -369,14 +597,14 @@ function InstallApp({ appName }: { appName: string }) {
 
 // ─── Entry point ─────────────────────────────────────────────────────────────
 
-const SPECIAL_TARGETS = ["docker", "backup"];
+const SPECIAL_TARGETS = ["docker", "backup", "https"];
 
 export async function runInstall(args: string[]): Promise<void> {
   const target = args[0];
 
   if (!target) {
     console.error(
-      `Usage: mithrandir install <target>\n\nTargets:\n  docker                Install Docker engine\n  backup                Install rclone and backup systemd timer\n  <app>                 Install a single app\n\nAvailable apps: ${getAppNames().join(", ")}`,
+      `Usage: mithrandir install <target>\n\nTargets:\n  docker                Install Docker engine\n  backup                Install rclone and backup systemd timer\n  https                 Install Caddy HTTPS reverse proxy\n  <app>                 Install a single app\n\nAvailable apps: ${getAppNames().join(", ")}`,
     );
     process.exit(1);
   }
@@ -391,6 +619,9 @@ export async function runInstall(args: string[]): Promise<void> {
     await waitUntilExit();
   } else if (target === "backup") {
     const { waitUntilExit } = render(<InstallBackup />);
+    await waitUntilExit();
+  } else if (target === "https") {
+    const { waitUntilExit } = render(<InstallHttps />);
     await waitUntilExit();
   } else {
     const { waitUntilExit } = render(<InstallApp appName={target} />);

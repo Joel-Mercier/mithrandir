@@ -100,6 +100,8 @@ export function generateCompose(
     }
     if (app.extraPorts) {
       for (const p of app.extraPorts) {
+        // Skip port 443 on Pi-hole when Caddy owns it
+        if (app.name === "pihole" && p.host === 443 && envConfig.ENABLE_HTTPS === "true") continue;
         const proto = p.protocol ? `/${p.protocol}` : "";
         ports.push(`${p.host}:${p.container}${proto}`);
       }

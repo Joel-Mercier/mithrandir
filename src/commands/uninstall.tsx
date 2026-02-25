@@ -7,6 +7,7 @@ import { homedir } from "os";
 import { getApp, getAppNames, getAppDir } from "@/lib/apps.js";
 import { shell, commandExists } from "@/lib/shell.js";
 import { loadEnvConfig } from "@/lib/config.js";
+import { regenerateCaddyfile } from "@/lib/caddy.js";
 import { BACKUP_LOG_PATH } from "@/lib/logger.js";
 import { Header } from "@/components/Header.js";
 import { AppStatus } from "@/components/AppStatus.js";
@@ -106,20 +107,34 @@ function AppUninstallInteractive({
     setCurrentLabel("Removing app data...");
     await shell("rm", ["-rf", dir]);
     addStep({ name: "Remove data", status: "done", message: `Removed ${dir}` });
+    await updateCaddyfile();
     setPhase("done");
     setTimeout(() => exit(), 500);
+  }
+
+  async function updateCaddyfile() {
+    const env = await loadEnvConfig();
+    if (env.ENABLE_HTTPS === "true") {
+      try {
+        await regenerateCaddyfile(env);
+        addStep({ name: "HTTPS", status: "done", message: "Caddyfile updated" });
+      } catch {
+        addStep({ name: "HTTPS", status: "skipped", message: "Failed to update Caddyfile" });
+      }
+    }
   }
 
   function handleConfirmDelete() {
     deleteAppData(appDir);
   }
 
-  function handleCancelDelete() {
+  async function handleCancelDelete() {
     addStep({
       name: "Remove data",
       status: "skipped",
       message: `Kept ${appDir}`,
     });
+    await updateCaddyfile();
     setPhase("done");
     setTimeout(() => exit(), 500);
   }

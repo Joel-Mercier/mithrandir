@@ -25,6 +25,7 @@ import {
 } from "@/lib/docker.js";
 import { isRcloneInstalled, installRclone } from "@/lib/rclone.js";
 import { generateCompose } from "@/lib/compose.js";
+import { getDuckDnsDomain } from "@/lib/caddy.js";
 import {
   hasSystemd,
   isWsl,
@@ -429,7 +430,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
   function AppSelectStep() {
     useEffect(() => {
       if (autoYes) {
-        const allApps = APP_REGISTRY
+        const allApps = APP_REGISTRY.filter((app) => !app.hidden);
         setSelectedApps(filterConflicts(allApps));
         setStep("check-secrets");
       }
@@ -437,7 +438,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
 
     if (autoYes) return null;
 
-    const options = APP_REGISTRY.map((app) => ({
+    const options = APP_REGISTRY.filter((app) => !app.hidden).map((app) => ({
       label: `${app.displayName} — ${app.description}`,
       value: app.name,
     }));
@@ -631,14 +632,20 @@ export function SetupCommand({ flags }: SetupCommandProps) {
         <Box flexDirection="column" marginBottom={1}>
           {selectedApps
             .filter((app) => app.port)
-            .map((app) => (
-              <Text key={app.name}>
-                {"  "}{app.displayName.padEnd(20)}
-                <Link url={`http://${localIp}:${app.port}`}>
-                  <Text color="cyan">http://{localIp}:{app.port}</Text>
-                </Link>
-              </Text>
-            ))}
+            .map((app) => {
+              const domain = envConfig.ENABLE_HTTPS === "true" ? getDuckDnsDomain(envConfig) : null;
+              const url = domain
+                ? `https://${app.name}.${domain}`
+                : `http://${localIp}:${app.port}`;
+              return (
+                <Text key={app.name}>
+                  {"  "}{app.displayName.padEnd(20)}
+                  <Link url={url}>
+                    <Text color="cyan">{url}</Text>
+                  </Link>
+                </Text>
+              );
+            })}
           {hasApp("duckdns") && (
             <Text>{"  "}{"DuckDNS".padEnd(20)}<Text dimColor>Background service (no web interface)</Text></Text>
           )}

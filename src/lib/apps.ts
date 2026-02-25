@@ -316,6 +316,38 @@ export const APP_REGISTRY: AppDefinition[] = [
     needsDataDir: false,
   },
   {
+    name: "caddy",
+    displayName: "Caddy",
+    description: "HTTPS reverse proxy with automatic certificates",
+    image: "mithrandir/caddy-duckdns:latest",
+    port: null,
+    configSubdir: "config",
+    needsDataDir: false,
+    hidden: true,
+    rawCompose: (envConfig: EnvConfig) => {
+      const baseDir = envConfig.BASE_DIR;
+      const appDir = `${baseDir}/caddy`;
+      const token = envConfig.DUCKDNS_TOKEN ?? "";
+      const acmeEmail = envConfig.ACME_EMAIL ?? "";
+      return [
+        "services:",
+        "  caddy:",
+        "    image: mithrandir/caddy-duckdns:latest",
+        "    container_name: caddy",
+        "    network_mode: host",
+        "    environment:",
+        `      - DUCKDNS_TOKEN=${token}`,
+        `      - ACME_EMAIL=${acmeEmail}`,
+        "    volumes:",
+        `      - ${appDir}/Caddyfile:/etc/caddy/Caddyfile:ro`,
+        `      - ${appDir}/data:/data`,
+        `      - ${appDir}/config:/config`,
+        "    restart: unless-stopped",
+        "",
+      ].join("\n") + "\n";
+    },
+  },
+  {
     name: "pihole",
     displayName: "Pi-hole",
     description: "Network-wide ad blocker and DNS server",

@@ -57,6 +57,8 @@ export interface AppDefinition {
   mountMusicDir?: boolean;
   /** Names of apps that conflict with this one (e.g. same port) */
   conflictsWith?: string[];
+  /** Hide from setup app-select (still visible in backup/restore/status) */
+  hidden?: boolean;
   /** Additional container names for multi-container apps (for orphan cleanup during reinstall/install) */
   additionalContainers?: string[];
   /** Custom compose generator for multi-container apps (bypasses generateCompose) */
@@ -90,6 +92,8 @@ export interface EnvConfig {
   REMOTE_RETENTION?: string;
   RCLONE_REMOTE?: string;
   APPS?: string;
+  ENABLE_HTTPS?: string;
+  ACME_EMAIL?: string;
   [key: string]: string | undefined;
 }
 
