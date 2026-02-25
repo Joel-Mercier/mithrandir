@@ -304,6 +304,7 @@ Checks configuration correctness across three categories: System (.env file, Doc
 | Immich | 2283 | Self-hosted photo and video management |
 | Pi-hole | 80 | Network-wide ad blocker and DNS server |
 | Excalidraw | 5000 | Virtual whiteboard for sketching |
+| Open WebUI | 3000 | Self-hosted AI chat interface |
 
 ## TODO
 

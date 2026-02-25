@@ -306,6 +306,16 @@ export const APP_REGISTRY: AppDefinition[] = [
     needsDataDir: false,
   },
   {
+    name: "openwebui",
+    displayName: "Open WebUI",
+    description: "Self-hosted AI chat interface",
+    image: "ghcr.io/open-webui/open-webui:main",
+    port: 3000,
+    containerPort: 8080,
+    configSubdir: "data",
+    needsDataDir: false,
+  },
+  {
     name: "pihole",
     displayName: "Pi-hole",
     description: "Network-wide ad blocker and DNS server",

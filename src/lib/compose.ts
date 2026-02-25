@@ -196,6 +196,8 @@ function getContainerConfigPath(app: AppDefinition): string {
       return "/app/config";
     case "navidrome":
       return "/data";
+    case "openwebui":
+      return "/app/backend/data";
     case "pihole":
       return "/etc/pihole";
     default:
