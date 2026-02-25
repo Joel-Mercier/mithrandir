@@ -11,8 +11,10 @@ export interface AppDefinition {
   image: string;
   /** Container name (defaults to `name` if not set) */
   containerName?: string;
-  /** WebUI port, null for background services like duckdns */
+  /** WebUI port (host-side), null for background services like duckdns */
   port: number | null;
+  /** Container-side port when different from host port (e.g. excalidraw: host 5000, container 80) */
+  containerPort?: number;
   /** Config subdirectory relative to app dir: "config", "data", "app/config" */
   configSubdir: string;
   /** For apps with multiple config dirs (homarr) */

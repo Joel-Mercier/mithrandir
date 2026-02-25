@@ -296,6 +296,16 @@ export const APP_REGISTRY: AppDefinition[] = [
     ],
   },
   {
+    name: "excalidraw",
+    displayName: "Excalidraw",
+    description: "Collaborative virtual whiteboard for sketching",
+    image: "excalidraw/excalidraw:latest",
+    port: 5000,
+    containerPort: 80,
+    configSubdir: "config",
+    needsDataDir: false,
+  },
+  {
     name: "pihole",
     displayName: "Pi-hole",
     description: "Network-wide ad blocker and DNS server",

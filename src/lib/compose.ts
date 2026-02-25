@@ -95,7 +95,8 @@ export function generateCompose(
   if (app.networkMode !== "host") {
     const ports: string[] = [];
     if (app.port) {
-      ports.push(`${app.port}:${app.port}`);
+      const cPort = app.containerPort ?? app.port;
+      ports.push(`${app.port}:${cPort}`);
     }
     if (app.extraPorts) {
       for (const p of app.extraPorts) {
