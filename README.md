@@ -303,6 +303,7 @@ Checks configuration correctness across three categories: System (.env file, Doc
 | Gatus | 3001 | Automated service health monitoring |
 | Immich | 2283 | Self-hosted photo and video management |
 | Pi-hole | 80 | Network-wide ad blocker and DNS server |
+| Excalidraw | 5000 | Virtual whiteboard for sketching |
 
 ## TODO
 

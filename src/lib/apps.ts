@@ -298,7 +298,7 @@ export const APP_REGISTRY: AppDefinition[] = [
   {
     name: "excalidraw",
     displayName: "Excalidraw",
-    description: "Collaborative virtual whiteboard for sketching",
+    description: "Virtual whiteboard for sketching",
     image: "excalidraw/excalidraw:latest",
     port: 5000,
     containerPort: 80,
