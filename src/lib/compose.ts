@@ -87,7 +87,11 @@ export function generateCompose(
   if (Object.keys(env).length > 0) {
     lines.push("    environment:");
     for (const [key, value] of Object.entries(env)) {
-      lines.push(`      - ${key}=${value}`);
+      // Quote values containing YAML-special or shell-special characters
+      const strVal = String(value);
+      const needsQuoting = /[#$&*\[\]{|}!@'"`\\:,>?]/.test(strVal);
+      const formatted = needsQuoting ? `"${strVal.replace(/["\\]/g, "\\$&")}"` : strVal;
+      lines.push(`      - ${key}=${formatted}`);
     }
   }
 
