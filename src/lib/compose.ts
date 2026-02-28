@@ -1,6 +1,9 @@
 import type { AppDefinition, EnvConfig } from "@/types.js";
 import { getAppDir } from "@/lib/apps.js";
 
+/** Host port for Pi-hole web UI when Caddy owns port 80 */
+export const PIHOLE_HTTPS_PORT = 8880;
+
 /**
  * Generate a docker-compose.yml string for an app.
  * Replaces the duplicated compose blocks in setup.sh.
@@ -100,11 +103,15 @@ export function generateCompose(
     const ports: string[] = [];
     if (app.port) {
       const cPort = app.containerPort ?? app.port;
-      ports.push(`${app.port}:${cPort}`);
+      // Remap Pi-hole web UI to port 8880 when Caddy owns port 80
+      const hostPort = app.name === "pihole" && app.port === 80 && envConfig.ENABLE_HTTPS === "true"
+        ? PIHOLE_HTTPS_PORT
+        : app.port;
+      ports.push(`${hostPort}:${cPort}`);
     }
     if (app.extraPorts) {
       for (const p of app.extraPorts) {
-        // Skip port 443 on Pi-hole when Caddy owns it
+        // Skip ports 443/80 on Pi-hole when Caddy owns them
         if (app.name === "pihole" && p.host === 443 && envConfig.ENABLE_HTTPS === "true") continue;
         const proto = p.protocol ? `/${p.protocol}` : "";
         ports.push(`${p.host}:${p.container}${proto}`);

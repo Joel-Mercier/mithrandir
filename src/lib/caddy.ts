@@ -1,5 +1,6 @@
 import { existsSync } from "fs";
 import { APP_REGISTRY, getComposePath } from "@/lib/apps.js";
+import { PIHOLE_HTTPS_PORT } from "@/lib/compose.js";
 import { shell } from "@/lib/shell.js";
 import type { AppDefinition, EnvConfig } from "@/types.js";
 
@@ -49,9 +50,11 @@ export function generateCaddyfile(
   );
   for (const app of proxyApps) {
     lines.push("");
+    // Pi-hole's host port is remapped when Caddy owns port 80
+    const proxyPort = app.name === "pihole" ? PIHOLE_HTTPS_PORT : app.port;
     lines.push(`    @${app.name} host ${app.name}.${domain}`);
     lines.push(`    handle @${app.name} {`);
-    lines.push(`        reverse_proxy localhost:${app.port}`);
+    lines.push(`        reverse_proxy localhost:${proxyPort}`);
     lines.push("    }");
   }
 
