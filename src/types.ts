@@ -59,6 +59,8 @@ export interface AppDefinition {
   conflictsWith?: string[];
   /** Hide from setup app-select (still visible in backup/restore/status) */
   hidden?: boolean;
+  /** Name of the parent app this companion belongs to (auto-installed/uninstalled with parent) */
+  companionOf?: string;
   /** Additional container names for multi-container apps (for orphan cleanup during reinstall/install) */
   additionalContainers?: string[];
   /** Custom compose generator for multi-container apps (bypasses generateCompose) */

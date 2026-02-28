@@ -11,6 +11,7 @@ import {
   getComposePath,
   getConfigPaths,
   filterConflicts,
+  getCompanionApps,
 } from "@/lib/apps.js";
 import {
   isDockerInstalled,
@@ -431,7 +432,9 @@ export function SetupCommand({ flags }: SetupCommandProps) {
     useEffect(() => {
       if (autoYes) {
         const allApps = APP_REGISTRY.filter((app) => !app.hidden);
-        setSelectedApps(filterConflicts(allApps));
+        const filtered = filterConflicts(allApps);
+        const withCompanions = filtered.flatMap((app) => [app, ...getCompanionApps(app.name)]);
+        setSelectedApps(withCompanions);
         setStep("check-secrets");
       }
     }, []);
@@ -448,7 +451,8 @@ export function SetupCommand({ flags }: SetupCommandProps) {
         .map((name) => getApp(name))
         .filter((a): a is AppDefinition => a !== undefined);
       const filtered = filterConflicts(apps);
-      setSelectedApps(filtered);
+      const withCompanions = filtered.flatMap((app) => [app, ...getCompanionApps(app.name)]);
+      setSelectedApps(withCompanions);
       setStep("check-secrets");
     }
 

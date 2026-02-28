@@ -3,7 +3,7 @@ import { Box, render, Text, useApp } from "ink";
 import Spinner from "ink-spinner";
 import { StatusMessage, TextInput } from "@inkjs/ui";
 import { existsSync } from "fs";
-import { getApp, getAppNames, getAppDir, getComposePath, APP_REGISTRY } from "@/lib/apps.js";
+import { getApp, getAppNames, getAppDir, getComposePath, getCompanionApps, APP_REGISTRY } from "@/lib/apps.js";
 import { loadEnvConfig, saveEnvConfig } from "@/lib/config.js";
 import {
   isDockerInstalled,
@@ -549,6 +549,21 @@ function InstallApp({ appName }: { appName: string }) {
     setCurrentLabel(`Installing ${appName}...`);
     await writeComposeAndStart(app, env);
     addStep({ name: "Install", status: "done", message: `${appName} is running` });
+
+    // Install companion apps
+    const companions = getCompanionApps(appName);
+    for (const companion of companions) {
+      const companionCompose = getComposePath(companion, env.BASE_DIR);
+      if (existsSync(companionCompose)) {
+        addStep({ name: companion.displayName, status: "done", message: "Already installed" });
+        continue;
+      }
+      setCurrentLabel(`Pulling ${companion.image}...`);
+      await pullImageWithProgress(companion.image, (pct) => setPullProgress(pct));
+      setCurrentLabel(`Installing ${companion.name}...`);
+      await writeComposeAndStart(companion, env);
+      addStep({ name: companion.displayName, status: "done", message: `${companion.name} is running` });
+    }
 
     // Regenerate Caddyfile if HTTPS is enabled
     if (env.ENABLE_HTTPS === "true") {

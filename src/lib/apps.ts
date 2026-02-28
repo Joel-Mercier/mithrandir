@@ -316,6 +316,23 @@ export const APP_REGISTRY: AppDefinition[] = [
     needsDataDir: false,
   },
   {
+    name: "flaresolverr",
+    displayName: "FlareSolverr",
+    description: "Proxy server to bypass Cloudflare for Prowlarr",
+    image: "ghcr.io/flaresolverr/flaresolverr:latest",
+    port: 8191,
+    configSubdir: "config",
+    needsDataDir: false,
+    hidden: true,
+    companionOf: "prowlarr",
+    environment: {
+      LOG_LEVEL: "info",
+      LOG_FILE: "none",
+      LOG_HTML: "false",
+      CAPTCHA_SOLVER: "none",
+    },
+  },
+  {
     name: "caddy",
     displayName: "Caddy",
     description: "HTTPS reverse proxy with automatic certificates",
@@ -440,4 +457,9 @@ export function filterConflicts(apps: AppDefinition[]): AppDefinition[] {
   }
 
   return result;
+}
+
+/** Get all companion apps for a given parent app */
+export function getCompanionApps(parentName: string): AppDefinition[] {
+  return APP_REGISTRY.filter((app) => app.companionOf === parentName);
 }

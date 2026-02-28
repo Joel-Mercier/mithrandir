@@ -4,7 +4,7 @@ import Spinner from "ink-spinner";
 import { ConfirmInput, StatusMessage } from "@inkjs/ui";
 import { existsSync, readdirSync, statSync } from "fs";
 import { homedir } from "os";
-import { getApp, getAppNames, getAppDir } from "@/lib/apps.js";
+import { getApp, getAppNames, getAppDir, getCompanionApps, getComposePath } from "@/lib/apps.js";
 import { shell, commandExists } from "@/lib/shell.js";
 import { loadEnvConfig } from "@/lib/config.js";
 import { regenerateCaddyfile } from "@/lib/caddy.js";
@@ -92,6 +92,19 @@ function AppUninstallInteractive({
       addStep({ name: "Stop container", status: "done", message: "Container stopped and removed" });
     } else {
       addStep({ name: "Stop container", status: "skipped", message: "No docker-compose.yml found" });
+    }
+
+    // Uninstall companion apps
+    const companions = getCompanionApps(appName);
+    for (const companion of companions) {
+      const companionDir = getAppDir(companion, env.BASE_DIR);
+      const companionComposePath = `${companionDir}/docker-compose.yml`;
+      if (existsSync(companionComposePath)) {
+        setCurrentLabel(`Stopping ${companion.name}...`);
+        await shell("docker", ["compose", "down", "--volumes"], { cwd: companionDir, ignoreError: true });
+        await shell("rm", ["-rf", companionDir]);
+        addStep({ name: companion.displayName, status: "done", message: "Uninstalled" });
+      }
     }
 
     // Ask about removing data
