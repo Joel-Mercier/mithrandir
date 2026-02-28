@@ -288,6 +288,7 @@ function InstallHttps() {
   const [error, setError] = useState<string | null>(null);
   const [domain, setDomain] = useState("");
   const [lanIp, setLanIp] = useState("");
+  const [piholeHandlesDns, setPiholeHandlesDns] = useState(false);
   const [envConfig, setEnvConfig] = useState<Awaited<ReturnType<typeof loadEnvConfig>> | null>(null);
 
   function addStep(step: CompletedStep) {
@@ -402,7 +403,7 @@ function InstallHttps() {
     await composeUp(caddyComposePath);
     addStep({ name: "Caddy", status: "done", message: "Container started on port 443" });
 
-    // Handle Pi-hole port 443 conflict
+    // Handle Pi-hole port conflicts + wildcard DNS
     const piholeDir = `${baseDir}/pihole`;
     const piholeComposePath = `${piholeDir}/docker-compose.yml`;
     if (existsSync(piholeComposePath)) {
@@ -410,9 +411,16 @@ function InstallHttps() {
       const piholeApp = getApp("pihole")!;
       const piholeCompose = generateCompose(piholeApp, env);
       await Bun.write(piholeComposePath, piholeCompose);
+
+      // Write wildcard DNS config so Pi-hole resolves *.domain to LAN IP
+      const dnsmasqDir = `${piholeDir}/etc-dnsmasq.d`;
+      await shell("mkdir", ["-p", dnsmasqDir], { sudo: true });
+      await Bun.write(`${dnsmasqDir}/10-wildcard-domain.conf`, `address=/${derivedDomain}/${ip}\n`);
+
       await composeDown(piholeComposePath);
       await composeUp(piholeComposePath);
-      addStep({ name: "Pi-hole", status: "done", message: "Restarted without port 443" });
+      addStep({ name: "Pi-hole", status: "done", message: `Restarted with wildcard DNS for *.${derivedDomain}` });
+      setPiholeHandlesDns(true);
     }
 
     setPhase("done");
@@ -477,7 +485,7 @@ function InstallHttps() {
       {phase === "pihole" && (
         <Text>
           <Text color="green"><Spinner type="dots" /></Text>
-          {" "}Restarting Pi-hole without port 443...
+          {" "}Restarting Pi-hole with port and DNS changes...
         </Text>
       )}
 
@@ -487,17 +495,27 @@ function InstallHttps() {
             HTTPS is enabled via Caddy reverse proxy
           </StatusMessage>
           <Text dimColor>  Certificates are issued automatically via DNS-01 challenge.</Text>
-          <Text />
-          <Text bold color="yellow">  DNS setup required:</Text>
-          <Text>  DuckDNS only resolves {domain} — not *.{domain} subdomains.</Text>
-          <Text>  Add a wildcard DNS entry on your router pointing to this server:</Text>
-          <Text />
-          <Text>    *.{domain}  →  {lanIp}</Text>
-          <Text />
-          <Text dimColor>  How to do this depends on your router. Common options:</Text>
-          <Text dimColor>    - Router admin DNS/hosts override (e.g. OpenWrt, pfSense, UniFi)</Text>
-          <Text dimColor>    - Pi-hole local DNS: add address=/{domain}/{lanIp} to /etc/dnsmasq.d/</Text>
-          <Text dimColor>    - Per-device /etc/hosts (no wildcard support — must list each app)</Text>
+          {piholeHandlesDns ? (
+            <>
+              <Text />
+              <Text bold color="green">  DNS: Handled by Pi-hole</Text>
+              <Text dimColor>  Wildcard DNS (*.{domain} → {lanIp}) configured automatically.</Text>
+              <Text dimColor>  Devices using Pi-hole as DNS will resolve all app subdomains.</Text>
+            </>
+          ) : (
+            <>
+              <Text />
+              <Text bold color="yellow">  DNS setup required:</Text>
+              <Text>  DuckDNS only resolves {domain} — not *.{domain} subdomains.</Text>
+              <Text>  Add a wildcard DNS entry on your router pointing to this server:</Text>
+              <Text />
+              <Text>    *.{domain}  →  {lanIp}</Text>
+              <Text />
+              <Text dimColor>  How to do this depends on your router. Common options:</Text>
+              <Text dimColor>    - Router admin DNS/hosts override (e.g. OpenWrt, pfSense, UniFi)</Text>
+              <Text dimColor>    - Per-device /etc/hosts (no wildcard support — must list each app)</Text>
+            </>
+          )}
         </Box>
       )}
     </Box>
@@ -574,6 +592,18 @@ function InstallApp({ appName }: { appName: string }) {
         addStep({ name: "HTTPS", status: "done", message: "Caddyfile updated" });
       } catch {
         addStep({ name: "HTTPS", status: "skipped", message: "Failed to update Caddyfile" });
+      }
+
+      // When Pi-hole is being installed with HTTPS active, write wildcard DNS config
+      if (appName === "pihole") {
+        const domain = getDuckDnsDomain(env);
+        if (domain) {
+          const ip = await getLocalIp();
+          const dnsmasqDir = `${env.BASE_DIR}/pihole/etc-dnsmasq.d`;
+          await shell("mkdir", ["-p", dnsmasqDir], { sudo: true });
+          await Bun.write(`${dnsmasqDir}/10-wildcard-domain.conf`, `address=/${domain}/${ip}\n`);
+          addStep({ name: "DNS", status: "done", message: `Wildcard *.${domain} → ${ip}` });
+        }
       }
     }
 

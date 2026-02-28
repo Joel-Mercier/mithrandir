@@ -378,6 +378,9 @@ export const APP_REGISTRY: AppDefinition[] = [
       { host: 53, container: 53, protocol: "udp" },
       { host: 443, container: 443, protocol: "tcp" },
     ],
+    extraVolumes: [
+      { host: "etc-dnsmasq.d", container: "/etc/dnsmasq.d" },
+    ],
     environment: {
       FTLCONF_dns_listeningMode: "ALL",
     },
