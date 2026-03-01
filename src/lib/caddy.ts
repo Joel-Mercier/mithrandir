@@ -42,6 +42,7 @@ export function generateCaddyfile(
   lines.push(`*.${domain} {`);
   lines.push("    tls {");
   lines.push("        dns duckdns {env.DUCKDNS_TOKEN}");
+  lines.push("        key_type rsa2048");
   lines.push("    }");
 
   // One matcher + handle block per app that has a port
