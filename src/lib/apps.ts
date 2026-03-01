@@ -383,6 +383,7 @@ export const APP_REGISTRY: AppDefinition[] = [
     ],
     environment: {
       FTLCONF_dns_listeningMode: "ALL",
+      FTLCONF_misc_etc_dnsmasq_d: "true",
     },
     secrets: [
       {
