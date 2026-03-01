@@ -87,6 +87,15 @@ export function generateCompose(
     }
   }
 
+  // Pi-hole: set webserver domain when behind Caddy reverse proxy
+  if (app.name === "pihole" && envConfig.ENABLE_HTTPS === "true") {
+    const subs = envConfig.DUCKDNS_SUBDOMAINS;
+    const primary = subs?.split(",")[0].trim();
+    if (primary) {
+      env.FTLCONF_webserver_domain = `pihole.${primary}.duckdns.org`;
+    }
+  }
+
   if (Object.keys(env).length > 0) {
     lines.push("    environment:");
     for (const [key, value] of Object.entries(env)) {
