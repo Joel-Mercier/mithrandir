@@ -109,8 +109,9 @@ export function generateCompose(
     lines.push("    environment:");
     for (const [key, value] of Object.entries(env)) {
       // Quote values containing YAML-special or shell-special characters
+      // Use negative lookbehind/lookahead to skip colons in URLs (e.g. https://)
       const strVal = String(value);
-      const needsQuoting = /[#$&*\[\]{|}!@'"`\\:,>?]/.test(strVal);
+      const needsQuoting = /[#$&*\[\]{|}!@'"`\\,>?]/.test(strVal) || /(?<!https?):|:(?!\/\/)/.test(strVal);
       const formatted = needsQuoting ? `"${strVal.replace(/["\\]/g, "\\$&")}"` : strVal;
       lines.push(`      - ${key}=${formatted}`);
     }
