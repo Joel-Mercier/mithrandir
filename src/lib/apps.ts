@@ -333,6 +333,20 @@ export const APP_REGISTRY: AppDefinition[] = [
     },
   },
   {
+    name: "vaultwarden",
+    displayName: "Vaultwarden",
+    description: "Lightweight Bitwarden-compatible password manager",
+    image: "vaultwarden/server:latest",
+    port: 8222,
+    containerPort: 80,
+    configSubdir: "data",
+    needsDataDir: false,
+    requiresHttps: true,
+    environment: {
+      SIGNUPS_ALLOWED: "true",
+    },
+  },
+  {
     name: "caddy",
     displayName: "Caddy",
     description: "HTTPS reverse proxy with automatic certificates",

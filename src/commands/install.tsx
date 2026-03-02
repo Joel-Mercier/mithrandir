@@ -555,6 +555,12 @@ function InstallApp({ appName }: { appName: string }) {
       return;
     }
 
+    // Check HTTPS prerequisite
+    if (app.requiresHttps && env.ENABLE_HTTPS !== "true") {
+      setError(`${app.displayName} requires HTTPS.\nInstall it first: mithrandir install https`);
+      return;
+    }
+
     // Pull image
     setPhase("pulling");
     setCurrentLabel(`Pulling ${app.image}...`);

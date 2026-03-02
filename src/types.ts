@@ -57,6 +57,8 @@ export interface AppDefinition {
   mountMusicDir?: boolean;
   /** Names of apps that conflict with this one (e.g. same port) */
   conflictsWith?: string[];
+  /** Requires HTTPS/Caddy to be set up before installation */
+  requiresHttps?: boolean;
   /** Hide from setup app-select (still visible in backup/restore/status) */
   hidden?: boolean;
   /** Name of the parent app this companion belongs to (auto-installed/uninstalled with parent) */

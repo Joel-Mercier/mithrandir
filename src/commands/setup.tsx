@@ -800,7 +800,7 @@ function InstallAppsStep({ selectedApps, envConfig, autoYes, onComplete }: Insta
     "secrets" | "pulling" | "composing" | "done"
   >("secrets");
   const [appResults, setAppResults] = useState<
-    Array<{ app: AppDefinition; status: "done" | "error" | "updated"; error?: string }>
+    Array<{ app: AppDefinition; status: "done" | "error" | "updated" | "skipped"; error?: string }>
   >([]);
   const [pullProgress, setPullProgress] = useState(0);
 
@@ -814,7 +814,7 @@ function InstallAppsStep({ selectedApps, envConfig, autoYes, onComplete }: Insta
   async function startInstallLoop() {
     const results: Array<{
       app: AppDefinition;
-      status: "done" | "error" | "updated";
+      status: "done" | "error" | "updated" | "skipped";
       error?: string;
     }> = [];
 
@@ -822,6 +822,17 @@ function InstallAppsStep({ selectedApps, envConfig, autoYes, onComplete }: Insta
       const app = selectedApps[i];
       setInstallIdx(i);
       setInstallPhase("secrets");
+
+      // Skip apps that require HTTPS if it's not enabled
+      if (app.requiresHttps && envConfig.ENABLE_HTTPS !== "true") {
+        results.push({
+          app,
+          status: "skipped",
+          error: "Requires HTTPS — run `mithrandir install https` first, then `mithrandir install vaultwarden`",
+        });
+        setAppResults([...results]);
+        continue;
+      }
 
       try {
         // Collect secrets if needed and not auto-yes
@@ -903,11 +914,11 @@ function InstallAppsStep({ selectedApps, envConfig, autoYes, onComplete }: Insta
         <AppStatus
           key={r.app.name}
           name={r.app.displayName}
-          status={r.status === "error" ? "error" : "done"}
+          status={r.status === "error" ? "error" : r.status === "skipped" ? "skipped" : "done"}
           message={
             r.status === "updated"
               ? "Updated"
-              : r.status === "error"
+              : r.status === "error" || r.status === "skipped"
                 ? r.error
                 : undefined
           }

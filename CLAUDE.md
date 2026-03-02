@@ -88,5 +88,6 @@ These allow programmatic access to the APIs of the above services.
 - Docker operations require sudo/root
 - Homarr is the only app with `configSubdir: "multiple"` (3 dirs: configs, icons, data)
 - Caddy is a hidden app (`hidden: true`) — excluded from setup app-select but included in backup/restore/status
+- Vaultwarden has `requiresHttps: true` — install command checks `ENABLE_HTTPS` before proceeding; setup wizard skips it with a warning if HTTPS isn't enabled. Its `DOMAIN` env var is derived from `DUCKDNS_SUBDOMAINS` in compose generation.
 - `composeUp`/`composeDown` expect a compose **file path** (not directory) — they derive `cwd` via `dirname()`
 - Systemd unit uses `/usr/local/bin/mithrandir` directly; only needs `PATH` set (no `BUN_INSTALL`)

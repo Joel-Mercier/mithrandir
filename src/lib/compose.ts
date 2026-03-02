@@ -1,5 +1,6 @@
 import type { AppDefinition, EnvConfig } from "@/types.js";
 import { getAppDir } from "@/lib/apps.js";
+import { getDuckDnsDomain } from "@/lib/caddy.js";
 
 /** Host port for Pi-hole web UI when Caddy owns port 80 */
 export const PIHOLE_HTTPS_PORT = 8880;
@@ -93,6 +94,14 @@ export function generateCompose(
     const primary = subs?.split(",")[0].trim();
     if (primary) {
       env.FTLCONF_webserver_domain = `pihole.${primary}.duckdns.org`;
+    }
+  }
+
+  // Vaultwarden: set DOMAIN to the HTTPS URL for the web vault
+  if (app.name === "vaultwarden") {
+    const domain = getDuckDnsDomain(envConfig);
+    if (domain) {
+      env.DOMAIN = `https://vaultwarden.${domain}`;
     }
   }
 
@@ -217,6 +226,7 @@ function getContainerConfigPath(app: AppDefinition): string {
     case "seerr":
       return "/app/config";
     case "navidrome":
+    case "vaultwarden":
       return "/data";
     case "openwebui":
       return "/app/backend/data";
