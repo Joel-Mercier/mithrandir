@@ -10,7 +10,7 @@ import {
   getComposePath,
 } from "@/lib/apps.js";
 import { isDockerInstalled } from "@/lib/docker.js";
-import { isRcloneInstalled, isRcloneRemoteConfigured } from "@/lib/rclone.js";
+import { isRcloneInstalled, isRcloneRemoteConfigured, isRemoteReachable } from "@/lib/rclone.js";
 import { shell } from "@/lib/shell.js";
 import { Header } from "@/components/Header.js";
 import { existsSync } from "fs";
@@ -208,10 +208,8 @@ async function checkRemoteBackup(
   }
 
   // Test actual connectivity
-  const result = await shell("rclone", ["lsd", `${rcloneRemote}:`], {
-    ignoreError: true,
-  });
-  if (result.exitCode !== 0) {
+  const reachable = await isRemoteReachable(rcloneRemote);
+  if (!reachable) {
     return {
       name: "Remote Backup",
       status: "fail",

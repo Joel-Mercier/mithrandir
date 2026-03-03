@@ -102,6 +102,16 @@ export async function isRcloneRemoteConfigured(
   return { configured: true };
 }
 
+/** Test connectivity to a remote by listing its root. */
+export async function isRemoteReachable(remote: string): Promise<boolean> {
+  const configArgs = await resolveRcloneConfigArgs();
+  const result = await shell("rclone", [...configArgs, "lsd", `${remote}:`], {
+    ignoreError: true,
+  });
+  await restoreRcloneConfigOwnership();
+  return result.exitCode === 0;
+}
+
 /** Install rclone via the official install script */
 export async function installRclone(): Promise<void> {
   await shell("bash", [
