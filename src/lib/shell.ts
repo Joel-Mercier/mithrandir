@@ -9,6 +9,8 @@ export interface ShellOptions {
   ignoreError?: boolean;
   /** Environment variables to pass */
   env?: Record<string, string>;
+  /** Timeout in milliseconds */
+  timeout?: number;
 }
 
 export interface ShellResult {
@@ -26,7 +28,7 @@ export async function shell(
   args: string[] = [],
   options: ShellOptions = {},
 ): Promise<ShellResult> {
-  const { sudo = false, user, cwd, ignoreError = false, env } = options;
+  const { sudo = false, user, cwd, ignoreError = false, env, timeout } = options;
 
   let cmd: string;
   let cmdArgs: string[];
@@ -44,6 +46,7 @@ export async function shell(
   const execaOpts: Record<string, unknown> = { reject: !ignoreError };
   if (cwd) execaOpts.cwd = cwd;
   if (env) execaOpts.env = env;
+  if (timeout) execaOpts.timeout = timeout;
 
   try {
     const result = await execa(cmd, cmdArgs, execaOpts);

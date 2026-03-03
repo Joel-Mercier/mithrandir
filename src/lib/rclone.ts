@@ -85,14 +85,28 @@ export async function upload(
   remotePath: string,
 ): Promise<void> {
   const configArgs = await resolveRcloneConfigArgs();
-  await shell("rclone", [
-    ...configArgs,
-    "copy",
-    localPath,
-    `${remote}:${remotePath}`,
-    "--log-level",
-    "INFO",
-  ]);
+  await shell(
+    "rclone",
+    [
+      ...configArgs,
+      "copy",
+      localPath,
+      `${remote}:${remotePath}`,
+      "--log-level",
+      "INFO",
+      "--timeout",
+      "5m",
+      "--retries",
+      "3",
+      "--low-level-retries",
+      "10",
+      "--drive-chunk-size",
+      "64M",
+      "--transfers",
+      "4",
+    ],
+    { timeout: 30 * 60 * 1000 },
+  );
 }
 
 /** Download a remote file to a local directory */
