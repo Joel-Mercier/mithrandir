@@ -1,5 +1,5 @@
 import { shell, commandExists } from "@/lib/shell.js";
-import { existsSync } from "fs";
+import { existsSync, statSync } from "fs";
 
 /** Check if rclone is installed */
 export async function isRcloneInstalled(): Promise<boolean> {
@@ -26,6 +26,38 @@ async function resolveRcloneConfigArgs(): Promise<string[]> {
   if (!existsSync(configPath)) return [];
 
   return ["--config", configPath];
+}
+
+/**
+ * Restore ownership of the rclone config file after running as root.
+ * rclone may rewrite the config (e.g. OAuth token refresh for Google Drive),
+ * which changes ownership to root when running under sudo.
+ */
+async function restoreRcloneConfigOwnership(): Promise<void> {
+  const sudoUser = process.env.SUDO_USER;
+  if (!sudoUser) return;
+
+  const result = await shell("getent", ["passwd", sudoUser], { ignoreError: true });
+  if (result.exitCode !== 0 || !result.stdout.trim()) return;
+
+  const fields = result.stdout.split(":");
+  const homeDir = fields[5];
+  const uid = fields[2];
+  const gid = fields[3];
+  if (!homeDir || !uid || !gid) return;
+
+  const configPath = `${homeDir}/.config/rclone/rclone.conf`;
+  if (!existsSync(configPath)) return;
+
+  // Only chown if currently owned by root
+  try {
+    const stat = statSync(configPath);
+    if (stat.uid === 0) {
+      await shell("chown", [`${uid}:${gid}`, configPath], { sudo: true, ignoreError: true });
+    }
+  } catch {
+    // Ignore stat errors
+  }
 }
 
 /**
@@ -107,6 +139,7 @@ export async function upload(
     ],
     { timeout: 30 * 60 * 1000 },
   );
+  await restoreRcloneConfigOwnership();
 }
 
 /** Download a remote file to a local directory */
@@ -117,6 +150,7 @@ export async function download(
 ): Promise<void> {
   const configArgs = await resolveRcloneConfigArgs();
   await shell("rclone", [...configArgs, "copy", `${remote}:${remotePath}`, localDir]);
+  await restoreRcloneConfigOwnership();
 }
 
 /** List directories at a remote path. Returns directory names. */
@@ -130,6 +164,8 @@ export async function listDirs(
     [...configArgs, "lsd", `${remote}:${remotePath}`],
     { ignoreError: true },
   );
+
+  await restoreRcloneConfigOwnership();
 
   if (result.exitCode !== 0 || !result.stdout.trim()) return [];
 
@@ -156,6 +192,7 @@ export async function remoteFileExists(
     [...configArgs, "ls", `${remote}:${remotePath}`],
     { ignoreError: true },
   );
+  await restoreRcloneConfigOwnership();
   return result.exitCode === 0 && result.stdout.trim().length > 0;
 }
 
@@ -170,6 +207,8 @@ export async function listFiles(
     [...configArgs, "ls", `${remote}:${remotePath}`],
     { ignoreError: true },
   );
+
+  await restoreRcloneConfigOwnership();
 
   if (result.exitCode !== 0 || !result.stdout.trim()) return [];
 
@@ -192,6 +231,7 @@ export async function purgeRemote(
 ): Promise<void> {
   const configArgs = await resolveRcloneConfigArgs();
   await shell("rclone", [...configArgs, "purge", `${remote}:${remotePath}`]);
+  await restoreRcloneConfigOwnership();
 }
 
 /**
