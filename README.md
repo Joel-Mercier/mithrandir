@@ -331,6 +331,5 @@ Checks configuration correctness across three categories: System (.env file, Doc
 
 ## TODO
 
-- [ ] Reorganize the app list in the setup command to make it more user-friendly. It should first present broad categories like "media", "security", "productivity", etc. Then, within each category, it should list apps in alphabetical order. A last option would be to pick and choose any particular app from the list.
-- [ ] Add a \[CERTIFICATE_EXPIRATION\] > 72h check for each app during the Gatus setup to warn the user if their certificate is about to expire.
+- [ ] Add a \[CERTIFICATE_EXPIRATION\] > 72h check for each app during the Gatus setup to warn the user if their certificate is about to expire. Caddy is handling the certificate renewal automatically.
 - [ ] Check if Profilarr is a good solution for quality profiles

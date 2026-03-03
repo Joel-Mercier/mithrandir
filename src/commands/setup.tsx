@@ -56,6 +56,62 @@ interface SetupCommandProps {
   flags: { yes?: boolean };
 }
 
+const APP_CATEGORIES = [
+  {
+    label: "Media: Movies & TV",
+    value: "media-movies-tv",
+    description: "qBittorrent, Prowlarr, Radarr, Sonarr, Bazarr, Seerr, Jellyfin",
+    apps: ["qbittorrent", "prowlarr", "radarr", "sonarr", "bazarr", "seerr", "jellyfin"],
+  },
+  {
+    label: "Media: Music",
+    value: "media-music",
+    description: "Navidrome, Lidarr, qBittorrent",
+    apps: ["navidrome", "lidarr", "qbittorrent"],
+  },
+  {
+    label: "Media: Pictures",
+    value: "media-pictures",
+    description: "Immich",
+    apps: ["immich"],
+  },
+  {
+    label: "Automation",
+    value: "automation",
+    description: "Home Assistant",
+    apps: ["homeassistant"],
+  },
+  {
+    label: "Monitoring",
+    value: "monitoring",
+    description: "Gatus",
+    apps: ["gatus"],
+  },
+  {
+    label: "Productivity",
+    value: "productivity",
+    description: "Excalidraw, Open WebUI, Vaultwarden",
+    apps: ["excalidraw", "openwebui", "vaultwarden"],
+  },
+  {
+    label: "Security",
+    value: "security",
+    description: "Caddy (HTTPS reverse proxy), Pi-hole (DNS)",
+    apps: ["caddy", "pihole"],
+  },
+  {
+    label: "Utilities",
+    value: "utilities",
+    description: "DuckDNS, WireGuard, Homarr",
+    apps: ["duckdns", "wireguard", "homarr"],
+  },
+];
+
+const APP_DEPENDENCIES: Record<string, string[]> = {
+  caddy: ["duckdns", "pihole"],
+  vaultwarden: ["caddy", "duckdns", "pihole"],
+};
+
 type SetupStep =
   | "init"
   | "docker"
@@ -429,6 +485,10 @@ export function SetupCommand({ flags }: SetupCommandProps) {
   // ─── Step: App selection ────────────────────────────────────────────────────
 
   function AppSelectStep() {
+    const [phase, setPhase] = useState<"categories" | "custom" | "review">("categories");
+    const [categoryAppNames, setCategoryAppNames] = useState<Set<string>>(new Set());
+    const [autoAdded, setAutoAdded] = useState<string[]>([]);
+
     useEffect(() => {
       if (autoYes) {
         const allApps = APP_REGISTRY.filter((app) => !app.hidden);
@@ -439,30 +499,143 @@ export function SetupCommand({ flags }: SetupCommandProps) {
       }
     }, []);
 
+    useEffect(() => {
+      if (phase === "review") {
+        const timer = setTimeout(() => setStep("check-secrets"), 2000);
+        return () => clearTimeout(timer);
+      }
+    }, [phase]);
+
     if (autoYes) return null;
 
-    const options = APP_REGISTRY.filter((app) => !app.hidden).map((app) => ({
-      label: `${app.displayName} — ${app.description}`,
-      value: app.name,
-    }));
+    function resolveDependencies(appNames: Set<string>): { resolved: Set<string>; added: string[] } {
+      const resolved = new Set(appNames);
+      const added: string[] = [];
+      for (const name of appNames) {
+        const deps = APP_DEPENDENCIES[name];
+        if (!deps) continue;
+        for (const dep of deps) {
+          if (!resolved.has(dep)) {
+            resolved.add(dep);
+            added.push(dep);
+          }
+        }
+      }
+      return { resolved, added };
+    }
 
-    function handleSubmit(values: string[]) {
-      const apps = values
+    function finalize(appNames: Set<string>) {
+      const { resolved, added } = resolveDependencies(appNames);
+      const apps = [...resolved]
         .map((name) => getApp(name))
         .filter((a): a is AppDefinition => a !== undefined);
       const filtered = filterConflicts(apps);
       const withCompanions = filtered.flatMap((app) => [app, ...getCompanionApps(app.name)]);
       setSelectedApps(withCompanions);
-      setStep("check-secrets");
+
+      if (added.length > 0) {
+        setAutoAdded(added);
+        setPhase("review");
+      } else {
+        setStep("check-secrets");
+      }
     }
 
-    return (
-      <Box flexDirection="column">
-        <StepIndicator current={5} total={9} label="Select Apps" />
-        <Text>Choose services to install (space to toggle, enter to confirm):</Text>
-        <MultiSelect options={options} onSubmit={handleSubmit} />
-      </Box>
-    );
+    // Phase 1: Category selection
+    if (phase === "categories") {
+      const options = [
+        ...APP_CATEGORIES.map((cat) => ({
+          label: `${cat.label} — ${cat.description}`,
+          value: cat.value,
+        })),
+        {
+          label: "Custom — pick individual apps",
+          value: "custom",
+        },
+      ];
+
+      function handleCategorySubmit(values: string[]) {
+        const appNames = new Set<string>();
+        let hasCustom = false;
+
+        for (const val of values) {
+          if (val === "custom") {
+            hasCustom = true;
+            continue;
+          }
+          const cat = APP_CATEGORIES.find((c) => c.value === val);
+          if (cat) {
+            for (const app of cat.apps) appNames.add(app);
+          }
+        }
+
+        setCategoryAppNames(appNames);
+
+        if (hasCustom) {
+          setPhase("custom");
+        } else {
+          finalize(appNames);
+        }
+      }
+
+      return (
+        <Box flexDirection="column">
+          <StepIndicator current={5} total={9} label="Select Apps" />
+          <Text>Choose app categories to install (space to toggle, enter to confirm):</Text>
+          <MultiSelect options={options} onSubmit={handleCategorySubmit} />
+        </Box>
+      );
+    }
+
+    // Phase 2: Custom flat list (if "Custom" was selected)
+    if (phase === "custom") {
+      const options = APP_REGISTRY.filter((app) => !app.hidden).map((app) => ({
+        label: `${app.displayName} — ${app.description}`,
+        value: app.name,
+      }));
+
+      const defaultSelected = options
+        .filter((opt) => categoryAppNames.has(opt.value))
+        .map((opt) => opt.value);
+
+      function handleCustomSubmit(values: string[]) {
+        const appNames = new Set(values);
+        finalize(appNames);
+      }
+
+      return (
+        <Box flexDirection="column">
+          <StepIndicator current={5} total={9} label="Select Apps" />
+          {categoryAppNames.size > 0 && (
+            <Text dimColor>Apps from selected categories are pre-checked.</Text>
+          )}
+          <Text>Choose individual apps (space to toggle, enter to confirm):</Text>
+          <MultiSelect options={options} defaultValue={defaultSelected} onSubmit={handleCustomSubmit} />
+        </Box>
+      );
+    }
+
+    // Phase 3: Review auto-added dependencies
+    if (phase === "review") {
+      const addedApps = autoAdded
+        .map((name) => getApp(name))
+        .filter((a): a is AppDefinition => a !== undefined);
+
+      return (
+        <Box flexDirection="column">
+          <StepIndicator current={5} total={9} label="Select Apps" />
+          <Text color="yellow">
+            Auto-included dependencies:
+          </Text>
+          {addedApps.map((app) => (
+            <Text key={app.name}>  + {app.displayName} — required by other selected apps</Text>
+          ))}
+          <Text dimColor>Continuing...</Text>
+        </Box>
+      );
+    }
+
+    return null;
   }
 
   // ─── Step: Check required secrets ──────────────────────────────────────────
