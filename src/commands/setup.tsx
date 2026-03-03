@@ -232,7 +232,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
             <ConfirmInput
               onConfirm={async () => { await doInstall(); }}
               onCancel={() => {
-                setError("Docker is required. Abortin | gsetup.");
+                setError("Docker is required. Aborting setup.");
               }}
             />
           </Box>
@@ -401,7 +401,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
             <ConfirmInput
               onConfirm={async () => { await doInstall(); }}
               onCancel={() => {
-                setError("rclone is required for backups. Abortin | gsetup.");
+                setError("rclone is required for backups. Aborting setup.");
               }}
             />
           </Box>
@@ -1712,8 +1712,11 @@ function AutoSetupAppsStep({ selectedApps, envConfig, localIp, autoYes, onComple
     onComplete(results);
   }
 
+  useEffect(() => {
+    if (setupableApps.length === 0) onComplete([]);
+  }, []);
+
   if (setupableApps.length === 0) {
-    useEffect(() => { onComplete([]); }, []);
     return null;
   }
 

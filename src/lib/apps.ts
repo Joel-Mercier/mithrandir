@@ -85,7 +85,7 @@ export const APP_REGISTRY: AppDefinition[] = [
     needsDataDir: false,
     init: true,
     environment: {
-      LOG_LEVEL: "debug",
+      LOG_LEVEL: "info",
       PORT: "5055",
     },
     healthcheck: {
@@ -132,7 +132,7 @@ export const APP_REGISTRY: AppDefinition[] = [
     needsDataDir: false,
     mountMusicDir: true,
     environment: {
-      ND_LOGLEVEL: "debug",
+      ND_LOGLEVEL: "info",
     },
     secrets: [
       {

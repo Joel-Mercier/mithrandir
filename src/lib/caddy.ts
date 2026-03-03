@@ -108,12 +108,17 @@ export async function regenerateCaddyfile(
   const installedApps = detectInstalledApps(baseDir);
   const caddyfile = generateCaddyfile(installedApps, envConfig);
 
-  const caddyDir = `${baseDir}/caddy`;
-  await Bun.write(`${caddyDir}/Caddyfile`, caddyfile);
+  const caddyfilePath = `${baseDir}/caddy/Caddyfile`;
+  await shell("bash", ["-c", `cat > "${caddyfilePath}" << 'CADDYFILE_EOF'\n${caddyfile}CADDYFILE_EOF`], {
+    sudo: true,
+  });
 
   // Reload Caddy (graceful config reload via docker exec)
-  await shell("docker", ["exec", "caddy", "caddy", "reload", "--config", "/etc/caddy/Caddyfile"], {
+  const reload = await shell("docker", ["exec", "caddy", "caddy", "reload", "--config", "/etc/caddy/Caddyfile"], {
     sudo: true,
     ignoreError: true,
   });
+  if ((reload.exitCode ?? 0) !== 0) {
+    console.warn(`Warning: Caddy reload failed: ${reload.stderr?.trim() || "unknown error"}`);
+  }
 }

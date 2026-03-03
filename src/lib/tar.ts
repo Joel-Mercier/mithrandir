@@ -6,7 +6,7 @@ import { getAppDir } from "@/lib/apps.js";
  * Resolve the real (non-root) user and group for file ownership.
  * Uses SUDO_USER + getent when running under sudo, falls back to id.
  */
-async function resolveOwnership(): Promise<string> {
+export async function resolveOwnership(): Promise<string> {
   const sudoUser = process.env.SUDO_USER;
   if (sudoUser) {
     // Look up the user's primary group via getent (same pattern as rclone.ts)

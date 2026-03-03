@@ -10,7 +10,7 @@ import {
   getComposePath,
   getContainerName,
 } from "@/lib/apps.js";
-import { createBackup } from "@/lib/tar.js";
+import { createBackup, resolveOwnership } from "@/lib/tar.js";
 import {
   getRunningImageId,
   pullImageWithProgress,
@@ -154,11 +154,10 @@ function UpdateInteractive({
           ["-p", archiveDir, latestDir],
           { sudo: true },
         );
-        const { stdout: user } = await shell("id", ["-un"]);
-        const { stdout: group } = await shell("id", ["-gn"]);
+        const ownership = await resolveOwnership();
         await shell(
           "chown",
-          ["-R", `${user.trim()}:${group.trim()}`, config.BACKUP_DIR],
+          ["-R", ownership, config.BACKUP_DIR],
           { sudo: true },
         );
 

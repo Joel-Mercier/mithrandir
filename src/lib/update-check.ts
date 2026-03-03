@@ -4,7 +4,13 @@ import { homedir } from "os";
 import { getProjectRoot } from "@/lib/config.js";
 import { shell } from "@/lib/shell.js";
 
-const CACHE_DIR = join(homedir(), ".cache", "mithrandir");
+function getRealHomeDir(): string {
+  const sudoUser = process.env.SUDO_USER;
+  if (sudoUser) return join("/home", sudoUser);
+  return homedir();
+}
+
+const CACHE_DIR = join(getRealHomeDir(), ".cache", "mithrandir");
 const CACHE_FILE = join(CACHE_DIR, "last-update-check");
 const CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 hours
 

@@ -32,6 +32,7 @@ import {
   loadEnvConfig,
   saveEnvConfig,
   getProjectRoot,
+  getBackupConfig,
 } from "@/lib/config.js";
 import { extractBackup } from "@/lib/tar.js";
 import { writeComposeAndStart } from "@/commands/setup.js";
@@ -126,7 +127,9 @@ async function runHeadlessRecover(autoYes: boolean): Promise<void> {
   }
 
   // 5. Check rclone remote
-  const rcloneRemote = "gdrive";
+  const env = await loadEnvConfig();
+  const backupConfig = getBackupConfig(env);
+  const rcloneRemote = backupConfig.RCLONE_REMOTE;
   const remoteCheck = await isRcloneRemoteConfigured(rcloneRemote);
   if (!remoteCheck.configured) {
     await logger.error(
@@ -285,7 +288,7 @@ function RecoverCommand({ autoYes }: { autoYes: boolean }) {
   const [step, setStep] = useState<RecoverStep>("init");
   const [completedSteps, setCompletedSteps] = useState<CompletedStep[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [rcloneRemote, setRcloneRemote] = useState("gdrive");
+  const [rcloneRemote, setRcloneRemote] = useState("gdrive"); // default, updated from config in doInit
   const [baseDir, setBaseDir] = useState(homedir());
   const [envConfig, setEnvConfig] = useState<EnvConfig>({
     BASE_DIR: homedir(),
@@ -326,6 +329,12 @@ function RecoverCommand({ autoYes }: { autoYes: boolean }) {
         status: "done",
         message: distro.prettyName,
       });
+
+      // Load config to get rclone remote (uses default "gdrive" if no .env exists)
+      const initEnv = await loadEnvConfig();
+      const initBackupConfig = getBackupConfig(initEnv);
+      setRcloneRemote(initBackupConfig.RCLONE_REMOTE);
+
       setStep("docker");
     } catch (err: any) {
       setError(err.message);
@@ -751,10 +760,11 @@ function RecoverCommand({ autoYes }: { autoYes: boolean }) {
       }
     }
 
-    // Reload config after secrets restore
+    // Reload config after secrets restore (may have updated .env with new rclone remote)
     const reloadedEnv = await loadEnvConfig();
     const finalEnv = { ...envConfig, ...reloadedEnv };
     setEnvConfig(finalEnv);
+    if (reloadedEnv.RCLONE_REMOTE) setRcloneRemote(reloadedEnv.RCLONE_REMOTE);
 
     // Restore each app
     const appNames = disc.apps.filter((a) => a !== "secrets");
