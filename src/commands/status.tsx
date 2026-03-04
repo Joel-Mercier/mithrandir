@@ -295,7 +295,7 @@ function StatusCommand() {
           <Box flexDirection="column" marginTop={1}>
             <Text bold>  Quick Links:</Text>
             {info.apps
-              .filter((a) => a.url)
+              .filter((a) => a.url && a.app.name !== "flaresolverr")
               .map((a) => (
                 <Text key={a.app.name}>
                   {"    "}{a.app.displayName.padEnd(18)}
