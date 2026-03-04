@@ -15,7 +15,7 @@ import {
   composeUp,
 } from "@/lib/docker.js";
 import { getSwapInfo, ensureSwap, formatSwapSize } from "@/lib/swap.js";
-import { isRcloneInstalled, installRclone } from "@/lib/rclone.js";
+import { isRcloneInstalled, installRclone, ensureRcloneConfig } from "@/lib/rclone.js";
 import {
   hasSystemd,
   isWsl,
@@ -171,6 +171,7 @@ function InstallBackup() {
   const [completedSteps, setCompletedSteps] = useState<CompletedStep[]>([]);
   const [phase, setPhase] = useState<"rclone-check" | "rclone-install" | "systemd" | "done">("rclone-check");
   const [error, setError] = useState<string | null>(null);
+  const [rcloneAutoConfigured, setRcloneAutoConfigured] = useState(false);
 
   function addStep(step: CompletedStep) {
     setCompletedSteps((prev) => [...prev, step]);
@@ -193,6 +194,18 @@ function InstallBackup() {
         setError(`rclone install failed: ${err.message}`);
         return;
       }
+    }
+
+    // ── auto-configure rclone from .env ──────────────────────────────────
+    try {
+      const env = await loadEnvConfig();
+      const generated = await ensureRcloneConfig(env);
+      if (generated) {
+        setRcloneAutoConfigured(true);
+        addStep({ name: "rclone config", status: "done", message: "Auto-configured from .env" });
+      }
+    } catch {
+      // Non-fatal: user can configure manually
     }
 
     // ── systemd backup timer ────────────────────────────────────────────
@@ -270,7 +283,12 @@ function InstallBackup() {
           <StatusMessage variant="success">
             Backup system is ready
           </StatusMessage>
-          <Text dimColor>  To configure rclone for Google Drive, run: rclone config</Text>
+          {!rcloneAutoConfigured && (
+            <Box flexDirection="column">
+              <Text dimColor>  TIP: Set RCLONE_GDRIVE_APP_ID, RCLONE_GDRIVE_APP_SECRET, and RCLONE_GDRIVE_TOKEN in .env to auto-configure</Text>
+              <Text dimColor>       Or run 'rclone config' manually. See: https://rclone.org/drive/#making-your-own-client-id</Text>
+            </Box>
+          )}
         </Box>
       )}
     </Box>

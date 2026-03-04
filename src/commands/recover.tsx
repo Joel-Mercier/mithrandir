@@ -130,7 +130,7 @@ async function runHeadlessRecover(autoYes: boolean): Promise<void> {
   const env = await loadEnvConfig();
   const backupConfig = getBackupConfig(env);
   const rcloneRemote = backupConfig.RCLONE_REMOTE;
-  const remoteCheck = await isRcloneRemoteConfigured(rcloneRemote);
+  const remoteCheck = await isRcloneRemoteConfigured(rcloneRemote, env);
   if (!remoteCheck.configured) {
     await logger.error(
       `rclone remote '${rcloneRemote}' not configured. Run 'rclone config' first. (${remoteCheck.reason})`,
@@ -516,7 +516,7 @@ function RecoverCommand({ autoYes }: { autoYes: boolean }) {
     }, []);
 
     async function checkRemote() {
-      const result = await isRcloneRemoteConfigured(rcloneRemote);
+      const result = await isRcloneRemoteConfigured(rcloneRemote, envConfig);
       if (result.configured) {
         setStatus("done");
         addStep({

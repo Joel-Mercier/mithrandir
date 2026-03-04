@@ -13,6 +13,7 @@ import { isDockerInstalled } from "@/lib/docker.js";
 import { isRcloneInstalled, isRcloneRemoteConfigured, isRemoteReachable } from "@/lib/rclone.js";
 import { shell } from "@/lib/shell.js";
 import { Header } from "@/components/Header.js";
+import type { EnvConfig } from "@/types.js";
 import { existsSync } from "fs";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -188,6 +189,7 @@ async function checkContainerRestarts(
 
 async function checkRemoteBackup(
   rcloneRemote: string,
+  env?: EnvConfig,
 ): Promise<CheckResult> {
   const installed = await isRcloneInstalled();
   if (!installed) {
@@ -198,7 +200,7 @@ async function checkRemoteBackup(
     };
   }
 
-  const configured = await isRcloneRemoteConfigured(rcloneRemote);
+  const configured = await isRcloneRemoteConfigured(rcloneRemote, env);
   if (!configured.configured) {
     return {
       name: "Remote Backup",
@@ -238,7 +240,7 @@ async function runChecks(): Promise<CheckResult[]> {
       checkDiskSpace("backups", backupDir),
       checkBackupAge(backupDir),
       checkContainerRestarts(baseDir),
-      checkRemoteBackup(backupConfig.RCLONE_REMOTE),
+      checkRemoteBackup(backupConfig.RCLONE_REMOTE, envConfig),
     ]);
 
   return [docker, diskApps, diskBackups, backupAge, ...containers, remote];

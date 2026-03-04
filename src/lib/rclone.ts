@@ -1,5 +1,7 @@
 import { shell, commandExists } from "@/lib/shell.js";
 import { existsSync, statSync } from "fs";
+import { readFile, writeFile, mkdir } from "fs/promises";
+import type { EnvConfig } from "@/types.js";
 
 /** Check if rclone is installed */
 export async function isRcloneInstalled(): Promise<boolean> {
@@ -10,21 +12,24 @@ export async function isRcloneInstalled(): Promise<boolean> {
  * Resolve the rclone config file path.
  * When running under sudo, the config lives under the original user's home,
  * not /root. We detect this via SUDO_USER and look up their home directory.
+ * Returns the config path or null if not under sudo / home not found.
  */
-async function resolveRcloneConfigArgs(): Promise<string[]> {
+async function resolveRcloneConfigPath(): Promise<string | null> {
   const sudoUser = process.env.SUDO_USER;
-  if (!sudoUser) return [];
+  if (!sudoUser) return null;
 
-  // Look up the original user's home directory via getent
   const result = await shell("getent", ["passwd", sudoUser], { ignoreError: true });
-  if (result.exitCode !== 0 || !result.stdout.trim()) return [];
+  if (result.exitCode !== 0 || !result.stdout.trim()) return null;
 
   const homeDir = result.stdout.split(":")[5];
-  if (!homeDir) return [];
+  if (!homeDir) return null;
 
-  const configPath = `${homeDir}/.config/rclone/rclone.conf`;
-  if (!existsSync(configPath)) return [];
+  return `${homeDir}/.config/rclone/rclone.conf`;
+}
 
+async function resolveRcloneConfigArgs(): Promise<string[]> {
+  const configPath = await resolveRcloneConfigPath();
+  if (!configPath || !existsSync(configPath)) return [];
   return ["--config", configPath];
 }
 
@@ -61,10 +66,80 @@ async function restoreRcloneConfigOwnership(): Promise<void> {
 }
 
 /**
+ * Auto-generate rclone.conf from .env variables if all required vars are set.
+ * Returns true if the config was written, false if skipped.
+ */
+export async function ensureRcloneConfig(env: EnvConfig): Promise<boolean> {
+  const clientId = env.RCLONE_GDRIVE_APP_ID;
+  const clientSecret = env.RCLONE_GDRIVE_APP_SECRET;
+  const token = env.RCLONE_GDRIVE_TOKEN;
+
+  if (!clientId || !clientSecret || !token) return false;
+
+  const remoteName = env.RCLONE_REMOTE ?? "gdrive";
+
+  // Resolve config path
+  const sudoPath = await resolveRcloneConfigPath();
+  const configPath = sudoPath ?? `${process.env.HOME ?? "/root"}/.config/rclone/rclone.conf`;
+
+  // If config already has this remote, don't overwrite (preserves refreshed tokens)
+  if (existsSync(configPath)) {
+    const existing = await readFile(configPath, "utf-8");
+    if (existing.includes(`[${remoteName}]`)) return false;
+  }
+
+  // Build the new remote section
+  const section = [
+    `[${remoteName}]`,
+    `type = drive`,
+    `client_id = ${clientId}`,
+    `client_secret = ${clientSecret}`,
+    `scope = drive`,
+    `token = ${token}`,
+    "",
+  ].join("\n");
+
+  // Create directory if needed
+  const configDir = configPath.replace(/\/[^/]+$/, "");
+  await mkdir(configDir, { recursive: true });
+
+  // Append to existing or create new
+  if (existsSync(configPath)) {
+    const existing = await readFile(configPath, "utf-8");
+    const separator = existing.endsWith("\n") ? "" : "\n";
+    await writeFile(configPath, existing + separator + section);
+  } else {
+    await writeFile(configPath, section);
+  }
+
+  await restoreRcloneConfigOwnership();
+  return true;
+}
+
+/**
  * Check if a specific rclone remote is configured (matches bash: rclone listremotes | grep).
  * Returns { configured: true } or { configured: false, reason: string } for diagnostics.
+ * When env is provided and the remote is not found, attempts to auto-generate config from .env vars.
  */
 export async function isRcloneRemoteConfigured(
+  remoteName: string,
+  env?: EnvConfig,
+): Promise<{ configured: true } | { configured: false; reason: string }> {
+  const result = await checkRemoteConfigured(remoteName);
+  if (result.configured) return result;
+
+  // Try auto-generating config from env vars
+  if (env) {
+    const generated = await ensureRcloneConfig(env);
+    if (generated) {
+      return checkRemoteConfigured(remoteName);
+    }
+  }
+
+  return result;
+}
+
+async function checkRemoteConfigured(
   remoteName: string,
 ): Promise<{ configured: true } | { configured: false; reason: string }> {
   const configArgs = await resolveRcloneConfigArgs();

@@ -180,7 +180,7 @@ function UpdateInteractive({
 
         // Upload to remote if rclone is configured
         if (await isRcloneInstalled()) {
-          const remoteCheck = await isRcloneRemoteConfigured(config.RCLONE_REMOTE);
+          const remoteCheck = await isRcloneRemoteConfigured(config.RCLONE_REMOTE, await loadEnvConfig());
           if (remoteCheck.configured) {
             setCurrentLabel(`Uploading backup to ${config.RCLONE_REMOTE}...`);
             try {

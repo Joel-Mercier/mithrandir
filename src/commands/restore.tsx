@@ -26,7 +26,7 @@ import { createRestoreLogger, Logger } from "@/lib/logger.js";
 import { Header } from "@/components/Header.js";
 import { AppStatus } from "@/components/AppStatus.js";
 import { ProgressBar } from "@/components/ProgressBar.js";
-import type { AppDefinition, BackupConfig } from "@/types.js";
+import type { AppDefinition, BackupConfig, EnvConfig } from "@/types.js";
 import { existsSync } from "fs";
 
 // ─── Shared helpers ──────────────────────────────────────────────────────────
@@ -148,6 +148,7 @@ async function resolveArchiveDir(
 async function findAvailableBackups(
   dateArg: string | undefined,
   config: BackupConfig,
+  env?: EnvConfig,
 ): Promise<{ apps: string[]; archiveDir: string | null }> {
   const date = dateArg ?? "latest";
   const foundApps: string[] = [];
@@ -194,7 +195,7 @@ async function findAvailableBackups(
 
   // Check remote for apps not found locally
   if (await isRcloneInstalled()) {
-    const remoteCheck = await isRcloneRemoteConfigured(config.RCLONE_REMOTE);
+    const remoteCheck = await isRcloneRemoteConfigured(config.RCLONE_REMOTE, env);
     if (remoteCheck.configured) {
       try {
         let remoteDate = date;
@@ -324,7 +325,8 @@ async function runHeadlessFullRestore(
   const logger = createRestoreLogger();
   await logger.info("=== Starting full restore ===");
 
-  const config = getBackupConfig(await loadEnvConfig());
+  const env = await loadEnvConfig();
+  const config = getBackupConfig(env);
   const date = dateArg ?? "latest";
 
   // Validate date
@@ -335,7 +337,7 @@ async function runHeadlessFullRestore(
 
   // Discover available backups (local + remote)
   await logger.info(`Finding available backups (${date})...`);
-  const { apps: availableApps } = await findAvailableBackups(dateArg, config);
+  const { apps: availableApps } = await findAvailableBackups(dateArg, config, env);
 
   if (availableApps.length === 0) {
     await logger.warn(`No backups found for ${date}`);
@@ -624,8 +626,9 @@ function FullRestoreInteractive({
 
   async function discoverBackups() {
     try {
-      const config = getBackupConfig(await loadEnvConfig());
-      const { apps } = await findAvailableBackups(dateArg, config);
+      const env = await loadEnvConfig();
+      const config = getBackupConfig(env);
+      const { apps } = await findAvailableBackups(dateArg, config, env);
 
       if (apps.length === 0) {
         setError("No backups found");

@@ -281,7 +281,7 @@ async function checkSystemdTimer(): Promise<CheckResult> {
   };
 }
 
-async function checkRclone(rcloneRemote: string): Promise<CheckResult[]> {
+async function checkRclone(rcloneRemote: string, env?: EnvConfig): Promise<CheckResult[]> {
   const installed = await isRcloneInstalled();
   if (!installed) {
     return [{
@@ -293,7 +293,7 @@ async function checkRclone(rcloneRemote: string): Promise<CheckResult[]> {
     }];
   }
 
-  const configured = await isRcloneRemoteConfigured(rcloneRemote);
+  const configured = await isRcloneRemoteConfigured(rcloneRemote, env);
   if (!configured.configured) {
     return [{
       category: "Backup",
@@ -342,7 +342,7 @@ async function runChecks(): Promise<CheckResult[]> {
     const serviceCheck = checkSystemdService();
     const [timerCheck, rcloneChecks] = await Promise.all([
       checkSystemdTimer(),
-      checkRclone(backupConfig.RCLONE_REMOTE),
+      checkRclone(backupConfig.RCLONE_REMOTE, envConfig),
     ]);
     results.push(backupDirCheck, serviceCheck, timerCheck, ...rcloneChecks);
   }

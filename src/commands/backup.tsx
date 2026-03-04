@@ -25,7 +25,7 @@ import { createBackupLogger, Logger } from "@/lib/logger.js";
 import { Header } from "@/components/Header.js";
 import { AppStatus } from "@/components/AppStatus.js";
 import { ProgressBar } from "@/components/ProgressBar.js";
-import type { AppDefinition, BackupConfig } from "@/types.js";
+import type { AppDefinition, BackupConfig, EnvConfig } from "@/types.js";
 import { existsSync } from "fs";
 
 // ─── Shared helpers ──────────────────────────────────────────────────────────
@@ -148,7 +148,8 @@ async function runHeadlessBackup(appFilter?: string): Promise<void> {
   await logger.info("=== Starting backup process ===");
 
   try {
-    const config = getBackupConfig(await loadEnvConfig());
+    const env = await loadEnvConfig();
+    const config = getBackupConfig(env);
     const projectRoot = getProjectRoot();
     const today = new Date().toISOString().slice(0, 10);
     const archiveDir = `${config.BACKUP_DIR}/archive/${today}`;
@@ -235,7 +236,7 @@ async function runHeadlessBackup(appFilter?: string): Promise<void> {
 
     // Upload to remote
     if (await isRcloneInstalled()) {
-      const remoteCheck = await isRcloneRemoteConfigured(config.RCLONE_REMOTE);
+      const remoteCheck = await isRcloneRemoteConfigured(config.RCLONE_REMOTE, env);
       if (remoteCheck.configured) {
         try {
           await logger.info(
@@ -327,7 +328,8 @@ function BackupInteractive({ appFilter }: { appFilter?: string }) {
 
   async function runInteractiveBackup() {
     try {
-      const config = getBackupConfig(await loadEnvConfig());
+      const env = await loadEnvConfig();
+      const config = getBackupConfig(env);
       const projectRoot = getProjectRoot();
       const today = new Date().toISOString().slice(0, 10);
       const archiveDir = `${config.BACKUP_DIR}/archive/${today}`;
@@ -442,7 +444,7 @@ function BackupInteractive({ appFilter }: { appFilter?: string }) {
 
       // Upload + rotate remote
       if (await isRcloneInstalled()) {
-        const remoteCheck = await isRcloneRemoteConfigured(config.RCLONE_REMOTE);
+        const remoteCheck = await isRcloneRemoteConfigured(config.RCLONE_REMOTE, env);
         if (remoteCheck.configured) {
           // Upload
           setCurrentLabel(
@@ -643,6 +645,7 @@ async function deleteLocalBackups(
 async function deleteRemoteBackups(
   rcloneRemote: string,
   date?: string,
+  env?: EnvConfig,
 ): Promise<{ deleted: string[]; errors: string[] }> {
   const deleted: string[] = [];
   const errors: string[] = [];
@@ -652,7 +655,7 @@ async function deleteRemoteBackups(
     return { deleted, errors };
   }
 
-  const remoteCheck = await isRcloneRemoteConfigured(rcloneRemote);
+  const remoteCheck = await isRcloneRemoteConfigured(rcloneRemote, env);
   if (!remoteCheck.configured) {
     errors.push(`rclone remote '${rcloneRemote}' not configured: ${remoteCheck.reason}`);
     return { deleted, errors };
@@ -714,12 +717,13 @@ function BackupDelete({
 
   async function performDelete() {
     try {
-      const config = getBackupConfig(await loadEnvConfig());
+      const env = await loadEnvConfig();
+      const config = getBackupConfig(env);
       let result: { deleted: string[]; errors: string[] };
       if (target === "local") {
         result = await deleteLocalBackups(config.BACKUP_DIR, date);
       } else {
-        result = await deleteRemoteBackups(config.RCLONE_REMOTE, date);
+        result = await deleteRemoteBackups(config.RCLONE_REMOTE, date, env);
       }
       setResults(result);
       setPhase("done");
@@ -845,7 +849,8 @@ export async function runBackupList(args: string[]): Promise<void> {
     process.exit(1);
   }
 
-  const config = getBackupConfig(await loadEnvConfig());
+  const env = await loadEnvConfig();
+  const config = getBackupConfig(env);
   const showLocal = !filter || filter === "local";
   const showRemote = !filter || filter === "remote";
 
@@ -874,7 +879,7 @@ export async function runBackupList(args: string[]): Promise<void> {
       return;
     }
 
-    const remoteCheck = await isRcloneRemoteConfigured(config.RCLONE_REMOTE);
+    const remoteCheck = await isRcloneRemoteConfigured(config.RCLONE_REMOTE, env);
     if (!remoteCheck.configured) {
       console.log(`  rclone remote '${config.RCLONE_REMOTE}' not configured.\n`);
       return;
@@ -1082,7 +1087,8 @@ function BackupVerify({
 
   async function runVerify() {
     try {
-      const config = getBackupConfig(await loadEnvConfig());
+      const env = await loadEnvConfig();
+      const config = getBackupConfig(env);
       let resolvedDate = date;
       let archiveDir: string;
       let tmpDir: string | undefined;
@@ -1093,7 +1099,7 @@ function BackupVerify({
           setError("rclone is not installed");
           return;
         }
-        const remoteCheck = await isRcloneRemoteConfigured(config.RCLONE_REMOTE);
+        const remoteCheck = await isRcloneRemoteConfigured(config.RCLONE_REMOTE, env);
         if (!remoteCheck.configured) {
           setError(`rclone remote '${config.RCLONE_REMOTE}' not configured: ${remoteCheck.reason}`);
           return;
@@ -1275,7 +1281,8 @@ async function runHeadlessVerify(
   remote?: boolean,
   doExtract?: boolean,
 ): Promise<void> {
-  const config = getBackupConfig(await loadEnvConfig());
+  const env = await loadEnvConfig();
+  const config = getBackupConfig(env);
   let resolvedDate = date;
   let archiveDir: string;
   let tmpDir: string | undefined;
@@ -1285,7 +1292,7 @@ async function runHeadlessVerify(
       console.error("Error: rclone is not installed");
       process.exit(1);
     }
-    const remoteCheck = await isRcloneRemoteConfigured(config.RCLONE_REMOTE);
+    const remoteCheck = await isRcloneRemoteConfigured(config.RCLONE_REMOTE, env);
     if (!remoteCheck.configured) {
       console.error(
         `Error: rclone remote '${config.RCLONE_REMOTE}' not configured: ${remoteCheck.reason}`,
