@@ -326,10 +326,12 @@ Checks configuration correctness across three categories: System (.env file, Doc
 | Caddy | — | HTTPS reverse proxy with automatic certificates (hidden, installed via `install https`) |
 | Pi-hole | 80 | Network-wide ad blocker and DNS server |
 | Excalidraw | 5000 | Virtual whiteboard for sketching |
+| Omni Tools | 8079 | Collection of useful productivity tools |
 | Open WebUI | 3000 | Self-hosted AI chat interface |
 | Vaultwarden | 8222 | Lightweight Bitwarden-compatible password manager (requires HTTPS) |
 
 ## TODO
 
+- [ ] check in prowlarr torznab (U2P / utopeer)
 - [ ] Add a \[CERTIFICATE_EXPIRATION\] > 72h check for each app during the Gatus setup to warn the user if their certificate is about to expire. Caddy is handling the certificate renewal automatically.
 - [ ] Check if Profilarr is a good solution for quality profiles

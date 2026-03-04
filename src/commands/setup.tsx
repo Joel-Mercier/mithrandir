@@ -90,8 +90,8 @@ const APP_CATEGORIES = [
   {
     label: "Productivity",
     value: "productivity",
-    description: "Excalidraw, Open WebUI, Vaultwarden",
-    apps: ["excalidraw", "openwebui", "vaultwarden"],
+    description: "Excalidraw, Omni Tools, Open WebUI, Vaultwarden",
+    apps: ["excalidraw", "omnitools", "openwebui", "vaultwarden"],
   },
   {
     label: "Security",

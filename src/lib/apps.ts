@@ -333,6 +333,16 @@ export const APP_REGISTRY: AppDefinition[] = [
     },
   },
   {
+    name: "omnitools",
+    displayName: "Omni Tools",
+    description: "Collection of useful productivity tools",
+    image: "iib0011/omni-tools:latest",
+    port: 8079,
+    containerPort: 80,
+    configSubdir: "config",
+    needsDataDir: false,
+  },
+  {
     name: "vaultwarden",
     displayName: "Vaultwarden",
     description: "Lightweight Bitwarden-compatible password manager",
