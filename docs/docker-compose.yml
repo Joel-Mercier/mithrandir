@@ -1,0 +1,7 @@
+services:
+  mithrandir-docs:
+    build: .
+    container_name: mithrandir-docs
+    ports:
+      - "4173:80"
+    restart: unless-stopped

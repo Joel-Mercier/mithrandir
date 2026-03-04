@@ -3,7 +3,7 @@ import { getAppNames } from "@/lib/apps.js";
 const SUBCOMMANDS = [
   "setup", "backup", "restore", "recover", "start", "stop", "restart",
   "install", "reinstall", "uninstall", "status", "health", "doctor",
-  "update", "log", "self-update", "config", "version", "completions",
+  "update", "log", "self-update", "config", "version", "completions", "docs",
 ];
 
 const APP_COMMANDS = [
@@ -57,6 +57,9 @@ _mithrandir() {
     completions)
       COMPREPLY=( $(compgen -W "bash zsh fish" -- "$cur") )
       ;;
+    docs)
+      COMPREPLY=( $(compgen -W "stop" -- "$cur") )
+      ;;
   esac
 }
 complete -F _mithrandir mithrandir
@@ -105,6 +108,9 @@ _mithrandir() {
           ;;
         completions)
           compadd -- bash zsh fish
+          ;;
+        docs)
+          compadd -- stop
           ;;
       esac
       ;;
@@ -173,6 +179,9 @@ function generateFish(): string {
 
   lines.push("", "# Completions shell argument");
   lines.push(`complete -c mithrandir -n '__fish_seen_subcommand_from completions' -a 'bash zsh fish'`);
+
+  lines.push("", "# Docs subcommands");
+  lines.push(`complete -c mithrandir -n '__fish_seen_subcommand_from docs' -a 'stop'`);
 
   lines.push("", "# Flags");
   lines.push(`complete -c mithrandir -l yes -s y -d 'Skip confirmation prompts'`);

@@ -1,6 +1,7 @@
 import { existsSync } from "fs";
 import { APP_REGISTRY, getComposePath } from "@/lib/apps.js";
 import { PIHOLE_HTTPS_PORT } from "@/lib/compose.js";
+import { isContainerRunning } from "@/lib/docker.js";
 import { shell } from "@/lib/shell.js";
 import type { AppDefinition, EnvConfig } from "@/types.js";
 
@@ -23,6 +24,7 @@ export function getDuckDnsDomain(envConfig: EnvConfig): string | null {
 export function generateCaddyfile(
   installedApps: AppDefinition[],
   envConfig: EnvConfig,
+  options?: { includeDocs?: boolean },
 ): string {
   const domain = getDuckDnsDomain(envConfig);
   if (!domain) throw new Error("DUCKDNS_SUBDOMAINS is not set — cannot generate Caddyfile");
@@ -56,6 +58,15 @@ export function generateCaddyfile(
     lines.push(`    @${app.name} host ${app.name}.${domain}`);
     lines.push(`    handle @${app.name} {`);
     lines.push(`        reverse_proxy localhost:${proxyPort}`);
+    lines.push("    }");
+  }
+
+  // Docs site (not in app registry, managed separately)
+  if (options?.includeDocs) {
+    lines.push("");
+    lines.push(`    @mithrandir-docs host mithrandir-docs.${domain}`);
+    lines.push("    handle @mithrandir-docs {");
+    lines.push("        reverse_proxy localhost:4173");
     lines.push("    }");
   }
 
@@ -106,7 +117,8 @@ export async function regenerateCaddyfile(
 
   const baseDir = envConfig.BASE_DIR;
   const installedApps = detectInstalledApps(baseDir);
-  const caddyfile = generateCaddyfile(installedApps, envConfig);
+  const includeDocs = await isContainerRunning("mithrandir-docs");
+  const caddyfile = generateCaddyfile(installedApps, envConfig, { includeDocs });
 
   const caddyfilePath = `${baseDir}/caddy/Caddyfile`;
   await shell("bash", ["-c", `cat > "${caddyfilePath}" << 'CADDYFILE_EOF'\n${caddyfile}CADDYFILE_EOF`], {

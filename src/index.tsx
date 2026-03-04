@@ -20,6 +20,7 @@ import { runVersion } from "@/commands/version.js";
 import { runConfig } from "@/commands/config.js";
 import { runCompletions } from "@/commands/completions.js";
 import { runRecover } from "@/commands/recover.js";
+import { runDocs, runDocsStop } from "@/commands/docs.js";
 import { ErrorBoundary } from "@/components/ErrorBoundary.js";
 import { checkForUpdate } from "@/lib/update-check.js";
 
@@ -45,6 +46,8 @@ const cli = meow(
     install https                      Install Caddy HTTPS reverse proxy
     reinstall <app>                    Reinstall an app (stop, remove, recreate)
     uninstall [app]                    Uninstall an app, or full system uninstall
+    docs                               Build and serve docs website
+    docs stop                          Stop docs website
     status                             Show installed apps and system status
     health                             Check system health (Docker, disk, backups)
     doctor                             Diagnose setup issues with fix suggestions
@@ -226,6 +229,14 @@ switch (command) {
 
   case "completions":
     runCompletions(cli.input.slice(1));
+    break;
+
+  case "docs":
+    if (cli.input[1] === "stop") {
+      runDocsStop();
+    } else {
+      runDocs();
+    }
     break;
 
   default:

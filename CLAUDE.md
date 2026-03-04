@@ -37,6 +37,9 @@ sudo mithrandir self-update                # Update CLI from git and rebuild
 mithrandir version                         # Show version and git commit hash
 mithrandir config                          # Show current .env settings
 mithrandir completions <bash|zsh|fish>     # Generate shell completion script
+sudo mithrandir docs                    # Build and serve docs website
+sudo mithrandir docs stop               # Stop docs website
+bun run docs:dev                        # Local VitePress dev server (hot reload)
 bun run typecheck              # TypeScript type checking (tsc --noEmit)
 bun run src/index.tsx --help         # Dev mode (unbundled)
 ```
@@ -55,6 +58,9 @@ When `ENABLE_HTTPS=true`, compose generation filters port 443 from Pi-hole's ext
 
 ### HTTPS / Caddy (`src/lib/caddy.ts`)
 `mithrandir install https` sets up Caddy as a wildcard HTTPS reverse proxy using DuckDNS DNS-01 challenge. Caddy is a hidden app in the registry (not shown in setup app-select) with a `rawCompose` generator. Domain is derived from `DUCKDNS_SUBDOMAINS` via `getDuckDnsDomain()` — no separate `PRIMARY_DOMAIN` env var. `generateCaddyfile()` creates reverse proxy blocks for all installed apps with ports. `regenerateCaddyfile()` is called after app install/uninstall to keep the Caddyfile in sync. The Caddy Docker image is built locally with `xcaddy` + `caddy-dns/duckdns` module. Requires DuckDNS app to be installed and running. Users must configure wildcard DNS on their router (`*.domain.duckdns.org → LAN IP`).
+
+### Documentation Site (`docs/`)
+VitePress static site in `docs/` folder, served via Docker (nginx). `mithrandir docs` builds the Docker image and starts the container on port 4173. `mithrandir docs stop` stops it. When Caddy HTTPS is enabled, `regenerateCaddyfile()` automatically adds/removes a `mithrandir-docs` reverse proxy entry. The docs container is not part of the app registry — it's managed separately.
 
 ### TTY / Non-TTY Branching (Backup)
 The backup command runs from systemd timer (non-TTY) daily. `commands/backup.tsx` checks `process.stdout.isTTY` — TTY renders Ink components with spinners and progress, non-TTY writes timestamped plaintext to stdout + `/var/log/homelab-backup.log`. Both paths call the same `lib/` functions.

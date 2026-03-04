@@ -286,6 +286,13 @@ eval "$(mithrandir completions zsh)"                   # Zsh (add to ~/.zshrc)
 mithrandir completions fish | source                   # Fish (add to config.fish)
 ```
 
+**Documentation site:**
+```bash
+sudo mithrandir docs              # Build and serve docs website
+sudo mithrandir docs stop         # Stop docs website
+bun run docs:dev                  # Local dev server (hot reload)
+```
+
 **Status check:**
 ```bash
 sudo mithrandir status
@@ -310,7 +317,7 @@ Checks configuration correctness across three categories: System (.env file, Doc
 |-----|------|-------------|
 | Home Assistant | 8123 | Open-source home automation platform |
 | qBittorrent | 8080 | BitTorrent client with web UI |
-| Prowlarr | 9696 | Indexer manager for the *Arr stack |
+| Prowlarr | 9696 | Indexer manager for the *Arr stack (also installs Flaresolverr) |
 | Radarr | 7878 | Movie collection manager |
 | Sonarr | 8989 | TV series collection manager |
 | Bazarr | 6767 | Subtitle manager for Sonarr and Radarr |

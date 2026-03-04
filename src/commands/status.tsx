@@ -12,7 +12,7 @@ import {
   getComposePath,
   getAppDir,
 } from "@/lib/apps.js";
-import { isDockerInstalled } from "@/lib/docker.js";
+import { isDockerInstalled, isContainerRunning } from "@/lib/docker.js";
 import { shell } from "@/lib/shell.js";
 import { isTimerActive, hasSystemd } from "@/lib/systemd.js";
 import { getLocalIp } from "@/lib/distro.js";
@@ -35,6 +35,8 @@ interface SystemInfo {
   dockerRunning: boolean;
   timerActive: boolean | null; // null = no systemd
   timerNext: string | null;
+  docsRunning: boolean;
+  docsUrl: string | null;
   apps: AppInfo[];
 }
 
@@ -155,6 +157,15 @@ async function gatherSystemInfo(): Promise<SystemInfo> {
   const httpsEnabled = envConfig.ENABLE_HTTPS === "true";
   const primaryDomain = httpsEnabled ? getDuckDnsDomain(envConfig) : null;
 
+  // Check docs container
+  const docsRunning = dockerRunning ? await isContainerRunning("mithrandir-docs") : false;
+  let docsUrl: string | null = null;
+  if (docsRunning) {
+    docsUrl = httpsEnabled && primaryDomain
+      ? `https://mithrandir-docs.${primaryDomain}`
+      : `http://${localIp}:4173`;
+  }
+
   // Gather per-app info in parallel
   const apps = await Promise.all(
     installedApps.map(async (app): Promise<AppInfo> => {
@@ -175,7 +186,7 @@ async function gatherSystemInfo(): Promise<SystemInfo> {
     }),
   );
 
-  return { dockerRunning, timerActive, timerNext, apps };
+  return { dockerRunning, timerActive, timerNext, docsRunning, docsUrl, apps };
 }
 
 // ─── Table helpers ───────────────────────────────────────────────────────────
@@ -281,6 +292,14 @@ function StatusCommand() {
             )}
           </Text>
         )}
+        <Text>
+          {"  Docs Site       "}
+          {info.docsRunning ? (
+            <Text color="green">● Running</Text>
+          ) : (
+            <Text dimColor>● Not running</Text>
+          )}
+        </Text>
       </Box>
 
       <Divider title="Services" titleColor="yellow" dividerColor="gray" />
@@ -304,6 +323,18 @@ function StatusCommand() {
                   </Link>
                 </Text>
               ))}
+            {info.docsRunning && info.docsUrl ? (
+              <Text>
+                {"    "}{"Docs".padEnd(18)}
+                <Link url={info.docsUrl}>
+                  <Text color="cyan">{info.docsUrl}</Text>
+                </Link>
+              </Text>
+            ) : (
+              <Text dimColor>
+                {"    "}Run 'mithrandir docs' to browse the documentation
+              </Text>
+            )}
           </Box>
         </Box>
       )}
@@ -338,6 +369,12 @@ async function runHeadlessStatus(): Promise<void> {
       ? `Active${info.timerNext ? ` — Next: ${info.timerNext}` : ""}`
       : "Inactive";
     console.log(`Backup Timer: ${timerStr}`);
+  }
+  console.log(`Docs Site: ${info.docsRunning ? "Running" : "Not running"}`);
+  if (info.docsRunning && info.docsUrl) {
+    console.log(`Docs URL: ${info.docsUrl}`);
+  } else {
+    console.log(`Docs: Run 'mithrandir docs' to browse the documentation`);
   }
   console.log("");
 

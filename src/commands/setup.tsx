@@ -864,6 +864,10 @@ export function SetupCommand({ flags }: SetupCommandProps) {
           </Box>
         )}
         <Box flexDirection="column" marginBottom={1}>
+          <Text bold>Documentation:</Text>
+          <Text>  Run `mithrandir docs` to build and serve the documentation website.</Text>
+        </Box>
+        <Box flexDirection="column" marginBottom={1}>
           <Text bold>Remote backups note:</Text>
           <Text>  To configure rclone for Google Drive, run: rclone config,</Text>
           <Text>  This will set up the remote connection to your Google Drive.</Text>
