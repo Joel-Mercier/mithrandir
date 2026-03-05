@@ -50,7 +50,7 @@ bun run src/index.tsx --help         # Dev mode (unbundled)
 Single source of truth for all services. Each `AppDefinition` encodes everything needed across all commands: Docker image, ports, config paths, volume mounts, secrets, capabilities. This replaces the duplicated `get_app_config()` case statements in backup.sh/restore.sh and per-app compose blocks in setup.sh. **Any new service must be added here.**
 
 ### Compose Generation (`src/lib/compose.ts`)
-Generates docker-compose.yml deterministically from an `AppDefinition` + `EnvConfig`. Handles special cases: host networking (Home Assistant, DuckDNS), multiple config dirs (Homarr), non-standard container paths (Seerr → `/app/config`, Uptime Kuma → `/app/data`), capabilities/sysctls (WireGuard), healthchecks (Seerr).
+Generates docker-compose.yml deterministically from an `AppDefinition` + `EnvConfig`. Handles special cases: host networking (Home Assistant, DuckDNS), multiple config dirs (Homarr), non-standard container paths (Seerr → `/app/config`), capabilities/sysctls (WireGuard), healthchecks (Seerr).
 
 Secret env var names are mapped between .env and compose: `DUCKDNS_SUBDOMAINS` → `SUBDOMAINS`, `DUCKDNS_TOKEN` → `TOKEN`, `WG_SERVERURL` → `SERVERURL`, `WG_PEERS` → `PEERS`.
 
@@ -86,6 +86,9 @@ These allow programmatic access to the APIs of the above services.
 ## Configuration
 
 - **.env** — All configuration lives here. Core settings: `BASE_DIR`, `PUID`/`PGID`, `TZ`. Per-app secrets: DuckDNS, WireGuard, Spotify. Backup settings: `BACKUP_DIR` (default `/backups`), `LOCAL_RETENTION` (5), `REMOTE_RETENTION` (10), `RCLONE_REMOTE` (gdrive), `APPS` (auto or comma-separated). HTTPS settings: `ENABLE_HTTPS`, `ACME_EMAIL`. Not in git.
+
+### Changelog (`docs/changelog.md`)
+Auto-generated from git commits via `scripts/generate-changelog.sh`. The nav bar version dropdown links to this page. **Run `./scripts/generate-changelog.sh` before every commit** to keep the changelog in sync. The script categorizes commits by message prefix (add/fix/update/etc.) and groups them under the current version from `package.json`. Also update the version in the nav dropdown in `docs/.vitepress/config.ts` when bumping the version in `package.json`.
 
 ## Key Constraints
 

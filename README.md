@@ -339,6 +339,9 @@ Checks configuration correctness across three categories: System (.env file, Doc
 
 ## TODO
 
+- [ ] Apparently, bun supports compiling a single file executable directly to bun-linux-arm64 or bun-linux-x64. Here is the official documentation: https://bun.com/docs/bundler/executables.
+Check if compiling this project this way is possible and if it's worth it. Make sure to update the @install.sh script and how self-update works if this change is made.
+- [ ] The config commands doesn't hide the PIHOLE_PASSWORD correctly like it does for other similar variables
 - [ ] check in prowlarr torznab (U2P / utopeer)
 - [ ] Add a \[CERTIFICATE_EXPIRATION\] > 72h check for each app during the Gatus setup to warn the user if their certificate is about to expire. Caddy is handling the certificate renewal automatically.
 - [ ] Check if Profilarr is a good solution for quality profiles
