@@ -840,7 +840,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
             <Text bold>WireGuard note:</Text>
             <Text>  Official mobile apps are available for Android and iOS.</Text>
             <Text>  To display the QR code for peer1, run:</Text>
-            <Text dimColor>  sudo docker exec wireguard /bin/bash -c 'qrencode -t ansiutf8 {"<"} /config/peer1/peer1.conf'</Text>
+            <Text dimColor>  sudo docker exec wireguard /app/show-peer 1</Text>
           </Box>
         )}
         {hasApp("jellyfin") && (

@@ -38,3 +38,9 @@ Pi-hole requires HTTPS to be setup and enabled in order to function. You must ha
 
 - Add your password to the PIHOLE_PASSWORD environment variable in your `.env` file.
 - Login to the Pi-hole web interface at https://pi-hole.yourdomain.duckdns.org
+- Go to **Settings → DNS** and add define a primary and secandary DNS server (Cloudflare DNS is recommended) since it doens't log any queries.
+- To add blocklists, go to **Lists** and add the lists you want to block. We recommand using the lists that are actively maintained (green) listed on this [website](https://firebog.net/). You can use the first few of every category to get started.
+> [!IMPORTANT]
+> You need to go to **Tools → Update Gravity** and click on **Update** to update the lists and have them take effect.
+
+- In **Settings → DHCP** you can also setup Pi-hole to handle DHCP instead of using your router's DHCP server if you wish.

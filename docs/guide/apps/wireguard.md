@@ -37,11 +37,13 @@ After installation, peer config files are generated at:
 
 Scan the QR code or copy the `.conf` file to your WireGuard client (available on iOS, Android, Windows, macOS, Linux).
 
-To display the QR code, run
+To display the QR code in the terminal, run
 
 ```sh
-sudo docker exec wireguard /bin/bash -c 'qrencode -t ansiutf8 {"<"} /config/peer1/peer1.conf'
+sudo docker exec wireguard /app/show-peer 1
 ```
+
+Replace `1` with the peer number you want to display (e.g., `2` for peer2).
 
 ## Notes
 
@@ -50,6 +52,7 @@ WireGuard requires the `NET_ADMIN` and `SYS_MODULE` Linux capabilities and mount
 ## Setup
 
 - Add your duckdns domain to the WG_SERVERURL environment variable in your `.env` file.
+- You need to add port forwarding to your router for wireguard to work. The internal port is `51820` and the external port is `51820` as well using the UDP protocol.
 - Download the WireGuard client app for your platform and scan the QR code to connect to your WireGuard server. Then when you want to access your homelab from another network, open the WireGuard app and tap the "connect" button.
 
 ## Clients
