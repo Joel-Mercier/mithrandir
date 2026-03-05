@@ -37,6 +37,7 @@ All configuration lives in a single `.env` file at the project root.
 - `WG_PEERS`: Number of WireGuard peers (default: `1`)
 - `ND_SPOTIFY_ID`, `ND_SPOTIFY_SECRET`: Optional for Navidrome artist images
 - `PIHOLE_PASSWORD`: Optional web interface password for Pi-hole
+- `GATUS_DISCORD_WEBHOOK_URL`: Optional Discord webhook URL for Gatus alerts
 
 ### Rclone configuration
 You can setup remote backups by running `rclone config` in the terminal after running the setup wizard. This will set up the remote connection to your Google Drive. Make sure the remote name matches the `RCLONE_REMOTE` setting in `.env`. If you run a desktopless linux server, you'll need to execute a rclone command on another device with a browser to complete the remote setup. The documentation to setup a Google Drive remote with rclone is [here](https://rclone.org/drive/#making-your-own-client-id).
@@ -339,9 +340,7 @@ Checks configuration correctness across three categories: System (.env file, Doc
 
 ## TODO
 
-- [ ] Apparently, bun supports compiling a single file executable directly to bun-linux-arm64 or bun-linux-x64. Here is the official documentation: https://bun.com/docs/bundler/executables.
-Check if compiling this project this way is possible and if it's worth it. Make sure to update the @install.sh script and how self-update works if this change is made.
-- [ ] The config commands doesn't hide the PIHOLE_PASSWORD correctly like it does for other similar variables
+- [ ] Write the full docs
 - [ ] check in prowlarr torznab (U2P / utopeer)
 - [ ] Add a \[CERTIFICATE_EXPIRATION\] > 72h check for each app during the Gatus setup to warn the user if their certificate is about to expire. Caddy is handling the certificate renewal automatically.
 - [ ] Check if Profilarr is a good solution for quality profiles

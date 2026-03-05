@@ -7,6 +7,8 @@ Modern music server and streamer — compatible with Subsonic clients (DSub, Sym
 | **Image** | `deluan/navidrome:latest` |
 | **Web UI** | `http://your-server:4533` |
 | **Config path** | `{BASE_DIR}/navidrome/data` |
+| **Website** | [navidrome.org](https://navidrome.org/) |
+| **Source code** | [GitHub](https://github.com/navidrome/navidrome) |
 
 ## Installation
 

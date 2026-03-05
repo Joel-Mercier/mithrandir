@@ -7,6 +7,7 @@ Lightweight Bitwarden-compatible password manager — use the official Bitwarden
 | **Image** | `vaultwarden/server:latest` |
 | **Web UI** | `https://vaultwarden.yourdomain.duckdns.org` |
 | **Config path** | `{BASE_DIR}/vaultwarden/data` |
+| **Source code** | [GitHub](https://github.com/dani-garcia/vaultwarden) |
 
 ## Installation
 
@@ -28,4 +29,5 @@ Vaultwarden automatically installs these if not already present:
 
 ## Setup
 
-<!-- TODO: Add setup instructions with screenshots -->
+- Follow the onboarding wizard and create a vaultwarden admin account.
+- Vaultwarden uses the Bitwarden browser extension to store and use your passwords on login forms. To connect the bitwarden extension to vaultwarden, select "self-hosted" in the extension login screen under the form.

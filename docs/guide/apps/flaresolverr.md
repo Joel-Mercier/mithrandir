@@ -7,6 +7,7 @@ Proxy server to bypass Cloudflare protection — used by Prowlarr to access Clou
 | **Image** | `ghcr.io/flaresolverr/flaresolverr:latest` |
 | **Port** | 8191 |
 | **Config path** | `{BASE_DIR}/flaresolverr/config` |
+| **Source code** | [GitHub](https://github.com/flaresolverr/flaresolverr) |
 
 ## Installation
 

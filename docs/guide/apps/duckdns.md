@@ -8,6 +8,8 @@ Free dynamic DNS service — keeps a domain name pointed at your home IP address
 | **Web UI** | None (background service) |
 | **Config path** | `{BASE_DIR}/duckdns/config` |
 | **Network** | Host mode |
+| **Website** | [duckdns.org](https://www.duckdns.org) |
+| **Source code** | [GitHub](https://github.com/linuxserver/docker-duckdns) |
 
 ## Installation
 
@@ -33,4 +35,4 @@ Get your subdomain and token at [duckdns.org](https://www.duckdns.org).
 
 ## Setup
 
-<!-- TODO: Add setup instructions with screenshots -->
+Go to the DuckDNS website, login using one of the provided methods, and add a subdomain. Current IP should be your public IP address. Then make sure to save your token and the subdomain in your `.env` file.

@@ -23,6 +23,12 @@ The backup directory structure looks like:
 
 The `secrets.tar.gz` archive contains your `.env` file and rclone configuration, so a full restore can recover everything including credentials.
 
+## What Gets Backed Up
+
+Backups include **app configuration and metadata only** — things like settings, databases, API keys, and library indexes. Your actual media files (movies, TV shows, music, photos) are **not** included in backups since they are typically large and already exist on your NAS or external drives.
+
+If you need to recover on a new machine, re-point your apps at the same media storage and the restored configuration will pick everything up where it left off.
+
 ## Automatic Backups
 
 The setup wizard installs a systemd timer that runs backups daily at 2:00 AM. You can check the timer status with:

@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented here. This page is auto-generated from git commits.
 
-## v1.0.0 (2026-03-04)
+## v1.0.0 (2026-03-05)
 
 ### Added
 
@@ -55,6 +55,12 @@ All notable changes to this project are documented here. This page is auto-gener
 - add Vaultwarden app with HTTPS prerequisite enforcement (`2c8607d`)
 - add Omni Tools to app registry and setup wizard (`122f5a5`)
 - add VitePress documentation website with Docker serving (`08485ed`)
+- add VitePress documentation site with changelog and docs command (`888877c`)
+- add Gatus Discord webhook URL environment variable for alerts
+- add MIT license
+- add docs homepage hero and features section
+- add "What Gets Backed Up" section to backup documentation
+- add detailed configuration guides and tips to all app documentation pages
 
 ### Fixed
 
@@ -102,6 +108,7 @@ All notable changes to this project are documented here. This page is auto-gener
 - fix rclone config ownership after OAuth token refresh under sudo (`c561a4b`)
 - fix health check using wrong rclone config under sudo (`c61574d`)
 - fix swap not persisting across reboots on Raspberry Pi OS (`06814cc`)
+- fix config command not masking password env vars (`93dec7f`)
 
 ### Changed
 

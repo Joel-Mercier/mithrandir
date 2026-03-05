@@ -7,6 +7,8 @@ Customizable server dashboard — a beautiful home page for all your self-hosted
 | **Image** | `ghcr.io/ajnart/homarr:latest` |
 | **Web UI** | `http://your-server:7575` |
 | **Config paths** | `{BASE_DIR}/homarr/configs`, `{BASE_DIR}/homarr/icons`, `{BASE_DIR}/homarr/data` |
+| **Website** | [homarr.vercel.app](https://homarr.vercel.app/) |
+| **Source code** | [GitHub](https://github.com/ajnart/homarr) |
 
 ## Installation
 
@@ -21,4 +23,4 @@ sudo mithrandir install homarr
 
 ## Setup
 
-<!-- TODO: Add setup instructions with screenshots -->
+Follow the onboarding wizard and create a dashboard.

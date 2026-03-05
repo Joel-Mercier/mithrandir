@@ -8,6 +8,8 @@ BitTorrent client with a web UI — used as the download client for Sonarr, Rada
 | **Web UI** | `http://your-server:8080` |
 | **Config path** | `{BASE_DIR}/qbittorrent/config` |
 | **Data** | `{BASE_DIR}/data` (downloads and media) |
+| **Website** | [qbittorrent.org](https://www.qbittorrent.org/) |
+| **Source code** | [GitHub](https://github.com/qbittorrent/qBittorrent) |
 
 ## Installation
 
@@ -22,6 +24,15 @@ sudo mithrandir install qbittorrent
 | 8080 | TCP | Web UI |
 | 6881 | TCP/UDP | BitTorrent traffic |
 
+## Auto-Configuration
+
+When installed via the setup wizard, qBittorrent is automatically configured with automatic torrent handling, downloads root path and adds authentication to the webUI.
+
 ## Setup
 
-<!-- TODO: Add setup instructions with screenshots -->
+- Go to the qBittorrent webUI settings (cog icon).
+- In the "Downloads" section, check "Delete .torrent files afterwards", set "Default Torrent Managing mode" to "Automatic", and set the "Default Save Path" to /data/downloads.
+- In the "Web UI" section, change the default username and password.
+
+An additional guide for qBittorrent is available [here (Trash Guides)](https://trash-guides.info/Downloaders/qBittorrent/Basic-Setup/) and here [here (Yams)](https://yams.media/config/qbittorrent/).
+

@@ -8,6 +8,10 @@ Self-hosted photo and video management — a Google Photos alternative with AI-p
 | **Web UI** | `http://your-server:2283` |
 | **Config path** | `{BASE_DIR}/immich/postgres` |
 | **Data** | `{BASE_DIR}/data/media/pictures` |
+| **Website** | [immich.app](https://immich.app/) |
+| **Source code** | [GitHub](https://github.com/immich-app/immich) |
+| **Android app** | [Play Store](https://play.google.com/store/apps/details?id=app.alextran.immich) |
+| **iOS app** | [App Store](https://apps.apple.com/us/app/immich/id1613945652) |
 
 ## Installation
 
@@ -32,4 +36,4 @@ Immich is a multi-container app consisting of:
 
 ## Setup
 
-<!-- TODO: Add setup instructions with screenshots -->
+Complete the onboarding wizard and setup your photos & videos.

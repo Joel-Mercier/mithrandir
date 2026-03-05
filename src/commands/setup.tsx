@@ -1638,7 +1638,7 @@ function AutoSetupAppsStep({ selectedApps, envConfig, localIp, autoYes, onComple
 
         // ── Gatus ──────────────────────────────────────────────────
         if (app.name === "gatus") {
-          const discordWebhook = await promptUser("discord-webhook", "");
+          const discordWebhook = envConfig.GATUS_DISCORD_WEBHOOK_URL || await promptUser("discord-webhook", "");
 
           // Hash password: bcrypt (cost 9), then base64-encode
           const bcryptHash = await Bun.password.hash(defaultPassword, { algorithm: "bcrypt", cost: 9 });

@@ -5,13 +5,20 @@ export default defineConfig({
   description: "Automated Docker-based homelab setup, backup, and restore",
   lastUpdated: true,
   themeConfig: {
+    footer: {
+      message: 'Released under the MIT License.',
+      copyright: 'Copyright © 2026-present Joel Mercier'
+    },
     nav: [
       { text: "Home", link: "/" },
       { text: "Guide", link: "/guide/" },
       { text: "Reference", link: "/reference/" },
       {
         text: "v1.0.0",
-        items: [{ text: "Changelog", link: "/changelog" }],
+        items: [
+          { text: "Changelog", link: "/changelog" },
+          { text: "Open an issue", link: "https://github.com/Joel-Mercier/mithrandir/issues/new" },
+        ],
       },
     ],
     search: {
@@ -162,7 +169,7 @@ export default defineConfig({
       },
     ],
     socialLinks: [
-      { icon: "github", link: "https://github.com" },
+      { icon: "github", link: "https://github.com/Joel-Mercier/mithrandir" },
     ],
   },
 });

@@ -8,6 +8,8 @@ Open-source home automation platform — control and automate your smart home de
 | **Web UI** | `http://your-server:8123` |
 | **Config path** | `{BASE_DIR}/homeassistant/data` |
 | **Network** | Host mode |
+| **Website** | [home-assistant.io](https://www.home-assistant.io/) |
+| **Source code** | [GitHub](https://github.com/home-assistant/core) |
 
 ## Installation
 
@@ -21,4 +23,4 @@ Home Assistant runs in **host networking mode** (not bridged) to allow discovery
 
 ## Setup
 
-<!-- TODO: Add setup instructions with screenshots -->
+Complete the onboarding wizard and setup your smart home & equipments.

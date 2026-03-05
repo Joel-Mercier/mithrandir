@@ -8,6 +8,8 @@ Music collection manager — automatically searches for and downloads music albu
 | **Web UI** | `http://your-server:8686` |
 | **Config path** | `{BASE_DIR}/lidarr/config` |
 | **Data** | `{BASE_DIR}/data` |
+| **Website** | [lidarr.audio](https://lidarr.audio/) |
+| **Source code** | [GitHub](https://github.com/Lidarr/Lidarr) |
 
 ## Installation
 
@@ -15,6 +17,14 @@ Music collection manager — automatically searches for and downloads music albu
 sudo mithrandir install lidarr
 ```
 
+## Auto-Configuration
+
+When installed via the setup wizard, Lidarr is automatically configured with the provided username and password. It also registers qBittorrent as a download client and sets the root folder to /data/media/music.
+
 ## Setup
 
-<!-- TODO: Add setup instructions with screenshots -->
+- Go to the Lidarr webUI and set the authentication method to "Forms" and configure the username and password with the values you set during the setup wizard.
+- In **Settings → Download Clients** add qBittorrent as a download client.
+- In **Settings → Media Management** set the root folder to /data/media/music.
+
+Official Lidarr documentation is available [here](https://wiki.servarr.com/en/lidarr).

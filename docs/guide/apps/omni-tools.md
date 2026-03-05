@@ -7,6 +7,8 @@ A collection of useful productivity tools in a single web interface — file con
 | **Image** | `iib0011/omni-tools:latest` |
 | **Web UI** | `http://your-server:8079` |
 | **Config path** | `{BASE_DIR}/omnitools/config` |
+| **Website** | [omnitools.app](https://omnitools.app/) |
+| **Source code** | [GitHub](https://github.com/iib0011/omni-tools) |
 
 ## Installation
 
@@ -16,4 +18,4 @@ sudo mithrandir install omni-tools
 
 ## Setup
 
-<!-- TODO: Add setup instructions with screenshots -->
+No additional setup required.
