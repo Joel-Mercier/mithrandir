@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Pre-commit hook: regenerate changelog and stage it
+# Note: the current commit won't appear in the changelog until the next commit
 
 set -euo pipefail
 

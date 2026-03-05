@@ -57,6 +57,7 @@ All notable changes to this project are documented here. This page is auto-gener
 - add VitePress documentation website with Docker serving (`08485ed`)
 - add VitePress documentation site with changelog and docs command (`888877c`)
 - add documentation improvements, Gatus Discord webhook env var, and MIT license (`3f069b8`)
+- add pre-commit hook for automatic changelog generation (`4164317`)
 
 ### Fixed
 
