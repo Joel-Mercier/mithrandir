@@ -13,9 +13,14 @@ Self-hosted AI chat interface — a ChatGPT-like UI for running local or remote 
 ## Installation
 
 ```sh
-sudo mithrandir install open-webui
+sudo mithrandir install openwebui
 ```
 
 ## Setup
 
-No additional setup required. You can start adding providers for example [OpenAI](https://docs.openwebui.com/getting-started/quick-start/connect-a-provider/starting-with-openai) or [Anthropic (Claude)](https://docs.openwebui.com/getting-started/quick-start/connect-a-provider/starting-with-anthropic). If you want to run a local model using Ollama, you can [do so too](https://docs.openwebui.com/getting-started/quick-start/connect-a-provider/starting-with-ollama) but you'll need to setup ollama yourself first.
+No additional setup required. 
+You can start adding providers for example [OpenAI](https://docs.openwebui.com/getting-started/quick-start/connect-a-provider/starting-with-openai) or [Anthropic (Claude)](https://docs.openwebui.com/getting-started/quick-start/connect-a-provider/starting-with-anthropic).
+If you want to run a local model using Ollama, you can [do so too](https://docs.openwebui.com/getting-started/quick-start/connect-a-provider/starting-with-ollama) but you'll need to setup ollama yourself first.
+::: warning
+Running local models requires very specific and powerful hardware. Make sure you have enough resources to run them.
+:::

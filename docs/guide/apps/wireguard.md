@@ -52,7 +52,7 @@ WireGuard requires the `NET_ADMIN` and `SYS_MODULE` Linux capabilities and mount
 ## Setup
 
 - Add your duckdns domain to the WG_SERVERURL environment variable in your `.env` file.
-- You need to add port forwarding to your router for wireguard to work. The internal port is `51820` and the external port is `51820` as well using the UDP protocol.
+- You need to add port forwarding to your router for wireguard to work. The internal port is `51820` and the external port is `51820` as well using the UDP protocol and assign it to the IP address of your homelab.
 - Download the WireGuard client app for your platform and scan the QR code to connect to your WireGuard server. Then when you want to access your homelab from another network, open the WireGuard app and tap the "connect" button.
 
 ## Clients
