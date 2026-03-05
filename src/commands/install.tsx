@@ -355,17 +355,6 @@ function InstallHttps() {
     setDomain(derivedDomain);
     addStep({ name: "DuckDNS", status: "done", message: `Domain: ${derivedDomain}` });
 
-    // Check if already enabled
-    if (env.ENABLE_HTTPS === "true") {
-      const caddyCompose = getComposePath(getApp("caddy")!, env.BASE_DIR);
-      if (existsSync(caddyCompose)) {
-        setError(
-          "HTTPS is already enabled.\nTo reconfigure, run: mithrandir reinstall caddy",
-        );
-        return;
-      }
-    }
-
     // Prompt for email (always prompt even if set, so user can verify)
     setPhase("prompt-email");
   }
@@ -421,6 +410,7 @@ function InstallHttps() {
     const compose = caddyApp.rawCompose!(env);
     const caddyComposePath = `${caddyDir}/docker-compose.yml`;
     await Bun.write(caddyComposePath, compose);
+    await composeDown(caddyComposePath).catch(() => {});
     await composeUp(caddyComposePath);
     addStep({ name: "Caddy", status: "done", message: "Container started on port 443" });
 

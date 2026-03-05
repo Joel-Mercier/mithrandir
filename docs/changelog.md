@@ -58,7 +58,7 @@ All notable changes to this project are documented here. This page is auto-gener
 - add VitePress documentation site with changelog and docs command (`888877c`)
 - add documentation improvements, Gatus Discord webhook env var, and MIT license (`3f069b8`)
 - add pre-commit hook for automatic changelog generation (`4164317`)
-- add styled 404 page for Caddy with links to installed apps
+- add styled 404 page for Caddy with links to installed apps (`170157b`)
 
 ### Fixed
 
@@ -110,6 +110,7 @@ All notable changes to this project are documented here. This page is auto-gener
 - fix changelog pre-commit hook: use --show-toplevel and add re-entrant note (`9013867`)
 - fix changelog hook: use commit-msg hook to include current commit in changelog (`360ec15`)
 - fix docs Docker build: install git for VitePress lastUpdated (`9a7fea6`)
+- fix install/reinstall caddy: redirect to install https
 
 ### Changed
 
