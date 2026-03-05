@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Pre-commit hook: regenerate changelog and stage it
+
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+"$REPO_ROOT/scripts/generate-changelog.sh"
+git add "$REPO_ROOT/docs/changelog.md"

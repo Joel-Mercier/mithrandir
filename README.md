@@ -338,6 +338,27 @@ Checks configuration correctness across three categories: System (.env file, Doc
 | Open WebUI | 3000 | Self-hosted AI chat interface |
 | Vaultwarden | 8222 | Lightweight Bitwarden-compatible password manager (requires HTTPS) |
 
+## Local Development
+
+```bash
+git clone <repo> && cd mithrandir
+bun install
+git config core.hooksPath .githooks
+```
+
+The `core.hooksPath` setting activates the pre-commit hook in `.githooks/` which auto-generates the changelog from git history and stages it with each commit.
+
+**Available scripts:**
+
+| Command | Description |
+|---------|-------------|
+| `bun run start` | Run the CLI in dev mode (unbundled) |
+| `bun run build` | Bundle into `dist/mithrandir.js` |
+| `bun run typecheck` | TypeScript type checking (`tsc --noEmit`) |
+| `bun run docs:dev` | Local VitePress dev server with hot reload |
+| `bun run docs:build` | Build the documentation site for production |
+| `bun run docs:preview` | Preview the built documentation site |
+
 ## TODO
 
 - [ ] Write the full docs

@@ -88,7 +88,7 @@ These allow programmatic access to the APIs of the above services.
 - **.env** — All configuration lives here. Core settings: `BASE_DIR`, `PUID`/`PGID`, `TZ`. Per-app secrets: DuckDNS, WireGuard, Spotify. Backup settings: `BACKUP_DIR` (default `/backups`), `LOCAL_RETENTION` (5), `REMOTE_RETENTION` (10), `RCLONE_REMOTE` (gdrive), `APPS` (auto or comma-separated). HTTPS settings: `ENABLE_HTTPS`, `ACME_EMAIL`. Not in git.
 
 ### Changelog (`docs/changelog.md`)
-Auto-generated from git commits via `scripts/generate-changelog.sh`. The nav bar version dropdown links to this page. **Run `./scripts/generate-changelog.sh` before every commit** to keep the changelog in sync. The script categorizes commits by message prefix (add/fix/update/etc.) and groups them under the current version from `package.json`. Also update the version in the nav dropdown in `docs/.vitepress/config.ts` when bumping the version in `package.json`.
+Auto-generated from git commits via `scripts/generate-changelog.sh`. A pre-commit hook (`.githooks/pre-commit`) runs this script automatically and stages the result, so the changelog is always in sync. The script categorizes commits by message prefix (add/fix/update/etc.) and groups them under the current version from `package.json`. Git is configured to use `.githooks/` via `core.hooksPath`. Also update the version in the nav dropdown in `docs/.vitepress/config.ts` when bumping the version in `package.json`.
 
 ## Key Constraints
 

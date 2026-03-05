@@ -133,6 +133,8 @@ All notable changes to this project are documented here. This page is auto-gener
 - use RSA certificates in Caddy for broader device compatibility (`ec3151a`)
 - reorganize setup app selection into category-based picker (`636e947`)
 - hide flaresolverr from Quick Links in status command (`b6a88c8`)
+- update changelog (`f66d016`)
+- update docs (`5e8c1f9`)
 
 ### Other
 
@@ -163,4 +165,5 @@ All notable changes to this project are documented here. This page is auto-gener
 - move CLI from cli/ to project root and remove legacy bash scripts (`0c3a971`)
 - remove dnsmasq sidecar, show DNS setup instructions instead (`12fcb83`)
 - auto-generate rclone.conf from .env variables (`8a190d2`)
+- merge docs into root package.json for single dependency tree (`28e8ea4`)
 
