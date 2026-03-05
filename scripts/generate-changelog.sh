@@ -8,7 +8,8 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"
 
 VERSION=$(grep '"version"' package.json | sed 's/.*"\([0-9][^"]*\)".*/\1/')
-LATEST_DATE=$(git log -1 --format="%as")
+TODAY=$(date +%Y-%m-%d)
+LATEST_DATE="${PENDING_DATE:-$(git log -1 --format="%as")}"
 
 OUTPUT="$REPO_ROOT/docs/changelog.md"
 
@@ -17,16 +18,8 @@ fixed=""
 changed=""
 other=""
 
-while IFS= read -r line; do
-  hash="${line%% *}"
-  rest="${line#* }"
-  date="${rest%% *}"
-  msg="${rest#* }"
-  short="${hash:0:7}"
-
-  entry="- ${msg} (\`${short}\`)"
-
-  # Categorize by commit message prefix
+categorize() {
+  local msg="$1" entry="$2"
   case "$msg" in
     [Aa]dd\ *|[Aa]dd:\ *|[Ff]eat\ *|[Ff]eat:\ *|[Cc]reate\ *)
       added="${added}${entry}"$'\n'
@@ -41,7 +34,23 @@ while IFS= read -r line; do
       other="${other}${entry}"$'\n'
       ;;
   esac
+}
+
+while IFS= read -r line; do
+  hash="${line%% *}"
+  rest="${line#* }"
+  date="${rest%% *}"
+  msg="${rest#* }"
+  short="${hash:0:7}"
+
+  categorize "$msg" "- ${msg} (\`${short}\`)"
 done < <(git log --format="%H %as %s" --reverse)
+
+# Include pending commit message (passed from commit-msg hook)
+if [ -n "${PENDING_MSG:-}" ]; then
+  LATEST_DATE="$TODAY"
+  categorize "$PENDING_MSG" "- ${PENDING_MSG}"
+fi
 
 {
   cat << 'HEADER'

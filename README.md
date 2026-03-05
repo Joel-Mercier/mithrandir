@@ -346,7 +346,7 @@ bun install
 git config core.hooksPath .githooks
 ```
 
-The `core.hooksPath` setting activates the pre-commit hook in `.githooks/` which auto-generates the changelog from git history and stages it with each commit.
+The `core.hooksPath` setting activates the commit-msg hook in `.githooks/` which auto-generates the changelog including the current commit and stages it.
 
 **Available scripts:**
 

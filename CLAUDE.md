@@ -88,7 +88,7 @@ These allow programmatic access to the APIs of the above services.
 - **.env** — All configuration lives here. Core settings: `BASE_DIR`, `PUID`/`PGID`, `TZ`. Per-app secrets: DuckDNS, WireGuard, Spotify. Backup settings: `BACKUP_DIR` (default `/backups`), `LOCAL_RETENTION` (5), `REMOTE_RETENTION` (10), `RCLONE_REMOTE` (gdrive), `APPS` (auto or comma-separated). HTTPS settings: `ENABLE_HTTPS`, `ACME_EMAIL`. Not in git.
 
 ### Changelog (`docs/changelog.md`)
-Auto-generated from git commits via `scripts/generate-changelog.sh`. A pre-commit hook (`.githooks/pre-commit`) runs this script automatically and stages the result. The current commit's message appears in the changelog on the next commit. The script categorizes commits by message prefix (add/fix/update/etc.) and groups them under the current version from `package.json`. Git is configured to use `.githooks/` via `core.hooksPath`. Also update the version in the nav dropdown in `docs/.vitepress/config.ts` when bumping the version in `package.json`.
+Auto-generated from git commits via `scripts/generate-changelog.sh`. A commit-msg hook (`.githooks/commit-msg`) passes the pending commit message to the script via `PENDING_MSG` env var, so the changelog includes the current commit. The script categorizes commits by message prefix (add/fix/update/etc.) and groups them under the current version from `package.json`. Git is configured to use `.githooks/` via `core.hooksPath`. Also update the version in the nav dropdown in `docs/.vitepress/config.ts` when bumping the version in `package.json`.
 
 ## Key Constraints
 
