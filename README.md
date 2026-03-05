@@ -343,10 +343,20 @@ Checks configuration correctness across three categories: System (.env file, Doc
 ```bash
 git clone <repo> && cd mithrandir
 bun install
-git config core.hooksPath .githooks
 ```
 
-The `core.hooksPath` setting activates the commit-msg hook in `.githooks/` which auto-generates the changelog including the current commit and stages it.
+**Creating a release:**
+```bash
+scripts/release.sh 1.1.0    # Bumps version, generates changelog, commits, and tags
+git push && git push --tags  # Push the release
+```
+
+The release script bumps the version in `package.json` and `docs/.vitepress/config.ts`, regenerates `docs/changelog.md` from git tags, creates a commit, and tags it. The changelog groups commits by tag, with unreleased commits shown at the top.
+
+You can also regenerate the changelog manually at any time:
+```bash
+scripts/generate-changelog.sh
+```
 
 **Available scripts:**
 
@@ -358,6 +368,7 @@ The `core.hooksPath` setting activates the commit-msg hook in `.githooks/` which
 | `bun run docs:dev` | Local VitePress dev server with hot reload |
 | `bun run docs:build` | Build the documentation site for production |
 | `bun run docs:preview` | Preview the built documentation site |
+| `bun run release <version>` | Create a new release |
 
 ## TODO
 

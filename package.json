@@ -10,6 +10,7 @@
     "start": "bun run src/index.tsx",
     "build": "bun run build.ts",
     "typecheck": "tsc --noEmit",
+    "release": "bash scripts/release.sh",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs"

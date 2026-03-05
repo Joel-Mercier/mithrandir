@@ -1,8 +1,8 @@
 # Changelog
 
-All notable changes to this project are documented here. This page is auto-generated from git commits.
+All notable changes to this project are documented here. This page is auto-generated from git commits grouped by release tags.
 
-## v1.0.0 (2026-03-05)
+## Unreleased (2026-03-05)
 
 ### Added
 
@@ -110,7 +110,8 @@ All notable changes to this project are documented here. This page is auto-gener
 - fix changelog pre-commit hook: use --show-toplevel and add re-entrant note (`9013867`)
 - fix changelog hook: use commit-msg hook to include current commit in changelog (`360ec15`)
 - fix docs Docker build: install git for VitePress lastUpdated (`9a7fea6`)
-- fix install/reinstall caddy: redirect to install https
+- fix install/reinstall caddy: redirect to install https (`e4a9e7f`)
+- fix install https: allow re-running when already installed (`8f0b543`)
 
 ### Changed
 
