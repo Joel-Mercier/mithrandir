@@ -56,11 +56,7 @@ All notable changes to this project are documented here. This page is auto-gener
 - add Omni Tools to app registry and setup wizard (`122f5a5`)
 - add VitePress documentation website with Docker serving (`08485ed`)
 - add VitePress documentation site with changelog and docs command (`888877c`)
-- add Gatus Discord webhook URL environment variable for alerts
-- add MIT license
-- add docs homepage hero and features section
-- add "What Gets Backed Up" section to backup documentation
-- add detailed configuration guides and tips to all app documentation pages
+- add documentation improvements, Gatus Discord webhook env var, and MIT license (`3f069b8`)
 
 ### Fixed
 
