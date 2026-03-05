@@ -41,6 +41,10 @@ sudo mithrandir setup
 
 The install script handles everything — installing Bun, building the CLI, and creating the `mithrandir` command. See the [Installation](./installation) and [Setup](./setup) pages for detailed instructions.
 
+::: tip
+It is highly recommended to assign a static DHCP IP address to your server so it's IP never changes. You can configure this in the DHCP static leases settings in your router's web interface.
+:::
+
 ## How It Works
 
 Mithrandir manages your homelab through a few key concepts:

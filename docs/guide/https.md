@@ -56,3 +56,4 @@ Add these to your `.env`:
 Some apps require HTTPS to function properly:
 
 - **Vaultwarden** — Password manager that requires a secure connection. Will not install unless `ENABLE_HTTPS=true`.
+- **Pi-hole** — Requires a secure connection.

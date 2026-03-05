@@ -44,3 +44,7 @@ Pi-hole requires HTTPS to be setup and enabled in order to function. You must ha
 > You need to go to **Tools → Update Gravity** and click on **Update** to update the lists and have them take effect.
 
 - In **Settings → DHCP** you can also setup Pi-hole to handle DHCP instead of using your router's DHCP server if you wish.
+
+## Clients configuration
+
+You need to add your homelab IP address as a primary DNS server for all your devices on your network. As a secondary DNS server, you can use your default router's DNS server or Cloudflare DNS. This will allow your devices to route their traffic through your Pi-hole to filter malicious/tracking domains and to resolve domains like `<app>.homelab.duckdns.org`.

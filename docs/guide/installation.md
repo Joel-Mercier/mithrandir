@@ -36,6 +36,10 @@ mithrandir version
 If `bun` is not found in a new terminal session, run `source ~/.bashrc` (or `source ~/.zshrc` for Zsh) to reload your shell profile.
 :::
 
+::: tip
+It is highly recommended to assign a static DHCP IP address to your server so it's IP never changes. You can configure this in the DHCP static leases settings in your router's web interface.
+:::
+
 ## Shell Completions
 
 Set up tab completion for your shell:
