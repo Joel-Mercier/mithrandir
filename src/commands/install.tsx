@@ -713,6 +713,9 @@ export async function runInstall(args: string[]): Promise<void> {
   } else if (target === "https") {
     const { waitUntilExit } = render(<InstallHttps />);
     await waitUntilExit();
+  } else if (target === "caddy") {
+    console.error("Caddy is installed via: mithrandir install https");
+    process.exit(1);
   } else {
     const { waitUntilExit } = render(<InstallApp appName={target} />);
     await waitUntilExit();

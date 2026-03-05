@@ -176,6 +176,11 @@ export async function runReinstall(
     process.exit(1);
   }
 
+  if (appName === "caddy") {
+    console.error("Caddy is managed via: mithrandir install https");
+    process.exit(1);
+  }
+
   // Root check
   if (process.getuid?.() !== 0) {
     console.error("Error: This command must be run as root (use sudo).");
