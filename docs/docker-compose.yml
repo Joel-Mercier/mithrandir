@@ -1,6 +1,8 @@
 services:
   mithrandir-docs:
-    build: .
+    build:
+      context: ..
+      dockerfile: docs/Dockerfile
     container_name: mithrandir-docs
     ports:
       - "4173:80"

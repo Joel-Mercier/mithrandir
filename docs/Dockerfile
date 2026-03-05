@@ -2,9 +2,9 @@ FROM oven/bun:1 AS builder
 WORKDIR /app
 COPY package.json bun.lock* ./
 RUN bun install --frozen-lockfile
-COPY . .
-RUN bun run build
+COPY docs/ docs/
+RUN bun run docs:build
 
 FROM nginx:alpine
-COPY --from=builder /app/.vitepress/dist /usr/share/nginx/html
+COPY --from=builder /app/docs/.vitepress/dist /usr/share/nginx/html
 EXPOSE 80
