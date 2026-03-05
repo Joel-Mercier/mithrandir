@@ -25,7 +25,7 @@ export async function runConfig(): Promise<void> {
   ]);
   const extras = Object.entries(env).filter(([k]) => !coreKeys.has(k));
   for (const [key, value] of extras) {
-    const masked = key.toLowerCase().includes("token") || key.toLowerCase().includes("secret")
+    const masked = key.toLowerCase().includes("token") || key.toLowerCase().includes("secret") || key.toLowerCase().includes("password")
       ? "****"
       : value;
     console.log(`  ${key.padEnd(pad)}${masked}`);
