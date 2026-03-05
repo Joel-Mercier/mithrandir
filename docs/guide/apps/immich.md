@@ -37,3 +37,7 @@ Immich is a multi-container app consisting of:
 ## Setup
 
 Complete the onboarding wizard and setup your photos & videos.
+
+## Clients
+
+Use the official [Android](https://play.google.com/store/apps/details?id=app.alextran.immich) or [iOS](https://apps.apple.com/us/app/immich/id1613945652) clients.

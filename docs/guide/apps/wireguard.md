@@ -51,3 +51,7 @@ WireGuard requires the `NET_ADMIN` and `SYS_MODULE` Linux capabilities and mount
 
 - Add your duckdns domain to the WG_SERVERURL environment variable in your `.env` file.
 - Download the WireGuard client app for your platform and scan the QR code to connect to your WireGuard server. Then when you want to access your homelab from another network, open the WireGuard app and tap the "connect" button.
+
+## Clients
+
+Use the official [Android](https://play.google.com/store/apps/details?id=com.wireguard.android) or [iOS](https://apps.apple.com/us/app/wireguard/id1441195209) clients.

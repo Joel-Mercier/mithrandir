@@ -27,4 +27,26 @@ These are optional — Navidrome works without them, but artist images won't be 
 
 ## Setup
 
-<!-- TODO: Add setup instructions with screenshots -->
+- Navidrome is setup to read files from `{BASE_DIR}/data/media/music`.
+- Go to the Navidrome webUI and create your admin user.
+- For an optimal experience, the audio files in your music library should be containing the most metadata possible. You can use [MusicBrainz Picard](https://picard.musicbrainz.org/) to add metadata to your files.
+
+## Clients
+
+Some good clients for Navidrome are:
+
+### Desktop
+
+- [feishin](https://github.com/jeffvli/feishin)
+
+### Mobile
+
+*Android*
+
+- [Symfonium](https://symfonium.app/)
+
+*iOS*
+
+- [Arpeggi (still in beta)](https://testflight.apple.com/join/LDWqgjAs)
+
+You can find the full list of apps [here](https://www.navidrome.org/apps/).

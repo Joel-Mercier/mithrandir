@@ -18,4 +18,4 @@ sudo mithrandir install open-webui
 
 ## Setup
 
-<!-- TODO: Add setup instructions with screenshots -->
+No additional setup required. You can start adding providers for example [OpenAI](https://docs.openwebui.com/getting-started/quick-start/connect-a-provider/starting-with-openai) or [Anthropic (Claude)](https://docs.openwebui.com/getting-started/quick-start/connect-a-provider/starting-with-anthropic). If you want to run a local model using Ollama, you can [do so too](https://docs.openwebui.com/getting-started/quick-start/connect-a-provider/starting-with-ollama) but you'll need to setup ollama yourself first.
