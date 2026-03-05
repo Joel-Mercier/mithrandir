@@ -26,7 +26,13 @@ import {
 } from "@/lib/docker.js";
 import { isRcloneInstalled, installRclone } from "@/lib/rclone.js";
 import { generateCompose } from "@/lib/compose.js";
-import { getDuckDnsDomain } from "@/lib/caddy.js";
+import {
+  getDuckDnsDomain,
+  generateCaddyfile,
+  generate404Page,
+  generateCaddyDockerfile,
+  regenerateCaddyfile,
+} from "@/lib/caddy.js";
 import {
   hasSystemd,
   isWsl,
@@ -43,6 +49,7 @@ import { ProgressBar } from "@/components/ProgressBar.js";
 import { Divider } from "@/components/Divider.js";
 import Link from "ink-link";
 import type { AppDefinition, EnvConfig, SecretDefinition } from "@/types.js";
+import { existsSync } from "fs";
 import { homedir } from "os";
 import { createQBittorrentClient, getQBittorrentCredentials } from "@/lib/qbittorrent.js";
 import { createProwlarrClient, getProwlarrApiKey } from "@/lib/prowlarr.js";
@@ -121,6 +128,7 @@ type SetupStep =
   | "app-select"
   | "check-secrets"
   | "install-apps"
+  | "setup-https"
   | "confirm-autosetup"
   | "autosetup-apps"
   | "backup-service"
@@ -219,7 +227,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
 
     return (
       <Box flexDirection="column">
-        <StepIndicator current={1} total={9} label="Docker" />
+        <StepIndicator current={1} total={10} label="Docker" />
         {status === "checking" && (
           <Text>
             <Text color="green"><Spinner type="dots" /></Text>
@@ -298,7 +306,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
 
     return (
       <Box flexDirection="column">
-        <StepIndicator current={2} total={9} label="Swap" />
+        <StepIndicator current={2} total={10} label="Swap" />
         {status === "checking" && (
           <Text>
             <Text color="green"><Spinner type="dots" /></Text>
@@ -390,7 +398,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
 
     return (
       <Box flexDirection="column">
-        <StepIndicator current={3} total={9} label="rclone" />
+        <StepIndicator current={3} total={10} label="rclone" />
         {status === "checking" && (
           <Text>
             <Text color="green"><Spinner type="dots" /></Text>
@@ -471,7 +479,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
 
     return (
       <Box flexDirection="column">
-        <StepIndicator current={4} total={9} label="Base Directory" />
+        <StepIndicator current={4} total={10} label="Base Directory" />
         <Text>Enter the base directory where all Docker app folders should be created:</Text>
         <Box>
           <Text color="blue">{">"} </Text>
@@ -582,7 +590,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
 
       return (
         <Box flexDirection="column">
-          <StepIndicator current={5} total={9} label="Select Apps" />
+          <StepIndicator current={5} total={10} label="Select Apps" />
           <Text>Choose app categories to install (space to toggle, enter to confirm):</Text>
           <MultiSelect options={options} onSubmit={handleCategorySubmit} />
         </Box>
@@ -607,7 +615,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
 
       return (
         <Box flexDirection="column">
-          <StepIndicator current={5} total={9} label="Select Apps" />
+          <StepIndicator current={5} total={10} label="Select Apps" />
           {categoryAppNames.size > 0 && (
             <Text dimColor>Apps from selected categories are pre-checked.</Text>
           )}
@@ -625,7 +633,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
 
       return (
         <Box flexDirection="column">
-          <StepIndicator current={5} total={9} label="Select Apps" />
+          <StepIndicator current={5} total={10} label="Select Apps" />
           <Text color="yellow">
             Auto-included dependencies:
           </Text>
@@ -694,7 +702,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
 
     return (
       <Box flexDirection="column">
-        <StepIndicator current={6} total={9} label="Required Secrets" />
+        <StepIndicator current={6} total={10} label="Required Secrets" />
         <Text>
           <Text bold>{current.app.displayName}</Text> requires{" "}
           <Text bold>{current.secret.envVar}</Text>
@@ -764,7 +772,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
 
     return (
       <Box flexDirection="column">
-        <StepIndicator current={8} total={9} label="Backup Service" />
+        <StepIndicator current={9} total={10} label="Backup Service" />
         {status === "checking" && (
           <Text>
             <Text color="green"><Spinner type="dots" /></Text>
@@ -803,7 +811,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
 
     return (
       <Box flexDirection="column">
-        <StepIndicator current={9} total={9} label="Setup Complete" />
+        <StepIndicator current={10} total={10} label="Setup Complete" />
         <Box marginBottom={1}>
           <Text bold color="green">All services are running!</Text>
         </Box>
@@ -861,6 +869,20 @@ export function SetupCommand({ flags }: SetupCommandProps) {
             <Text bold>Seerr & Jellyfin note:</Text>
             <Text>  Wholphin is an app that allows for media playback from Jellyfin</Text>
             <Text>  and media discovery and request from Seerr.</Text>
+          </Box>
+        )}
+        {envConfig.ENABLE_HTTPS === "true" && (
+          <Box flexDirection="column" marginBottom={1}>
+            <Text bold>HTTPS note:</Text>
+            <Text>  Caddy is running as a reverse proxy with wildcard TLS for *.{getDuckDnsDomain(envConfig)}.</Text>
+            {hasApp("pihole") ? (
+              <Text>  DNS is handled by Pi-hole — wildcard domain configured automatically.</Text>
+            ) : (
+              <>
+                <Text>  You need to configure wildcard DNS on your router:</Text>
+                <Text>    *.{getDuckDnsDomain(envConfig)} → {localIp}</Text>
+              </>
+            )}
           </Box>
         )}
         <Box flexDirection="column" marginBottom={1}>
@@ -924,8 +946,22 @@ export function SetupCommand({ flags }: SetupCommandProps) {
           autoYes={autoYes}
           onComplete={async () => {
             await saveEnvConfig(envConfig);
+            setStep("setup-https");
+          }}
+        />
+      )}
+      {step === "setup-https" && (
+        <HttpsSetupStep
+          selectedApps={selectedApps}
+          envConfig={envConfig}
+          autoYes={autoYes}
+          onComplete={(httpsEnabled) => {
+            if (httpsEnabled) {
+              addCompletedStep({ name: "HTTPS", status: "done", message: "Caddy reverse proxy enabled" });
+            }
             setStep("confirm-autosetup");
           }}
+          onEnvUpdate={(updated) => setEnvConfig(updated)}
         />
       )}
       {step === "confirm-autosetup" && (
@@ -1007,7 +1043,7 @@ function InstallAppsStep({ selectedApps, envConfig, autoYes, onComplete }: Insta
         results.push({
           app,
           status: "skipped",
-          error: "Requires HTTPS — run `mithrandir install https` first, then `mithrandir install vaultwarden`",
+          error: "Requires HTTPS — will install after HTTPS setup",
         });
         setAppResults([...results]);
         continue;
@@ -1083,8 +1119,8 @@ function InstallAppsStep({ selectedApps, envConfig, autoYes, onComplete }: Insta
   return (
     <Box flexDirection="column">
       <StepIndicator
-        current={6}
-        total={9}
+        current={7}
+        total={10}
         label={`Installing Apps (${installIdx + 1}/${selectedApps.length})`}
       />
 
@@ -1122,6 +1158,230 @@ function InstallAppsStep({ selectedApps, envConfig, autoYes, onComplete }: Insta
   );
 }
 
+// ─── HTTPS Setup Step ─────────────────────────────────────────────────────────
+
+interface HttpsSetupStepProps {
+  selectedApps: AppDefinition[];
+  envConfig: EnvConfig;
+  autoYes: boolean;
+  onComplete: (httpsEnabled: boolean) => void;
+  onEnvUpdate: (env: EnvConfig) => void;
+}
+
+function HttpsSetupStep({ selectedApps, envConfig, autoYes, onComplete, onEnvUpdate }: HttpsSetupStepProps) {
+  const [phase, setPhase] = useState<
+    "check" | "confirm" | "prompt-email" | "building" | "starting" | "pihole" | "installing-https-apps" | "done"
+  >("check");
+  const [completedSteps, setCompletedSteps] = useState<
+    Array<{ name: string; status: "done" | "skipped"; message?: string }>
+  >([]);
+  const [error, setError] = useState<string | null>(null);
+  const [pullProgress, setPullProgress] = useState(0);
+
+  function addStep(step: { name: string; status: "done" | "skipped"; message?: string }) {
+    setCompletedSteps((prev) => [...prev, step]);
+  }
+
+  const hasDuckDns = selectedApps.some((a) => a.name === "duckdns");
+
+  useEffect(() => {
+    // Skip if DuckDNS is not installed
+    if (!hasDuckDns || !envConfig.DUCKDNS_TOKEN || !envConfig.DUCKDNS_SUBDOMAINS) {
+      onComplete(false);
+      return;
+    }
+
+    if (autoYes) {
+      // In --yes mode, auto-enable if ACME_EMAIL is already set
+      if (envConfig.ACME_EMAIL) {
+        doInstall(envConfig, envConfig.ACME_EMAIL);
+      } else {
+        onComplete(false);
+      }
+    } else {
+      setPhase("confirm");
+    }
+  }, []);
+
+  async function doInstall(env: EnvConfig, acmeEmail: string) {
+    const derivedDomain = getDuckDnsDomain(env);
+    if (!derivedDomain) {
+      setError("Could not derive domain from DUCKDNS_SUBDOMAINS.");
+      return;
+    }
+
+    // Save HTTPS config to .env
+    const updated = { ...env, ENABLE_HTTPS: "true", ACME_EMAIL: acmeEmail };
+    onEnvUpdate(updated);
+    await saveEnvConfig(updated);
+    addStep({ name: "Config", status: "done", message: `Email: ${acmeEmail}` });
+
+    // Build custom Caddy image with DuckDNS DNS module
+    setPhase("building");
+    const baseDir = updated.BASE_DIR;
+    const caddyDir = `${baseDir}/caddy`;
+    await shell("mkdir", ["-p", caddyDir], { sudo: true });
+    await shell("mkdir", ["-p", `${caddyDir}/config`], { sudo: true });
+    await shell("mkdir", ["-p", `${caddyDir}/data`], { sudo: true });
+    await shell("mkdir", ["-p", `${caddyDir}/srv`], { sudo: true });
+
+    const dockerfile = generateCaddyDockerfile();
+    await Bun.write(`${caddyDir}/Dockerfile`, dockerfile);
+
+    await shell("docker", ["build", "-t", "mithrandir/caddy-duckdns:latest", caddyDir], { sudo: true });
+    addStep({ name: "Build image", status: "done", message: "Built Caddy with DuckDNS module" });
+
+    // Generate Caddyfile from all currently installed apps
+    const installedApps = APP_REGISTRY.filter((app) =>
+      existsSync(getComposePath(app, baseDir)),
+    );
+    const caddyfile = generateCaddyfile(installedApps, updated);
+    await Bun.write(`${caddyDir}/Caddyfile`, caddyfile);
+    const notFoundPage = generate404Page(installedApps, updated);
+    await Bun.write(`${caddyDir}/srv/404.html`, notFoundPage);
+    const proxyCount = installedApps.filter((a) => a.port && a.name !== "caddy").length;
+    addStep({ name: "Caddyfile", status: "done", message: `${proxyCount} app${proxyCount !== 1 ? "s" : ""} configured` });
+
+    // Generate compose and start Caddy
+    setPhase("starting");
+    const caddyApp = getApp("caddy")!;
+    const compose = caddyApp.rawCompose!(updated);
+    const caddyComposePath = `${caddyDir}/docker-compose.yml`;
+    await Bun.write(caddyComposePath, compose);
+    await composeDown(caddyComposePath).catch(() => {});
+    await composeUp(caddyComposePath);
+    addStep({ name: "Caddy", status: "done", message: "Container started on port 443" });
+
+    // Handle Pi-hole port conflicts + wildcard DNS
+    const piholeDir = `${baseDir}/pihole`;
+    const piholeComposePath = `${piholeDir}/docker-compose.yml`;
+    if (existsSync(piholeComposePath)) {
+      setPhase("pihole");
+      const piholeApp = getApp("pihole")!;
+      const piholeCompose = generateCompose(piholeApp, updated);
+      await Bun.write(piholeComposePath, piholeCompose);
+
+      const ip = await getLocalIp();
+      const dnsmasqDir = `${piholeDir}/etc-dnsmasq.d`;
+      await shell("mkdir", ["-p", dnsmasqDir], { sudo: true });
+      await Bun.write(`${dnsmasqDir}/10-wildcard-domain.conf`, `address=/${derivedDomain}/${ip}\n`);
+
+      await composeDown(piholeComposePath);
+      await composeUp(piholeComposePath);
+      addStep({ name: "Pi-hole", status: "done", message: `Restarted with wildcard DNS for *.${derivedDomain}` });
+    }
+
+    // Install any requiresHttps apps that were skipped during install-apps
+    const skippedHttpsApps = selectedApps.filter(
+      (app) => app.requiresHttps && !existsSync(getComposePath(app, baseDir)),
+    );
+    if (skippedHttpsApps.length > 0) {
+      setPhase("installing-https-apps");
+      for (const app of skippedHttpsApps) {
+        try {
+          setPullProgress(0);
+          await pullImageWithProgress(app.image, (pct) => setPullProgress(pct));
+          await writeComposeAndStart(app, updated);
+          addStep({ name: app.displayName, status: "done", message: "Installed (requires HTTPS)" });
+          // Regenerate Caddyfile to include the new app
+          await regenerateCaddyfile(updated);
+        } catch (err: any) {
+          addStep({ name: app.displayName, status: "skipped", message: err.message });
+        }
+      }
+    }
+
+    setPhase("done");
+    onComplete(true);
+  }
+
+  if (error) {
+    return (
+      <Box flexDirection="column">
+        <StepIndicator current={8} total={10} label="HTTPS Setup" />
+        <Text color="red">Error: {error}</Text>
+      </Box>
+    );
+  }
+
+  return (
+    <Box flexDirection="column">
+      <StepIndicator current={8} total={10} label="HTTPS Setup" />
+
+      {completedSteps.map((step, i) => (
+        <AppStatus
+          key={i}
+          name={step.name}
+          status={step.status}
+          message={step.message}
+        />
+      ))}
+
+      {phase === "confirm" && (
+        <Box flexDirection="column">
+          <Text>Enable HTTPS via Caddy reverse proxy? (requires DuckDNS)</Text>
+          <ConfirmInput
+            onConfirm={() => setPhase("prompt-email")}
+            onCancel={() => onComplete(false)}
+          />
+        </Box>
+      )}
+
+      {phase === "prompt-email" && (
+        <Box flexDirection="column">
+          <Text bold>ACME Email</Text>
+          <Text dimColor>  Let's Encrypt requires an email to issue TLS certificates.</Text>
+          <Text dimColor>  Used for expiry warnings and account recovery — not shared publicly.</Text>
+          <Box marginTop={1}>
+            <Text color="cyan">{"  Email: "}</Text>
+            <TextInput
+              defaultValue={envConfig.ACME_EMAIL ?? ""}
+              onSubmit={(value) => {
+                const trimmed = value.trim();
+                if (!trimmed || !trimmed.includes("@")) return;
+                doInstall(envConfig, trimmed);
+              }}
+            />
+          </Box>
+        </Box>
+      )}
+
+      {phase === "building" && (
+        <Text>
+          <Text color="yellow"><Spinner type="dots" /></Text>
+          {" "}Building Caddy image with DuckDNS module (this may take a minute)...
+        </Text>
+      )}
+
+      {phase === "starting" && (
+        <Text>
+          <Text color="green"><Spinner type="dots" /></Text>
+          {" "}Starting Caddy container...
+        </Text>
+      )}
+
+      {phase === "pihole" && (
+        <Text>
+          <Text color="green"><Spinner type="dots" /></Text>
+          {" "}Restarting Pi-hole with port and DNS changes...
+        </Text>
+      )}
+
+      {phase === "installing-https-apps" && (
+        <Box flexDirection="column">
+          <Text>
+            <Text color="yellow"><Spinner type="dots" /></Text>
+            {" "}Installing HTTPS-required apps...
+          </Text>
+          {pullProgress > 0 && pullProgress < 100 && (
+            <ProgressBar percent={pullProgress} />
+          )}
+        </Box>
+      )}
+    </Box>
+  );
+}
+
 // ─── Confirm Auto Setup Step ──────────────────────────────────────────────────
 
 interface ConfirmAutoSetupStepProps {
@@ -1148,7 +1408,7 @@ function ConfirmAutoSetupStep({ selectedApps, autoYes, onYes, onNo }: ConfirmAut
 
   return (
     <Box flexDirection="column">
-      <StepIndicator current={7} total={9} label="Automatic Setup" />
+      <StepIndicator current={9} total={10} label="Automatic Setup" />
       <Text>Would you like to automatically configure your apps (credentials, download clients, etc.)?</Text>
       <ConfirmInput onConfirm={onYes} onCancel={onNo} />
     </Box>
@@ -1739,8 +1999,8 @@ function AutoSetupAppsStep({ selectedApps, envConfig, localIp, autoYes, onComple
   return (
     <Box flexDirection="column">
       <StepIndicator
-        current={7}
-        total={9}
+        current={9}
+        total={10}
         label={`Auto-Setup (${setupIdx + 1}/${setupableApps.length})`}
       />
 

@@ -18,8 +18,9 @@ The wizard runs through these steps in order:
 6. **App selection** — Choose which apps to install (by category or individually)
 7. **Secrets** — Prompts for any required API tokens, passwords, or keys
 8. **Install apps** — Pulls Docker images and starts all selected containers
-9. **Backup service** — Sets up the systemd timer for daily automatic backups at 2:00 AM
-10. **Summary** — Shows all running services with their URLs
+9. **HTTPS** — Offers to enable HTTPS via Caddy reverse proxy (requires DuckDNS). In `--yes` mode, auto-enables if `ACME_EMAIL` is already configured in `.env`
+10. **Backup service** — Sets up the systemd timer for daily automatic backups at 2:00 AM
+11. **Summary** — Shows all running services with their URLs
 
 ## App Selection
 
