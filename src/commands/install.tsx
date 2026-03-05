@@ -24,7 +24,7 @@ import {
 } from "@/lib/systemd.js";
 import { shell } from "@/lib/shell.js";
 import { generateCompose } from "@/lib/compose.js";
-import { generateCaddyfile, generateCaddyDockerfile, getDuckDnsDomain, regenerateCaddyfile } from "@/lib/caddy.js";
+import { generate404Page, generateCaddyfile, generateCaddyDockerfile, getDuckDnsDomain, regenerateCaddyfile } from "@/lib/caddy.js";
 import { getLocalIp } from "@/lib/distro.js";
 import { Header } from "@/components/Header.js";
 import { AppStatus } from "@/components/AppStatus.js";
@@ -396,6 +396,7 @@ function InstallHttps() {
     await shell("mkdir", ["-p", caddyDir], { sudo: true });
     await shell("mkdir", ["-p", `${caddyDir}/config`], { sudo: true });
     await shell("mkdir", ["-p", `${caddyDir}/data`], { sudo: true });
+    await shell("mkdir", ["-p", `${caddyDir}/srv`], { sudo: true });
 
     const dockerfile = generateCaddyDockerfile();
     await Bun.write(`${caddyDir}/Dockerfile`, dockerfile);
@@ -409,6 +410,8 @@ function InstallHttps() {
     );
     const caddyfile = generateCaddyfile(installedApps, env);
     await Bun.write(`${caddyDir}/Caddyfile`, caddyfile);
+    const notFoundPage = generate404Page(installedApps, env);
+    await Bun.write(`${caddyDir}/srv/404.html`, notFoundPage);
     const proxyCount = installedApps.filter((a) => a.port && a.name !== "caddy").length;
     addStep({ name: "Caddyfile", status: "done", message: `${proxyCount} app${proxyCount !== 1 ? "s" : ""} configured` });
 

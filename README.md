@@ -362,6 +362,7 @@ The `core.hooksPath` setting activates the commit-msg hook in `.githooks/` which
 ## TODO
 
 - [ ] Write the full docs
+- [ ] The setup wizard doesn't actually install Caddy itself (the Dockerfile build, Caddyfile, etc.) — that's exclusively done via mithrandir install https. Make a plan to add a step to the setup wizard to fully setup https with Caddy. Note that https setup required DuckDNS so don't show this step unless duckdns is already installed or selected. Also this step should happen after the app installation step I guess so it can generate the correct Caddyfile.
 - [ ] check in prowlarr torznab (U2P / utopeer)
 - [ ] Add a \[CERTIFICATE_EXPIRATION\] > 72h check for each app during the Gatus setup to warn the user if their certificate is about to expire. Caddy is handling the certificate renewal automatically.
 - [ ] Check if Profilarr is a good solution for quality profiles

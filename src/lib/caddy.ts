@@ -70,15 +70,101 @@ export function generateCaddyfile(
     lines.push("    }");
   }
 
-  // Fallback
+  // Fallback — serve custom 404 page
   lines.push("");
   lines.push("    handle {");
-  lines.push('        respond "Not Found" 404');
+  lines.push("        root * /srv");
+  lines.push("        rewrite * /404.html");
+  lines.push("        file_server");
   lines.push("    }");
   lines.push("}");
   lines.push("");
 
   return lines.join("\n");
+}
+
+/**
+ * Generate a styled 404 HTML page with links to all installed apps.
+ */
+export function generate404Page(
+  installedApps: AppDefinition[],
+  envConfig: EnvConfig,
+  options?: { includeDocs?: boolean },
+): string {
+  const domain = getDuckDnsDomain(envConfig);
+  if (!domain) throw new Error("DUCKDNS_SUBDOMAINS is not set");
+
+  const proxyApps = installedApps.filter(
+    (app) => app.port !== null && app.name !== "caddy",
+  );
+
+  const appLinks = proxyApps
+    .map((app) => {
+      const label = app.displayName ?? app.name.charAt(0).toUpperCase() + app.name.slice(1);
+      return `      <a href="https://${app.name}.${domain}">${label}</a>`;
+    })
+    .join("\n");
+
+  const docsLink = options?.includeDocs
+    ? `\n      <a href="https://mithrandir-docs.${domain}">Docs</a>`
+    : "";
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>404 - Not Found</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container { text-align: center; max-width: 480px; padding: 2rem; }
+    .code {
+      font-size: 6rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+    }
+    .message { font-size: 1.25rem; color: #94a3b8; margin: 0.75rem 0 2rem; }
+    h2 { font-size: 0.875rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
+    .apps { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; }
+    .apps a {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      background: #1e293b;
+      color: #93c5fd;
+      text-decoration: none;
+      border-radius: 0.5rem;
+      border: 1px solid #334155;
+      font-size: 0.875rem;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .apps a:hover { background: #334155; border-color: #3b82f6; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="code">404</div>
+    <p class="message">This subdomain doesn't exist.</p>
+    <h2>Available Services</h2>
+    <div class="apps">
+${appLinks}${docsLink}
+    </div>
+  </div>
+</body>
+</html>
+`;
 }
 
 /**
@@ -120,8 +206,17 @@ export async function regenerateCaddyfile(
   const includeDocs = await isContainerRunning("mithrandir-docs");
   const caddyfile = generateCaddyfile(installedApps, envConfig, { includeDocs });
 
-  const caddyfilePath = `${baseDir}/caddy/Caddyfile`;
+  const caddyDir = `${baseDir}/caddy`;
+  const caddyfilePath = `${caddyDir}/Caddyfile`;
   await shell("bash", ["-c", `cat > "${caddyfilePath}" << 'CADDYFILE_EOF'\n${caddyfile}CADDYFILE_EOF`], {
+    sudo: true,
+  });
+
+  // Write the 404 page
+  const notFoundHtml = generate404Page(installedApps, envConfig, { includeDocs });
+  const srvDir = `${caddyDir}/srv`;
+  await shell("mkdir", ["-p", srvDir], { sudo: true });
+  await shell("bash", ["-c", `cat > "${srvDir}/404.html" << 'HTML_EOF'\n${notFoundHtml}HTML_EOF`], {
     sudo: true,
   });
 

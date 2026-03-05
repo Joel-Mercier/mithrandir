@@ -381,6 +381,7 @@ export const APP_REGISTRY: AppDefinition[] = [
         `      - ACME_EMAIL=${acmeEmail}`,
         "    volumes:",
         `      - ${appDir}/Caddyfile:/etc/caddy/Caddyfile:ro`,
+        `      - ${appDir}/srv:/srv:ro`,
         `      - ${appDir}/data:/data`,
         `      - ${appDir}/config:/config`,
         "    restart: unless-stopped",

@@ -106,6 +106,9 @@ All notable changes to this project are documented here. This page is auto-gener
 - fix health check using wrong rclone config under sudo (`c61574d`)
 - fix swap not persisting across reboots on Raspberry Pi OS (`06814cc`)
 - fix config command not masking password env vars (`93dec7f`)
+- fix changelog pre-commit hook: use --show-toplevel and add re-entrant note (`9013867`)
+- fix changelog hook: use commit-msg hook to include current commit in changelog (`360ec15`)
+- fix docs Docker build: install git for VitePress lastUpdated
 
 ### Changed
 
