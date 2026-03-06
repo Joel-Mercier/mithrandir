@@ -23,6 +23,7 @@ sudo mithrandir install <target>
 | `docker` | Install Docker engine on the host (includes swap configuration) |
 | `backup` | Install rclone and the backup systemd timer for scheduled backups |
 | `https` | Install Caddy as a wildcard HTTPS reverse proxy using DuckDNS DNS-01 challenge |
+| `firewall` | Install UFW firewall with ufw-docker for Docker-aware port control |
 
 ### Stacks
 

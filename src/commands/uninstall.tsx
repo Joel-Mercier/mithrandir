@@ -8,6 +8,7 @@ import { getApp, getAppNames, getAppDir, getCompanionApps, getComposePath } from
 import { shell, commandExists } from "@/lib/shell.js";
 import { loadEnvConfig } from "@/lib/config.js";
 import { regenerateCaddyfile } from "@/lib/caddy.js";
+import { isUfwActive, removeAppPorts } from "@/lib/ufw.js";
 import { BACKUP_LOG_PATH } from "@/lib/logger.js";
 import { Header } from "@/components/Header.js";
 import { AppStatus } from "@/components/AppStatus.js";
@@ -104,6 +105,19 @@ function AppUninstallInteractive({
         await shell("docker", ["compose", "down", "--volumes"], { cwd: companionDir, ignoreError: true });
         await shell("rm", ["-rf", companionDir]);
         addStep({ name: companion.displayName, status: "done", message: "Uninstalled" });
+      }
+    }
+
+    // Remove UFW rules if firewall is enabled
+    if (env.ENABLE_FIREWALL === "true" && await isUfwActive()) {
+      try {
+        await removeAppPorts(app);
+        for (const companion of companions) {
+          await removeAppPorts(companion);
+        }
+        addStep({ name: "Firewall", status: "done", message: "UFW rules removed" });
+      } catch {
+        addStep({ name: "Firewall", status: "skipped", message: "Failed to remove UFW rules" });
       }
     }
 

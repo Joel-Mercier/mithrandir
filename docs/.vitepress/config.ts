@@ -34,6 +34,7 @@ export default defineConfig({
           { text: "Setup Wizard", link: "/guide/setup" },
           { text: "Backup & Restore", link: "/guide/backup" },
           { text: "HTTPS Setup", link: "/guide/https" },
+          { text: "Firewall", link: "/guide/firewall" },
           {
             text: "Apps",
             collapsed: false,

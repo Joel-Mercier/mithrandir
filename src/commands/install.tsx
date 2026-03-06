@@ -26,6 +26,16 @@ import { shell } from "@/lib/shell.js";
 import { generateCompose } from "@/lib/compose.js";
 import { generate404Page, generateCaddyfile, generateCaddyDockerfile, getDuckDnsDomain, regenerateCaddyfile } from "@/lib/caddy.js";
 import { getLocalIp } from "@/lib/distro.js";
+import {
+  isUfwInstalled,
+  isUfwDockerInstalled,
+  isUfwActive,
+  installUfw,
+  installUfwDocker,
+  enableUfw,
+  allowAppPorts,
+  syncAllAppPorts,
+} from "@/lib/ufw.js";
 import { Header } from "@/components/Header.js";
 import { AppStatus } from "@/components/AppStatus.js";
 import { ProgressBar } from "@/components/ProgressBar.js";
@@ -533,6 +543,175 @@ function InstallHttps() {
   );
 }
 
+// ─── Install Firewall (UFW + ufw-docker) ─────────────────────────────────────
+
+function InstallFirewall() {
+  const { exit } = useApp();
+  const [completedSteps, setCompletedSteps] = useState<CompletedStep[]>([]);
+  const [phase, setPhase] = useState<
+    "checking" | "installing-ufw" | "installing-ufw-docker" | "enabling" | "rules" | "done"
+  >("checking");
+  const [error, setError] = useState<string | null>(null);
+
+  function addStep(step: CompletedStep) {
+    setCompletedSteps((prev) => [...prev, step]);
+  }
+
+  useEffect(() => {
+    run();
+  }, []);
+
+  async function run() {
+    // Check if UFW is already installed
+    const ufwInstalled = await isUfwInstalled();
+    if (ufwInstalled) {
+      addStep({ name: "UFW", status: "done", message: "Already installed" });
+    } else {
+      setPhase("installing-ufw");
+      try {
+        await installUfw();
+        addStep({ name: "UFW", status: "done", message: "Installed" });
+      } catch (err: any) {
+        setError(`UFW install failed: ${err.message}`);
+        return;
+      }
+    }
+
+    // Check if ufw-docker is already installed
+    const ufwDockerInstalled = await isUfwDockerInstalled();
+    if (ufwDockerInstalled) {
+      addStep({ name: "ufw-docker", status: "done", message: "Already installed" });
+    } else {
+      setPhase("installing-ufw-docker");
+      try {
+        await installUfwDocker();
+        addStep({ name: "ufw-docker", status: "done", message: "Installed" });
+      } catch (err: any) {
+        setError(`ufw-docker install failed: ${err.message}`);
+        return;
+      }
+    }
+
+    // Enable UFW if not already active
+    setPhase("enabling");
+    const active = await isUfwActive();
+    if (active) {
+      addStep({ name: "Enable UFW", status: "done", message: "Already active" });
+    } else {
+      try {
+        await enableUfw();
+        addStep({ name: "Enable UFW", status: "done", message: "Enabled (default deny incoming, SSH allowed)" });
+      } catch (err: any) {
+        setError(`Failed to enable UFW: ${err.message}`);
+        return;
+      }
+    }
+
+    // Add rules for all currently installed apps
+    setPhase("rules");
+    try {
+      const env = await loadEnvConfig();
+      const installedApps = APP_REGISTRY.filter((app) =>
+        existsSync(getComposePath(app, env.BASE_DIR)),
+      );
+      if (installedApps.length > 0) {
+        await syncAllAppPorts(installedApps);
+        addStep({
+          name: "Firewall rules",
+          status: "done",
+          message: `Added rules for ${installedApps.length} installed app(s)`,
+        });
+      } else {
+        addStep({ name: "Firewall rules", status: "skipped", message: "No apps installed yet" });
+      }
+    } catch {
+      addStep({ name: "Firewall rules", status: "skipped", message: "Failed to sync rules (non-fatal)" });
+    }
+
+    // Save ENABLE_FIREWALL to .env
+    try {
+      const env = await loadEnvConfig();
+      env.ENABLE_FIREWALL = "true";
+      await saveEnvConfig(env);
+    } catch {
+      // Non-fatal
+    }
+
+    setPhase("done");
+    setTimeout(() => exit(), 500);
+  }
+
+  if (error) {
+    return (
+      <Box flexDirection="column">
+        <Header title="Install: firewall" />
+        <StatusMessage variant="error">{error}</StatusMessage>
+      </Box>
+    );
+  }
+
+  return (
+    <Box flexDirection="column">
+      <Header title="Install: firewall" />
+
+      <Box marginBottom={1} flexDirection="column">
+        <Text dimColor>  Configures UFW firewall with ufw-docker to control access to</Text>
+        <Text dimColor>  container ports. SSH (port 22) is always allowed.</Text>
+      </Box>
+
+      {completedSteps.map((step, i) => (
+        <AppStatus
+          key={i}
+          name={step.name}
+          status={step.status}
+          message={step.message}
+        />
+      ))}
+
+      {phase === "checking" && (
+        <Text>
+          <Text color="green"><Spinner type="dots" /></Text>
+          {" "}Checking firewall status...
+        </Text>
+      )}
+      {phase === "installing-ufw" && (
+        <Text>
+          <Text color="yellow"><Spinner type="dots" /></Text>
+          {" "}Installing UFW...
+        </Text>
+      )}
+      {phase === "installing-ufw-docker" && (
+        <Text>
+          <Text color="yellow"><Spinner type="dots" /></Text>
+          {" "}Installing ufw-docker...
+        </Text>
+      )}
+      {phase === "enabling" && (
+        <Text>
+          <Text color="green"><Spinner type="dots" /></Text>
+          {" "}Enabling UFW...
+        </Text>
+      )}
+      {phase === "rules" && (
+        <Text>
+          <Text color="green"><Spinner type="dots" /></Text>
+          {" "}Configuring firewall rules for installed apps...
+        </Text>
+      )}
+
+      {phase === "done" && (
+        <Box flexDirection="column" marginTop={1}>
+          <StatusMessage variant="success">
+            Firewall is enabled and configured
+          </StatusMessage>
+          <Text dimColor>  UFW rules are automatically managed when you install or uninstall apps.</Text>
+          <Text dimColor>  View current rules: sudo ufw status</Text>
+        </Box>
+      )}
+    </Box>
+  );
+}
+
 // ─── Install App ─────────────────────────────────────────────────────────────
 
 function InstallApp({ appName }: { appName: string }) {
@@ -621,6 +800,19 @@ function InstallApp({ appName }: { appName: string }) {
           await Bun.write(`${dnsmasqDir}/10-wildcard-domain.conf`, `address=/${domain}/${ip}\n`);
           addStep({ name: "DNS", status: "done", message: `Wildcard *.${domain} → ${ip}` });
         }
+      }
+    }
+
+    // Add UFW rules if firewall is enabled
+    if (env.ENABLE_FIREWALL === "true" && await isUfwActive()) {
+      try {
+        await allowAppPorts(app);
+        for (const companion of companions) {
+          await allowAppPorts(companion);
+        }
+        addStep({ name: "Firewall", status: "done", message: "UFW rules added" });
+      } catch {
+        addStep({ name: "Firewall", status: "skipped", message: "Failed to add UFW rules" });
       }
     }
 
@@ -763,6 +955,18 @@ function InstallStack({ stackName }: { stackName: string }) {
       }
     }
 
+    // Add UFW rules if firewall is enabled
+    if (env.ENABLE_FIREWALL === "true" && await isUfwActive()) {
+      try {
+        for (const { app } of appsToInstall) {
+          await allowAppPorts(app);
+        }
+        addStep({ name: "Firewall", status: "done", message: "UFW rules added" });
+      } catch {
+        addStep({ name: "Firewall", status: "skipped", message: "Failed to add UFW rules" });
+      }
+    }
+
     setPhase("done");
     setTimeout(() => exit(), 500);
   }
@@ -818,7 +1022,7 @@ function InstallStack({ stackName }: { stackName: string }) {
 
 // ─── Entry point ─────────────────────────────────────────────────────────────
 
-const SPECIAL_TARGETS = ["docker", "backup", "https"];
+const SPECIAL_TARGETS = ["docker", "backup", "https", "firewall"];
 
 export async function runInstall(args: string[]): Promise<void> {
   const target = args[0];
@@ -826,7 +1030,7 @@ export async function runInstall(args: string[]): Promise<void> {
 
   if (!target) {
     console.error(
-      `Usage: mithrandir install <target>\n\nTargets:\n  docker                Install Docker engine\n  backup                Install rclone and backup systemd timer\n  https                 Install Caddy HTTPS reverse proxy\n  <stack>               Install a predefined app stack\n  <app>                 Install a single app\n\nStacks: ${stackNames.join(", ")}\n\nAvailable apps: ${getAppNames().join(", ")}`,
+      `Usage: mithrandir install <target>\n\nTargets:\n  docker                Install Docker engine\n  backup                Install rclone and backup systemd timer\n  https                 Install Caddy HTTPS reverse proxy\n  firewall              Install UFW firewall with ufw-docker\n  <stack>               Install a predefined app stack\n  <app>                 Install a single app\n\nStacks: ${stackNames.join(", ")}\n\nAvailable apps: ${getAppNames().join(", ")}`,
     );
     process.exit(1);
   }
@@ -844,6 +1048,9 @@ export async function runInstall(args: string[]): Promise<void> {
     await waitUntilExit();
   } else if (target === "https") {
     const { waitUntilExit } = render(<InstallHttps />);
+    await waitUntilExit();
+  } else if (target === "firewall") {
+    const { waitUntilExit } = render(<InstallFirewall />);
     await waitUntilExit();
   } else if (target === "caddy") {
     console.error("Caddy is installed via: mithrandir install https");

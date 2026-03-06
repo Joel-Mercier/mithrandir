@@ -27,6 +27,7 @@ sudo mithrandir install <stack>                  # Install a predefined app stac
 sudo mithrandir install docker                   # Install Docker engine
 sudo mithrandir install backup                   # Install rclone + backup systemd timer
 sudo mithrandir install https                    # Install Caddy HTTPS reverse proxy
+sudo mithrandir install firewall                 # Install UFW firewall with ufw-docker
 sudo mithrandir reinstall <app> [--yes]        # Reinstall an app from scratch
 sudo mithrandir uninstall <app>
 sudo mithrandir status                      # Check system status
@@ -61,6 +62,9 @@ When `ENABLE_HTTPS=true`, compose generation filters port 443 from Pi-hole's ext
 ### HTTPS / Caddy (`src/lib/caddy.ts`)
 `mithrandir install https` sets up Caddy as a wildcard HTTPS reverse proxy using DuckDNS DNS-01 challenge. Caddy is a hidden app in the registry (not shown in setup app-select) with a `rawCompose` generator. Domain is derived from `DUCKDNS_SUBDOMAINS` via `getDuckDnsDomain()` — no separate `PRIMARY_DOMAIN` env var. `generateCaddyfile()` creates reverse proxy blocks for all installed apps with ports. `regenerateCaddyfile()` is called after app install/uninstall to keep the Caddyfile in sync. The Caddy Docker image is built locally with `xcaddy` + `caddy-dns/duckdns` module. Requires DuckDNS app to be installed and running. Users must configure wildcard DNS on their router (`*.domain.duckdns.org → LAN IP`).
 
+### Firewall (`src/lib/ufw.ts`)
+`mithrandir install firewall` sets up UFW with the `ufw-docker` third-party utility. Standard UFW doesn't work with Docker (Docker bypasses iptables), so `ufw-docker` manages rules in the `DOCKER-USER` chain. For host-networked apps (Home Assistant, DuckDNS), regular `ufw allow` rules are used. For bridge-networked apps, `ufw-docker allow <container> <port>` is used. When `ENABLE_FIREWALL=true`, install/uninstall commands automatically add/remove UFW rules. SSH (port 22) is always allowed.
+
 ### Documentation Site (`docs/`)
 VitePress static site in `docs/` folder, served via Docker (nginx). `mithrandir docs` builds the Docker image and starts the container on port 4173. `mithrandir docs stop` stops it. When Caddy HTTPS is enabled, `regenerateCaddyfile()` automatically adds/removes a `mithrandir-docs` reverse proxy entry. The docs container is not part of the app registry — it's managed separately.
 
@@ -87,7 +91,7 @@ These allow programmatic access to the APIs of the above services.
 
 ## Configuration
 
-- **.env** — All configuration lives here. Core settings: `BASE_DIR`, `PUID`/`PGID`, `TZ`. Per-app secrets: DuckDNS, WireGuard, Spotify. Backup settings: `BACKUP_DIR` (default `/backups`), `LOCAL_RETENTION` (5), `REMOTE_RETENTION` (10), `RCLONE_REMOTE` (gdrive), `APPS` (auto or comma-separated). HTTPS settings: `ENABLE_HTTPS`, `ACME_EMAIL`. Not in git.
+- **.env** — All configuration lives here. Core settings: `BASE_DIR`, `PUID`/`PGID`, `TZ`. Per-app secrets: DuckDNS, WireGuard, Spotify. Backup settings: `BACKUP_DIR` (default `/backups`), `LOCAL_RETENTION` (5), `REMOTE_RETENTION` (10), `RCLONE_REMOTE` (gdrive), `APPS` (auto or comma-separated). HTTPS settings: `ENABLE_HTTPS`, `ACME_EMAIL`. Firewall: `ENABLE_FIREWALL`. Not in git.
 
 ### Changelog (`docs/changelog.md`)
 Auto-generated from git commits via `scripts/generate-changelog.sh`, grouped by git tags. Each tag becomes a version section; commits after the latest tag appear under "Unreleased". The script categorizes commits by message prefix (add/fix/update/etc.). To create a release, run `scripts/release.sh <version>` — this bumps the version in `package.json` and the nav dropdown in `docs/.vitepress/config.ts`, generates the changelog, commits everything, and creates the git tag.

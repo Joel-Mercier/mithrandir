@@ -46,6 +46,7 @@ const cli = meow(
     install docker                     Install Docker engine on the host
     install backup                     Install rclone and backup systemd timer
     install https                      Install Caddy HTTPS reverse proxy
+    install firewall                   Install UFW firewall with ufw-docker
     reinstall <app>                    Reinstall an app (stop, remove, recreate)
     uninstall [app]                    Uninstall an app, or full system uninstall
     docs                               Build and serve docs website

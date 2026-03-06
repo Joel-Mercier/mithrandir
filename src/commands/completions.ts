@@ -19,7 +19,7 @@ function generateBash(): string {
   const cmds = SUBCOMMANDS.join(" ");
   const appCmds = APP_COMMANDS.join("|");
   const backupSubs = BACKUP_SUBCOMMANDS.join(" ");
-  const installTargets = `docker backup https ${stacks} ${apps}`;
+  const installTargets = `docker backup https firewall ${stacks} ${apps}`;
 
   return `# mithrandir bash completions
 # Add to ~/.bashrc: eval "$(mithrandir completions bash)"
@@ -89,7 +89,7 @@ _mithrandir() {
     args)
       case \${words[2]} in
         install)
-          compadd -- docker backup https ${stacks} ${apps}
+          compadd -- docker backup https firewall ${stacks} ${apps}
           ;;
         start|stop|restart|reinstall|uninstall|update|log)
           compadd -- ${apps}
@@ -146,6 +146,7 @@ function generateFish(): string {
   lines.push(`complete -c mithrandir -n '__fish_seen_subcommand_from install' -a 'docker'`);
   lines.push(`complete -c mithrandir -n '__fish_seen_subcommand_from install' -a 'backup'`);
   lines.push(`complete -c mithrandir -n '__fish_seen_subcommand_from install' -a 'https'`);
+  lines.push(`complete -c mithrandir -n '__fish_seen_subcommand_from install' -a 'firewall'`);
   for (const stack of stacks) {
     lines.push(
       `complete -c mithrandir -n '__fish_seen_subcommand_from install' -a '${stack}'`,

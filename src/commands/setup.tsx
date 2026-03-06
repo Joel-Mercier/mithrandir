@@ -40,6 +40,15 @@ import {
   installSystemdUnits,
 } from "@/lib/systemd.js";
 import { detectDistro, getLocalIp } from "@/lib/distro.js";
+import {
+  isUfwInstalled,
+  isUfwDockerInstalled,
+  isUfwActive,
+  installUfw,
+  installUfwDocker,
+  enableUfw,
+  syncAllAppPorts,
+} from "@/lib/ufw.js";
 import { loadEnvConfig, saveEnvConfig } from "@/lib/config.js";
 import { shell } from "@/lib/shell.js";
 import { getSwapInfo, ensureSwap, formatSwapSize } from "@/lib/swap.js";
@@ -83,6 +92,7 @@ type SetupStep =
   | "setup-https"
   | "confirm-autosetup"
   | "autosetup-apps"
+  | "setup-firewall"
   | "backup-service"
   | "summary";
 
@@ -684,6 +694,94 @@ export function SetupCommand({ flags }: SetupCommandProps) {
   // InstallAppsStep is defined at module level to avoid React component
   // recreation on parent re-renders (the classic inner-component anti-pattern).
 
+  // ─── Step: Firewall ──────────────────────────────────────────────────────────
+
+  function FirewallSetupStep() {
+    const [status, setStatus] = useState<
+      "confirm" | "installing" | "done" | "skipped"
+    >(autoYes ? "installing" : "confirm");
+
+    useEffect(() => {
+      if (autoYes) {
+        doInstallFirewall();
+      }
+    }, []);
+
+    async function doInstallFirewall() {
+      setStatus("installing");
+      try {
+        // Install UFW if needed
+        if (!(await isUfwInstalled())) {
+          await installUfw();
+        }
+
+        // Install ufw-docker if needed
+        if (!(await isUfwDockerInstalled())) {
+          await installUfwDocker();
+        }
+
+        // Enable UFW if not active
+        if (!(await isUfwActive())) {
+          await enableUfw();
+        }
+
+        // Add rules for all selected apps
+        await syncAllAppPorts(selectedApps);
+
+        // Save to .env
+        envConfig.ENABLE_FIREWALL = "true";
+        await saveEnvConfig(envConfig);
+
+        setStatus("done");
+        addCompletedStep({ name: "Firewall", status: "done", message: "UFW enabled with ufw-docker" });
+      } catch (err: any) {
+        setStatus("done");
+        addCompletedStep({ name: "Firewall", status: "skipped", message: `Failed: ${err.message}` });
+      }
+      setStep("backup-service");
+    }
+
+    function handleConfirm() {
+      doInstallFirewall();
+    }
+
+    function handleCancel() {
+      setStatus("skipped");
+      addCompletedStep({ name: "Firewall", status: "skipped", message: "Skipped" });
+      setStep("backup-service");
+    }
+
+    return (
+      <Box flexDirection="column">
+        <StepIndicator current={9} total={11} label="Firewall" />
+        {status === "confirm" && (
+          <Box flexDirection="column">
+            <Text bold>Enable UFW firewall?</Text>
+            <Text dimColor>  Configures UFW with ufw-docker to control access to container ports.</Text>
+            <Text dimColor>  Default policy: deny all incoming, allow outgoing. SSH is always allowed.</Text>
+            <Text dimColor>  Firewall rules are automatically managed when you install or uninstall apps.</Text>
+            <Box marginTop={1}>
+              <Text>Enable firewall? </Text>
+              <ConfirmInput onConfirm={handleConfirm} onCancel={handleCancel} />
+            </Box>
+          </Box>
+        )}
+        {status === "installing" && (
+          <Text>
+            <Text color="yellow"><Spinner type="dots" /></Text>
+            {" "}Installing and configuring firewall...
+          </Text>
+        )}
+        {status === "done" && (
+          <AppStatus name="Firewall" status="done" message="UFW enabled with ufw-docker" />
+        )}
+        {status === "skipped" && (
+          <AppStatus name="Firewall" status="skipped" message="Skipped" />
+        )}
+      </Box>
+    );
+  }
+
   // ─── Step: Backup service ───────────────────────────────────────────────────
 
   function BackupServiceStep() {
@@ -724,7 +822,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
 
     return (
       <Box flexDirection="column">
-        <StepIndicator current={9} total={10} label="Backup Service" />
+        <StepIndicator current={10} total={11} label="Backup Service" />
         {status === "checking" && (
           <Text>
             <Text color="green"><Spinner type="dots" /></Text>
@@ -763,7 +861,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
 
     return (
       <Box flexDirection="column">
-        <StepIndicator current={10} total={10} label="Setup Complete" />
+        <StepIndicator current={11} total={11} label="Setup Complete" />
         <Box marginBottom={1}>
           <Text bold color="green">All services are running!</Text>
         </Box>
@@ -921,7 +1019,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
           selectedApps={selectedApps}
           autoYes={autoYes}
           onYes={() => setStep("autosetup-apps")}
-          onNo={() => setStep("backup-service")}
+          onNo={() => setStep("setup-firewall")}
         />
       )}
       {step === "autosetup-apps" && (
@@ -941,10 +1039,11 @@ export function SetupCommand({ flags }: SetupCommandProps) {
                 notes: r.warnings.length > 0 ? r.warnings.map((w) => `  ⚠ ${w}`) : undefined,
               });
             }
-            setStep("backup-service");
+            setStep("setup-firewall");
           }}
         />
       )}
+      {step === "setup-firewall" && <FirewallSetupStep />}
       {step === "backup-service" && <BackupServiceStep />}
       {step === "summary" && <SummaryStep />}
     </Box>

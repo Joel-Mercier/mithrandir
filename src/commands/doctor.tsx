@@ -13,6 +13,7 @@ import { isDockerInstalled } from "@/lib/docker.js";
 import { isRcloneInstalled, isRcloneRemoteConfigured } from "@/lib/rclone.js";
 import { isTimerActive } from "@/lib/systemd.js";
 import { shell } from "@/lib/shell.js";
+import { isUfwInstalled, isUfwDockerInstalled, isUfwActive } from "@/lib/ufw.js";
 import { getSwapInfo, formatSwapSize } from "@/lib/swap.js";
 import { existsSync } from "fs";
 import type { EnvConfig } from "@/types.js";
@@ -281,6 +282,62 @@ async function checkSystemdTimer(): Promise<CheckResult> {
   };
 }
 
+async function checkFirewall(envConfig: EnvConfig): Promise<CheckResult[]> {
+  if (envConfig.ENABLE_FIREWALL !== "true") {
+    return [{
+      category: "System",
+      name: "Firewall",
+      status: "warn",
+      message: "Not enabled",
+      hint: "Run `mithrandir install firewall` to set up UFW with ufw-docker",
+    }];
+  }
+
+  const results: CheckResult[] = [];
+
+  const ufwInstalled = await isUfwInstalled();
+  if (!ufwInstalled) {
+    return [{
+      category: "System",
+      name: "Firewall",
+      status: "fail",
+      message: "ENABLE_FIREWALL=true but UFW is not installed",
+      hint: "Run `mithrandir install firewall` to install and configure it",
+    }];
+  }
+
+  const active = await isUfwActive();
+  if (!active) {
+    return [{
+      category: "System",
+      name: "Firewall",
+      status: "fail",
+      message: "UFW is installed but not active",
+      hint: "Run `mithrandir install firewall` to enable it",
+    }];
+  }
+
+  const ufwDockerInstalled = await isUfwDockerInstalled();
+  if (!ufwDockerInstalled) {
+    results.push({
+      category: "System",
+      name: "Firewall",
+      status: "fail",
+      message: "UFW is active but ufw-docker is not installed",
+      hint: "Run `mithrandir install firewall` to install ufw-docker",
+    });
+  } else {
+    results.push({
+      category: "System",
+      name: "Firewall",
+      status: "pass",
+      message: "UFW active with ufw-docker",
+    });
+  }
+
+  return results;
+}
+
 async function checkRclone(rcloneRemote: string, env?: EnvConfig): Promise<CheckResult[]> {
   const installed = await isRcloneInstalled();
   if (!installed) {
@@ -328,7 +385,8 @@ async function runChecks(): Promise<CheckResult[]> {
   const dockerChecks = await checkDocker();
   const swapCheck = await checkSwap();
 
-  const results: CheckResult[] = [envCheck, ...dockerChecks, swapCheck];
+  const firewallChecks = await checkFirewall(envConfig);
+  const results: CheckResult[] = [envCheck, ...dockerChecks, swapCheck, ...firewallChecks];
 
   // App checks
   const stoppedCheck = await checkStoppedContainers(baseDir);

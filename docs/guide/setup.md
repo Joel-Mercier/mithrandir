@@ -19,8 +19,9 @@ The wizard runs through these steps in order:
 7. **Secrets** — Prompts for any required API tokens, passwords, or keys
 8. **Install apps** — Pulls Docker images and starts all selected containers
 9. **HTTPS** — Offers to enable HTTPS via Caddy reverse proxy (requires DuckDNS). In `--yes` mode, auto-enables if `ACME_EMAIL` is already configured in `.env`
-10. **Backup service** — Sets up the systemd timer for daily automatic backups at 2:00 AM
-11. **Summary** — Shows all running services with their URLs
+10. **Firewall** — Offers to enable UFW firewall with ufw-docker to control access to container ports. SSH is always allowed. In `--yes` mode, the firewall is installed automatically
+11. **Backup service** — Sets up the systemd timer for daily automatic backups at 2:00 AM
+12. **Summary** — Shows all running services with their URLs
 
 ## App Selection
 
@@ -76,6 +77,7 @@ Key settings include:
 | `REMOTE_RETENTION` | `10` | Number of remote backups to keep |
 | `RCLONE_REMOTE` | `gdrive` | rclone remote name for cloud backups |
 | `ENABLE_HTTPS` | `false` | Enable Caddy HTTPS reverse proxy |
+| `ENABLE_FIREWALL` | *(not set)* | Enable UFW firewall with automatic rule management |
 
 ## Non-Interactive Mode
 
