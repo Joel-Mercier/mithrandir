@@ -154,6 +154,7 @@ export default defineConfig({
               { text: "status", link: "/reference/status" },
               { text: "health", link: "/reference/health" },
               { text: "log", link: "/reference/log" },
+              { text: "graph", link: "/reference/graph" },
             ],
           },
           {

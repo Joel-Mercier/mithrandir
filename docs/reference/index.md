@@ -46,6 +46,7 @@ Mithrandir is invoked as `mithrandir <command> [options]`. Most commands that mo
 | [`status`](./status) | Show installed apps and system status |
 | [`health`](./health) | Check system health |
 | [`log`](./log) | View container logs |
+| [`graph`](./graph) | Show inter-app dependency tree |
 
 ### Maintenance
 

@@ -19,6 +19,7 @@ import { runSelfUpdate } from "@/commands/self-update.js";
 import { runVersion } from "@/commands/version.js";
 import { runConfig } from "@/commands/config.js";
 import { runCompletions } from "@/commands/completions.js";
+import { runGraph } from "@/commands/graph.js";
 import { runRecover } from "@/commands/recover.js";
 import { runDocs, runDocsStop } from "@/commands/docs.js";
 import { ErrorBoundary } from "@/components/ErrorBoundary.js";
@@ -41,6 +42,7 @@ const cli = meow(
     stop <app>                         Stop a running app container
     restart <app>                      Restart a running app container
     install <app>                      Install a single app
+    install <stack>                    Install a particular app stack (media, media-movies-tv, productivity, etc.)
     install docker                     Install Docker engine on the host
     install backup                     Install rclone and backup systemd timer
     install https                      Install Caddy HTTPS reverse proxy
@@ -53,6 +55,7 @@ const cli = meow(
     doctor                             Diagnose setup issues with fix suggestions
     update [app]                       Update all or a specific app's container
     log <app>                          View container logs
+    graph                              Show inter-app dependency tree
     self-update                        Update the CLI itself from git
     version                            Show version and git commit
     config                             Show current configuration
@@ -225,6 +228,10 @@ switch (command) {
 
   case "config":
     runConfig();
+    break;
+
+  case "graph":
+    runGraph();
     break;
 
   case "completions":

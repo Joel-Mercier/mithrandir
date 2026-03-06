@@ -309,6 +309,12 @@ sudo mithrandir docs stop         # Stop docs website
 bun run docs:dev                  # Local dev server (hot reload)
 ```
 
+**Dependency graph:**
+```bash
+mithrandir graph
+```
+Shows the inter-app dependency tree with color-coded installation status (green = installed, dim = not installed). Includes the media pipeline data flow, network/security dependencies, standalone apps, and recommended installation order for the Arr stack.
+
 **Status check:**
 ```bash
 sudo mithrandir status
@@ -391,7 +397,6 @@ scripts/generate-changelog.sh
 - [ ] The CLI appears to require root privileges for all operations. There's rootless Docker support, which has been stable for years and is now the recommended approach for security. Plan a migration to sudoless project if and whenever possible.
 - [ ] Backups are synced to cloud storage (e.g., Google Drive) via rclone with no mention of encryption. Sensitive config data — credentials, private keys, personal files from Vaultwarden or Immich — would be stored in plaintext on a third-party cloud service. Plan to encrypt backups with a passphrase. Also make sure the health command and the backup verify command verify the integrity of the backups.
 - [ ] As part of mithrandir setup, optionally configure ufw to allow only the ports actually needed by installed apps, with sane defaults. The setup wizard installs Docker and starts 20+ services, but there's no mention of ufw configuration. New users may unknowingly expose ports to their LAN or internet without realising it. Show a message explaining the benefits of a firewall when prompting this step.
-- [ ] Add a mithrandir graph command (and docs page) showing the inter-app dependency tree — especially useful for the Arr stack (Prowlarr → Sonarr/Radarr → qBittorrent → Jellyfin) to help users understand installation order and troubleshoot issues.
 - [ ] Setup a local test environment with docker. This would allow us to test the CLI on a wider range of hardware and operating systems, and also help us catch any regressions before releasing a new version.
 - [ ] check in prowlarr torznab (U2P / utopeer)
 - [ ] Add a \[CERTIFICATE_EXPIRATION\] > 72h check for each app during the Gatus setup to warn the user if their certificate is about to expire. Caddy is handling the certificate renewal automatically.

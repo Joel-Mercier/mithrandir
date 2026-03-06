@@ -3,7 +3,7 @@ import { getAppNames, getStackNames } from "@/lib/apps.js";
 const SUBCOMMANDS = [
   "setup", "backup", "restore", "recover", "start", "stop", "restart",
   "install", "reinstall", "uninstall", "status", "health", "doctor",
-  "update", "log", "self-update", "config", "version", "completions", "docs",
+  "update", "log", "graph", "self-update", "config", "version", "completions", "docs",
 ];
 
 const APP_COMMANDS = [
