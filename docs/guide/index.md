@@ -29,7 +29,7 @@ Mithrandir has only been tested on a Raspberry Pi 5 with 4GB RAM and running Ras
 
 ```sh
 # Clone the repository
-git clone https://github.com/your-username/homelab.git
+git clone https://github.com/Joel-Mercier/homelab.git
 cd homelab
 
 # Install everything (Bun, dependencies, CLI)
