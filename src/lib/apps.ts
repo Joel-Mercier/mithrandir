@@ -492,3 +492,76 @@ export function filterConflicts(apps: AppDefinition[]): AppDefinition[] {
 export function getCompanionApps(parentName: string): AppDefinition[] {
   return APP_REGISTRY.filter((app) => app.companionOf === parentName);
 }
+
+/** Predefined app stacks for one-command installs */
+export interface AppStack {
+  label: string;
+  value: string;
+  description: string;
+  apps: string[];
+}
+
+export const APP_STACKS: AppStack[] = [
+  {
+    label: "Media",
+    value: "media",
+    description: "qBittorrent, Prowlarr, Radarr, Sonarr, Bazarr, Seerr, Jellyfin, Navidrome, Lidarr, Immich",
+    apps: ["qbittorrent", "prowlarr", "radarr", "sonarr", "bazarr", "seerr", "jellyfin", "navidrome", "lidarr", "immich"],
+  },
+  {
+    label: "Media: Movies & TV",
+    value: "media-movies-tv",
+    description: "qBittorrent, Prowlarr, Radarr, Sonarr, Bazarr, Seerr, Jellyfin",
+    apps: ["qbittorrent", "prowlarr", "radarr", "sonarr", "bazarr", "seerr", "jellyfin"],
+  },
+  {
+    label: "Media: Music",
+    value: "media-music",
+    description: "Navidrome, Lidarr, qBittorrent",
+    apps: ["navidrome", "lidarr", "qbittorrent"],
+  },
+  {
+    label: "Media: Pictures",
+    value: "media-pictures",
+    description: "Immich",
+    apps: ["immich"],
+  },
+  {
+    label: "Automation",
+    value: "automation",
+    description: "Home Assistant",
+    apps: ["homeassistant"],
+  },
+  {
+    label: "Monitoring",
+    value: "monitoring",
+    description: "Gatus",
+    apps: ["gatus"],
+  },
+  {
+    label: "Productivity",
+    value: "productivity",
+    description: "Excalidraw, Omni Tools, Open WebUI, Vaultwarden",
+    apps: ["excalidraw", "omnitools", "openwebui", "vaultwarden"],
+  },
+  {
+    label: "Security",
+    value: "security",
+    description: "Caddy (HTTPS reverse proxy), Pi-hole (DNS)",
+    apps: ["caddy", "pihole"],
+  },
+  {
+    label: "Utilities",
+    value: "utilities",
+    description: "DuckDNS, WireGuard, Homarr",
+    apps: ["duckdns", "wireguard", "homarr"],
+  },
+];
+
+export function getStackNames(): string[] {
+  return APP_STACKS.map((s) => s.value);
+}
+
+export function getStack(name: string): AppStack | undefined {
+  return APP_STACKS.find((s) => s.value === name);
+}

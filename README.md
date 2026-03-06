@@ -209,6 +209,21 @@ sudo mithrandir install <app>
 ```
 Installs a single app: pulls the Docker image, creates directories, generates docker-compose.yml, and starts the container. The app must not already be installed.
 
+**Install a stack:**
+```bash
+sudo mithrandir install <stack>
+```
+Installs a predefined group of apps in one command. Already-installed apps are skipped. Companion apps are included automatically.
+
+Available stacks: `media`, `media-movies-tv`, `media-music`, `media-pictures`, `automation`, `monitoring`, `productivity`, `security`, `utilities`
+
+Examples:
+```bash
+sudo mithrandir install media-movies-tv    # qBittorrent, Prowlarr, Radarr, Sonarr, Bazarr, Seerr, Jellyfin
+sudo mithrandir install productivity       # Excalidraw, Omni Tools, Open WebUI, Vaultwarden
+sudo mithrandir install utilities          # DuckDNS, WireGuard, Homarr
+```
+
 **Install Docker:**
 ```bash
 sudo mithrandir install docker
@@ -373,6 +388,11 @@ scripts/generate-changelog.sh
 ## TODO
 
 - [ ] Add screenshots to the docs
+- [ ] The CLI appears to require root privileges for all operations. There's rootless Docker support, which has been stable for years and is now the recommended approach for security. Plan a migration to sudoless project if and whenever possible.
+- [ ] Backups are synced to cloud storage (e.g., Google Drive) via rclone with no mention of encryption. Sensitive config data — credentials, private keys, personal files from Vaultwarden or Immich — would be stored in plaintext on a third-party cloud service. Plan to encrypt backups with a passphrase. Also make sure the health command and the backup verify command verify the integrity of the backups.
+- [ ] As part of mithrandir setup, optionally configure ufw to allow only the ports actually needed by installed apps, with sane defaults. The setup wizard installs Docker and starts 20+ services, but there's no mention of ufw configuration. New users may unknowingly expose ports to their LAN or internet without realising it. Show a message explaining the benefits of a firewall when prompting this step.
+- [ ] Add a mithrandir graph command (and docs page) showing the inter-app dependency tree — especially useful for the Arr stack (Prowlarr → Sonarr/Radarr → qBittorrent → Jellyfin) to help users understand installation order and troubleshoot issues.
+- [ ] Setup a local test environment with docker. This would allow us to test the CLI on a wider range of hardware and operating systems, and also help us catch any regressions before releasing a new version.
 - [ ] check in prowlarr torznab (U2P / utopeer)
 - [ ] Add a \[CERTIFICATE_EXPIRATION\] > 72h check for each app during the Gatus setup to warn the user if their certificate is about to expire. Caddy is handling the certificate renewal automatically.
 - [ ] Check if Profilarr is a good solution for quality profiles

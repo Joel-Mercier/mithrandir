@@ -1,4 +1,4 @@
-import { getAppNames } from "@/lib/apps.js";
+import { getAppNames, getStackNames } from "@/lib/apps.js";
 
 const SUBCOMMANDS = [
   "setup", "backup", "restore", "recover", "start", "stop", "restart",
@@ -15,10 +15,11 @@ const BACKUP_SUBCOMMANDS = ["list", "delete", "verify"];
 
 function generateBash(): string {
   const apps = getAppNames().join(" ");
+  const stacks = getStackNames().join(" ");
   const cmds = SUBCOMMANDS.join(" ");
   const appCmds = APP_COMMANDS.join("|");
   const backupSubs = BACKUP_SUBCOMMANDS.join(" ");
-  const installTargets = `docker backup ${apps}`;
+  const installTargets = `docker backup https ${stacks} ${apps}`;
 
   return `# mithrandir bash completions
 # Add to ~/.bashrc: eval "$(mithrandir completions bash)"
@@ -68,6 +69,7 @@ complete -F _mithrandir mithrandir
 
 function generateZsh(): string {
   const apps = getAppNames().join(" ");
+  const stacks = getStackNames().join(" ");
   const cmds = SUBCOMMANDS.join(" ");
   const backupSubs = BACKUP_SUBCOMMANDS.join(" ");
 
@@ -87,7 +89,7 @@ _mithrandir() {
     args)
       case \${words[2]} in
         install)
-          compadd -- docker backup ${apps}
+          compadd -- docker backup https ${stacks} ${apps}
           ;;
         start|stop|restart|reinstall|uninstall|update|log)
           compadd -- ${apps}
@@ -138,9 +140,17 @@ function generateFish(): string {
     );
   }
 
-  lines.push("", "# Install targets (docker, backup, and app names)");
+  const stacks = getStackNames();
+
+  lines.push("", "# Install targets (docker, backup, https, stacks, and app names)");
   lines.push(`complete -c mithrandir -n '__fish_seen_subcommand_from install' -a 'docker'`);
   lines.push(`complete -c mithrandir -n '__fish_seen_subcommand_from install' -a 'backup'`);
+  lines.push(`complete -c mithrandir -n '__fish_seen_subcommand_from install' -a 'https'`);
+  for (const stack of stacks) {
+    lines.push(
+      `complete -c mithrandir -n '__fish_seen_subcommand_from install' -a '${stack}'`,
+    );
+  }
   for (const app of apps) {
     lines.push(
       `complete -c mithrandir -n '__fish_seen_subcommand_from install' -a '${app}'`,

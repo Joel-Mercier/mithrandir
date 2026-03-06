@@ -4,6 +4,7 @@ import { MultiSelect, TextInput, PasswordInput, ConfirmInput } from "@inkjs/ui";
 import Spinner from "ink-spinner";
 import {
   APP_REGISTRY,
+  APP_STACKS,
   getApp,
   getAppDir,
   getContainerName,
@@ -63,56 +64,7 @@ interface SetupCommandProps {
   flags: { yes?: boolean };
 }
 
-const APP_CATEGORIES = [
-  {
-    label: "Media: Movies & TV",
-    value: "media-movies-tv",
-    description: "qBittorrent, Prowlarr, Radarr, Sonarr, Bazarr, Seerr, Jellyfin",
-    apps: ["qbittorrent", "prowlarr", "radarr", "sonarr", "bazarr", "seerr", "jellyfin"],
-  },
-  {
-    label: "Media: Music",
-    value: "media-music",
-    description: "Navidrome, Lidarr, qBittorrent",
-    apps: ["navidrome", "lidarr", "qbittorrent"],
-  },
-  {
-    label: "Media: Pictures",
-    value: "media-pictures",
-    description: "Immich",
-    apps: ["immich"],
-  },
-  {
-    label: "Automation",
-    value: "automation",
-    description: "Home Assistant",
-    apps: ["homeassistant"],
-  },
-  {
-    label: "Monitoring",
-    value: "monitoring",
-    description: "Gatus",
-    apps: ["gatus"],
-  },
-  {
-    label: "Productivity",
-    value: "productivity",
-    description: "Excalidraw, Omni Tools, Open WebUI, Vaultwarden",
-    apps: ["excalidraw", "omnitools", "openwebui", "vaultwarden"],
-  },
-  {
-    label: "Security",
-    value: "security",
-    description: "Caddy (HTTPS reverse proxy), Pi-hole (DNS)",
-    apps: ["caddy", "pihole"],
-  },
-  {
-    label: "Utilities",
-    value: "utilities",
-    description: "DuckDNS, WireGuard, Homarr",
-    apps: ["duckdns", "wireguard", "homarr"],
-  },
-];
+const APP_CATEGORIES = APP_STACKS;
 
 const APP_DEPENDENCIES: Record<string, string[]> = {
   caddy: ["duckdns", "pihole"],

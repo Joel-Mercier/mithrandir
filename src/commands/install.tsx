@@ -3,7 +3,7 @@ import { Box, render, Text, useApp } from "ink";
 import Spinner from "ink-spinner";
 import { StatusMessage, TextInput } from "@inkjs/ui";
 import { existsSync } from "fs";
-import { getApp, getAppNames, getAppDir, getComposePath, getCompanionApps, APP_REGISTRY } from "@/lib/apps.js";
+import { getApp, getAppNames, getAppDir, getComposePath, getCompanionApps, getStack, getStackNames, APP_REGISTRY } from "@/lib/apps.js";
 import { loadEnvConfig, saveEnvConfig } from "@/lib/config.js";
 import {
   isDockerInstalled,
@@ -675,16 +675,158 @@ function InstallApp({ appName }: { appName: string }) {
   );
 }
 
+// ─── Install Stack ──────────────────────────────────────────────────────────
+
+function InstallStack({ stackName }: { stackName: string }) {
+  const { exit } = useApp();
+  const [completedSteps, setCompletedSteps] = useState<CompletedStep[]>([]);
+  const [phase, setPhase] = useState<"init" | "pulling" | "installing" | "caddy" | "done">("init");
+  const [currentLabel, setCurrentLabel] = useState("Initializing...");
+  const [error, setError] = useState<string | null>(null);
+  const [pullProgress, setPullProgress] = useState(0);
+
+  const stack = getStack(stackName)!;
+
+  function addStep(step: CompletedStep) {
+    setCompletedSteps((prev) => [...prev, step]);
+  }
+
+  useEffect(() => {
+    run();
+  }, []);
+
+  async function run() {
+    const env = await loadEnvConfig();
+
+    // Resolve all apps in the stack, including companions
+    const appNames = new Set<string>();
+    for (const name of stack.apps) {
+      appNames.add(name);
+      for (const companion of getCompanionApps(name)) {
+        appNames.add(companion.name);
+      }
+    }
+
+    // Filter out caddy (installed via `install https`) and already-installed apps
+    const appsToInstall: Array<{ app: NonNullable<ReturnType<typeof getApp>>; skipped?: string }> = [];
+    for (const name of appNames) {
+      if (name === "caddy") {
+        addStep({ name: "Caddy", status: "skipped", message: "Install separately via: mithrandir install https" });
+        continue;
+      }
+      const app = getApp(name);
+      if (!app) continue;
+
+      const composePath = getComposePath(app, env.BASE_DIR);
+      if (existsSync(composePath)) {
+        addStep({ name: app.displayName, status: "done", message: "Already installed" });
+        continue;
+      }
+
+      if (app.requiresHttps && env.ENABLE_HTTPS !== "true") {
+        addStep({ name: app.displayName, status: "skipped", message: "Requires HTTPS (run: mithrandir install https)" });
+        continue;
+      }
+
+      appsToInstall.push({ app });
+    }
+
+    if (appsToInstall.length === 0) {
+      setPhase("done");
+      setTimeout(() => exit(), 500);
+      return;
+    }
+
+    // Install each app
+    for (const { app } of appsToInstall) {
+      setPhase("pulling");
+      setCurrentLabel(`Pulling ${app.image}...`);
+      setPullProgress(0);
+      await pullImageWithProgress(app.image, (pct) => setPullProgress(pct));
+      addStep({ name: `Pull ${app.displayName}`, status: "done", message: app.image });
+
+      setPhase("installing");
+      setCurrentLabel(`Installing ${app.name}...`);
+      await writeComposeAndStart(app, env);
+      addStep({ name: app.displayName, status: "done", message: `${app.name} is running` });
+    }
+
+    // Regenerate Caddyfile if HTTPS is enabled
+    if (env.ENABLE_HTTPS === "true") {
+      setPhase("caddy");
+      setCurrentLabel("Updating HTTPS configuration...");
+      try {
+        await regenerateCaddyfile(env);
+        addStep({ name: "HTTPS", status: "done", message: "Caddyfile updated" });
+      } catch {
+        addStep({ name: "HTTPS", status: "skipped", message: "Failed to update Caddyfile" });
+      }
+    }
+
+    setPhase("done");
+    setTimeout(() => exit(), 500);
+  }
+
+  if (error) {
+    return (
+      <Box flexDirection="column">
+        <Header title={`Install stack: ${stack.label}`} />
+        <StatusMessage variant="error">{error}</StatusMessage>
+      </Box>
+    );
+  }
+
+  return (
+    <Box flexDirection="column">
+      <Header title={`Install stack: ${stack.label}`} />
+      <Text dimColor>  {stack.description}</Text>
+      <Box marginTop={1} flexDirection="column">
+        {completedSteps.map((step, i) => (
+          <AppStatus
+            key={i}
+            name={step.name}
+            status={step.status}
+            message={step.message}
+          />
+        ))}
+
+        {(phase === "init" || phase === "pulling" || phase === "installing" || phase === "caddy") && (
+          <Box flexDirection="column">
+            <Text>
+              <Text color="green">
+                <Spinner type="dots" />
+              </Text>
+              {" "}{currentLabel}
+            </Text>
+            {phase === "pulling" && pullProgress > 0 && pullProgress < 100 && (
+              <ProgressBar percent={pullProgress} />
+            )}
+          </Box>
+        )}
+
+        {phase === "done" && (
+          <Box marginTop={1}>
+            <StatusMessage variant="success">
+              Stack '{stack.label}' install complete
+            </StatusMessage>
+          </Box>
+        )}
+      </Box>
+    </Box>
+  );
+}
+
 // ─── Entry point ─────────────────────────────────────────────────────────────
 
 const SPECIAL_TARGETS = ["docker", "backup", "https"];
 
 export async function runInstall(args: string[]): Promise<void> {
   const target = args[0];
+  const stackNames = getStackNames();
 
   if (!target) {
     console.error(
-      `Usage: mithrandir install <target>\n\nTargets:\n  docker                Install Docker engine\n  backup                Install rclone and backup systemd timer\n  https                 Install Caddy HTTPS reverse proxy\n  <app>                 Install a single app\n\nAvailable apps: ${getAppNames().join(", ")}`,
+      `Usage: mithrandir install <target>\n\nTargets:\n  docker                Install Docker engine\n  backup                Install rclone and backup systemd timer\n  https                 Install Caddy HTTPS reverse proxy\n  <stack>               Install a predefined app stack\n  <app>                 Install a single app\n\nStacks: ${stackNames.join(", ")}\n\nAvailable apps: ${getAppNames().join(", ")}`,
     );
     process.exit(1);
   }
@@ -706,6 +848,9 @@ export async function runInstall(args: string[]): Promise<void> {
   } else if (target === "caddy") {
     console.error("Caddy is installed via: mithrandir install https");
     process.exit(1);
+  } else if (getStack(target)) {
+    const { waitUntilExit } = render(<InstallStack stackName={target} />);
+    await waitUntilExit();
   } else {
     const { waitUntilExit } = render(<InstallApp appName={target} />);
     await waitUntilExit();
