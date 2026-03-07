@@ -103,7 +103,7 @@ function AppUninstallInteractive({
       if (existsSync(companionComposePath)) {
         setCurrentLabel(`Stopping ${companion.name}...`);
         await shell("docker", ["compose", "down", "--volumes"], { cwd: companionDir, ignoreError: true });
-        await shell("rm", ["-rf", companionDir]);
+        await shell("rm", ["-rf", companionDir], { sudo: true });
         addStep({ name: companion.displayName, status: "done", message: "Uninstalled" });
       }
     }
@@ -132,7 +132,7 @@ function AppUninstallInteractive({
   async function deleteAppData(dir: string) {
     setPhase("deleting");
     setCurrentLabel("Removing app data...");
-    await shell("rm", ["-rf", dir]);
+    await shell("rm", ["-rf", dir], { sudo: true });
     addStep({ name: "Remove data", status: "done", message: `Removed ${dir}` });
     await updateCaddyfile();
     setPhase("done");
@@ -348,7 +348,7 @@ function SystemUninstallInteractive({ autoYes }: { autoYes: boolean }) {
     setPhase("running");
     setCurrentLabel("Removing app data directories...");
     for (const d of dirs) {
-      await shell("rm", ["-rf", `${dir}/${d}`]);
+      await shell("rm", ["-rf", `${dir}/${d}`], { sudo: true });
     }
     addStep({ name: "App data", status: "done", message: `Removed ${dirs.length} directory(ies) from ${dir}` });
     setPhase("done");
@@ -477,7 +477,7 @@ async function step1RemoveSystemdUnits() {
     { ignoreError: true },
   );
   if (timerActive.exitCode === 0) {
-    await shell("systemctl", ["stop", `${SERVICE_NAME}.timer`]);
+    await shell("systemctl", ["stop", `${SERVICE_NAME}.timer`], { sudo: true });
   }
 
   const timerEnabled = await shell(
@@ -486,7 +486,7 @@ async function step1RemoveSystemdUnits() {
     { ignoreError: true },
   );
   if (timerEnabled.exitCode === 0) {
-    await shell("systemctl", ["disable", `${SERVICE_NAME}.timer`]);
+    await shell("systemctl", ["disable", `${SERVICE_NAME}.timer`], { sudo: true });
   }
 
   const serviceActive = await shell(
@@ -495,7 +495,7 @@ async function step1RemoveSystemdUnits() {
     { ignoreError: true },
   );
   if (serviceActive.exitCode === 0) {
-    await shell("systemctl", ["stop", `${SERVICE_NAME}.service`]);
+    await shell("systemctl", ["stop", `${SERVICE_NAME}.service`], { sudo: true });
   }
 
   for (const unitFile of [
@@ -503,18 +503,18 @@ async function step1RemoveSystemdUnits() {
     `/etc/systemd/system/${SERVICE_NAME}.service`,
   ]) {
     if (existsSync(unitFile)) {
-      await shell("rm", ["-f", unitFile]);
+      await shell("rm", ["-f", unitFile], { sudo: true });
     }
   }
 
-  await shell("systemctl", ["daemon-reload"]);
+  await shell("systemctl", ["daemon-reload"], { sudo: true });
 
   if (existsSync(LOG_FILE)) {
-    await shell("rm", ["-f", LOG_FILE]);
+    await shell("rm", ["-f", LOG_FILE], { sudo: true });
   }
 
   if (existsSync("/usr/local/bin/mithrandir")) {
-    await shell("rm", ["-f", "/usr/local/bin/mithrandir"]);
+    await shell("rm", ["-f", "/usr/local/bin/mithrandir"], { sudo: true });
   }
 }
 
@@ -525,7 +525,7 @@ async function step2StopDocker() {
     { ignoreError: true },
   );
   if (dockerActive.exitCode === 0) {
-    await shell("systemctl", ["stop", "docker"]);
+    await shell("systemctl", ["stop", "docker"], { sudo: true });
   }
 
   const containerdActive = await shell(
@@ -534,7 +534,7 @@ async function step2StopDocker() {
     { ignoreError: true },
   );
   if (containerdActive.exitCode === 0) {
-    await shell("systemctl", ["stop", "containerd"]);
+    await shell("systemctl", ["stop", "containerd"], { sudo: true });
   }
 }
 
@@ -570,14 +570,14 @@ async function step3RemoveDocker() {
       "docker-buildx-plugin",
       "docker-compose-plugin",
     ],
-    { ignoreError: true },
+    { sudo: true, ignoreError: true },
   );
 
-  await shell("apt", ["autoremove", "-y"], { ignoreError: true });
+  await shell("apt", ["autoremove", "-y"], { sudo: true, ignoreError: true });
 
   for (const dir of ["/var/lib/docker", "/var/lib/containerd", "/etc/docker"]) {
     if (existsSync(dir)) {
-      await shell("rm", ["-rf", dir]);
+      await shell("rm", ["-rf", dir], { sudo: true });
     }
   }
 
@@ -587,7 +587,7 @@ async function step3RemoveDocker() {
       for (const user of readdirSync("/home")) {
         const userDocker = `/home/${user}/.docker`;
         if (existsSync(userDocker)) {
-          await shell("rm", ["-rf", userDocker]);
+          await shell("rm", ["-rf", userDocker], { sudo: true });
         }
       }
     } catch {
@@ -596,15 +596,15 @@ async function step3RemoveDocker() {
   }
   const rootDocker = "/root/.docker";
   if (existsSync(rootDocker)) {
-    await shell("rm", ["-rf", rootDocker]);
+    await shell("rm", ["-rf", rootDocker], { sudo: true });
   }
 
   if (existsSync("/etc/apt/sources.list.d/docker.list")) {
-    await shell("rm", ["-f", "/etc/apt/sources.list.d/docker.list"]);
+    await shell("rm", ["-f", "/etc/apt/sources.list.d/docker.list"], { sudo: true });
   }
 
   if (existsSync("/etc/apt/keyrings/docker.asc")) {
-    await shell("rm", ["-f", "/etc/apt/keyrings/docker.asc"]);
+    await shell("rm", ["-f", "/etc/apt/keyrings/docker.asc"], { sudo: true });
   }
 }
 
@@ -612,7 +612,7 @@ async function step4RemoveRclone() {
   if (await commandExists("rclone")) {
     const which = await shell("which", ["rclone"]);
     const rcloneBin = which.stdout.trim();
-    await shell("rm", ["-f", rcloneBin]);
+    await shell("rm", ["-f", rcloneBin], { sudo: true });
   }
 
   for (const manFile of [
@@ -620,7 +620,7 @@ async function step4RemoveRclone() {
     "/usr/share/man/man1/rclone.1",
   ]) {
     if (existsSync(manFile)) {
-      await shell("rm", ["-f", manFile]);
+      await shell("rm", ["-f", manFile], { sudo: true });
     }
   }
 
@@ -638,14 +638,14 @@ async function step4RemoveRclone() {
 
   for (const confDir of configDirs) {
     if (existsSync(confDir)) {
-      await shell("rm", ["-rf", confDir]);
+      await shell("rm", ["-rf", confDir], { sudo: true });
     }
   }
 }
 
 async function step5DeleteBackups() {
   if (existsSync(BACKUP_DIR)) {
-    await shell("rm", ["-rf", BACKUP_DIR]);
+    await shell("rm", ["-rf", BACKUP_DIR], { sudo: true });
   }
 }
 
