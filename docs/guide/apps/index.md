@@ -68,6 +68,7 @@ mithrandir log <app>          # View logs
 | App | Port | Description |
 | --- | --- | --- |
 | [Actual Budget](./actualbudget) | 5006 | Privacy-focused personal finance and budgeting app |
+| [Sure](./sure) | 3005 | Privacy-focused personal finance tracker |
 
 ### Network & Security
 

@@ -64,7 +64,7 @@ export async function runGraph(): Promise<void> {
     `${DIM}  No dependencies — can be installed independently${RESET}`,
     ``,
     `  ${i("homeassistant")}   ${i("immich")}   ${i("gatus")}   ${i("homarr")}`,
-    `  ${i("wireguard")}       ${i("excalidraw")}   ${i("omnitools")}   ${i("openwebui")}   ${i("actualbudget")}`,
+    `  ${i("wireguard")}       ${i("excalidraw")}   ${i("omnitools")}   ${i("openwebui")}   ${i("actualbudget")}   ${i("sure")}`,
     ``,
     sectionTitle("Recommended Installation Order"),
     ``,

@@ -4,7 +4,7 @@ import { MultiSelect, TextInput, PasswordInput, ConfirmInput } from "@inkjs/ui";
 import Spinner from "ink-spinner";
 import {
   APP_REGISTRY,
-  APP_STACKS,
+  APP_CATEGORIES,
   getApp,
   getAppDir,
   getContainerName,
@@ -73,7 +73,6 @@ interface SetupCommandProps {
   flags: { yes?: boolean };
 }
 
-const APP_CATEGORIES = APP_STACKS;
 
 const APP_DEPENDENCIES: Record<string, string[]> = {
   caddy: ["duckdns", "pihole"],
@@ -620,25 +619,47 @@ export function SetupCommand({ flags }: SetupCommandProps) {
     const [phase, setPhase] = useState<"scanning" | "prompting" | "done">("scanning");
 
     useEffect(() => {
-      // Find all required secrets that are missing
-      const missing: Array<{ app: AppDefinition; secret: SecretDefinition }> = [];
-      for (const app of selectedApps) {
-        if (!app.secrets) continue;
-        for (const secret of app.secrets) {
-          if (secret.required && !envConfig[secret.envVar]) {
-            missing.push({ app, secret });
+      (async () => {
+        // Auto-generate secrets that have a generate command
+        for (const app of selectedApps) {
+          if (!app.secrets) continue;
+          for (const secret of app.secrets) {
+            if (secret.generate && !envConfig[secret.envVar]) {
+              try {
+                const parts = secret.generate.split(/\s+/);
+                const result = await shell(parts[0], parts.slice(1), { ignoreError: true });
+                const value = result.stdout.trim();
+                if (value) {
+                  setEnvConfig(prev => ({ ...prev, [secret.envVar]: value }));
+                  envConfig[secret.envVar] = value;
+                }
+              } catch {
+                // Fall through to prompt
+              }
+            }
           }
         }
-      }
 
-      if (missing.length === 0 || autoYes) {
-        setPhase("done");
-        setStep("install-apps");
-        return;
-      }
+        // Find all required secrets that are still missing
+        const missing: Array<{ app: AppDefinition; secret: SecretDefinition }> = [];
+        for (const app of selectedApps) {
+          if (!app.secrets) continue;
+          for (const secret of app.secrets) {
+            if (secret.required && !envConfig[secret.envVar]) {
+              missing.push({ app, secret });
+            }
+          }
+        }
 
-      setMissingSecrets(missing);
-      setPhase("prompting");
+        if (missing.length === 0 || autoYes) {
+          setPhase("done");
+          setStep("install-apps");
+          return;
+        }
+
+        setMissingSecrets(missing);
+        setPhase("prompting");
+      })();
     }, []);
 
     function handleSecretSubmit(value: string) {

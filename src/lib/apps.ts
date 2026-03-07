@@ -406,6 +406,129 @@ export const APP_REGISTRY: AppDefinition[] = [
     },
   },
   {
+    name: "sure",
+    displayName: "Sure",
+    description: "Privacy-focused personal finance tracker",
+    image: "ghcr.io/we-promise/sure:stable",
+    containerName: "sure_web",
+    additionalContainers: ["sure_worker", "sure_redis", "sure_postgres"],
+    port: 3005,
+    configSubdir: "postgres",
+    needsDataDir: false,
+    rawCompose: (envConfig: EnvConfig) => {
+      const baseDir = envConfig.BASE_DIR;
+      const dbPassword = envConfig.SURE_DB_PASSWORD ?? "sure_password";
+      const secretKeyBase = envConfig.SURE_SECRET_KEY_BASE ?? "change-me";
+      const assumeSsl = envConfig.ENABLE_HTTPS === "true" ? "true" : "false";
+      const lines = [
+        `services:`,
+        `  sure_web:`,
+        `    image: ghcr.io/we-promise/sure:stable`,
+        `    container_name: sure_web`,
+        `    environment:`,
+        `      - SELF_HOSTED=true`,
+        `      - SECRET_KEY_BASE=${secretKeyBase}`,
+        `      - RAILS_FORCE_SSL=false`,
+        `      - RAILS_ASSUME_SSL=${assumeSsl}`,
+        `      - POSTGRES_USER=sure_user`,
+        `      - POSTGRES_PASSWORD=${dbPassword}`,
+        `      - POSTGRES_DB=sure_production`,
+        `      - DB_HOST=sure_postgres`,
+        `      - DB_PORT=5432`,
+        `      - REDIS_URL=redis://sure_redis:6379/1`,
+        `      - TZ=${envConfig.TZ}`,
+        `    volumes:`,
+        `      - sure-storage:/rails/storage`,
+        `    ports:`,
+        `      - 3005:3000`,
+        `    depends_on:`,
+        `      sure_postgres:`,
+        `        condition: service_healthy`,
+        `      sure_redis:`,
+        `        condition: service_healthy`,
+        `    dns:`,
+        `      - 8.8.8.8`,
+        `      - 1.1.1.1`,
+        `    restart: unless-stopped`,
+        ``,
+        `  sure_worker:`,
+        `    image: ghcr.io/we-promise/sure:stable`,
+        `    container_name: sure_worker`,
+        `    command: bundle exec sidekiq`,
+        `    environment:`,
+        `      - SELF_HOSTED=true`,
+        `      - SECRET_KEY_BASE=${secretKeyBase}`,
+        `      - RAILS_FORCE_SSL=false`,
+        `      - RAILS_ASSUME_SSL=${assumeSsl}`,
+        `      - POSTGRES_USER=sure_user`,
+        `      - POSTGRES_PASSWORD=${dbPassword}`,
+        `      - POSTGRES_DB=sure_production`,
+        `      - DB_HOST=sure_postgres`,
+        `      - DB_PORT=5432`,
+        `      - REDIS_URL=redis://sure_redis:6379/1`,
+        `      - TZ=${envConfig.TZ}`,
+        `    volumes:`,
+        `      - sure-storage:/rails/storage`,
+        `    depends_on:`,
+        `      sure_postgres:`,
+        `        condition: service_healthy`,
+        `      sure_redis:`,
+        `        condition: service_healthy`,
+        `    dns:`,
+        `      - 8.8.8.8`,
+        `      - 1.1.1.1`,
+        `    restart: unless-stopped`,
+        ``,
+        `  sure_redis:`,
+        `    image: redis:latest`,
+        `    container_name: sure_redis`,
+        `    volumes:`,
+        `      - sure-redis-data:/data`,
+        `    healthcheck:`,
+        `      test: ["CMD", "redis-cli", "ping"]`,
+        `      interval: 5s`,
+        `      timeout: 5s`,
+        `      retries: 5`,
+        `    restart: unless-stopped`,
+        ``,
+        `  sure_postgres:`,
+        `    image: postgres:16`,
+        `    container_name: sure_postgres`,
+        `    environment:`,
+        `      - POSTGRES_USER=sure_user`,
+        `      - POSTGRES_PASSWORD=${dbPassword}`,
+        `      - POSTGRES_DB=sure_production`,
+        `    volumes:`,
+        `      - ${baseDir}/sure/postgres:/var/lib/postgresql/data`,
+        `    healthcheck:`,
+        `      test: ["CMD-SHELL", "pg_isready -U sure_user -d sure_production"]`,
+        `      interval: 5s`,
+        `      timeout: 5s`,
+        `      retries: 5`,
+        `    restart: unless-stopped`,
+        ``,
+        `volumes:`,
+        `  sure-storage:`,
+        `  sure-redis-data:`,
+      ];
+      return lines.join("\n") + "\n";
+    },
+    secrets: [
+      {
+        envVar: "SURE_SECRET_KEY_BASE",
+        prompt: "Sure secret key base (Rails secret)",
+        sensitive: true,
+        required: true,
+        generate: "openssl rand -hex 64",
+      },
+      {
+        envVar: "SURE_DB_PASSWORD",
+        prompt: "Sure database password",
+        sensitive: true,
+      },
+    ],
+  },
+  {
     name: "pihole",
     displayName: "Pi-hole",
     description: "Network-wide ad blocker and DNS server",
@@ -543,6 +666,37 @@ export const APP_STACKS: AppStack[] = [
     apps: ["immich"],
   },
   {
+    label: "Security",
+    value: "security",
+    description: "Caddy (HTTPS reverse proxy), Pi-hole (DNS)",
+    apps: ["caddy", "pihole"],
+  },
+];
+
+export function getStackNames(): string[] {
+  return APP_STACKS.map((s) => s.value);
+}
+
+export function getStack(name: string): AppStack | undefined {
+  return APP_STACKS.find((s) => s.value === name);
+}
+
+/** Categories for the setup wizard's app picker (broader than stacks) */
+export interface AppCategory {
+  label: string;
+  value: string;
+  description: string;
+  apps: string[];
+}
+
+export const APP_CATEGORIES: AppCategory[] = [
+  {
+    label: "Media",
+    value: "media",
+    description: "qBittorrent, Prowlarr, Radarr, Sonarr, Bazarr, Seerr, Jellyfin, Navidrome, Lidarr, Immich",
+    apps: ["qbittorrent", "prowlarr", "radarr", "sonarr", "bazarr", "seerr", "jellyfin", "navidrome", "lidarr", "immich"],
+  },
+  {
     label: "Automation",
     value: "automation",
     description: "Home Assistant",
@@ -563,27 +717,19 @@ export const APP_STACKS: AppStack[] = [
   {
     label: "Finance",
     value: "finance",
-    description: "Actual Budget",
-    apps: ["actualbudget"],
+    description: "Actual Budget, Sure",
+    apps: ["actualbudget", "sure"],
   },
   {
-    label: "Security",
+    label: "Network & Security",
     value: "security",
-    description: "Caddy (HTTPS reverse proxy), Pi-hole (DNS)",
-    apps: ["caddy", "pihole"],
+    description: "Pi-hole, WireGuard, DuckDNS",
+    apps: ["pihole", "wireguard", "duckdns"],
   },
   {
     label: "Utilities",
     value: "utilities",
-    description: "DuckDNS, WireGuard, Homarr",
-    apps: ["duckdns", "wireguard", "homarr"],
+    description: "Homarr",
+    apps: ["homarr"],
   },
 ];
-
-export function getStackNames(): string[] {
-  return APP_STACKS.map((s) => s.value);
-}
-
-export function getStack(name: string): AppStack | undefined {
-  return APP_STACKS.find((s) => s.value === name);
-}

@@ -78,6 +78,8 @@ export interface SecretDefinition {
   sensitive?: boolean;
   /** Whether this secret is required for the app to function */
   required?: boolean;
+  /** Shell command to auto-generate the value (e.g. "openssl rand -hex 64") */
+  generate?: string;
 }
 
 export interface EnvConfig {

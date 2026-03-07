@@ -751,6 +751,30 @@ function InstallApp({ appName }: { appName: string }) {
       return;
     }
 
+    // Auto-generate secrets if needed
+    if (app.secrets) {
+      let envChanged = false;
+      for (const secret of app.secrets) {
+        if (secret.generate && !env[secret.envVar]) {
+          try {
+            const parts = secret.generate.split(/\s+/);
+            const result = await shell(parts[0], parts.slice(1), { ignoreError: true });
+            const value = result.stdout.trim();
+            if (value) {
+              env[secret.envVar] = value;
+              envChanged = true;
+            }
+          } catch {
+            // Non-fatal — user can set manually
+          }
+        }
+      }
+      if (envChanged) {
+        await saveEnvConfig(env);
+        addStep({ name: "Secrets", status: "done", message: "Auto-generated" });
+      }
+    }
+
     // Pull image
     setPhase("pulling");
     setCurrentLabel(`Pulling ${app.image}...`);

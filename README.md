@@ -45,6 +45,8 @@ All configuration lives in a single `.env` file at the project root.
 - `WG_SERVERURL`: Required for WireGuard
 - `WG_PEERS`: Number of WireGuard peers (default: `1`)
 - `ND_SPOTIFY_ID`, `ND_SPOTIFY_SECRET`: Optional for Navidrome artist images
+- `SURE_SECRET_KEY_BASE`: Required Rails secret for Sure
+- `SURE_DB_PASSWORD`: Optional database password for Sure
 - `PIHOLE_PASSWORD`: Optional web interface password for Pi-hole
 - `GATUS_DISCORD_WEBHOOK_URL`: Optional Discord webhook URL for Gatus alerts
 
@@ -226,14 +228,12 @@ mithrandir install <stack>
 ```
 Installs a predefined group of apps in one command. Already-installed apps are skipped. Companion apps are included automatically.
 
-Available stacks: `media`, `media-movies-tv`, `media-music`, `media-pictures`, `automation`, `monitoring`, `productivity`, `finance`, `security`, `utilities`
+Available stacks: `media`, `media-movies-tv`, `media-music`, `media-pictures`, `security`
 
 Examples:
 ```bash
 mithrandir install media-movies-tv    # qBittorrent, Prowlarr, Radarr, Sonarr, Bazarr, Seerr, Jellyfin
-mithrandir install productivity       # Excalidraw, Omni Tools, Open WebUI, Vaultwarden
-mithrandir install finance            # Actual Budget
-mithrandir install utilities          # DuckDNS, WireGuard, Homarr
+mithrandir install security           # Caddy, Pi-hole
 ```
 
 **Install Docker:**
@@ -371,6 +371,7 @@ Checks configuration correctness across three categories: System (.env file, Doc
 | Open WebUI | 3000 | Self-hosted AI chat interface |
 | Vaultwarden | 8222 | Lightweight Bitwarden-compatible password manager (requires HTTPS) |
 | Actual Budget | 5006 | Privacy-focused personal finance and budgeting app |
+| Sure | 3005 | Privacy-focused personal finance tracker |
 
 ## Local Development
 
@@ -407,7 +408,6 @@ scripts/generate-changelog.sh
 ## TODO
 
 - [ ] Add screenshots to the docs
-- [ ] Add sure to the list of installable apps in @src/lib/apps.ts. It should be in the "Finance" category & stack. Make sure to update the docs, README, CLAUDE.md, completions, caddyfile and so on. Here is the link to the official docker-compose file: https://github.com/we-promise/sure/blob/main/compose.example.yml
 - [ ] Setup a local test environment with docker. This would allow us to test the CLI on a wider range of hardware and operating systems, and also help us catch any regressions before releasing a new version.
 - [ ] I want to internationalize this project's documentation that is built with VitePress. Here is the official documentation: https://vitepress.dev/guide/i18n. For now I just want to add a French translation.
 - [ ] check in prowlarr torznab (U2P / utopeer)

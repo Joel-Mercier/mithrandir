@@ -35,25 +35,19 @@ Install a predefined group of apps in one command. Already-installed apps are sk
 | `media-movies-tv` | qBittorrent, Prowlarr, Radarr, Sonarr, Bazarr, Seerr, Jellyfin |
 | `media-music` | Navidrome, Lidarr, qBittorrent |
 | `media-pictures` | Immich |
-| `automation` | Home Assistant |
-| `monitoring` | Gatus |
-| `productivity` | Excalidraw, Omni Tools, Open WebUI, Vaultwarden |
-| `finance` | Actual Budget |
-| `security` | Pi-hole (Caddy must be installed separately via `install https`) |
-| `utilities` | DuckDNS, WireGuard, Homarr |
+| `security` | Caddy (HTTPS reverse proxy), Pi-hole (DNS) |
 
 Examples:
 ```sh
 mithrandir install media-movies-tv    # Install the full movie & TV stack
-mithrandir install productivity       # Install productivity apps
-mithrandir install utilities          # Install DuckDNS, WireGuard, Homarr
+mithrandir install security           # Install Caddy and Pi-hole
 ```
 
 ### Apps
 
 Any app name from the registry can be used as a target. Available apps:
 
-`actualbudget`, `homarr`, `pihole`, `homeassistant`, `jellyfin`, `jellyseerr`, `sonarr`, `radarr`, `lidarr`, `prowlarr`, `qbittorrent`, `navidrome`, `duckdns`, `wireguard`, `vaultwarden`, `flaresolverr`, `omni-tools`, `excalidraw`, `openwebui`, `immich`, `gatus`, `bazarr`, `seerr`
+`actualbudget`, `sure`, `homarr`, `pihole`, `homeassistant`, `jellyfin`, `jellyseerr`, `sonarr`, `radarr`, `lidarr`, `prowlarr`, `qbittorrent`, `navidrome`, `duckdns`, `wireguard`, `vaultwarden`, `flaresolverr`, `omni-tools`, `excalidraw`, `openwebui`, `immich`, `gatus`, `bazarr`, `seerr`
 
 ## Notes
 

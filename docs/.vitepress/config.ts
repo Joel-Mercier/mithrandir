@@ -98,6 +98,7 @@ export default defineConfig({
                 collapsed: true,
                 items: [
                   { text: "Actual Budget", link: "/guide/apps/actualbudget" },
+                  { text: "Sure", link: "/guide/apps/sure" },
                 ],
               },
               {

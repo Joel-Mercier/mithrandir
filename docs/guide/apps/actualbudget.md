@@ -16,11 +16,7 @@ Privacy-focused personal finance and budgeting app with local-first data storage
 mithrandir install actualbudget
 ```
 
-Or install the full finance stack:
-
-```sh
-mithrandir install finance
-```
+Also see [Sure](./sure) for an alternative finance tracker.
 
 ## Setup
 
