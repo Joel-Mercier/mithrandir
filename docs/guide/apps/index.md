@@ -58,6 +58,7 @@ mithrandir log <app>          # View logs
 
 | App | Port | Description |
 | --- | --- | --- |
+| [AFFiNE](./affine) | 3010 | Privacy-focused knowledge base and workspace |
 | [Excalidraw](./excalidraw) | 5000 | Virtual whiteboard for sketching |
 | [Omni Tools](./omni-tools) | 8079 | Collection of useful productivity tools |
 | [Open WebUI](./open-webui) | 3000 | Self-hosted AI chat interface |

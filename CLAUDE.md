@@ -50,7 +50,7 @@ bun run src/index.tsx --help         # Dev mode (unbundled)
 ## Architecture
 
 ### App Registry Pattern (`src/lib/apps.ts`)
-Single source of truth for all services. Each `AppDefinition` encodes everything needed across all commands: Docker image, ports, config paths, volume mounts, secrets, capabilities. This replaces the duplicated `get_app_config()` case statements in backup.sh/restore.sh and per-app compose blocks in setup.sh. **Any new service must be added here.** Also defines `APP_STACKS` — installable groups of interdependent apps (media, media-movies-tv, media-music, media-pictures, security) used by `install <stack>`, and `APP_CATEGORIES` — broader groupings (media, automation, monitoring, productivity, finance, security, utilities) used by the setup wizard's category picker.
+Single source of truth for all services. Each `AppDefinition` encodes everything needed across all commands: Docker image, ports, config paths, volume mounts, secrets, capabilities. This replaces the duplicated `get_app_config()` case statements in backup.sh/restore.sh and per-app compose blocks in setup.sh. **Any new service must be added here.** Multi-container apps with `rawCompose` generators: Immich (postgres/redis/ML), Sure (postgres/redis/worker), AFFiNE (postgres/redis/migration). Also defines `APP_STACKS` — installable groups of interdependent apps (media, media-movies-tv, media-music, media-pictures, security) used by `install <stack>`, and `APP_CATEGORIES` — broader groupings (media, automation, monitoring, productivity, finance, security, utilities) used by the setup wizard's category picker.
 
 ### Compose Generation (`src/lib/compose.ts`)
 Generates docker-compose.yml deterministically from an `AppDefinition` + `EnvConfig`. Handles special cases: host networking (Home Assistant, DuckDNS), multiple config dirs (Homarr), non-standard container paths (Seerr → `/app/config`), capabilities/sysctls (WireGuard), healthchecks (Seerr).
@@ -92,6 +92,7 @@ These allow programmatic access to the APIs of the above services.
 ## Configuration
 
 - **.env** — All configuration lives here. Core settings: `BASE_DIR`, `PUID`/`PGID`, `TZ`. Per-app secrets: DuckDNS, WireGuard, Spotify. Backup settings: `BACKUP_DIR` (default `/backups`), `LOCAL_RETENTION` (5), `REMOTE_RETENTION` (10), `RCLONE_REMOTE` (gdrive), `APPS` (auto or comma-separated), `BACKUP_PASSWORD` (optional, encrypts backups with AES-256-CBC). HTTPS settings: `ENABLE_HTTPS`, `ACME_EMAIL`. Firewall: `ENABLE_FIREWALL`. Not in git.
+- **.env.example** — Template with all available env vars and defaults. **When adding new env vars (e.g. app secrets), always add them to `.env.example` too.**
 
 ### Changelog (`docs/changelog.md`)
 Auto-generated from git commits via `scripts/generate-changelog.sh`, grouped by git tags. Each tag becomes a version section; commits after the latest tag appear under "Unreleased". The script categorizes commits by message prefix (add/fix/update/etc.). To create a release, run `scripts/release.sh <version>` — this bumps the version in `package.json` and the nav dropdown in `docs/.vitepress/config.ts`, generates the changelog, commits everything, and creates the git tag.

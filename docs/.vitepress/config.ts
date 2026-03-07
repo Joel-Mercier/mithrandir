@@ -87,6 +87,7 @@ export default defineConfig({
                 text: "Productivity",
                 collapsed: true,
                 items: [
+                  { text: "AFFiNE", link: "/guide/apps/affine" },
                   { text: "Excalidraw", link: "/guide/apps/excalidraw" },
                   { text: "Omni Tools", link: "/guide/apps/omni-tools" },
                   { text: "Open WebUI", link: "/guide/apps/open-webui" },
