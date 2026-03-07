@@ -1,4 +1,4 @@
-# AFFiNE
+# <img src="https://cdn.jsdelivr.net/gh/selfhst/icons/png/affine.png" width="32" height="32" style="display:inline;vertical-align:middle;margin-right:8px"> AFFiNE
 
 Privacy-focused knowledge base and workspace — an open-source alternative to Notion.
 

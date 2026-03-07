@@ -1,4 +1,4 @@
-# Sure
+# <img src="https://cdn.jsdelivr.net/gh/selfhst/icons/png/sure-finance.png" width="32" height="32" style="display:inline;vertical-align:middle;margin-right:8px"> Sure
 
 Privacy-focused personal finance tracker with multi-currency support, bank syncing, and budgeting tools.
 

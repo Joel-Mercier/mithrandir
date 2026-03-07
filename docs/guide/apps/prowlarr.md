@@ -1,4 +1,4 @@
-# Prowlarr
+# <img src="https://cdn.jsdelivr.net/gh/selfhst/icons/png/prowlarr.png" width="32" height="32" style="display:inline;vertical-align:middle;margin-right:8px"> Prowlarr
 
 Indexer manager for the *Arr stack — manages indexers in a single place and syncs them to Sonarr, Radarr, and Lidarr.
 

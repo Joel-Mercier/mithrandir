@@ -1,4 +1,4 @@
-# Excalidraw
+# <img src="https://cdn.jsdelivr.net/gh/selfhst/icons/png/excalidraw.png" width="32" height="32" style="display:inline;vertical-align:middle;margin-right:8px"> Excalidraw
 
 Virtual whiteboard for sketching — create diagrams, wireframes, and hand-drawn style illustrations collaboratively.
 

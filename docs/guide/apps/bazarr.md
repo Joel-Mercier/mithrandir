@@ -1,4 +1,4 @@
-# Bazarr
+# <img src="https://cdn.jsdelivr.net/gh/selfhst/icons/png/bazarr.png" width="32" height="32" style="display:inline;vertical-align:middle;margin-right:8px"> Bazarr
 
 Subtitle manager — automatically downloads subtitles for your Sonarr and Radarr libraries.
 

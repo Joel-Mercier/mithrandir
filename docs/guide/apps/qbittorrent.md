@@ -1,4 +1,4 @@
-# qBittorrent
+# <img src="https://cdn.jsdelivr.net/gh/selfhst/icons/png/qbittorrent.png" width="32" height="32" style="display:inline;vertical-align:middle;margin-right:8px"> qBittorrent
 
 BitTorrent client with a web UI — used as the download client for Sonarr, Radarr, and Lidarr.
 

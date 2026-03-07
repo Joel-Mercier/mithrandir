@@ -1,4 +1,4 @@
-# Actual Budget
+# <img src="https://cdn.jsdelivr.net/gh/selfhst/icons/png/actual-budget.png" width="32" height="32" style="display:inline;vertical-align:middle;margin-right:8px"> Actual Budget
 
 Privacy-focused personal finance and budgeting app with local-first data storage, envelope budgeting, and bank syncing.
 

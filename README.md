@@ -415,7 +415,6 @@ scripts/generate-changelog.sh
 
 ## TODO
 
-- [ ] Use https://selfh.st/icons/ (https://github.com/selfhst/icons) to add a icon for each app in the docs
 - [ ] Add screenshots to the docs
 - [ ] Make sure that empty env vars in .env are considered as not set and not as empty strings since this might cause issues with some apps where a value is expected
 - [ ] Setup a local test environment with docker. This would allow us to test the CLI on a wider range of hardware and operating systems, and also help us catch any regressions before releasing a new version.

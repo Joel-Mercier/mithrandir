@@ -1,4 +1,4 @@
-# Home Assistant
+# <img src="https://cdn.jsdelivr.net/gh/selfhst/icons/png/home-assistant.png" width="32" height="32" style="display:inline;vertical-align:middle;margin-right:8px"> Home Assistant
 
 Open-source home automation platform — control and automate your smart home devices from a single dashboard.
 

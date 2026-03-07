@@ -1,4 +1,4 @@
-# Pi-hole
+# <img src="https://cdn.jsdelivr.net/gh/selfhst/icons/png/pi-hole.png" width="32" height="32" style="display:inline;vertical-align:middle;margin-right:8px"> Pi-hole
 
 Network-wide ad blocker and DNS server — blocks ads and trackers for every device on your network.
 

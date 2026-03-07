@@ -1,4 +1,4 @@
-# Navidrome
+# <img src="https://cdn.jsdelivr.net/gh/selfhst/icons/png/navidrome.png" width="32" height="32" style="display:inline;vertical-align:middle;margin-right:8px"> Navidrome
 
 Modern music server and streamer — compatible with Subsonic clients (DSub, Symphonium, etc.).
 

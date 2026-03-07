@@ -1,4 +1,4 @@
-# WireGuard
+# <img src="https://cdn.jsdelivr.net/gh/selfhst/icons/png/wireguard.png" width="32" height="32" style="display:inline;vertical-align:middle;margin-right:8px"> WireGuard
 
 Fast, modern VPN tunnel — access your homelab remotely from anywhere.
 

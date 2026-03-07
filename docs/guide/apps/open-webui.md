@@ -1,4 +1,4 @@
-# Open WebUI
+# <img src="https://cdn.jsdelivr.net/gh/selfhst/icons/png/open-webui.png" width="32" height="32" style="display:inline;vertical-align:middle;margin-right:8px"> Open WebUI
 
 Self-hosted AI chat interface — a ChatGPT-like UI for running local or remote LLMs.
 

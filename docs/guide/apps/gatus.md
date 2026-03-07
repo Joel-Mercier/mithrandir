@@ -1,4 +1,4 @@
-# Gatus
+# <img src="https://cdn.jsdelivr.net/gh/selfhst/icons/png/gatus.png" width="32" height="32" style="display:inline;vertical-align:middle;margin-right:8px"> Gatus
 
 Automated service health monitoring — monitors your services and displays their status on a clean dashboard.
 

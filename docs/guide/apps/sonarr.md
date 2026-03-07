@@ -1,4 +1,4 @@
-# Sonarr
+# <img src="https://cdn.jsdelivr.net/gh/selfhst/icons/png/sonarr.png" width="32" height="32" style="display:inline;vertical-align:middle;margin-right:8px"> Sonarr
 
 TV series collection manager — monitors for new episodes and automatically downloads them via your preferred download client.
 

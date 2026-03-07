@@ -1,4 +1,4 @@
-# DuckDNS
+# <img src="https://cdn.jsdelivr.net/gh/selfhst/icons/png/duckdns.png" width="32" height="32" style="display:inline;vertical-align:middle;margin-right:8px"> DuckDNS
 
 Free dynamic DNS service — keeps a domain name pointed at your home IP address, even if it changes.
 

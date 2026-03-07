@@ -1,4 +1,4 @@
-# Seerr
+# <img src="https://cdn.jsdelivr.net/gh/selfhst/icons/png/jellyseerr.png" width="32" height="32" style="display:inline;vertical-align:middle;margin-right:8px"> Seerr
 
 Media request manager for Jellyfin — lets users request movies and TV shows that are automatically sent to Sonarr and Radarr.
 

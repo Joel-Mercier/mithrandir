@@ -1,4 +1,4 @@
-# Jellyfin
+# <img src="https://cdn.jsdelivr.net/gh/selfhst/icons/png/jellyfin.png" width="32" height="32" style="display:inline;vertical-align:middle;margin-right:8px"> Jellyfin
 
 Free media streaming server — an open-source alternative to Plex and Emby.
 

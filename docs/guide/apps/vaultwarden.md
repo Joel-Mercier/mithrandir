@@ -1,4 +1,4 @@
-# Vaultwarden
+# <img src="https://cdn.jsdelivr.net/gh/selfhst/icons/png/vaultwarden.png" width="32" height="32" style="display:inline;vertical-align:middle;margin-right:8px"> Vaultwarden
 
 Lightweight Bitwarden-compatible password manager — use the official Bitwarden clients (browser extensions, mobile apps, desktop) with your self-hosted server.
 

@@ -1,4 +1,4 @@
-# n8n
+# <img src="https://cdn.jsdelivr.net/gh/selfhst/icons/png/n8n.png" width="32" height="32" style="display:inline;vertical-align:middle;margin-right:8px"> n8n
 
 Workflow automation platform — connect apps and automate tasks with a visual editor.
 

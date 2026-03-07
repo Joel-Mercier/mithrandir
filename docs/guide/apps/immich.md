@@ -1,4 +1,4 @@
-# Immich
+# <img src="https://cdn.jsdelivr.net/gh/selfhst/icons/png/immich.png" width="32" height="32" style="display:inline;vertical-align:middle;margin-right:8px"> Immich
 
 Self-hosted photo and video management — a Google Photos alternative with AI-powered search, face recognition, and mobile apps.
 

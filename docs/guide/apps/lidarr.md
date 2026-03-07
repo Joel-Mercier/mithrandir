@@ -1,4 +1,4 @@
-# Lidarr
+# <img src="https://cdn.jsdelivr.net/gh/selfhst/icons/png/lidarr.png" width="32" height="32" style="display:inline;vertical-align:middle;margin-right:8px"> Lidarr
 
 Music collection manager — automatically searches for and downloads music albums.
 

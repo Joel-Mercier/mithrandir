@@ -1,4 +1,4 @@
-# Penpot
+# <img src="https://cdn.jsdelivr.net/gh/selfhst/icons/png/penpot.png" width="32" height="32" style="display:inline;vertical-align:middle;margin-right:8px"> Penpot
 
 Open-source design and prototyping platform — an alternative to Figma.
 
