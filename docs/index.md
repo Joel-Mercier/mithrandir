@@ -4,7 +4,7 @@ layout: home
 hero:
   name: "Mithrandir"
   text: "Your homelab, automated"
-  tagline: One CLI to set up, back up, and manage Docker-based self-hosted services on Debian and Ubuntu
+  tagline: One CLI to set up, back up, and manage Docker-based self-hosted services on Raspberry Pi OS, Debian and Ubuntu
   actions:
     - theme: brand
       text: Get Started

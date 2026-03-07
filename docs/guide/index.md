@@ -1,6 +1,6 @@
 # Getting Started
 
-Mithrandir is an automated Docker-based homelab setup, backup, and restore system for Debian and Ubuntu servers. It provides a single CLI to install, configure, and manage a full suite of self-hosted services — from media streaming to home automation to network security.
+Mithrandir is an automated Docker-based homelab setup, backup, and restore system for Raspberry Pi OS, Debian and Ubuntu servers. It provides a single CLI to install, configure, and manage a full suite of self-hosted services — from media streaming to home automation to network security.
 
 ::: warning
 This project is being developed with the help of LLMs and agentic coding. Altough I'm a professional software developer, I'm more experienced in developing websites and mobile apps.
