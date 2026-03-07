@@ -94,6 +94,13 @@ export default defineConfig({
                 ],
               },
               {
+                text: "Finance",
+                collapsed: true,
+                items: [
+                  { text: "Actual Budget", link: "/guide/apps/actualbudget" },
+                ],
+              },
+              {
                 text: "Network & Security",
                 collapsed: true,
                 items: [

@@ -63,6 +63,12 @@ mithrandir log <app>          # View logs
 | [Open WebUI](./open-webui) | 3000 | Self-hosted AI chat interface |
 | [Vaultwarden](./vaultwarden) | 8222 | Lightweight Bitwarden-compatible password manager |
 
+### Finance
+
+| App | Port | Description |
+| --- | --- | --- |
+| [Actual Budget](./actualbudget) | 5006 | Privacy-focused personal finance and budgeting app |
+
 ### Network & Security
 
 | App | Port | Description |

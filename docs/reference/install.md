@@ -38,6 +38,7 @@ Install a predefined group of apps in one command. Already-installed apps are sk
 | `automation` | Home Assistant |
 | `monitoring` | Gatus |
 | `productivity` | Excalidraw, Omni Tools, Open WebUI, Vaultwarden |
+| `finance` | Actual Budget |
 | `security` | Pi-hole (Caddy must be installed separately via `install https`) |
 | `utilities` | DuckDNS, WireGuard, Homarr |
 
@@ -52,7 +53,7 @@ mithrandir install utilities          # Install DuckDNS, WireGuard, Homarr
 
 Any app name from the registry can be used as a target. Available apps:
 
-`homarr`, `pihole`, `home-assistant`, `jellyfin`, `jellyseerr`, `sonarr`, `radarr`, `lidarr`, `prowlarr`, `qbittorrent`, `navidrome`, `duckdns`, `wireguard`, `vaultwarden`, `flaresolverr`, `omni-tools`
+`actualbudget`, `homarr`, `pihole`, `homeassistant`, `jellyfin`, `jellyseerr`, `sonarr`, `radarr`, `lidarr`, `prowlarr`, `qbittorrent`, `navidrome`, `duckdns`, `wireguard`, `vaultwarden`, `flaresolverr`, `omni-tools`, `excalidraw`, `openwebui`, `immich`, `gatus`, `bazarr`, `seerr`
 
 ## Notes
 

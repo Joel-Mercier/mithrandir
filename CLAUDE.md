@@ -50,7 +50,7 @@ bun run src/index.tsx --help         # Dev mode (unbundled)
 ## Architecture
 
 ### App Registry Pattern (`src/lib/apps.ts`)
-Single source of truth for all services. Each `AppDefinition` encodes everything needed across all commands: Docker image, ports, config paths, volume mounts, secrets, capabilities. This replaces the duplicated `get_app_config()` case statements in backup.sh/restore.sh and per-app compose blocks in setup.sh. **Any new service must be added here.** Also defines `APP_STACKS` — predefined app groups (media-movies-tv, productivity, etc.) used by both `install <stack>` and the setup wizard's category picker.
+Single source of truth for all services. Each `AppDefinition` encodes everything needed across all commands: Docker image, ports, config paths, volume mounts, secrets, capabilities. This replaces the duplicated `get_app_config()` case statements in backup.sh/restore.sh and per-app compose blocks in setup.sh. **Any new service must be added here.** Also defines `APP_STACKS` — predefined app groups (media-movies-tv, productivity, finance, etc.) used by both `install <stack>` and the setup wizard's category picker.
 
 ### Compose Generation (`src/lib/compose.ts`)
 Generates docker-compose.yml deterministically from an `AppDefinition` + `EnvConfig`. Handles special cases: host networking (Home Assistant, DuckDNS), multiple config dirs (Homarr), non-standard container paths (Seerr → `/app/config`), capabilities/sysctls (WireGuard), healthchecks (Seerr).

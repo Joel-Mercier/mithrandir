@@ -390,6 +390,22 @@ export const APP_REGISTRY: AppDefinition[] = [
     },
   },
   {
+    name: "actualbudget",
+    displayName: "Actual Budget",
+    description: "Privacy-focused personal finance and budgeting app",
+    image: "docker.io/actualbudget/actual-server:latest",
+    port: 5006,
+    configSubdir: "data",
+    needsDataDir: false,
+    healthcheck: {
+      test: "node src/scripts/health-check.js",
+      startPeriod: "20s",
+      timeout: "10s",
+      interval: "60s",
+      retries: 3,
+    },
+  },
+  {
     name: "pihole",
     displayName: "Pi-hole",
     description: "Network-wide ad blocker and DNS server",
@@ -543,6 +559,12 @@ export const APP_STACKS: AppStack[] = [
     value: "productivity",
     description: "Excalidraw, Omni Tools, Open WebUI, Vaultwarden",
     apps: ["excalidraw", "omnitools", "openwebui", "vaultwarden"],
+  },
+  {
+    label: "Finance",
+    value: "finance",
+    description: "Actual Budget",
+    apps: ["actualbudget"],
   },
   {
     label: "Security",
