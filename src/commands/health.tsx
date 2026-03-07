@@ -13,6 +13,7 @@ import { isDockerInstalled } from "@/lib/docker.js";
 import { isRcloneInstalled, isRcloneRemoteConfigured, isRemoteReachable } from "@/lib/rclone.js";
 import { shell } from "@/lib/shell.js";
 import { Header } from "@/components/Header.js";
+import { isBackupArchive, ENCRYPTED_EXT, ARCHIVE_EXT } from "@/lib/backup-utils.js";
 import type { EnvConfig } from "@/types.js";
 import { existsSync } from "fs";
 
@@ -187,6 +188,68 @@ async function checkContainerRestarts(
   ];
 }
 
+async function checkBackupEncryption(
+  backupDir: string,
+  password?: string,
+): Promise<CheckResult | null> {
+  // Find the latest backup dir
+  const archiveDir = `${backupDir}/archive`;
+  if (!existsSync(archiveDir)) return null;
+
+  const result = await shell("ls", ["-1", archiveDir], { ignoreError: true });
+  if (result.exitCode !== 0 || !result.stdout.trim()) return null;
+
+  const dates = result.stdout
+    .trim()
+    .split("\n")
+    .filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d))
+    .sort()
+    .reverse();
+
+  if (dates.length === 0) return null;
+
+  // Check files in the latest backup
+  const latestDir = `${archiveDir}/${dates[0]}`;
+  const lsResult = await shell("ls", ["-1", latestDir], { ignoreError: true });
+  if (lsResult.exitCode !== 0 || !lsResult.stdout.trim()) return null;
+
+  const files = lsResult.stdout.trim().split("\n").filter(isBackupArchive);
+  if (files.length === 0) return null;
+
+  const encCount = files.filter((f) => f.endsWith(ENCRYPTED_EXT)).length;
+  const plainCount = files.filter((f) => f.endsWith(ARCHIVE_EXT)).length;
+
+  if (encCount > 0 && plainCount === 0) {
+    return {
+      name: "Encryption",
+      status: "pass",
+      message: "Backups encrypted",
+    };
+  }
+  if (plainCount > 0 && encCount === 0 && !password) {
+    return {
+      name: "Encryption",
+      status: "warn",
+      message: "Encryption not configured — backups stored in plaintext",
+    };
+  }
+  if (plainCount > 0 && encCount === 0 && password) {
+    return {
+      name: "Encryption",
+      status: "warn",
+      message: "Password set but existing backups are unencrypted (next backup will encrypt)",
+    };
+  }
+  if (encCount > 0 && plainCount > 0) {
+    return {
+      name: "Encryption",
+      status: "warn",
+      message: "Mixed encrypted/unencrypted backups found",
+    };
+  }
+  return null;
+}
+
 async function checkRemoteBackup(
   rcloneRemote: string,
   env?: EnvConfig,
@@ -233,7 +296,7 @@ async function runChecks(): Promise<CheckResult[]> {
   const baseDir = envConfig.BASE_DIR;
   const backupDir = backupConfig.BACKUP_DIR;
 
-  const [docker, diskApps, diskBackups, backupAge, containers, remote] =
+  const [docker, diskApps, diskBackups, backupAge, containers, remote, encryption] =
     await Promise.all([
       checkDocker(),
       checkDiskSpace("apps", baseDir),
@@ -241,9 +304,12 @@ async function runChecks(): Promise<CheckResult[]> {
       checkBackupAge(backupDir),
       checkContainerRestarts(baseDir),
       checkRemoteBackup(backupConfig.RCLONE_REMOTE, envConfig),
+      checkBackupEncryption(backupDir, backupConfig.BACKUP_PASSWORD),
     ]);
 
-  return [docker, diskApps, diskBackups, backupAge, ...containers, remote];
+  const results = [docker, diskApps, diskBackups, backupAge, ...containers, remote];
+  if (encryption) results.push(encryption);
+  return results;
 }
 
 // ─── Display helpers ─────────────────────────────────────────────────────────

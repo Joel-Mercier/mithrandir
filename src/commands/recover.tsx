@@ -35,6 +35,8 @@ import {
   getBackupConfig,
 } from "@/lib/config.js";
 import { extractBackup } from "@/lib/tar.js";
+import { decryptFile, isEncryptedBackup } from "@/lib/crypto.js";
+import { isBackupArchive, stripArchiveSuffix } from "@/lib/backup-utils.js";
 import { writeComposeAndStart } from "@/commands/setup.js";
 import { shell } from "@/lib/shell.js";
 import { createRestoreLogger, Logger } from "@/lib/logger.js";
@@ -66,18 +68,25 @@ async function downloadBackup(
 /** Discover available app backups from the latest remote archive */
 async function discoverRemoteBackups(
   rcloneRemote: string,
-): Promise<{ date: string; apps: string[] } | null> {
+): Promise<{ date: string; apps: string[]; fileMap: Record<string, string> } | null> {
   const dirs = await listDirs(rcloneRemote, "/backups/archive");
   if (dirs.length === 0) return null;
 
   const latestDate = dirs[dirs.length - 1];
   const files = await listFiles(rcloneRemote, `/backups/archive/${latestDate}`);
 
-  const apps = files
-    .filter((f) => f.endsWith(".tar.zst"))
-    .map((f) => f.replace(".tar.zst", ""));
+  // Build a map of appName -> filename (prefer .enc over .tar.zst)
+  const fileMap: Record<string, string> = {};
+  for (const f of files) {
+    if (!isBackupArchive(f)) continue;
+    const appName = stripArchiveSuffix(f);
+    // .enc takes priority
+    if (!fileMap[appName] || f.endsWith(".enc")) {
+      fileMap[appName] = f;
+    }
+  }
 
-  return { date: latestDate, apps };
+  return { date: latestDate, apps: Object.keys(fileMap), fileMap };
 }
 
 // ─── Headless (non-TTY) recover ─────────────────────────────────────────────
@@ -178,18 +187,36 @@ async function runHeadlessRecover(autoYes: boolean): Promise<void> {
     process.exit(0);
   }
 
+  // Check if any backups are encrypted and we need a password
+  const hasEncrypted = Object.values(discovered.fileMap).some((f) => f.endsWith(".enc"));
+  const backupPassword = env.BACKUP_PASSWORD || process.env.BACKUP_PASSWORD;
+  if (hasEncrypted && !backupPassword) {
+    await logger.error(
+      "Encrypted backups found but no password available. Set BACKUP_PASSWORD in .env or pass as environment variable.",
+    );
+    process.exit(1);
+  }
+
   // 8. Restore secrets first
   const failed: string[] = [];
   if (discovered.apps.includes("secrets")) {
     try {
       await logger.info("Restoring secrets...");
-      const remotePath = `/backups/archive/${discovered.date}/secrets.tar.zst`;
+      const secretsFile = discovered.fileMap["secrets"];
+      const remotePath = `/backups/archive/${discovered.date}/${secretsFile}`;
       const { localPath, tempDir } = await downloadBackup(
         rcloneRemote,
         remotePath,
       );
+
+      let extractPath = localPath;
+      if (isEncryptedBackup(localPath) && backupPassword) {
+        await logger.info("Decrypting secrets...");
+        extractPath = await decryptFile(localPath, backupPassword);
+      }
+
       const projectRoot = getProjectRoot();
-      await extractBackup(localPath, projectRoot);
+      await extractBackup(extractPath, projectRoot);
       await shell("rm", ["-rf", tempDir]);
       await logger.info("Secrets restored — reloading config");
     } catch (err: any) {
@@ -211,12 +238,20 @@ async function runHeadlessRecover(autoYes: boolean): Promise<void> {
 
     try {
       await logger.info(`Restoring ${app.displayName}...`);
-      const remotePath = `/backups/archive/${discovered.date}/${appName}.tar.zst`;
+      const appFile = discovered.fileMap[appName];
+      const remotePath = `/backups/archive/${discovered.date}/${appFile}`;
       const { localPath, tempDir } = await downloadBackup(
         rcloneRemote,
         remotePath,
       );
-      await extractBackup(localPath, reloadedEnv.BASE_DIR);
+
+      let extractPath = localPath;
+      if (isEncryptedBackup(localPath) && backupPassword) {
+        await logger.info(`Decrypting ${app.displayName}...`);
+        extractPath = await decryptFile(localPath, backupPassword);
+      }
+
+      await extractBackup(extractPath, reloadedEnv.BASE_DIR);
       await shell("rm", ["-rf", tempDir]);
 
       // Generate compose and start (fresh system has no compose files)
@@ -293,6 +328,7 @@ function RecoverCommand({ autoYes }: { autoYes: boolean }) {
   const [discovered, setDiscovered] = useState<{
     date: string;
     apps: string[];
+    fileMap: Record<string, string>;
   } | null>(null);
   const [restoreProgress, setRestoreProgress] = useState({
     current: 0,
@@ -689,6 +725,7 @@ function RecoverCommand({ autoYes }: { autoYes: boolean }) {
   function ConfirmStep() {
     if (!discovered) return null;
     const appList = discovered.apps.filter((a) => a !== "secrets");
+    const hasEncrypted = Object.values(discovered.fileMap).some((f) => f.endsWith(".enc"));
 
     function handleConfirm() {
       doRestore(discovered!);
@@ -722,25 +759,42 @@ function RecoverCommand({ autoYes }: { autoYes: boolean }) {
 
   // ─── Restore logic ─────────────────────────────────────────────────────────
 
-  async function doRestore(disc: { date: string; apps: string[] }) {
+  async function doRestore(disc: { date: string; apps: string[]; fileMap: Record<string, string> }) {
     setStep("restoring");
     const failed: string[] = [];
     const logger = createRestoreLogger();
+
+    // Determine password for encrypted backups
+    const initEnv = await loadEnvConfig();
+    const backupPassword = initEnv.BACKUP_PASSWORD || process.env.BACKUP_PASSWORD;
 
     // Restore secrets first
     if (disc.apps.includes("secrets")) {
       setCurrentLabel("Restoring secrets...");
       try {
-        const remotePath = `/backups/archive/${disc.date}/secrets.tar.zst`;
+        const secretsFile = disc.fileMap["secrets"];
+        const remotePath = `/backups/archive/${disc.date}/${secretsFile}`;
         const { localPath, tempDir } = await downloadBackup(
           rcloneRemote,
           remotePath,
         );
-        const projectRoot = getProjectRoot();
-        await extractBackup(localPath, projectRoot);
-        await shell("rm", ["-rf", tempDir]);
-        addStep({ name: "Secrets", status: "done" });
-        await logger.info("Restored secrets");
+
+        let extractPath = localPath;
+        if (isEncryptedBackup(localPath)) {
+          if (!backupPassword) {
+            addStep({ name: "Secrets", status: "error", message: "Encrypted — no password" });
+          } else {
+            setCurrentLabel("Decrypting secrets...");
+            extractPath = await decryptFile(localPath, backupPassword);
+          }
+        }
+        if (!isEncryptedBackup(extractPath)) {
+          const projectRoot = getProjectRoot();
+          await extractBackup(extractPath, projectRoot);
+          await shell("rm", ["-rf", tempDir]);
+          addStep({ name: "Secrets", status: "done" });
+          await logger.info("Restored secrets");
+        }
       } catch (err: any) {
         addStep({
           name: "Secrets",
@@ -755,6 +809,8 @@ function RecoverCommand({ autoYes }: { autoYes: boolean }) {
     const finalEnv = { ...envConfig, ...reloadedEnv };
     setEnvConfig(finalEnv);
     if (reloadedEnv.RCLONE_REMOTE) setRcloneRemote(reloadedEnv.RCLONE_REMOTE);
+    // Re-check password after secrets restore (may have gained BACKUP_PASSWORD from restored .env)
+    const password = reloadedEnv.BACKUP_PASSWORD || backupPassword;
 
     // Restore each app
     const appNames = disc.apps.filter((a) => a !== "secrets");
@@ -777,15 +833,29 @@ function RecoverCommand({ autoYes }: { autoYes: boolean }) {
 
       try {
         // Download
-        const remotePath = `/backups/archive/${disc.date}/${appName}.tar.zst`;
+        const appFile = disc.fileMap[appName];
+        const remotePath = `/backups/archive/${disc.date}/${appFile}`;
         const { localPath, tempDir } = await downloadBackup(
           rcloneRemote,
           remotePath,
         );
 
+        // Decrypt if needed
+        let extractPath = localPath;
+        if (isEncryptedBackup(localPath)) {
+          if (!password) {
+            addStep({ name: app.displayName, status: "error", message: "Encrypted — no password" });
+            failed.push(appName);
+            await shell("rm", ["-rf", tempDir]);
+            continue;
+          }
+          setCurrentLabel(`Decrypting ${app.displayName}...`);
+          extractPath = await decryptFile(localPath, password);
+        }
+
         // Extract
         setCurrentLabel(`Extracting ${app.displayName}...`);
-        await extractBackup(localPath, finalEnv.BASE_DIR);
+        await extractBackup(extractPath, finalEnv.BASE_DIR);
         await shell("rm", ["-rf", tempDir]);
 
         // Generate compose and start

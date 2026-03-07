@@ -18,6 +18,7 @@ import { isTimerActive, hasSystemd } from "@/lib/systemd.js";
 import { getLocalIp } from "@/lib/distro.js";
 import { getDuckDnsDomain } from "@/lib/caddy.js";
 import { Header } from "@/components/Header.js";
+import { findArchiveFile } from "@/lib/backup-utils.js";
 import type { AppDefinition } from "@/types.js";
 import { existsSync } from "fs";
 
@@ -85,8 +86,7 @@ async function getLastBackupDate(
     .reverse();
 
   for (const date of dates) {
-    const tarPath = `${backupDir}/archive/${date}/${app.name}.tar.zst`;
-    if (existsSync(tarPath)) return date;
+    if (findArchiveFile(`${backupDir}/archive/${date}`, app.name)) return date;
   }
   return null;
 }

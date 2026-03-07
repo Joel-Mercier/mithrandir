@@ -10,6 +10,14 @@ sudo bash install.sh          # Installs Bun + dependencies
 mithrandir setup              # No sudo needed — CLI elevates internally when required
 ```
 
+**Documentation website:** https://joel-mercier.github.io/mithrandir/
+
+> [!WARNING]
+> This project is being developed with the help of LLMs and agentic coding. Altough I'm a professional software developer, I'm more experienced in developing websites and mobile apps.
+
+> [!WARNING]
+> Mithrandir has for now only been tested on a Raspberry Pi 5 with 4GB RAM and running Raspberry Pi OS in headless mode. It may not work on other hardware or operating systems.
+
 ## Configuration
 
 ### .env File
@@ -26,6 +34,7 @@ All configuration lives in a single `.env` file at the project root.
 - `REMOTE_RETENTION`: Number of Google Drive backups to keep (default: `10`)
 - `RCLONE_REMOTE`: rclone remote name for Google Drive (default: `gdrive`)
 - `APPS`: Apps to backup - `"auto"` to detect installed apps, or comma-separated list
+- `BACKUP_PASSWORD`: Optional encryption password — when set, backups are encrypted with AES-256-CBC
 
 **HTTPS settings (Caddy reverse proxy):**
 - `ENABLE_HTTPS`: Set to `true` when HTTPS is installed (managed by `install https`)
@@ -396,8 +405,10 @@ scripts/generate-changelog.sh
 ## TODO
 
 - [ ] Add screenshots to the docs
-- [ ] Backups are synced to cloud storage (e.g., Google Drive) via rclone with no mention of encryption. Sensitive config data — credentials, private keys, personal files from Vaultwarden or Immich — would be stored in plaintext on a third-party cloud service. Plan to encrypt backups with a passphrase. Also make sure the health command and the backup verify command verify the integrity of the backups.
+- [ ] Add ActualBudget to the list of installable apps in @src/lib/apps.ts. It should be in a new "Finance" category & stack. Make sure to update the docs, README, CLAUDE.md, completions, caddyfile and so on. Here is the link to the official docker-compose file: https://github.com/actualbudget/actual/blob/master/packages/sync-server/docker-compose.yml
+- [ ] Add sure to the list of installable apps in @src/lib/apps.ts. It should be in the "Finance" category & stack. Make sure to update the docs, README, CLAUDE.md, completions, caddyfile and so on. Here is the link to the official docker-compose file: https://github.com/we-promise/sure/blob/main/compose.example.yml
 - [ ] Setup a local test environment with docker. This would allow us to test the CLI on a wider range of hardware and operating systems, and also help us catch any regressions before releasing a new version.
+- [ ] I want to internationalize this project's documentation that is built with VitePress. Here is the official documentation: https://vitepress.dev/guide/i18n. For now I just want to add a French translation.
 - [ ] check in prowlarr torznab (U2P / utopeer)
 - [ ] Add a \[CERTIFICATE_EXPIRATION\] > 72h check for each app during the Gatus setup to warn the user if their certificate is about to expire. Caddy is handling the certificate renewal automatically.
 - [ ] Check if Profilarr is a good solution for quality profiles

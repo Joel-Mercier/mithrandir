@@ -25,6 +25,12 @@ import { createBackupLogger, Logger } from "@/lib/logger.js";
 import { Header } from "@/components/Header.js";
 import { AppStatus } from "@/components/AppStatus.js";
 import { ProgressBar } from "@/components/ProgressBar.js";
+import { encryptFile, decryptFile, isEncryptedBackup } from "@/lib/crypto.js";
+import {
+  stripArchiveSuffix as sharedStripArchiveSuffix,
+  isBackupArchive,
+  ENCRYPTED_EXT,
+} from "@/lib/backup-utils.js";
 import type { AppDefinition, BackupConfig, EnvConfig } from "@/types.js";
 import { existsSync } from "fs";
 
@@ -195,14 +201,21 @@ async function runHeadlessBackup(appFilter?: string): Promise<void> {
     for (const app of apps) {
       try {
         await logger.info(`Backing up ${app.name}...`);
-        const outputPath = `${archiveDir}/${app.name}.tar.zst`;
+        let outputPath = `${archiveDir}/${app.name}.tar.zst`;
         await createBackup(app, config.BASE_DIR, outputPath);
 
+        // Encrypt if password is set
+        if (config.BACKUP_PASSWORD) {
+          await logger.info(`Encrypting ${app.name} backup...`);
+          outputPath = await encryptFile(outputPath, config.BACKUP_PASSWORD);
+        }
+
         // Update latest symlink
+        const symlinkName = outputPath.split("/").pop()!;
         await shell("ln", [
           "-sf",
           outputPath,
-          `${latestDir}/${app.name}.tar.zst`,
+          `${latestDir}/${symlinkName}`,
         ]);
 
         await logger.info(
@@ -217,12 +230,20 @@ async function runHeadlessBackup(appFilter?: string): Promise<void> {
     // Backup secrets
     try {
       await logger.info("Backing up secrets...");
-      const secretsPath = `${archiveDir}/secrets.tar.zst`;
+      let secretsPath = `${archiveDir}/secrets.tar.zst`;
       await createSecretsBackup(projectRoot, secretsPath);
+
+      // Encrypt if password is set
+      if (config.BACKUP_PASSWORD) {
+        await logger.info("Encrypting secrets backup...");
+        secretsPath = await encryptFile(secretsPath, config.BACKUP_PASSWORD);
+      }
+
+      const symlinkName = secretsPath.split("/").pop()!;
       await shell("ln", [
         "-sf",
         secretsPath,
-        `${latestDir}/secrets.tar.zst`,
+        `${latestDir}/${symlinkName}`,
       ]);
       await logger.info(
         `Successfully backed up secrets to ${secretsPath}`,
@@ -386,12 +407,20 @@ function BackupInteractive({ appFilter }: { appFilter?: string }) {
         setAppProgress({ current: i, total: apps.length });
         setCurrentLabel(`Backing up ${app.displayName}...`);
         try {
-          const outputPath = `${archiveDir}/${app.name}.tar.zst`;
+          let outputPath = `${archiveDir}/${app.name}.tar.zst`;
           await createBackup(app, config.BASE_DIR, outputPath);
+
+          // Encrypt if password is set
+          if (config.BACKUP_PASSWORD) {
+            setCurrentLabel(`Encrypting ${app.displayName}...`);
+            outputPath = await encryptFile(outputPath, config.BACKUP_PASSWORD);
+          }
+
+          const symlinkName = outputPath.split("/").pop()!;
           await shell("ln", [
             "-sf",
             outputPath,
-            `${latestDir}/${app.name}.tar.zst`,
+            `${latestDir}/${symlinkName}`,
           ]);
           addStep({ name: app.displayName, status: "done" });
         } catch (err: any) {
@@ -407,12 +436,20 @@ function BackupInteractive({ appFilter }: { appFilter?: string }) {
       // Backup secrets
       setCurrentLabel("Backing up secrets...");
       try {
-        const secretsPath = `${archiveDir}/secrets.tar.zst`;
+        let secretsPath = `${archiveDir}/secrets.tar.zst`;
         await createSecretsBackup(projectRoot, secretsPath);
+
+        // Encrypt if password is set
+        if (config.BACKUP_PASSWORD) {
+          setCurrentLabel("Encrypting secrets...");
+          secretsPath = await encryptFile(secretsPath, config.BACKUP_PASSWORD);
+        }
+
+        const symlinkName = secretsPath.split("/").pop()!;
         await shell("ln", [
           "-sf",
           secretsPath,
-          `${latestDir}/secrets.tar.zst`,
+          `${latestDir}/${symlinkName}`,
         ]);
         addStep({ name: "Secrets", status: "done" });
       } catch (err: any) {
@@ -818,9 +855,9 @@ export async function runBackupDelete(
 
 // ─── Backup listing ──────────────────────────────────────────────────────────
 
-/** Strip .tar.zst suffix for display */
+/** Strip archive suffix for display (delegates to shared helper) */
 function stripArchiveSuffix(filename: string): string {
-  return filename.replace(/\.tar\.zst$/, "");
+  return sharedStripArchiveSuffix(filename);
 }
 
 /** List contents of local backup date directories */
@@ -834,7 +871,7 @@ async function listLocalBackupContents(
   return result.stdout
     .trim()
     .split("\n")
-    .filter((f) => f.endsWith(".tar.zst"))
+    .filter((f) => isBackupArchive(f))
     .map(stripArchiveSuffix)
     .sort();
 }
@@ -896,7 +933,7 @@ export async function runBackupList(args: string[]): Promise<void> {
           `/backups/archive/${date}`,
         );
         const contents = files
-          .filter((f) => f.endsWith(".tar.zst"))
+          .filter((f) => isBackupArchive(f))
           .map(stripArchiveSuffix)
           .sort();
         if (contents.length > 0) {
@@ -933,20 +970,23 @@ interface VerifyResult {
 }
 
 /**
- * Verify a single .tar.zst archive:
+ * Verify a single backup archive (.tar.zst or .tar.zst.enc):
  * 1. Size > 0
- * 2. Archive integrity (tar --zstd -tf)
- * 3. Expected files present
- * 4. Optional extract test
+ * 2. If encrypted: decrypt to temp file (or report "encrypted" if no password)
+ * 3. Archive integrity (tar --zstd -tf)
+ * 4. Expected files present
+ * 5. Optional extract test
  */
 async function verifyArchive(
   archivePath: string,
   doExtract: boolean,
+  password?: string,
 ): Promise<VerifyResult> {
   const filename = archivePath.split("/").pop()!;
   const appName = stripArchiveSuffix(filename);
   const checks: string[] = [];
   const errors: string[] = [];
+  const encrypted = isEncryptedBackup(archivePath);
 
   // 1. Size check
   const statResult = await shell("stat", ["-c", "%s", archivePath], {
@@ -963,84 +1003,119 @@ async function verifyArchive(
   }
   checks.push(`Size: ${formatBytes(size)}`);
 
-  // 2. Archive integrity — list contents
-  const listResult = await shell("tar", ["--zstd", "-tf", archivePath], {
-    ignoreError: true,
-  });
-  if (listResult.exitCode !== 0) {
-    errors.push(
-      `Archive corrupt: tar -tf failed (exit ${listResult.exitCode})`,
-    );
-    return { file: filename, appName, status: "error", checks, errors };
+  // 2. Handle encrypted files
+  if (encrypted && !password) {
+    checks.push("Encrypted (provide BACKUP_PASSWORD to verify contents)");
+    return {
+      file: filename,
+      appName,
+      status: "ok",
+      checks,
+      errors,
+    };
   }
-  checks.push("Archive integrity OK");
 
-  const contents = listResult.stdout
-    .trim()
-    .split("\n")
-    .filter(Boolean);
+  let verifyPath = archivePath;
+  let decryptedTmpFile: string | null = null;
 
-  // 3. Expected file presence
-  if (appName === "secrets") {
-    // Secrets archive should contain .env
-    if (contents.some((f) => f === ".env" || f.endsWith("/.env"))) {
-      checks.push("Contains .env");
-    } else {
-      errors.push("Missing .env in secrets archive");
+  if (encrypted && password) {
+    checks.push("Encrypted: AES-256-CBC");
+    try {
+      // Decrypt to a temp location for verification
+      const tmpResult = await shell("mktemp", ["-d", "/tmp/mithrandir-decrypt-XXXXXX"]);
+      const tmpDir = tmpResult.stdout.trim();
+      const tmpEncFile = `${tmpDir}/${filename}`;
+      await shell("cp", [archivePath, tmpEncFile]);
+      verifyPath = await decryptFile(tmpEncFile, password);
+      decryptedTmpFile = tmpDir;
+    } catch (err: any) {
+      errors.push(`Decryption failed: ${err.message}`);
+      return { file: filename, appName, status: "error", checks, errors };
     }
-  } else {
-    const app = getApp(appName);
-    if (app) {
-      // Check for docker-compose.yml
-      const composeEntry = `${app.name}/docker-compose.yml`;
-      if (contents.some((f) => f === composeEntry)) {
-        checks.push("Contains docker-compose.yml");
-      } else {
-        errors.push(`Missing ${composeEntry}`);
-      }
+  }
 
-      // Check for config dir(s)
-      if (app.configSubdir === "multiple" && app.multipleConfigDirs) {
-        for (const dir of app.multipleConfigDirs) {
-          const prefix = `${app.name}/${dir}/`;
-          if (contents.some((f) => f === `${app.name}/${dir}` || f.startsWith(prefix))) {
-            checks.push(`Contains ${dir}/`);
+  try {
+    // 3. Archive integrity — list contents
+    const listResult = await shell("tar", ["--zstd", "-tf", verifyPath], {
+      ignoreError: true,
+    });
+    if (listResult.exitCode !== 0) {
+      errors.push(
+        `Archive corrupt: tar -tf failed (exit ${listResult.exitCode})`,
+      );
+      return { file: filename, appName, status: "error", checks, errors };
+    }
+    checks.push("Archive integrity OK");
+
+    const contents = listResult.stdout
+      .trim()
+      .split("\n")
+      .filter(Boolean);
+
+    // 4. Expected file presence
+    if (appName === "secrets") {
+      if (contents.some((f) => f === ".env" || f.endsWith("/.env"))) {
+        checks.push("Contains .env");
+      } else {
+        errors.push("Missing .env in secrets archive");
+      }
+    } else {
+      const app = getApp(appName);
+      if (app) {
+        const composeEntry = `${app.name}/docker-compose.yml`;
+        if (contents.some((f) => f === composeEntry)) {
+          checks.push("Contains docker-compose.yml");
+        } else {
+          errors.push(`Missing ${composeEntry}`);
+        }
+
+        if (app.configSubdir === "multiple" && app.multipleConfigDirs) {
+          for (const dir of app.multipleConfigDirs) {
+            const prefix = `${app.name}/${dir}/`;
+            if (contents.some((f) => f === `${app.name}/${dir}` || f.startsWith(prefix))) {
+              checks.push(`Contains ${dir}/`);
+            } else {
+              errors.push(`Missing config dir: ${dir}/`);
+            }
+          }
+        } else {
+          const prefix = `${app.name}/${app.configSubdir}/`;
+          if (contents.some((f) => f === `${app.name}/${app.configSubdir}` || f.startsWith(prefix))) {
+            checks.push(`Contains ${app.configSubdir}/`);
           } else {
-            errors.push(`Missing config dir: ${dir}/`);
+            errors.push(`Missing config dir: ${app.configSubdir}/`);
           }
         }
       } else {
-        const prefix = `${app.name}/${app.configSubdir}/`;
-        if (contents.some((f) => f === `${app.name}/${app.configSubdir}` || f.startsWith(prefix))) {
-          checks.push(`Contains ${app.configSubdir}/`);
-        } else {
-          errors.push(`Missing config dir: ${app.configSubdir}/`);
-        }
+        checks.push(`Unknown app "${appName}", skipping file checks`);
       }
-    } else {
-      checks.push(`Unknown app "${appName}", skipping file checks`);
     }
-  }
 
-  // 4. Extract test
-  if (doExtract) {
-    const tmpResult = await shell("mktemp", ["-d", "/tmp/mithrandir-extract-XXXXXX"]);
-    const tmpDir = tmpResult.stdout.trim();
-    try {
-      const extractResult = await shell(
-        "tar",
-        ["--zstd", "-xf", archivePath, "-C", tmpDir],
-        { ignoreError: true },
-      );
-      if (extractResult.exitCode !== 0) {
-        errors.push(
-          `Extract test failed (exit ${extractResult.exitCode})`,
+    // 5. Extract test
+    if (doExtract) {
+      const tmpResult = await shell("mktemp", ["-d", "/tmp/mithrandir-extract-XXXXXX"]);
+      const tmpDir = tmpResult.stdout.trim();
+      try {
+        const extractResult = await shell(
+          "tar",
+          ["--zstd", "-xf", verifyPath, "-C", tmpDir],
+          { ignoreError: true },
         );
-      } else {
-        checks.push("Extract test OK");
+        if (extractResult.exitCode !== 0) {
+          errors.push(
+            `Extract test failed (exit ${extractResult.exitCode})`,
+          );
+        } else {
+          checks.push("Extract test OK");
+        }
+      } finally {
+        await shell("rm", ["-rf", tmpDir], { ignoreError: true });
       }
-    } finally {
-      await shell("rm", ["-rf", tmpDir], { ignoreError: true });
+    }
+  } finally {
+    // Clean up decrypted temp file
+    if (decryptedTmpFile) {
+      await shell("rm", ["-rf", decryptedTmpFile], { ignoreError: true });
     }
   }
 
@@ -1089,6 +1164,7 @@ function BackupVerify({
     try {
       const env = await loadEnvConfig();
       const config = getBackupConfig(env);
+      const backupPassword = config.BACKUP_PASSWORD;
       let resolvedDate = date;
       let archiveDir: string;
       let tmpDir: string | undefined;
@@ -1163,7 +1239,7 @@ function BackupVerify({
         message: `Verifying ${remote ? "remote" : "local"} backup: ${resolvedDate}`,
       });
 
-      // Find all .tar.zst files
+      // Find all backup archives
       const lsResult = await shell("ls", ["-1", archiveDir], { ignoreError: true });
       if (lsResult.exitCode !== 0 || !lsResult.stdout.trim()) {
         setError(`No files found in ${archiveDir}`);
@@ -1174,10 +1250,10 @@ function BackupVerify({
       const archives = lsResult.stdout
         .trim()
         .split("\n")
-        .filter((f) => f.endsWith(".tar.zst"));
+        .filter((f) => isBackupArchive(f));
 
       if (archives.length === 0) {
-        setError("No .tar.zst archives found");
+        setError("No backup archives found");
         if (tmpDir) await shell("rm", ["-rf", tmpDir], { ignoreError: true });
         return;
       }
@@ -1190,6 +1266,7 @@ function BackupVerify({
         const result = await verifyArchive(
           `${archiveDir}/${archive}`,
           doExtract,
+          backupPassword,
         );
 
         if (result.status === "ok") {
@@ -1283,6 +1360,7 @@ async function runHeadlessVerify(
 ): Promise<void> {
   const env = await loadEnvConfig();
   const config = getBackupConfig(env);
+  const backupPassword = config.BACKUP_PASSWORD;
   let resolvedDate = date;
   let archiveDir: string;
   let tmpDir: string | undefined;
@@ -1356,10 +1434,10 @@ async function runHeadlessVerify(
   const archives = lsResult.stdout
     .trim()
     .split("\n")
-    .filter((f) => f.endsWith(".tar.zst"));
+    .filter((f) => isBackupArchive(f));
 
   if (archives.length === 0) {
-    console.error("Error: No .tar.zst archives found");
+    console.error("Error: No backup archives found");
     if (tmpDir) await shell("rm", ["-rf", tmpDir], { ignoreError: true });
     process.exit(1);
   }
@@ -1369,6 +1447,7 @@ async function runHeadlessVerify(
     const result = await verifyArchive(
       `${archiveDir}/${archive}`,
       !!doExtract,
+      backupPassword,
     );
     if (result.status === "ok") {
       console.log(`  ✓ ${result.appName}: ${result.checks.join(", ")}`);

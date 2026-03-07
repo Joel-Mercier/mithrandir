@@ -11,17 +11,17 @@ The backup directory structure looks like:
 ```
 /backups/
 ├── 2024-01-15/
-│   ├── jellyfin.tar.gz
-│   ├── sonarr.tar.gz
-│   ├── radarr.tar.gz
-│   ├── secrets.tar.gz
+│   ├── jellyfin.tar.zst
+│   ├── sonarr.tar.zst
+│   ├── radarr.tar.zst
+│   ├── secrets.tar.zst
 │   └── ...
 ├── 2024-01-14/
 │   └── ...
 └── ...
 ```
 
-The `secrets.tar.gz` archive contains your `.env` file and rclone configuration, so a full restore can recover everything including credentials.
+The `secrets.tar.zst` archive contains your `.env` file and rclone configuration, so a full restore can recover everything including credentials.
 
 ## What Gets Backed Up
 
@@ -145,6 +145,28 @@ The rclone config is auto-generated the first time a backup runs. If a config al
 ### Manual rclone Setup
 
 Alternatively, run `rclone config` interactively to set up any supported cloud provider (not just Google Drive).
+
+## Encryption
+
+Backups can be encrypted before storage so that sensitive data (credentials, private keys, Vaultwarden vaults) is protected on cloud remotes.
+
+To enable encryption, set `BACKUP_PASSWORD` in your `.env`:
+
+```
+BACKUP_PASSWORD=your-secure-password
+```
+
+When set, all new backups are encrypted with AES-256-CBC (PBKDF2 key derivation, 100k iterations) using `openssl`. Encrypted files have the `.tar.zst.enc` extension.
+
+**Important:** Store your password somewhere safe. Without it, encrypted backups cannot be restored.
+
+### How it works
+
+- **Backup:** Archives are created as `.tar.zst`, then encrypted to `.tar.zst.enc`. The unencrypted file is removed.
+- **Restore:** Encrypted backups are detected automatically by extension. The password is read from `BACKUP_PASSWORD` in `.env`.
+- **Verify:** With a password set, `backup verify` decrypts archives to a temp file for integrity checking. Without a password, encrypted backups report size only and pass verification.
+- **Health check:** `mithrandir health` reports encryption status — whether backups are encrypted, unencrypted, or mixed.
+- **Backward compatible:** Unencrypted `.tar.zst` backups continue to work. Both formats can coexist in the same backup directory.
 
 ## Retention
 

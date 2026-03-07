@@ -26,6 +26,14 @@ import { createRestoreLogger, Logger } from "@/lib/logger.js";
 import { Header } from "@/components/Header.js";
 import { AppStatus } from "@/components/AppStatus.js";
 import { ProgressBar } from "@/components/ProgressBar.js";
+import { decryptFile, isEncryptedBackup } from "@/lib/crypto.js";
+import {
+  findArchiveFile,
+  isBackupArchive,
+  stripArchiveSuffix,
+  ARCHIVE_EXT,
+  ENCRYPTED_EXT,
+} from "@/lib/backup-utils.js";
 import type { AppDefinition, BackupConfig, EnvConfig } from "@/types.js";
 import { existsSync } from "fs";
 
@@ -46,17 +54,17 @@ async function findBackupFile(
 
   // Try local latest
   if (date === "latest") {
-    const latestPath = `${config.BACKUP_DIR}/latest/${appName}.tar.zst`;
-    if (existsSync(latestPath)) {
-      return { path: latestPath, tempDir: null };
+    const found = findArchiveFile(`${config.BACKUP_DIR}/latest`, appName);
+    if (found) {
+      return { path: found, tempDir: null };
     }
   }
 
   // Try local dated
   if (date !== "latest") {
-    const datedPath = `${config.BACKUP_DIR}/archive/${date}/${appName}.tar.zst`;
-    if (existsSync(datedPath)) {
-      return { path: datedPath, tempDir: null };
+    const found = findArchiveFile(`${config.BACKUP_DIR}/archive/${date}`, appName);
+    if (found) {
+      return { path: found, tempDir: null };
     }
   }
 
@@ -64,14 +72,14 @@ async function findBackupFile(
   if (date === "latest") {
     const archiveDir = await resolveArchiveDir("latest", config);
     if (archiveDir) {
-      const path = `${archiveDir}/${appName}.tar.zst`;
-      if (existsSync(path)) {
-        return { path, tempDir: null };
+      const found = findArchiveFile(archiveDir, appName);
+      if (found) {
+        return { path: found, tempDir: null };
       }
     }
   }
 
-  // Try remote
+  // Try remote (encrypted first, then plain)
   if (await isRcloneInstalled()) {
     try {
       let remoteDate = date;
@@ -87,9 +95,18 @@ async function findBackupFile(
         }
       }
 
-      const remotePath = `/backups/archive/${remoteDate}/${appName}.tar.zst`;
-      if (await remoteFileExists(config.RCLONE_REMOTE, remotePath)) {
-        // Download to temp dir
+      // Try encrypted first, then plain
+      const encPath = `/backups/archive/${remoteDate}/${appName}${ENCRYPTED_EXT}`;
+      const plainPath = `/backups/archive/${remoteDate}/${appName}${ARCHIVE_EXT}`;
+      let remotePath: string | null = null;
+
+      if (await remoteFileExists(config.RCLONE_REMOTE, encPath)) {
+        remotePath = encPath;
+      } else if (await remoteFileExists(config.RCLONE_REMOTE, plainPath)) {
+        remotePath = plainPath;
+      }
+
+      if (remotePath) {
         const { stdout: tmpDir } = await shell("mktemp", ["-d"]);
         const tempDir = tmpDir.trim();
         await download(
@@ -97,8 +114,9 @@ async function findBackupFile(
           remotePath,
           tempDir,
         );
+        const filename = remotePath.split("/").pop()!;
         return {
-          path: `${tempDir}/${appName}.tar.zst`,
+          path: `${tempDir}/${filename}`,
           tempDir,
         };
       }
@@ -164,8 +182,7 @@ async function findAvailableBackups(
     const latestDir = `${config.BACKUP_DIR}/latest`;
     if (existsSync(latestDir)) {
       for (const name of allNames) {
-        const p = `${latestDir}/${name}.tar.zst`;
-        if (existsSync(p)) {
+        if (findArchiveFile(latestDir, name)) {
           foundApps.push(name);
         }
       }
@@ -175,8 +192,7 @@ async function findAvailableBackups(
     if (archiveDir) {
       for (const name of allNames) {
         if (foundApps.includes(name)) continue;
-        const p = `${archiveDir}/${name}.tar.zst`;
-        if (existsSync(p)) {
+        if (findArchiveFile(archiveDir, name)) {
           foundApps.push(name);
         }
       }
@@ -185,8 +201,7 @@ async function findAvailableBackups(
     archiveDir = await resolveArchiveDir(date, config);
     if (archiveDir) {
       for (const name of allNames) {
-        const p = `${archiveDir}/${name}.tar.zst`;
-        if (existsSync(p)) {
+        if (findArchiveFile(archiveDir, name)) {
           foundApps.push(name);
         }
       }
@@ -212,8 +227,13 @@ async function findAvailableBackups(
         if (remoteDate !== "latest") {
           for (const name of allNames) {
             if (foundApps.includes(name)) continue;
-            const remotePath = `/backups/archive/${remoteDate}/${name}.tar.zst`;
-            if (await remoteFileExists(config.RCLONE_REMOTE, remotePath)) {
+            // Try encrypted first, then plain
+            const encPath = `/backups/archive/${remoteDate}/${name}${ENCRYPTED_EXT}`;
+            const plainPath = `/backups/archive/${remoteDate}/${name}${ARCHIVE_EXT}`;
+            if (
+              (await remoteFileExists(config.RCLONE_REMOTE, encPath)) ||
+              (await remoteFileExists(config.RCLONE_REMOTE, plainPath))
+            ) {
               foundApps.push(name);
             }
           }
@@ -239,6 +259,7 @@ async function restoreApp(
   tempDir: string | null,
   config: BackupConfig,
   logger: Logger,
+  password?: string,
 ): Promise<void> {
   const containerName = getContainerName(app);
 
@@ -253,9 +274,24 @@ async function restoreApp(
     await shell("rm", ["-rf", p], { sudo: true });
   }
 
+  // Decrypt if encrypted
+  let extractPath = backupPath;
+  if (isEncryptedBackup(backupPath)) {
+    if (!password) {
+      throw new Error("Backup is encrypted. Set BACKUP_PASSWORD in .env");
+    }
+    await logger.info(`Decrypting backup for ${app.displayName}...`);
+    extractPath = await decryptFile(backupPath, password);
+  }
+
   // Extract backup
   await logger.info(`Extracting backup for ${app.displayName}...`);
-  await extractBackup(backupPath, config.BASE_DIR);
+  await extractBackup(extractPath, config.BASE_DIR);
+
+  // Clean up decrypted temp file (if we decrypted, remove the plaintext copy)
+  if (extractPath !== backupPath) {
+    await shell("rm", ["-f", extractPath], { ignoreError: true });
+  }
 
   // Clean up temp dir
   if (tempDir) {
@@ -282,7 +318,8 @@ async function runHeadlessSingleRestore(
   const logger = createRestoreLogger();
   await logger.info(`=== Restoring ${app.displayName} ===`);
 
-  const config = getBackupConfig(await loadEnvConfig());
+  const env = await loadEnvConfig();
+  const config = getBackupConfig(env);
   const date = dateArg ?? "latest";
 
   // Validate date
@@ -309,8 +346,14 @@ async function runHeadlessSingleRestore(
     process.exit(0);
   }
 
+  // Check for encrypted backup without password
+  if (isEncryptedBackup(found.path) && !config.BACKUP_PASSWORD) {
+    await logger.error("Backup is encrypted. Set BACKUP_PASSWORD in .env");
+    process.exit(1);
+  }
+
   try {
-    await restoreApp(app, found.path, found.tempDir, config, logger);
+    await restoreApp(app, found.path, found.tempDir, config, logger, config.BACKUP_PASSWORD);
     await logger.info(`=== Successfully restored ${app.displayName} ===`);
   } catch (err: any) {
     await logger.error(`Failed to restore ${app.displayName}: ${err.message}`);
@@ -355,18 +398,35 @@ async function runHeadlessFullRestore(
     process.exit(0);
   }
 
+  const password = config.BACKUP_PASSWORD;
+
   // Restore secrets first
   if (availableApps.includes("secrets")) {
     try {
       await logger.info("Restoring secrets...");
       const secretsBackup = await findBackupFile("secrets", dateArg, config);
       if (secretsBackup) {
-        const projectRoot = getProjectRoot();
-        await extractBackup(secretsBackup.path, projectRoot);
-        if (secretsBackup.tempDir) {
-          await shell("rm", ["-rf", secretsBackup.tempDir]);
+        let extractPath = secretsBackup.path;
+        if (isEncryptedBackup(extractPath)) {
+          if (!password) {
+            await logger.warn("Secrets backup is encrypted but no BACKUP_PASSWORD set, skipping");
+          } else {
+            await logger.info("Decrypting secrets...");
+            extractPath = await decryptFile(extractPath, password);
+          }
         }
-        await logger.info("Secrets restored successfully");
+        if (!isEncryptedBackup(extractPath)) {
+          const projectRoot = getProjectRoot();
+          await extractBackup(extractPath, projectRoot);
+          // Clean up decrypted temp file
+          if (extractPath !== secretsBackup.path) {
+            await shell("rm", ["-f", extractPath], { ignoreError: true });
+          }
+          if (secretsBackup.tempDir) {
+            await shell("rm", ["-rf", secretsBackup.tempDir]);
+          }
+          await logger.info("Secrets restored successfully");
+        }
       }
     } catch (err: any) {
       await logger.warn(`Failed to restore secrets: ${err.message}`);
@@ -387,7 +447,12 @@ async function runHeadlessFullRestore(
         failed.push(appName);
         continue;
       }
-      await restoreApp(app, found.path, found.tempDir, config, logger);
+      if (isEncryptedBackup(found.path) && !password) {
+        await logger.warn(`${app.displayName} backup is encrypted but no BACKUP_PASSWORD set, skipping`);
+        failed.push(appName);
+        continue;
+      }
+      await restoreApp(app, found.path, found.tempDir, config, logger, password);
     } catch (err: any) {
       failed.push(appName);
       await logger.warn(`Failed to restore ${app.displayName}: ${err.message}`);
@@ -468,8 +533,10 @@ function SingleRestoreInteractive({
   async function doRestore(found: FoundBackup) {
     setPhase("running");
     try {
-      const config = getBackupConfig(await loadEnvConfig());
+      const env = await loadEnvConfig();
+      const config = getBackupConfig(env);
       const logger = createRestoreLogger();
+      const password = config.BACKUP_PASSWORD;
 
       // Stop container
       setCurrentLabel(`Stopping ${app.displayName} container...`);
@@ -485,10 +552,27 @@ function SingleRestoreInteractive({
       }
       addStep({ name: "Remove config", status: "done" });
 
+      // Decrypt if encrypted
+      let extractPath = found.path;
+      if (isEncryptedBackup(found.path)) {
+        if (!password) {
+          setError("Backup is encrypted. Set BACKUP_PASSWORD in .env");
+          return;
+        }
+        setCurrentLabel(`Decrypting backup...`);
+        extractPath = await decryptFile(found.path, password);
+        addStep({ name: "Decrypt", status: "done" });
+      }
+
       // Extract backup
       setCurrentLabel(`Extracting backup...`);
-      await extractBackup(found.path, config.BASE_DIR);
+      await extractBackup(extractPath, config.BASE_DIR);
       addStep({ name: "Extract backup", status: "done" });
+
+      // Clean up decrypted temp file
+      if (extractPath !== found.path) {
+        await shell("rm", ["-f", extractPath], { ignoreError: true });
+      }
 
       // Clean up temp dir
       if (found.tempDir) {
@@ -655,8 +739,10 @@ function FullRestoreInteractive({
 
   async function doFullRestore(apps: string[]) {
     setPhase("running");
-    const config = getBackupConfig(await loadEnvConfig());
+    const env = await loadEnvConfig();
+    const config = getBackupConfig(env);
     const logger = createRestoreLogger();
+    const password = config.BACKUP_PASSWORD;
     let failed = 0;
 
     // Restore secrets first
@@ -665,13 +751,27 @@ function FullRestoreInteractive({
       try {
         const secretsBackup = await findBackupFile("secrets", dateArg, config);
         if (secretsBackup) {
-          const projectRoot = getProjectRoot();
-          await extractBackup(secretsBackup.path, projectRoot);
-          if (secretsBackup.tempDir) {
-            await shell("rm", ["-rf", secretsBackup.tempDir]);
+          let extractPath = secretsBackup.path;
+          if (isEncryptedBackup(extractPath)) {
+            if (!password) {
+              addStep({ name: "Secrets", status: "error", message: "Encrypted — set BACKUP_PASSWORD" });
+            } else {
+              setCurrentLabel("Decrypting secrets...");
+              extractPath = await decryptFile(extractPath, password);
+            }
           }
-          addStep({ name: "Secrets", status: "done" });
-          await logger.info("Restored secrets");
+          if (!isEncryptedBackup(extractPath)) {
+            const projectRoot = getProjectRoot();
+            await extractBackup(extractPath, projectRoot);
+            if (extractPath !== secretsBackup.path) {
+              await shell("rm", ["-f", extractPath], { ignoreError: true });
+            }
+            if (secretsBackup.tempDir) {
+              await shell("rm", ["-rf", secretsBackup.tempDir]);
+            }
+            addStep({ name: "Secrets", status: "done" });
+            await logger.info("Restored secrets");
+          }
         }
       } catch (err: any) {
         addStep({
@@ -703,7 +803,16 @@ function FullRestoreInteractive({
           failed++;
           continue;
         }
-        await restoreApp(app, found.path, found.tempDir, config, logger);
+        if (isEncryptedBackup(found.path) && !password) {
+          addStep({
+            name: app.displayName,
+            status: "error",
+            message: "Encrypted — set BACKUP_PASSWORD",
+          });
+          failed++;
+          continue;
+        }
+        await restoreApp(app, found.path, found.tempDir, config, logger, password);
         addStep({ name: app.displayName, status: "done" });
       } catch (err: any) {
         addStep({

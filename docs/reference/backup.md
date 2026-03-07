@@ -78,6 +78,14 @@ Old backups are automatically pruned based on `LOCAL_RETENTION` and `REMOTE_RETE
 
 When run from a systemd timer or non-interactive shell, the backup command outputs timestamped plaintext logs to stdout and `/var/log/homelab-backup.log` instead of the interactive UI.
 
+## Encryption
+
+When `BACKUP_PASSWORD` is set in `.env`, all backups are encrypted with AES-256-CBC (via `openssl`) after creation. Encrypted files use the `.tar.zst.enc` extension. Restore and verify commands detect encrypted files automatically and decrypt using the same password.
+
+If a backup is encrypted but no password is available:
+- **Restore/recover:** Fails with an error message
+- **Verify:** Reports "encrypted" and passes (size check only)
+
 ## Related Configuration
 
 | Variable | Default | Description |
@@ -87,3 +95,4 @@ When run from a systemd timer or non-interactive shell, the backup command outpu
 | `REMOTE_RETENTION` | `10` | Number of remote backups to keep |
 | `RCLONE_REMOTE` | `gdrive` | rclone remote name |
 | `APPS` | `auto` | Comma-separated app list, or `auto` for all installed |
+| `BACKUP_PASSWORD` | *(none)* | Optional encryption password for backups |

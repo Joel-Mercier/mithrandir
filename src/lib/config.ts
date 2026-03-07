@@ -79,6 +79,7 @@ export function getBackupConfig(env: EnvConfig): BackupConfig {
     RCLONE_REMOTE: env.RCLONE_REMOTE ?? "gdrive",
     APPS: env.APPS ?? "auto",
     BASE_DIR: env.BASE_DIR,
+    BACKUP_PASSWORD: env.BACKUP_PASSWORD || undefined,
   };
 }
 

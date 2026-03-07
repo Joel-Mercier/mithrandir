@@ -11,6 +11,7 @@ import {
   getContainerName,
 } from "@/lib/apps.js";
 import { createBackup, resolveOwnership } from "@/lib/tar.js";
+import { encryptFile } from "@/lib/crypto.js";
 import {
   getRunningImageId,
   pullImageWithProgress,
@@ -164,10 +165,18 @@ function UpdateInteractive({
         for (const app of apps) {
           setCurrentLabel(`Backing up ${app.displayName}...`);
           try {
-            const outputPath = `${archiveDir}/${app.name}.tar.zst`;
+            let outputPath = `${archiveDir}/${app.name}.tar.zst`;
             await createBackup(app, config.BASE_DIR, outputPath);
+
+            // Encrypt if password is set
+            if (config.BACKUP_PASSWORD) {
+              setCurrentLabel(`Encrypting ${app.displayName} backup...`);
+              outputPath = await encryptFile(outputPath, config.BACKUP_PASSWORD);
+            }
+
             // Update latest symlink
-            await shell("ln", ["-sf", outputPath, `${latestDir}/${app.name}.tar.zst`]);
+            const symlinkName = outputPath.split("/").pop()!;
+            await shell("ln", ["-sf", outputPath, `${latestDir}/${symlinkName}`]);
             addStep({ name: `Backup ${app.displayName}`, status: "done" });
           } catch (err: any) {
             addStep({

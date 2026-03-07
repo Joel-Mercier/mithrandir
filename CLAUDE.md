@@ -69,7 +69,7 @@ When `ENABLE_HTTPS=true`, compose generation filters port 443 from Pi-hole's ext
 VitePress static site in `docs/` folder, served via Docker (nginx). `mithrandir docs` builds the Docker image and starts the container on port 4173. `mithrandir docs stop` stops it. When Caddy HTTPS is enabled, `regenerateCaddyfile()` automatically adds/removes a `mithrandir-docs` reverse proxy entry. The docs container is not part of the app registry — it's managed separately.
 
 ### TTY / Non-TTY Branching (Backup)
-The backup command runs from systemd timer (non-TTY) daily. `commands/backup.tsx` checks `process.stdout.isTTY` — TTY renders Ink components with spinners and progress, non-TTY writes timestamped plaintext to stdout + `/var/log/homelab-backup.log`. Both paths call the same `lib/` functions.
+The backup command runs from systemd timer (non-TTY) daily. `commands/backup.tsx` checks `process.stdout.isTTY` — TTY renders Ink components with spinners and progress, non-TTY writes timestamped plaintext to stdout + `/var/log/homelab-backup.log`. Both paths call the same `lib/` functions. When `BACKUP_PASSWORD` is set, backups are encrypted with AES-256-CBC via `openssl` after creation — the password is read from `.env` so automated backups work without interaction.
 
 ### Config Loading (`src/lib/config.ts`)
 `getProjectRoot()` resolves the repo root by walking up from `src/lib/`. `.env` lives at repo root. `loadEnvConfig()` loads all settings (including backup config) from `.env`. `getBackupConfig(env)` extracts and parses backup-related fields from an `EnvConfig` into a typed `BackupConfig` with number retention values.
@@ -91,7 +91,7 @@ These allow programmatic access to the APIs of the above services.
 
 ## Configuration
 
-- **.env** — All configuration lives here. Core settings: `BASE_DIR`, `PUID`/`PGID`, `TZ`. Per-app secrets: DuckDNS, WireGuard, Spotify. Backup settings: `BACKUP_DIR` (default `/backups`), `LOCAL_RETENTION` (5), `REMOTE_RETENTION` (10), `RCLONE_REMOTE` (gdrive), `APPS` (auto or comma-separated). HTTPS settings: `ENABLE_HTTPS`, `ACME_EMAIL`. Firewall: `ENABLE_FIREWALL`. Not in git.
+- **.env** — All configuration lives here. Core settings: `BASE_DIR`, `PUID`/`PGID`, `TZ`. Per-app secrets: DuckDNS, WireGuard, Spotify. Backup settings: `BACKUP_DIR` (default `/backups`), `LOCAL_RETENTION` (5), `REMOTE_RETENTION` (10), `RCLONE_REMOTE` (gdrive), `APPS` (auto or comma-separated), `BACKUP_PASSWORD` (optional, encrypts backups with AES-256-CBC). HTTPS settings: `ENABLE_HTTPS`, `ACME_EMAIL`. Firewall: `ENABLE_FIREWALL`. Not in git.
 
 ### Changelog (`docs/changelog.md`)
 Auto-generated from git commits via `scripts/generate-changelog.sh`, grouped by git tags. Each tag becomes a version section; commits after the latest tag appear under "Unreleased". The script categorizes commits by message prefix (add/fix/update/etc.). To create a release, run `scripts/release.sh <version>` — this bumps the version in `package.json` and the nav dropdown in `docs/.vitepress/config.ts`, generates the changelog, commits everything, and creates the git tag.
