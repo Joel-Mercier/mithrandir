@@ -5,14 +5,14 @@ Mithrandir supports over 20 self-hosted applications. Each app is installed and 
 ## Managing Apps
 
 ```sh
-sudo mithrandir install <app>      # Install an app
-sudo mithrandir start <app>        # Start a stopped app
-sudo mithrandir stop <app>         # Stop a running app
-sudo mithrandir restart <app>      # Restart an app
-sudo mithrandir update <app>       # Update to the latest image
-sudo mithrandir reinstall <app>    # Reinstall from scratch
-sudo mithrandir uninstall <app>    # Remove an app
-sudo mithrandir log <app>          # View logs
+mithrandir install <app>      # Install an app
+mithrandir start <app>        # Start a stopped app
+mithrandir stop <app>         # Stop a running app
+mithrandir restart <app>      # Restart an app
+mithrandir update <app>       # Update to the latest image
+mithrandir reinstall <app>    # Reinstall from scratch
+mithrandir uninstall <app>    # Remove an app
+mithrandir log <app>          # View logs
 ```
 
 ## Available Apps

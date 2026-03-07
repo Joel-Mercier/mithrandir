@@ -5,7 +5,7 @@ Stop a running app.
 ## Usage
 
 ```sh
-sudo mithrandir stop <app>
+mithrandir stop <app>
 ```
 
 ## Arguments

@@ -13,7 +13,7 @@ Customizable server dashboard — a beautiful home page for all your self-hosted
 ## Installation
 
 ```sh
-sudo mithrandir install homarr
+mithrandir install homarr
 ```
 
 ## Notes

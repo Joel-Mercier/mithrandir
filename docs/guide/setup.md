@@ -3,7 +3,7 @@
 The setup wizard walks you through configuring your entire homelab. Run it with:
 
 ```sh
-sudo mithrandir setup
+mithrandir setup
 ```
 
 ## What It Does
@@ -84,7 +84,7 @@ Key settings include:
 To run the setup without prompts (useful for scripting), pass `--yes`:
 
 ```sh
-sudo mithrandir setup --yes
+mithrandir setup --yes
 ```
 
 This uses default values and skips confirmation prompts.

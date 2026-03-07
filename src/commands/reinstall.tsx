@@ -181,12 +181,6 @@ export async function runReinstall(
     process.exit(1);
   }
 
-  // Root check
-  if (process.getuid?.() !== 0) {
-    console.error("Error: This command must be run as root (use sudo).");
-    process.exit(1);
-  }
-
   const autoYes = flags.yes ?? false;
   const { waitUntilExit } = render(
     <ReinstallInteractive appName={appName} autoYes={autoYes} />,

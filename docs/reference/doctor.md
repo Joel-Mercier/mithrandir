@@ -5,7 +5,7 @@ Diagnose setup issues and suggest fixes.
 ## Usage
 
 ```sh
-sudo mithrandir doctor
+mithrandir doctor
 ```
 
 ## Description

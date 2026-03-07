@@ -60,4 +60,4 @@ The suggested order for installing the full media stack, based on dependencies:
 
 - Installed apps are shown in green, uninstalled apps are dimmed
 - The graph reads `.env` to determine which apps are installed
-- Use `sudo mithrandir install media` to install the entire media stack at once
+- Use `mithrandir install media` to install the entire media stack at once

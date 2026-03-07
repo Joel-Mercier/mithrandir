@@ -5,7 +5,7 @@ Interactive setup wizard that walks through initial homelab configuration.
 ## Usage
 
 ```sh
-sudo mithrandir setup
+mithrandir setup
 ```
 
 ## Description

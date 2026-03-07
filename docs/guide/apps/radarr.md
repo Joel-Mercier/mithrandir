@@ -14,7 +14,7 @@ Movie collection manager — automatically searches for, downloads, and organize
 ## Installation
 
 ```sh
-sudo mithrandir install radarr
+mithrandir install radarr
 ```
 
 ## Auto-Configuration

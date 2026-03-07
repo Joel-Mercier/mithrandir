@@ -14,7 +14,7 @@ Free media streaming server — an open-source alternative to Plex and Emby.
 ## Installation
 
 ```sh
-sudo mithrandir install jellyfin
+mithrandir install jellyfin
 ```
 
 ## Ports

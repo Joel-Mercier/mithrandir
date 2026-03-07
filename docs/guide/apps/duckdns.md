@@ -14,7 +14,7 @@ Free dynamic DNS service — keeps a domain name pointed at your home IP address
 ## Installation
 
 ```sh
-sudo mithrandir install duckdns
+mithrandir install duckdns
 ```
 
 ## Required Secrets

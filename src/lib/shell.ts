@@ -1,5 +1,27 @@
 import { execa, type ResultPromise } from "execa";
 
+/**
+ * Cached check: does Docker require sudo?
+ * Returns false if already root or if user is in the `docker` group.
+ */
+let _dockerNeedsSudo: boolean | null = null;
+
+export async function dockerNeedsSudo(): Promise<boolean> {
+  if (_dockerNeedsSudo !== null) return _dockerNeedsSudo;
+  if (process.getuid?.() === 0) {
+    _dockerNeedsSudo = false;
+    return false;
+  }
+  try {
+    const result = await execa("id", ["-nG"], { reject: false });
+    const groups = (result.stdout ?? "").trim().split(/\s+/);
+    _dockerNeedsSudo = !groups.includes("docker");
+  } catch {
+    _dockerNeedsSudo = true;
+  }
+  return _dockerNeedsSudo;
+}
+
 export interface ShellOptions {
   sudo?: boolean;
   /** Run command as a specific user via sudo -u */
@@ -28,7 +50,12 @@ export async function shell(
   args: string[] = [],
   options: ShellOptions = {},
 ): Promise<ShellResult> {
-  const { sudo = false, user, cwd, ignoreError = false, env, timeout } = options;
+  let { sudo = false, user, cwd, ignoreError = false, env, timeout } = options;
+
+  // Docker commands don't need sudo if the user is in the docker group
+  if (sudo && !user && command === "docker") {
+    if (!(await dockerNeedsSudo())) sudo = false;
+  }
 
   let cmd: string;
   let cmdArgs: string[];
@@ -70,12 +97,17 @@ export async function shell(
 /**
  * Run a command and stream output in real-time (for long-running ops).
  */
-export function shellStream(
+export async function shellStream(
   command: string,
   args: string[] = [],
   options: ShellOptions = {},
-): ResultPromise {
-  const { sudo = false, cwd, env } = options;
+): Promise<ResultPromise> {
+  let { sudo = false, cwd, env } = options;
+
+  // Docker commands don't need sudo if the user is in the docker group
+  if (sudo && command === "docker") {
+    if (!(await dockerNeedsSudo())) sudo = false;
+  }
 
   const cmd = sudo ? "sudo" : command;
   const cmdArgs = sudo ? [command, ...args] : args;

@@ -34,13 +34,13 @@ If you need to recover on a new machine, re-point your apps at the same media st
 The setup wizard installs a systemd timer that runs backups daily at 2:00 AM. You can check the timer status with:
 
 ```sh
-sudo mithrandir status
+mithrandir status
 ```
 
 Or install/reinstall the backup timer manually:
 
 ```sh
-sudo mithrandir install backup
+mithrandir install backup
 ```
 
 ## Manual Backups
@@ -49,23 +49,23 @@ Run a backup on demand:
 
 ```sh
 # Backup all apps
-sudo mithrandir backup
+mithrandir backup
 
 # Backup a specific app
-sudo mithrandir backup jellyfin
+mithrandir backup jellyfin
 ```
 
 ## Listing Backups
 
 ```sh
 # List all backups (local and remote)
-sudo mithrandir backup list
+mithrandir backup list
 
 # List only local backups
-sudo mithrandir backup list local
+mithrandir backup list local
 
 # List only remote backups
-sudo mithrandir backup list remote
+mithrandir backup list remote
 ```
 
 ## Verifying Backups
@@ -74,16 +74,16 @@ Check that backup archives are intact:
 
 ```sh
 # Verify latest local backup
-sudo mithrandir backup verify
+mithrandir backup verify
 
 # Verify a specific date
-sudo mithrandir backup verify 2024-01-15
+mithrandir backup verify 2024-01-15
 
 # Verify remote backups
-sudo mithrandir backup verify --remote
+mithrandir backup verify --remote
 
 # Also test extraction
-sudo mithrandir backup verify --extract
+mithrandir backup verify --extract
 ```
 
 ## Restoring from Backup
@@ -92,13 +92,13 @@ Restore a single app or everything:
 
 ```sh
 # Restore a specific app from the latest backup
-sudo mithrandir restore sonarr
+mithrandir restore sonarr
 
 # Restore from a specific date
-sudo mithrandir restore sonarr 2024-01-15
+mithrandir restore sonarr 2024-01-15
 
 # Full restore of all apps
-sudo mithrandir restore full
+mithrandir restore full
 ```
 
 The restore process checks local backups first, then falls back to the remote.
@@ -108,7 +108,7 @@ The restore process checks local backups first, then falls back to the remote.
 If you need to set up your homelab from scratch on a new machine (or after a fresh OS install), use the recovery command:
 
 ```sh
-sudo mithrandir recover
+mithrandir recover
 ```
 
 This walks you through a complete recovery:
@@ -162,11 +162,11 @@ Old backups are pruned automatically after each backup run. Configure retention 
 
 ```sh
 # Delete a specific local backup
-sudo mithrandir backup delete local 2024-01-10
+mithrandir backup delete local 2024-01-10
 
 # Delete a remote backup (with confirmation prompt)
-sudo mithrandir backup delete remote 2024-01-10
+mithrandir backup delete remote 2024-01-10
 
 # Skip confirmation
-sudo mithrandir backup delete local 2024-01-10 --yes
+mithrandir backup delete local 2024-01-10 --yes
 ```

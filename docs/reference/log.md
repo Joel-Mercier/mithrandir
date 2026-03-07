@@ -5,7 +5,7 @@ View container logs for an app.
 ## Usage
 
 ```sh
-sudo mithrandir log <app> [--follow] [--tail N] [--since TIME]
+mithrandir log <app> [--follow] [--tail N] [--since TIME]
 ```
 
 ## Arguments
@@ -26,13 +26,13 @@ sudo mithrandir log <app> [--follow] [--tail N] [--since TIME]
 
 ```sh
 # Show last 50 lines of Sonarr logs
-sudo mithrandir log sonarr --tail 50
+mithrandir log sonarr --tail 50
 
 # Follow Pi-hole logs in real time
-sudo mithrandir log pihole --follow
+mithrandir log pihole --follow
 
 # Show Jellyfin logs from the last 2 hours
-sudo mithrandir log jellyfin --since 2h
+mithrandir log jellyfin --since 2h
 ```
 
 ## Notes

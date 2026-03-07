@@ -5,7 +5,7 @@ Check system health.
 ## Usage
 
 ```sh
-sudo mithrandir health
+mithrandir health
 ```
 
 ## Description

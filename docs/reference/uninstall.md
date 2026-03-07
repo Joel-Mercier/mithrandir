@@ -5,7 +5,7 @@ Uninstall an app or the entire system.
 ## Usage
 
 ```sh
-sudo mithrandir uninstall [app]
+mithrandir uninstall [app]
 ```
 
 ## Arguments

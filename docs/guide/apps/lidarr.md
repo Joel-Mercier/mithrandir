@@ -14,7 +14,7 @@ Music collection manager — automatically searches for and downloads music albu
 ## Installation
 
 ```sh
-sudo mithrandir install lidarr
+mithrandir install lidarr
 ```
 
 ## Auto-Configuration

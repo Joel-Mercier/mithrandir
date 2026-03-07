@@ -1035,11 +1035,6 @@ export async function runInstall(args: string[]): Promise<void> {
     process.exit(1);
   }
 
-  if (process.getuid?.() !== 0) {
-    console.error("Error: This command must be run as root (use sudo).");
-    process.exit(1);
-  }
-
   if (target === "docker") {
     const { waitUntilExit } = render(<InstallDocker />);
     await waitUntilExit();

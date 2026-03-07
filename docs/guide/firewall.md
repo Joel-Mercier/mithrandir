@@ -9,7 +9,7 @@ Docker manipulates `iptables` directly, which means standard UFW rules **do not 
 ## Install
 
 ```sh
-sudo mithrandir install firewall
+mithrandir install firewall
 ```
 
 This will:

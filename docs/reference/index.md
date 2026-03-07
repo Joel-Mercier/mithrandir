@@ -1,6 +1,6 @@
 # CLI Reference
 
-Mithrandir is invoked as `mithrandir <command> [options]`. Most commands that modify the system require `sudo`.
+Mithrandir is invoked as `mithrandir <command> [options]`.
 
 ## Global Flags
 

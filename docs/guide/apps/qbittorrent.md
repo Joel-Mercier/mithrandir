@@ -14,7 +14,7 @@ BitTorrent client with a web UI — used as the download client for Sonarr, Rada
 ## Installation
 
 ```sh
-sudo mithrandir install qbittorrent
+mithrandir install qbittorrent
 ```
 
 ## Ports

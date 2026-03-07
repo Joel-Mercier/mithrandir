@@ -13,7 +13,7 @@ Modern music server and streamer — compatible with Subsonic clients (DSub, Sym
 ## Installation
 
 ```sh
-sudo mithrandir install navidrome
+mithrandir install navidrome
 ```
 
 ## Optional Secrets

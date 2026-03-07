@@ -5,10 +5,10 @@ Backup apps to local and remote storage.
 ## Usage
 
 ```sh
-sudo mithrandir backup [app]
-sudo mithrandir backup list [local|remote]
-sudo mithrandir backup delete <local|remote> [date] [--yes]
-sudo mithrandir backup verify [date] [--remote] [--extract]
+mithrandir backup [app]
+mithrandir backup list [local|remote]
+mithrandir backup delete <local|remote> [date] [--yes]
+mithrandir backup verify [date] [--remote] [--extract]
 ```
 
 ## Arguments
@@ -24,7 +24,7 @@ sudo mithrandir backup verify [date] [--remote] [--extract]
 List existing backups.
 
 ```sh
-sudo mithrandir backup list [local|remote]
+mithrandir backup list [local|remote]
 ```
 
 | Argument | Description |
@@ -39,7 +39,7 @@ If no argument is given, lists both local and remote backups.
 Delete backups by location and optional date.
 
 ```sh
-sudo mithrandir backup delete <local|remote> [date] [--yes]
+mithrandir backup delete <local|remote> [date] [--yes]
 ```
 
 | Argument | Description |
@@ -56,7 +56,7 @@ sudo mithrandir backup delete <local|remote> [date] [--yes]
 Verify the integrity of backup archives.
 
 ```sh
-sudo mithrandir backup verify [date] [--remote] [--extract]
+mithrandir backup verify [date] [--remote] [--extract]
 ```
 
 | Argument | Description |

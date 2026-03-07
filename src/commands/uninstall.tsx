@@ -658,12 +658,6 @@ export async function runUninstall(
 ) {
   ensurePath();
 
-  // Root check
-  if (process.getuid?.() !== 0) {
-    console.error("Error: This command must be run as root (use sudo).");
-    process.exit(1);
-  }
-
   const autoYes = flags.yes ?? false;
   const appArg = args[0];
 

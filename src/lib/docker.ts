@@ -1,7 +1,7 @@
 import { dirname, join } from "path";
 import { writeFileSync } from "fs";
 import { tmpdir } from "os";
-import { shell, commandExists } from "@/lib/shell.js";
+import { shell, commandExists, dockerNeedsSudo } from "@/lib/shell.js";
 import { hasSystemd } from "@/lib/systemd.js";
 import { detectDistro } from "@/lib/distro.js";
 import type { AppDefinition } from "@/types.js";
@@ -99,6 +99,14 @@ export async function installDocker(): Promise<void> {
   writeFileSync(tmpDaemon, daemonJson);
   await shell("mv", [tmpDaemon, "/etc/docker/daemon.json"], { sudo: true });
 
+  // Add the current user to the docker group so future commands don't need sudo.
+  // The group change takes effect after the next login session.
+  const sudoUser = process.env.SUDO_USER;
+  const dockerUser = sudoUser ?? (await shell("id", ["-un"], { ignoreError: true })).stdout.trim();
+  if (dockerUser && dockerUser !== "root") {
+    await shell("usermod", ["-aG", "docker", dockerUser], { sudo: true, ignoreError: true });
+  }
+
   // Start Docker daemon
   if (await hasSystemd()) {
     await shell("systemctl", ["enable", "docker"], { sudo: true });
@@ -177,7 +185,11 @@ export async function pullImageWithProgress(
 ): Promise<string> {
   const { execa } = await import("execa");
 
-  const proc = execa("sudo", ["docker", "pull", image], {
+  const useSudo = await dockerNeedsSudo();
+  const cmd = useSudo ? "sudo" : "docker";
+  const cmdArgs = useSudo ? ["docker", "pull", image] : ["pull", image];
+
+  const proc = execa(cmd, cmdArgs, {
     stdout: "pipe",
     stderr: "pipe",
     reject: false,

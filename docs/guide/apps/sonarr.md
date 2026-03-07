@@ -14,7 +14,7 @@ TV series collection manager — monitors for new episodes and automatically dow
 ## Installation
 
 ```sh
-sudo mithrandir install sonarr
+mithrandir install sonarr
 ```
 
 ## Auto-Configuration

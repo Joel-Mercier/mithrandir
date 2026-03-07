@@ -37,7 +37,7 @@ cd homelab
 sudo bash install.sh
 
 # Run the setup wizard
-sudo mithrandir setup
+mithrandir setup
 ```
 
 The install script handles everything — installing Bun, building the CLI, and creating the `mithrandir` command. See the [Installation](./installation) and [Setup](./setup) pages for detailed instructions.

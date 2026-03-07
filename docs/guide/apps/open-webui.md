@@ -13,7 +13,7 @@ Self-hosted AI chat interface — a ChatGPT-like UI for running local or remote 
 ## Installation
 
 ```sh
-sudo mithrandir install openwebui
+mithrandir install openwebui
 ```
 
 ## Setup

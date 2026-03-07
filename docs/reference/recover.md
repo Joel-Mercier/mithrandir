@@ -5,7 +5,7 @@ Full disaster recovery from a remote backup.
 ## Usage
 
 ```sh
-sudo mithrandir recover [--yes]
+mithrandir recover [--yes]
 ```
 
 ## Flags

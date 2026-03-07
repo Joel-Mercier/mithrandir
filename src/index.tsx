@@ -107,6 +107,9 @@ const cli = meow(
     $ mithrandir config
     $ mithrandir completions bash
     $ mithrandir completions zsh
+
+  Most commands work without sudo when your user is in the docker group.
+  The CLI uses sudo internally only for system operations (apt, systemd, ufw).
 `,
   {
     importMeta: import.meta,

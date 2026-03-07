@@ -13,7 +13,7 @@ Network-wide ad blocker and DNS server — blocks ads and trackers for every dev
 ## Installation
 
 ```sh
-sudo mithrandir install pihole
+mithrandir install pihole
 ```
 
 ## Ports

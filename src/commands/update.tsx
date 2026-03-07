@@ -369,11 +369,6 @@ export async function runUpdate(
   args: string[],
   flags: { yes?: boolean },
 ): Promise<void> {
-  if (process.getuid?.() !== 0) {
-    console.error("Error: This command must be run as root (use sudo).");
-    process.exit(1);
-  }
-
   const appFilter = args[0];
 
   if (appFilter) {

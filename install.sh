@@ -106,6 +106,10 @@ sudo ln -sf "$SCRIPT_DIR/dist/mithrandir.js" /usr/local/bin/mithrandir
 
 log ""
 log "Setup complete! Run the CLI with:"
-log "  sudo mithrandir setup"
+log "  mithrandir setup"
 log ""
 log "If 'bun' is not found in a new terminal, run: source $SHELL_RC"
+log ""
+log "Note: After Docker is installed, you may need to log out and back in"
+log "for Docker group membership to take effect. Until then, the CLI uses"
+log "sudo internally for Docker operations."

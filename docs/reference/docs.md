@@ -5,8 +5,8 @@ Build and serve the documentation website.
 ## Usage
 
 ```sh
-sudo mithrandir docs
-sudo mithrandir docs stop
+mithrandir docs
+mithrandir docs stop
 ```
 
 ## Subcommands

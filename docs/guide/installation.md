@@ -67,7 +67,7 @@ mithrandir completions fish > ~/.config/fish/completions/mithrandir.fish
 With Mithrandir installed, run the [setup wizard](./setup) to configure your homelab:
 
 ```sh
-sudo mithrandir setup
+mithrandir setup
 ```
 
 ## Updating
@@ -75,7 +75,7 @@ sudo mithrandir setup
 To update the CLI to the latest version:
 
 ```sh
-sudo mithrandir self-update
+mithrandir self-update
 ```
 
 This pulls the latest changes from git, reinstalls dependencies, and rebuilds the CLI.

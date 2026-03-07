@@ -7,7 +7,7 @@ Automated setup and backup system for Docker-based homelab applications.
 ```bash
 git clone <repo> && cd mithrandir
 sudo bash install.sh          # Installs Bun + dependencies
-sudo mithrandir setup
+mithrandir setup              # No sudo needed — CLI elevates internally when required
 ```
 
 ## Configuration
@@ -56,34 +56,36 @@ Automatically generated and installed by setup to `/etc/systemd/system/`:
 
 The CLI requires Bun. Run `sudo bash install.sh` first to install Bun, build the CLI, and install the `mithrandir` command on a bare Debian/Ubuntu server.
 
+**Privilege handling:** Most commands work without `sudo` when your user is in the `docker` group. The CLI uses `sudo` internally only for system operations (apt, systemd, UFW). During initial setup, Docker is installed and your user is added to the `docker` group automatically — log out and back in for it to take effect. Until then, the CLI transparently falls back to `sudo` for Docker operations.
+
 **Setup wizard:**
 ```bash
-sudo mithrandir setup [--yes]
+mithrandir setup [--yes]
 ```
 Interactive multi-step wizard: installs Docker and rclone, prompts for base directory, lets you pick services to install, auto configures the installed services, configures the systemd backup timer, and prints a summary with service URLs. `--yes` skips all prompts, selects all apps, and uses defaults from `.env`.
 
 **Backup:**
 ```bash
-sudo mithrandir backup
+mithrandir backup
 ```
 Backs up all configured apps. In a terminal it shows spinners and colored progress; from systemd (non-TTY) it writes timestamped plaintext to stdout and `/var/log/homelab-backup.log`.
 
 **List backups:**
 ```bash
-sudo mithrandir backup list [local|remote]
+mithrandir backup list [local|remote]
 ```
 Lists existing backups with their contents. Without an argument, shows both local and remote backups.
 
 Examples:
 ```bash
-sudo mithrandir backup list                # List both local and remote backups
-sudo mithrandir backup list local          # List only local backups
-sudo mithrandir backup list remote         # List only remote backups
+mithrandir backup list                # List both local and remote backups
+mithrandir backup list local          # List only local backups
+mithrandir backup list remote         # List only remote backups
 ```
 
 **Delete backups:**
 ```bash
-sudo mithrandir backup delete <local|remote> [YYYY-MM-DD] [--yes]
+mithrandir backup delete <local|remote> [YYYY-MM-DD] [--yes]
 ```
 - `local`: Delete local backups from the archive directory
 - `remote`: Delete remote backups via rclone
@@ -92,15 +94,15 @@ sudo mithrandir backup delete <local|remote> [YYYY-MM-DD] [--yes]
 
 Examples:
 ```bash
-sudo mithrandir backup delete local                  # Delete all local backups
-sudo mithrandir backup delete local 2025-06-01       # Delete a specific local backup
-sudo mithrandir backup delete remote --yes           # Delete all remote backups (no prompt)
-sudo mithrandir backup delete remote 2025-06-01      # Delete a specific remote backup
+mithrandir backup delete local                  # Delete all local backups
+mithrandir backup delete local 2025-06-01       # Delete a specific local backup
+mithrandir backup delete remote --yes           # Delete all remote backups (no prompt)
+mithrandir backup delete remote 2025-06-01      # Delete a specific remote backup
 ```
 
 **Verify backups:**
 ```bash
-sudo mithrandir backup verify [YYYY-MM-DD] [--remote] [--extract]
+mithrandir backup verify [YYYY-MM-DD] [--remote] [--extract]
 ```
 Checks archive integrity, validates expected files are present (docker-compose.yml, config dirs), and reports file sizes. Without a date, verifies the most recent backup.
 - `--remote`: Verify remote backups (downloads to temp dir, verifies, cleans up)
@@ -108,15 +110,15 @@ Checks archive integrity, validates expected files are present (docker-compose.y
 
 Examples:
 ```bash
-sudo mithrandir backup verify                              # Verify most recent local backup
-sudo mithrandir backup verify 2025-06-01                   # Verify a specific date
-sudo mithrandir backup verify --remote                     # Verify most recent remote backup
-sudo mithrandir backup verify --remote --extract           # Verify remote with extract test
+mithrandir backup verify                              # Verify most recent local backup
+mithrandir backup verify 2025-06-01                   # Verify a specific date
+mithrandir backup verify --remote                     # Verify most recent remote backup
+mithrandir backup verify --remote --extract           # Verify remote with extract test
 ```
 
 **Restore:**
 ```bash
-sudo mithrandir restore <app|full> [date] [--yes]
+mithrandir restore <app|full> [date] [--yes]
 ```
 - `app`: Name of app to restore (e.g., `jellyfin`, `radarr`, `sonarr`)
 - `full`: Restore all apps and secrets
@@ -125,15 +127,15 @@ sudo mithrandir restore <app|full> [date] [--yes]
 
 Examples:
 ```bash
-sudo mithrandir restore jellyfin
-sudo mithrandir restore jellyfin 2025-01-01
-sudo mithrandir restore full
-sudo mithrandir restore full 2025-01-01 --yes
+mithrandir restore jellyfin
+mithrandir restore jellyfin 2025-01-01
+mithrandir restore full
+mithrandir restore full 2025-01-01 --yes
 ```
 
 **Disaster recovery:**
 ```bash
-sudo mithrandir recover [--yes]
+mithrandir recover [--yes]
 ```
 Full disaster recovery for a fresh system (new server, reinstalled OS). Automates the entire process: installs Docker and rclone, verifies the rclone remote is configured, sets up the base directory, discovers the latest remote backup, restores secrets and all app configs, regenerates docker-compose files, starts all containers, and installs the backup timer. Unlike `restore` (which assumes Docker and compose files already exist), `recover` bootstraps everything from scratch.
 
@@ -141,77 +143,77 @@ In interactive mode, prompts for confirmation at each step. In `--yes` mode, use
 
 Examples:
 ```bash
-sudo mithrandir recover                  # Interactive recovery
-sudo mithrandir recover --yes            # Automated recovery with defaults
+mithrandir recover                  # Interactive recovery
+mithrandir recover --yes            # Automated recovery with defaults
 ```
 
 **Uninstall an app:**
 ```bash
-sudo mithrandir uninstall <app>
+mithrandir uninstall <app>
 ```
 Stops and removes the container. Prompts whether to also delete the app's data and configuration.
 
 **Full system uninstall:**
 ```bash
-sudo mithrandir uninstall
+mithrandir uninstall
 ```
 Removes all Homelab components: Docker, backup systemd timer, rclone, local backups, and app data directories.
 
 **Update containers:**
 ```bash
-sudo mithrandir update [app] [--yes]
+mithrandir update [app] [--yes]
 ```
 Pulls the latest Docker images for installed apps and recreates containers that have newer images available. Optionally backs up apps before updating. Without an app name, updates all installed apps. `--yes` skips the backup confirmation prompt.
 
 Examples:
 ```bash
-sudo mithrandir update                       # Update all installed apps
-sudo mithrandir update radarr                # Update only Radarr
-sudo mithrandir update --yes                 # Update all, skip backup prompt
+mithrandir update                       # Update all installed apps
+mithrandir update radarr                # Update only Radarr
+mithrandir update --yes                 # Update all, skip backup prompt
 ```
 
 **View logs:**
 ```bash
-sudo mithrandir log <app> [--follow] [--tail N] [--since TIME]
+mithrandir log <app> [--follow] [--tail N] [--since TIME]
 ```
 Streams Docker container logs to the terminal. Supports following output in real time, limiting the number of lines shown, and filtering by time.
 
 Examples:
 ```bash
-sudo mithrandir log radarr                           # Show all logs
-sudo mithrandir log radarr --follow                  # Follow log output
-sudo mithrandir log radarr --tail 100                # Show last 100 lines
-sudo mithrandir log radarr --follow --tail 50        # Follow, starting from last 50 lines
-sudo mithrandir log jellyfin --since 1h              # Logs from the last hour
+mithrandir log radarr                           # Show all logs
+mithrandir log radarr --follow                  # Follow log output
+mithrandir log radarr --tail 100                # Show last 100 lines
+mithrandir log radarr --follow --tail 50        # Follow, starting from last 50 lines
+mithrandir log jellyfin --since 1h              # Logs from the last hour
 ```
 
 **Start an app:**
 ```bash
-sudo mithrandir start <app>
+mithrandir start <app>
 ```
 Starts a stopped app container. The app must already be installed (docker-compose.yml exists).
 
 **Stop an app:**
 ```bash
-sudo mithrandir stop <app>
+mithrandir stop <app>
 ```
 Stops a running app container.
 
 **Restart an app:**
 ```bash
-sudo mithrandir restart <app>
+mithrandir restart <app>
 ```
 Stops and restarts a running app container.
 
 **Install an app:**
 ```bash
-sudo mithrandir install <app>
+mithrandir install <app>
 ```
 Installs a single app: pulls the Docker image, creates directories, generates docker-compose.yml, and starts the container. The app must not already be installed.
 
 **Install a stack:**
 ```bash
-sudo mithrandir install <stack>
+mithrandir install <stack>
 ```
 Installs a predefined group of apps in one command. Already-installed apps are skipped. Companion apps are included automatically.
 
@@ -219,26 +221,26 @@ Available stacks: `media`, `media-movies-tv`, `media-music`, `media-pictures`, `
 
 Examples:
 ```bash
-sudo mithrandir install media-movies-tv    # qBittorrent, Prowlarr, Radarr, Sonarr, Bazarr, Seerr, Jellyfin
-sudo mithrandir install productivity       # Excalidraw, Omni Tools, Open WebUI, Vaultwarden
-sudo mithrandir install utilities          # DuckDNS, WireGuard, Homarr
+mithrandir install media-movies-tv    # qBittorrent, Prowlarr, Radarr, Sonarr, Bazarr, Seerr, Jellyfin
+mithrandir install productivity       # Excalidraw, Omni Tools, Open WebUI, Vaultwarden
+mithrandir install utilities          # DuckDNS, WireGuard, Homarr
 ```
 
 **Install Docker:**
 ```bash
-sudo mithrandir install docker
+mithrandir install docker
 ```
 Installs Docker engine on the host. If Docker is already installed and running, reports the existing installation. Equivalent to the Docker installation step in the setup wizard.
 
 **Install backup system:**
 ```bash
-sudo mithrandir install backup
+mithrandir install backup
 ```
 Installs rclone (for remote backups to Google Drive) and sets up the systemd backup timer (daily at 2:00 AM). Skips components that are already installed. Equivalent to the rclone and backup timer steps in the setup wizard.
 
 **Install HTTPS:**
 ```bash
-sudo mithrandir install https
+mithrandir install https
 ```
 Sets up HTTPS for all installed apps using Caddy as a reverse proxy with automatic Let's Encrypt certificates via DuckDNS DNS-01 challenge. Requires the DuckDNS app to be installed and running first.
 
@@ -255,19 +257,19 @@ After installation, apps are accessible at `https://appname.yourdomain.duckdns.o
 
 **Reinstall an app:**
 ```bash
-sudo mithrandir reinstall <app> [--yes]
+mithrandir reinstall <app> [--yes]
 ```
 Completely reinstalls an app: stops the container, removes the Docker image, optionally deletes app data, then recreates directories, generates a fresh docker-compose.yml, pulls the image, and starts the container. `--yes` skips the data deletion prompt (deletes data without asking).
 
 Examples:
 ```bash
-sudo mithrandir reinstall radarr             # Reinstall, prompt before deleting data
-sudo mithrandir reinstall radarr --yes       # Reinstall, delete data without prompting
+mithrandir reinstall radarr             # Reinstall, prompt before deleting data
+mithrandir reinstall radarr --yes       # Reinstall, delete data without prompting
 ```
 
 **Self-update:**
 ```bash
-sudo mithrandir self-update
+mithrandir self-update
 ```
 Pulls the latest code from git, installs any new dependencies, and rebuilds the CLI. Since `/usr/local/bin/mithrandir` is a symlink to the built file, no reinstall is needed.
 
@@ -304,8 +306,8 @@ mithrandir completions fish | source                   # Fish (add to config.fis
 
 **Documentation site:**
 ```bash
-sudo mithrandir docs              # Build and serve docs website
-sudo mithrandir docs stop         # Stop docs website
+mithrandir docs              # Build and serve docs website
+mithrandir docs stop         # Stop docs website
 bun run docs:dev                  # Local dev server (hot reload)
 ```
 
@@ -317,19 +319,19 @@ Shows the inter-app dependency tree with color-coded installation status (green 
 
 **Status check:**
 ```bash
-sudo mithrandir status
+mithrandir status
 ```
 Displays the status of all homelab components: installed apps, running containers, backup info, and disk usage.
 
 **Health check:**
 ```bash
-sudo mithrandir health
+mithrandir health
 ```
 Validates system health across five dimensions: Docker daemon, disk space (warn at 80%, fail at 95%), backup age (warn >2 days, fail >7 days), container restart loops (fail if RestartCount >5 or status "restarting"), and remote backup connectivity via rclone. Exit code 0 if all pass/warn, 1 if any fail — useful for monitoring and automation.
 
 **Doctor (diagnose setup issues):**
 ```bash
-sudo mithrandir doctor
+mithrandir doctor
 ```
 Checks configuration correctness across three categories: System (.env file, Docker installation and daemon), Apps (stopped containers, missing config directories, missing required/optional secrets), and Backup (backup directory, systemd service and timer, rclone installation and remote configuration). Each failing or warning check includes an actionable hint with the command to fix it. Backup checks are skipped if no apps are installed. Exit code 1 if any check fails.
 
@@ -394,7 +396,6 @@ scripts/generate-changelog.sh
 ## TODO
 
 - [ ] Add screenshots to the docs
-- [ ] The CLI appears to require root privileges for all operations. There's rootless Docker support, which has been stable for years and is now the recommended approach for security. Plan a migration to sudoless project if and whenever possible.
 - [ ] Backups are synced to cloud storage (e.g., Google Drive) via rclone with no mention of encryption. Sensitive config data — credentials, private keys, personal files from Vaultwarden or Immich — would be stored in plaintext on a third-party cloud service. Plan to encrypt backups with a passphrase. Also make sure the health command and the backup verify command verify the integrity of the backups.
 - [ ] Setup a local test environment with docker. This would allow us to test the CLI on a wider range of hardware and operating systems, and also help us catch any regressions before releasing a new version.
 - [ ] check in prowlarr torznab (U2P / utopeer)

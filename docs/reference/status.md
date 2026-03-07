@@ -5,7 +5,7 @@ Show installed apps and system status.
 ## Usage
 
 ```sh
-sudo mithrandir status
+mithrandir status
 ```
 
 ## Description

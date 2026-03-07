@@ -16,7 +16,7 @@ Self-hosted photo and video management — a Google Photos alternative with AI-p
 ## Installation
 
 ```sh
-sudo mithrandir install immich
+mithrandir install immich
 ```
 
 ## Architecture

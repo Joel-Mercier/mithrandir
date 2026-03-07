@@ -12,36 +12,36 @@ Automated Docker-based homelab setup, backup, and restore system for Debian/Ubun
 ```bash
 bun install                    # Install dependencies
 bun run build                  # Bundle into dist/mithrandir.js
-sudo mithrandir setup                       # Interactive setup wizard
-sudo mithrandir backup                      # Backup all apps
-sudo mithrandir backup list [local|remote]     # List existing backups
-sudo mithrandir backup delete <local|remote> [date] [--yes]  # Delete backups
-sudo mithrandir backup verify [date] [--remote] [--extract]  # Verify backup integrity
-sudo mithrandir restore <app|full> [date] [--yes]
-sudo mithrandir recover [--yes]              # Full disaster recovery from remote backup
-sudo mithrandir start <app>                    # Start a stopped app
-sudo mithrandir stop <app>                     # Stop a running app
-sudo mithrandir restart <app>                  # Restart a running app
-sudo mithrandir install <app>                    # Install a single app
-sudo mithrandir install <stack>                  # Install a predefined app stack
-sudo mithrandir install docker                   # Install Docker engine
-sudo mithrandir install backup                   # Install rclone + backup systemd timer
-sudo mithrandir install https                    # Install Caddy HTTPS reverse proxy
-sudo mithrandir install firewall                 # Install UFW firewall with ufw-docker
-sudo mithrandir reinstall <app> [--yes]        # Reinstall an app from scratch
-sudo mithrandir uninstall <app>
-sudo mithrandir status                      # Check system status
-sudo mithrandir health                      # Check system health
-sudo mithrandir doctor                     # Diagnose setup issues
-sudo mithrandir update [app] [--yes]        # Update container images
-sudo mithrandir log <app> [--follow] [--tail N] [--since TIME]  # View container logs
+mithrandir setup                       # Interactive setup wizard
+mithrandir backup                      # Backup all apps
+mithrandir backup list [local|remote]     # List existing backups
+mithrandir backup delete <local|remote> [date] [--yes]  # Delete backups
+mithrandir backup verify [date] [--remote] [--extract]  # Verify backup integrity
+mithrandir restore <app|full> [date] [--yes]
+mithrandir recover [--yes]              # Full disaster recovery from remote backup
+mithrandir start <app>                    # Start a stopped app
+mithrandir stop <app>                     # Stop a running app
+mithrandir restart <app>                  # Restart a running app
+mithrandir install <app>                    # Install a single app
+mithrandir install <stack>                  # Install a predefined app stack
+mithrandir install docker                   # Install Docker engine
+mithrandir install backup                   # Install rclone + backup systemd timer
+mithrandir install https                    # Install Caddy HTTPS reverse proxy
+mithrandir install firewall                 # Install UFW firewall with ufw-docker
+mithrandir reinstall <app> [--yes]        # Reinstall an app from scratch
+mithrandir uninstall <app>
+mithrandir status                      # Check system status
+mithrandir health                      # Check system health
+mithrandir doctor                     # Diagnose setup issues
+mithrandir update [app] [--yes]        # Update container images
+mithrandir log <app> [--follow] [--tail N] [--since TIME]  # View container logs
 mithrandir graph                           # Show inter-app dependency tree
-sudo mithrandir self-update                # Update CLI from git and rebuild
+mithrandir self-update                # Update CLI from git and rebuild
 mithrandir version                         # Show version and git commit hash
 mithrandir config                          # Show current .env settings
 mithrandir completions <bash|zsh|fish>     # Generate shell completion script
-sudo mithrandir docs                    # Build and serve docs website
-sudo mithrandir docs stop               # Stop docs website
+mithrandir docs                    # Build and serve docs website
+mithrandir docs stop               # Stop docs website
 bun run docs:dev                        # Local VitePress dev server (hot reload)
 bun run typecheck              # TypeScript type checking (tsc --noEmit)
 bun run src/index.tsx --help         # Dev mode (unbundled)
@@ -100,7 +100,7 @@ Auto-generated from git commits via `scripts/generate-changelog.sh`, grouped by 
 
 - `@inkjs/ui` ConfirmInput uses separate `onConfirm`/`onCancel` callbacks (both `() => void`), not a single callback with a boolean parameter
 - `execa` v9: `result.exitCode` can be `undefined`, needs `?? 0` fallback
-- Docker operations require sudo/root
+- Docker operations auto-detect: if user is in docker group, sudo is skipped; otherwise sudo is used transparently via `dockerNeedsSudo()` in `shell.ts`
 - Homarr is the only app with `configSubdir: "multiple"` (3 dirs: configs, icons, data)
 - Caddy is a hidden app (`hidden: true`) — excluded from setup app-select but included in backup/restore/status
 - Vaultwarden has `requiresHttps: true` — install command checks `ENABLE_HTTPS` before proceeding; setup wizard skips it with a warning if HTTPS isn't enabled. Its `DOMAIN` env var is derived from `DUCKDNS_SUBDOMAINS` in compose generation.

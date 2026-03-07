@@ -5,7 +5,7 @@ Update container images for one or all apps.
 ## Usage
 
 ```sh
-sudo mithrandir update [app]
+mithrandir update [app]
 ```
 
 ## Arguments

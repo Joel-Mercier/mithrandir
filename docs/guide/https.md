@@ -5,13 +5,13 @@ Mithrandir can set up wildcard HTTPS for all your services using Caddy and DuckD
 ## Prerequisites
 
 - A [DuckDNS](https://www.duckdns.org) account with a subdomain and token
-- DuckDNS app installed and running (`sudo mithrandir install duckdns`)
+- DuckDNS app installed and running (`mithrandir install duckdns`)
 - Wildcard DNS configured on your router (see below)
 
 ## Installation
 
 ```sh
-sudo mithrandir install https
+mithrandir install https
 ```
 
 This will:

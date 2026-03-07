@@ -5,7 +5,7 @@ Restart a running app.
 ## Usage
 
 ```sh
-sudo mithrandir restart <app>
+mithrandir restart <app>
 ```
 
 ## Arguments

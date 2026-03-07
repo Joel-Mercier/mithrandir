@@ -13,7 +13,7 @@ A collection of useful productivity tools in a single web interface — file con
 ## Installation
 
 ```sh
-sudo mithrandir install omnitools
+mithrandir install omnitools
 ```
 
 ## Setup

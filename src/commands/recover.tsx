@@ -86,13 +86,7 @@ async function runHeadlessRecover(autoYes: boolean): Promise<void> {
   const logger = createRestoreLogger();
   await logger.info("=== Starting disaster recovery ===");
 
-  // 1. Check root
-  if (process.getuid?.() !== 0) {
-    await logger.error("Recover must be run as root (sudo)");
-    process.exit(1);
-  }
-
-  // 2. Detect distro
+  // 1. Detect distro
   try {
     const distro = await detectDistro();
     await logger.info(`Detected distro: ${distro.prettyName}`);
@@ -319,10 +313,6 @@ function RecoverCommand({ autoYes }: { autoYes: boolean }) {
 
   async function doInit() {
     try {
-      if (process.getuid?.() !== 0) {
-        setError("Recover must be run as root (sudo)");
-        return;
-      }
       const distro = await detectDistro();
       addStep({
         name: "System",

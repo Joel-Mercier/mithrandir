@@ -15,7 +15,7 @@ Fast, modern VPN tunnel — access your homelab remotely from anywhere.
 ## Installation
 
 ```sh
-sudo mithrandir install wireguard
+mithrandir install wireguard
 ```
 
 ## Required Secrets

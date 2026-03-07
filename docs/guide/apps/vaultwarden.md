@@ -12,7 +12,7 @@ Lightweight Bitwarden-compatible password manager — use the official Bitwarden
 ## Installation
 
 ```sh
-sudo mithrandir install vaultwarden
+mithrandir install vaultwarden
 ```
 
 ::: warning HTTPS Required

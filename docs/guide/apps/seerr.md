@@ -13,7 +13,7 @@ Media request manager for Jellyfin — lets users request movies and TV shows th
 ## Installation
 
 ```sh
-sudo mithrandir install seerr
+mithrandir install seerr
 ```
 
 ## Auto-Configuration

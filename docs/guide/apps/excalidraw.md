@@ -13,7 +13,7 @@ Virtual whiteboard for sketching — create diagrams, wireframes, and hand-drawn
 ## Installation
 
 ```sh
-sudo mithrandir install excalidraw
+mithrandir install excalidraw
 ```
 
 ## Setup

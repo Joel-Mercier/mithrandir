@@ -119,11 +119,6 @@ export async function runRestart(args: string[]): Promise<void> {
     process.exit(1);
   }
 
-  if (process.getuid?.() !== 0) {
-    console.error("Error: This command must be run as root (use sudo).");
-    process.exit(1);
-  }
-
   const { waitUntilExit } = render(<RestartApp appName={appName} />);
   await waitUntilExit();
 }

@@ -5,7 +5,7 @@ Reinstall an app from scratch.
 ## Usage
 
 ```sh
-sudo mithrandir reinstall <app>
+mithrandir reinstall <app>
 ```
 
 ## Arguments

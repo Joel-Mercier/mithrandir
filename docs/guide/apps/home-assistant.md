@@ -14,7 +14,7 @@ Open-source home automation platform — control and automate your smart home de
 ## Installation
 
 ```sh
-sudo mithrandir install homeassistant
+mithrandir install homeassistant
 ```
 
 ## Notes

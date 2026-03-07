@@ -1,5 +1,6 @@
 import { execa } from "execa";
 import { getApp, getContainerName, getAppNames } from "@/lib/apps.js";
+import { dockerNeedsSudo } from "@/lib/shell.js";
 
 export async function runLog(
   args: string[],
@@ -23,7 +24,8 @@ export async function runLog(
   }
 
   const containerName = getContainerName(app);
-  const dockerArgs = ["docker", "logs"];
+  const useSudo = await dockerNeedsSudo();
+  const dockerArgs = useSudo ? ["docker", "logs"] : ["logs"];
 
   if (flags.follow) dockerArgs.push("--follow");
   if (flags.tail) dockerArgs.push("--tail", flags.tail);
@@ -32,7 +34,7 @@ export async function runLog(
   dockerArgs.push(containerName);
 
   try {
-    await execa("sudo", dockerArgs, { stdio: "inherit" });
+    await execa(useSudo ? "sudo" : "docker", dockerArgs, { stdio: "inherit" });
   } catch (error: any) {
     // Exit code 130 = SIGINT (Ctrl+C) — exit cleanly
     if (error.exitCode === 130 || error.signal === "SIGINT") {

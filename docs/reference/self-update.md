@@ -5,7 +5,7 @@ Update the Mithrandir CLI from git.
 ## Usage
 
 ```sh
-sudo mithrandir self-update
+mithrandir self-update
 ```
 
 ## Description

@@ -5,7 +5,7 @@ Start a stopped app.
 ## Usage
 
 ```sh
-sudo mithrandir start <app>
+mithrandir start <app>
 ```
 
 ## Arguments

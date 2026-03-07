@@ -14,7 +14,7 @@ Subtitle manager — automatically downloads subtitles for your Sonarr and Radar
 ## Installation
 
 ```sh
-sudo mithrandir install bazarr
+mithrandir install bazarr
 ```
 
 ## Setup

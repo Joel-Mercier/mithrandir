@@ -5,7 +5,7 @@ Install a system component, app, or predefined app stack.
 ## Usage
 
 ```sh
-sudo mithrandir install <target>
+mithrandir install <target>
 ```
 
 ## Arguments
@@ -43,9 +43,9 @@ Install a predefined group of apps in one command. Already-installed apps are sk
 
 Examples:
 ```sh
-sudo mithrandir install media-movies-tv    # Install the full movie & TV stack
-sudo mithrandir install productivity       # Install productivity apps
-sudo mithrandir install utilities          # Install DuckDNS, WireGuard, Homarr
+mithrandir install media-movies-tv    # Install the full movie & TV stack
+mithrandir install productivity       # Install productivity apps
+mithrandir install utilities          # Install DuckDNS, WireGuard, Homarr
 ```
 
 ### Apps

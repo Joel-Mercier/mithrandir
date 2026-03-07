@@ -13,7 +13,7 @@ Automated service health monitoring — monitors your services and displays thei
 ## Installation
 
 ```sh
-sudo mithrandir install gatus
+mithrandir install gatus
 ```
 
 ## Auto-Configuration

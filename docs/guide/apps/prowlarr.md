@@ -13,7 +13,7 @@ Indexer manager for the *Arr stack — manages indexers in a single place and sy
 ## Installation
 
 ```sh
-sudo mithrandir install prowlarr
+mithrandir install prowlarr
 ```
 
 Prowlarr automatically installs [FlareSolverr](./flaresolverr) as a companion service for bypassing Cloudflare-protected indexers.
