@@ -63,7 +63,7 @@ mithrandir log <app>          # View logs
 | [Excalidraw](./excalidraw) | 5000 | Virtual whiteboard for sketching |
 | [Omni Tools](./omni-tools) | 8079 | Collection of useful productivity tools |
 | [Open WebUI](./open-webui) | 3000 | Self-hosted AI chat interface |
-| [Vaultwarden](./vaultwarden) | 8222 | Lightweight Bitwarden-compatible password manager |
+| [Penpot](./penpot) | 9001 | Open-source design and prototyping platform |
 
 ### Finance
 
@@ -79,6 +79,7 @@ mithrandir log <app>          # View logs
 | [Pi-hole](./pihole) | 80 | Network-wide ad blocker and DNS server |
 | [WireGuard](./wireguard) | 51820/udp | Fast, modern VPN tunnel |
 | [DuckDNS](./duckdns) | — | Free dynamic DNS service |
+| [Vaultwarden](./vaultwarden) | 8222 | Lightweight Bitwarden-compatible password manager |
 
 ### Utilities
 

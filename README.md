@@ -49,6 +49,9 @@ All configuration lives in a single `.env` file at the project root.
 - `SURE_DB_PASSWORD`: Optional database password for Sure
 - `AFFINE_DB_PASSWORD`: Optional database password for AFFiNE
 - `AFFINE_DB_USERNAME`: Optional database username for AFFiNE (default: `affine`)
+- `PENPOT_SECRET_KEY`: Required secret key for Penpot
+- `PENPOT_DB_PASSWORD`: Optional database password for Penpot
+- `PENPOT_PUBLIC_URI`: Optional public URI for Penpot (default: `http://localhost:9001`)
 - `PIHOLE_PASSWORD`: Optional web interface password for Pi-hole
 - `GATUS_DISCORD_WEBHOOK_URL`: Optional Discord webhook URL for Gatus alerts
 
@@ -373,8 +376,9 @@ Checks configuration correctness across three categories: System (.env file, Doc
 | Excalidraw | 5000 | Virtual whiteboard for sketching |
 | Omni Tools | 8079 | Collection of useful productivity tools |
 | Open WebUI | 3000 | Self-hosted AI chat interface |
-| Vaultwarden | 8222 | Lightweight Bitwarden-compatible password manager (requires HTTPS) |
+| Penpot | 9001 | Open-source design and prototyping platform |
 | Actual Budget | 5006 | Privacy-focused personal finance and budgeting app |
+| Vaultwarden | 8222 | Lightweight Bitwarden-compatible password manager (requires HTTPS) |
 | Sure | 3005 | Privacy-focused personal finance tracker |
 
 ## Local Development
@@ -411,10 +415,9 @@ scripts/generate-changelog.sh
 
 ## TODO
 
+- [ ] Use https://selfh.st/icons/ (https://github.com/selfhst/icons) to add a icon for each app in the docs
 - [ ] Add screenshots to the docs
 - [ ] Make sure that empty env vars in .env are considered as not set and not as empty strings since this might cause issues with some apps where a value is expected
-- [ ] Add penpot to the list of installable apps in @src/lib/apps.ts. It should be in the "Productivity" category.
-https://help.penpot.app/technical-guide/getting-started/docker/
 - [ ] Setup a local test environment with docker. This would allow us to test the CLI on a wider range of hardware and operating systems, and also help us catch any regressions before releasing a new version.
 - [ ] I want to internationalize this project's documentation that is built with VitePress. Here is the official documentation: https://vitepress.dev/guide/i18n. For now I just want to add a French translation.
 - [ ] check in prowlarr torznab (U2P / utopeer)

@@ -92,7 +92,7 @@ export default defineConfig({
                   { text: "Excalidraw", link: "/guide/apps/excalidraw" },
                   { text: "Omni Tools", link: "/guide/apps/omni-tools" },
                   { text: "Open WebUI", link: "/guide/apps/open-webui" },
-                  { text: "Vaultwarden", link: "/guide/apps/vaultwarden" },
+                  { text: "Penpot", link: "/guide/apps/penpot" },
                 ],
               },
               {
@@ -110,6 +110,7 @@ export default defineConfig({
                   { text: "Pi-hole", link: "/guide/apps/pihole" },
                   { text: "WireGuard", link: "/guide/apps/wireguard" },
                   { text: "DuckDNS", link: "/guide/apps/duckdns" },
+                  { text: "Vaultwarden", link: "/guide/apps/vaultwarden" },
                 ],
               },
               {
