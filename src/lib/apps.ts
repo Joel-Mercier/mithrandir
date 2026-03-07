@@ -798,6 +798,15 @@ export const APP_REGISTRY: AppDefinition[] = [
     ],
   },
   {
+    name: "profilarr",
+    displayName: "Profilarr",
+    description: "Import, sync, and manage quality profiles for Radarr and Sonarr",
+    image: "santiagosayshey/profilarr:latest",
+    port: 6868,
+    configSubdir: "config",
+    needsDataDir: false,
+  },
+  {
     name: "pihole",
     displayName: "Pi-hole",
     description: "Network-wide ad blocker and DNS server",
@@ -913,14 +922,14 @@ export const APP_STACKS: AppStack[] = [
   {
     label: "Media",
     value: "media",
-    description: "qBittorrent, Prowlarr, Radarr, Sonarr, Bazarr, Seerr, Jellyfin, Navidrome, Lidarr, Immich",
-    apps: ["qbittorrent", "prowlarr", "radarr", "sonarr", "bazarr", "seerr", "jellyfin", "navidrome", "lidarr", "immich"],
+    description: "qBittorrent, Prowlarr, Radarr, Sonarr, Bazarr, Seerr, Jellyfin, Navidrome, Lidarr, Immich, Profilarr",
+    apps: ["qbittorrent", "prowlarr", "radarr", "sonarr", "bazarr", "seerr", "jellyfin", "navidrome", "lidarr", "immich", "profilarr"],
   },
   {
     label: "Media: Movies & TV",
     value: "media-movies-tv",
-    description: "qBittorrent, Prowlarr, Radarr, Sonarr, Bazarr, Seerr, Jellyfin",
-    apps: ["qbittorrent", "prowlarr", "radarr", "sonarr", "bazarr", "seerr", "jellyfin"],
+    description: "qBittorrent, Prowlarr, Radarr, Sonarr, Bazarr, Seerr, Jellyfin, Profilarr",
+    apps: ["qbittorrent", "prowlarr", "radarr", "sonarr", "bazarr", "seerr", "jellyfin", "profilarr"],
   },
   {
     label: "Media: Music",
@@ -962,8 +971,8 @@ export const APP_CATEGORIES: AppCategory[] = [
   {
     label: "Media",
     value: "media",
-    description: "qBittorrent, Prowlarr, Radarr, Sonarr, Bazarr, Seerr, Jellyfin, Navidrome, Lidarr, Immich",
-    apps: ["qbittorrent", "prowlarr", "radarr", "sonarr", "bazarr", "seerr", "jellyfin", "navidrome", "lidarr", "immich"],
+    description: "qBittorrent, Prowlarr, Radarr, Sonarr, Bazarr, Seerr, Jellyfin, Navidrome, Lidarr, Immich, Profilarr",
+    apps: ["qbittorrent", "prowlarr", "radarr", "sonarr", "bazarr", "seerr", "jellyfin", "navidrome", "lidarr", "immich", "profilarr"],
   },
   {
     label: "Automation",

@@ -361,6 +361,7 @@ Checks configuration correctness across three categories: System (.env file, Doc
 | Sonarr | 8989 | TV series collection manager |
 | Bazarr | 6767 | Subtitle manager for Sonarr and Radarr |
 | Lidarr | 8686 | Music collection manager |
+| Profilarr | 6868 | Quality profile manager for Radarr and Sonarr |
 | Seerr | 5055 | Media request manager for Jellyfin |
 | Homarr | 7575 | Customizable dashboard for your server |
 | Jellyfin | 8096 | Free media streaming server |
@@ -421,4 +422,4 @@ scripts/generate-changelog.sh
 - [ ] I want to internationalize this project's documentation that is built with VitePress. Here is the official documentation: https://vitepress.dev/guide/i18n. For now I just want to add a French translation.
 - [ ] check in prowlarr torznab (U2P / utopeer)
 - [ ] Add a \[CERTIFICATE_EXPIRATION\] > 72h check for each app during the Gatus setup to warn the user if their certificate is about to expire. Caddy is handling the certificate renewal automatically.
-- [ ] Check if Profilarr is a good solution for quality profiles
+- [x] Check if Profilarr is a good solution for quality profiles

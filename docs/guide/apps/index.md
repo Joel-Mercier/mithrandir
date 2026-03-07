@@ -28,6 +28,7 @@ mithrandir log <app>          # View logs
 | [Bazarr](./bazarr) | 6767 | Subtitle manager for Sonarr and Radarr |
 | [Prowlarr](./prowlarr) | 9696 | Indexer manager for the *Arr stack |
 | [qBittorrent](./qbittorrent) | 8080 | BitTorrent client with web UI |
+| [Profilarr](./profilarr) | 6868 | Quality profile manager for Radarr and Sonarr |
 
 ### Media: Music
 

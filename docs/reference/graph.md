@@ -26,6 +26,7 @@ Prowlarr ───► Radarr  ───► qBittorrent ───► /data/media/
 FlareSolverr ───► Prowlarr  (CAPTCHA solving, auto-installed with Prowlarr)
 Bazarr       ───► Radarr, Sonarr  (subtitle management)
 Seerr        ───► Radarr, Sonarr, Jellyfin  (media requests & discovery)
+Profilarr    ───► Radarr, Sonarr  (quality profile management)
 ```
 
 ### Network & Security
@@ -51,10 +52,11 @@ The suggested order for installing the full media stack, based on dependencies:
 3. Radarr (movies)
 4. Sonarr (TV)
 5. Lidarr (music)
-6. Bazarr (subtitles)
+6. Bazarr (subtitles, optional)
 7. Jellyfin (media server)
 8. Navidrome (music server)
-9. Seerr (media requests)
+9. Seerr (media requests, optional)
+10. Profilarr (quality profiles, optional)
 
 ## Notes
 

@@ -51,6 +51,7 @@ export default defineConfig({
                   { text: "Bazarr", link: "/guide/apps/bazarr" },
                   { text: "Prowlarr", link: "/guide/apps/prowlarr" },
                   { text: "qBittorrent", link: "/guide/apps/qbittorrent" },
+                  { text: "Profilarr", link: "/guide/apps/profilarr" },
                   { text: "FlareSolverr", link: "/guide/apps/flaresolverr" },
                 ],
               },
