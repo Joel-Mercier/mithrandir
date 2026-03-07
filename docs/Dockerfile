@@ -5,7 +5,7 @@ COPY .git .git
 COPY package.json bun.lock* ./
 RUN bun install --frozen-lockfile
 COPY docs/ docs/
-RUN bun run docs:build
+RUN VITEPRESS_BASE=/ bun run docs:build
 
 FROM nginx:alpine
 COPY --from=builder /app/docs/.vitepress/dist /usr/share/nginx/html

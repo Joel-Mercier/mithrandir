@@ -1,7 +1,7 @@
 import { defineConfig } from "vitepress";
 
 export default defineConfig({
-  base: "/mithrandir",
+  base: process.env.VITEPRESS_BASE ?? "/mithrandir",
   title: "Mithrandir",
   description: "Automated Docker-based homelab setup, backup, and restore",
   lastUpdated: true,
