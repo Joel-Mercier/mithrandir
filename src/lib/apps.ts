@@ -637,6 +637,24 @@ export const APP_REGISTRY: AppDefinition[] = [
     ],
   },
   {
+    name: "n8n",
+    displayName: "n8n",
+    description: "Workflow automation platform",
+    image: "docker.n8n.io/n8nio/n8n:latest",
+    port: 5678,
+    configSubdir: "data",
+    needsDataDir: false,
+    environment: {
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true",
+      N8N_PORT: "5678",
+      N8N_RUNNERS_ENABLED: "true",
+      NODE_ENV: "production",
+    },
+    extraVolumes: [
+      { host: "files", container: "/files" },
+    ],
+  },
+  {
     name: "pihole",
     displayName: "Pi-hole",
     description: "Network-wide ad blocker and DNS server",
@@ -807,8 +825,8 @@ export const APP_CATEGORIES: AppCategory[] = [
   {
     label: "Automation",
     value: "automation",
-    description: "Home Assistant",
-    apps: ["homeassistant"],
+    description: "Home Assistant, n8n",
+    apps: ["homeassistant", "n8n"],
   },
   {
     label: "Monitoring",

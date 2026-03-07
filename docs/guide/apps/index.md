@@ -42,11 +42,12 @@ mithrandir log <app>          # View logs
 | --- | --- | --- |
 | [Immich](./immich) | 2283 | Self-hosted photo and video management |
 
-### Home Automation
+### Automation
 
 | App | Port | Description |
 | --- | --- | --- |
 | [Home Assistant](./home-assistant) | 8123 | Open-source home automation platform |
+| [n8n](./n8n) | 5678 | Workflow automation platform |
 
 ### Monitoring
 

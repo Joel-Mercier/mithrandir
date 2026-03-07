@@ -368,6 +368,7 @@ Checks configuration correctness across three categories: System (.env file, Doc
 | Immich | 2283 | Self-hosted photo and video management |
 | Caddy | — | HTTPS reverse proxy with automatic certificates (hidden, installed via `install https`) |
 | Pi-hole | 80 | Network-wide ad blocker and DNS server |
+| n8n | 5678 | Workflow automation platform |
 | AFFiNE | 3010 | Privacy-focused knowledge base and workspace |
 | Excalidraw | 5000 | Virtual whiteboard for sketching |
 | Omni Tools | 8079 | Collection of useful productivity tools |
@@ -412,8 +413,6 @@ scripts/generate-changelog.sh
 
 - [ ] Add screenshots to the docs
 - [ ] Make sure that empty env vars in .env are considered as not set and not as empty strings since this might cause issues with some apps where a value is expected
-- [ ] Add n8n to the list of installable apps in @src/lib/apps.ts. It should be in the "Automation" category. 
-Here is the official docker compose doc : https://docs.n8n.io/hosting/installation/server-setups/docker-compose/. Make sure to update the docs as well as the README and CLAUDE.md
 - [ ] Add penpot to the list of installable apps in @src/lib/apps.ts. It should be in the "Productivity" category.
 https://help.penpot.app/technical-guide/getting-started/docker/
 - [ ] Setup a local test environment with docker. This would allow us to test the CLI on a wider range of hardware and operating systems, and also help us catch any regressions before releasing a new version.

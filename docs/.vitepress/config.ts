@@ -70,10 +70,11 @@ export default defineConfig({
                 ],
               },
               {
-                text: "Home Automation",
+                text: "Automation",
                 collapsed: true,
                 items: [
                   { text: "Home Assistant", link: "/guide/apps/home-assistant" },
+                  { text: "n8n", link: "/guide/apps/n8n" },
                 ],
               },
               {
