@@ -40,5 +40,8 @@ Sure runs as a multi-container stack:
 | --- | --- |
 | `SURE_SECRET_KEY_BASE` | Rails secret key base — auto-generated with `openssl rand -hex 64` during install |
 | `SURE_DB_PASSWORD` | PostgreSQL password (default: `sure_password`) |
+| `SURE_OPENAI_ACCESS_TOKEN` | OpenAI API key for AI-powered features (optional) |
+| `SURE_OPENAI_URI_BASE` | Custom OpenAI-compatible API base URL (optional) |
+| `SURE_OPENAI_MODEL` | OpenAI model to use (optional) |
 
 When HTTPS is enabled via Caddy, `RAILS_ASSUME_SSL` is automatically set to `true` so Sure correctly handles HTTPS traffic behind the reverse proxy.

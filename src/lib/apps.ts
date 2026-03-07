@@ -420,6 +420,16 @@ export const APP_REGISTRY: AppDefinition[] = [
       const dbPassword = envConfig.SURE_DB_PASSWORD ?? "sure_password";
       const secretKeyBase = envConfig.SURE_SECRET_KEY_BASE ?? "change-me";
       const assumeSsl = envConfig.ENABLE_HTTPS === "true" ? "true" : "false";
+      const openaiEnv: string[] = [];
+      if (envConfig.SURE_OPENAI_ACCESS_TOKEN) {
+        openaiEnv.push(`      - OPENAI_ACCESS_TOKEN=${envConfig.SURE_OPENAI_ACCESS_TOKEN}`);
+      }
+      if (envConfig.SURE_OPENAI_URI_BASE) {
+        openaiEnv.push(`      - OPENAI_URI_BASE=${envConfig.SURE_OPENAI_URI_BASE}`);
+      }
+      if (envConfig.SURE_OPENAI_MODEL) {
+        openaiEnv.push(`      - OPENAI_MODEL=${envConfig.SURE_OPENAI_MODEL}`);
+      }
       const lines = [
         `services:`,
         `  sure_web:`,
@@ -437,6 +447,7 @@ export const APP_REGISTRY: AppDefinition[] = [
         `      - DB_PORT=5432`,
         `      - REDIS_URL=redis://sure_redis:6379/1`,
         `      - TZ=${envConfig.TZ}`,
+        ...openaiEnv,
         `    volumes:`,
         `      - sure-storage:/rails/storage`,
         `    ports:`,
@@ -467,6 +478,7 @@ export const APP_REGISTRY: AppDefinition[] = [
         `      - DB_PORT=5432`,
         `      - REDIS_URL=redis://sure_redis:6379/1`,
         `      - TZ=${envConfig.TZ}`,
+        ...openaiEnv,
         `    volumes:`,
         `      - sure-storage:/rails/storage`,
         `    depends_on:`,
