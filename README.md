@@ -438,8 +438,5 @@ A GitHub Actions workflow runs on every push and pull request to `main`. It runs
 
 - [ ] Add screenshots to the docs
 - [ ] Make sure that empty env vars in .env are considered as not set and not as empty strings since this might cause issues with some apps where a value is expected
-- [ ] Setup a local test environment with docker. This would allow us to test the CLI on a wider range of hardware and operating systems, and also help us catch any regressions before releasing a new version.
-- [ ] I want to internationalize this project's documentation that is built with VitePress. Here is the official documentation: https://vitepress.dev/guide/i18n. For now I just want to add a French translation.
-- [ ] check in prowlarr torznab (U2P / utopeer)
+- [ ] Setup a local test environment with docker. This would allow to test the CLI on a wider range of hardware and operating systems, and also help us catch any regressions before releasing a new version.
 - [ ] Add a \[CERTIFICATE_EXPIRATION\] > 72h check for each app during the Gatus setup to warn the user if their certificate is about to expire. Caddy is handling the certificate renewal automatically.
-- [x] Check if Profilarr is a good solution for quality profiles

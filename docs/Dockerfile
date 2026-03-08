@@ -8,5 +8,5 @@ COPY docs/ docs/
 RUN VITEPRESS_BASE=/ bun run docs:build
 
 FROM caddy:alpine
-COPY --from=builder /app/docs/.vitepress/dist /srv
+COPY --from=builder /app/docs/.vitepress/dist /usr/share/caddy
 EXPOSE 80
