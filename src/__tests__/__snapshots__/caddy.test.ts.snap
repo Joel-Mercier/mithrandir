@@ -1,0 +1,106 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`generateCaddyfile generates valid Caddyfile with installed apps 1`] = `
+"{
+    email {env.ACME_EMAIL}
+    acme_dns duckdns {env.DUCKDNS_TOKEN}
+}
+
+*.mylab.duckdns.org {
+    tls {
+        dns duckdns {env.DUCKDNS_TOKEN}
+        key_type rsa2048
+    }
+
+    @sonarr host sonarr.mylab.duckdns.org
+    handle @sonarr {
+        reverse_proxy localhost:8989
+    }
+
+    @radarr host radarr.mylab.duckdns.org
+    handle @radarr {
+        reverse_proxy localhost:7878
+    }
+
+    @jellyfin host jellyfin.mylab.duckdns.org
+    handle @jellyfin {
+        reverse_proxy localhost:8096
+    }
+
+    handle {
+        root * /srv
+        rewrite * /404.html
+        file_server
+    }
+}
+"
+`;
+
+exports[`generate404Page generates HTML with app links 1`] = `
+"<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>404 - Not Found</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container { text-align: center; max-width: 480px; padding: 2rem; }
+    .code {
+      font-size: 6rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+    }
+    .message { font-size: 1.25rem; color: #94a3b8; margin: 0.75rem 0 2rem; }
+    h2 { font-size: 0.875rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
+    .apps { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; }
+    .apps a {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      background: #1e293b;
+      color: #93c5fd;
+      text-decoration: none;
+      border-radius: 0.5rem;
+      border: 1px solid #334155;
+      font-size: 0.875rem;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .apps a:hover { background: #334155; border-color: #3b82f6; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="code">404</div>
+    <p class="message">This subdomain doesn't exist.</p>
+    <h2>Available Services</h2>
+    <div class="apps">
+      <a href="https://sonarr.mylab.duckdns.org">Sonarr</a>
+      <a href="https://radarr.mylab.duckdns.org">Radarr</a>
+    </div>
+  </div>
+</body>
+</html>
+"
+`;
+
+exports[`generateCaddyDockerfile generates valid Dockerfile 1`] = `
+"FROM caddy:builder AS builder
+RUN xcaddy build --with github.com/caddy-dns/duckdns
+
+FROM caddy:latest
+COPY --from=builder /usr/bin/caddy /usr/bin/caddy
+"
+`;

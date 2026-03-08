@@ -1,0 +1,297 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`generateCompose simple LinuxServer app (Sonarr) 1`] = `
+"services:
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+    ports:
+      - 8989:8989
+    volumes:
+      - /home/test/sonarr/config:/config
+      - /home/test/data:/data
+    restart: unless-stopped
+"
+`;
+
+exports[`generateCompose host-networked app (Home Assistant) 1`] = `
+"services:
+  homeassistant:
+    image: lscr.io/linuxserver/homeassistant:latest
+    container_name: homeassistant
+    network_mode: host
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+    volumes:
+      - /home/test/homeassistant/data:/config
+    restart: unless-stopped
+"
+`;
+
+exports[`generateCompose app with secrets (DuckDNS) 1`] = `
+"services:
+  duckdns:
+    image: lscr.io/linuxserver/duckdns:latest
+    container_name: duckdns
+    network_mode: host
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+      - UPDATE_IP=ipv4
+      - LOG_FILE=false
+      - SUBDOMAINS=mylab
+      - TOKEN=abc-123-token
+    volumes:
+      - /home/test/duckdns/config:/config
+    restart: unless-stopped
+"
+`;
+
+exports[`generateCompose app with healthcheck (Seerr) 1`] = `
+"services:
+  seerr:
+    image: ghcr.io/seerr-team/seerr:latest
+    container_name: seerr
+    init: true
+    environment:
+      - TZ=Etc/UTC
+      - LOG_LEVEL=info
+      - PORT=5055
+    ports:
+      - 5055:5055
+    volumes:
+      - /home/test/seerr/app/config:/app/config
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:5055/api/v1/status || exit 1"]
+      start_period: 20s
+      timeout: 3s
+      interval: 15s
+      retries: 3
+    restart: unless-stopped
+"
+`;
+
+exports[`generateCompose app with capabilities/sysctls (WireGuard) 1`] = `
+"services:
+  wireguard:
+    image: lscr.io/linuxserver/wireguard:latest
+    container_name: wireguard
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+      - SERVERPORT=51820
+      - PEERDNS=auto
+      - INTERNAL_SUBNET=10.13.13.0
+      - LOG_CONFS=true
+      - SERVERURL=vpn.example.com
+      - PEERS=3
+    ports:
+      - 51820:51820/udp
+    volumes:
+      - /home/test/wireguard/config:/config
+      - /home/test/wireguard/lib/modules:/lib/modules:ro
+    restart: unless-stopped
+"
+`;
+
+exports[`generateCompose app with multiple config dirs (Homarr) 1`] = `
+"services:
+  homarr:
+    image: ghcr.io/ajnart/homarr:latest
+    container_name: homarr
+    environment:
+      - TZ=Etc/UTC
+    ports:
+      - 7575:7575
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /home/test/homarr/configs:/app/data/configs
+      - /home/test/homarr/icons:/app/public/icons
+      - /home/test/homarr/data:/data
+    restart: unless-stopped
+"
+`;
+
+exports[`generateCompose app with data dir read-only (Jellyfin) 1`] = `
+"services:
+  jellyfin:
+    image: lscr.io/linuxserver/jellyfin:latest
+    container_name: jellyfin
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+    ports:
+      - 8096:8096
+      - 8920:8920/tcp
+      - 7359:7359/udp
+    volumes:
+      - /home/test/jellyfin/config:/config
+      - /home/test/data:/data:ro
+    restart: unless-stopped
+"
+`;
+
+exports[`generateCompose app with music dir (Navidrome) 1`] = `
+"services:
+  navidrome:
+    image: deluan/navidrome:latest
+    container_name: navidrome
+    user: "1000:1000"
+    environment:
+      - TZ=Etc/UTC
+      - ND_LOGLEVEL=info
+    ports:
+      - 4533:4533
+    volumes:
+      - /home/test/navidrome/data:/data
+      - /home/test/data/media/music:/music:ro
+    restart: unless-stopped
+"
+`;
+
+exports[`generateCompose Pi-hole with ENABLE_HTTPS=false 1`] = `
+"services:
+  pihole:
+    image: pihole/pihole:latest
+    container_name: pihole
+    cap_add:
+      - NET_ADMIN
+      - SYS_TIME
+      - SYS_NICE
+    environment:
+      - TZ=Etc/UTC
+      - FTLCONF_dns_listeningMode=ALL
+      - FTLCONF_misc_etc_dnsmasq_d=true
+      - FTLCONF_webserver_api_password=admin123
+    ports:
+      - 80:80
+      - 53:53/tcp
+      - 53:53/udp
+      - 443:443/tcp
+    volumes:
+      - /home/test/pihole/etc-pihole:/etc/pihole
+      - /home/test/pihole/etc-dnsmasq.d:/etc/dnsmasq.d
+    restart: unless-stopped
+"
+`;
+
+exports[`generateCompose Pi-hole with ENABLE_HTTPS=true (port remapping) 1`] = `
+"services:
+  pihole:
+    image: pihole/pihole:latest
+    container_name: pihole
+    cap_add:
+      - NET_ADMIN
+      - SYS_TIME
+      - SYS_NICE
+    environment:
+      - TZ=Etc/UTC
+      - FTLCONF_dns_listeningMode=ALL
+      - FTLCONF_misc_etc_dnsmasq_d=true
+      - FTLCONF_webserver_api_password=admin123
+      - FTLCONF_webserver_domain=pihole.mylab.duckdns.org
+    ports:
+      - 8880:80
+      - 53:53/tcp
+      - 53:53/udp
+    volumes:
+      - /home/test/pihole/etc-pihole:/etc/pihole
+      - /home/test/pihole/etc-dnsmasq.d:/etc/dnsmasq.d
+    restart: unless-stopped
+"
+`;
+
+exports[`generateCompose rawCompose app (Immich) returns non-empty string 1`] = `
+"services:
+  immich_server:
+    image: ghcr.io/immich-app/immich-server:release
+    container_name: immich_server
+    environment:
+      - DB_PASSWORD=testpass
+      - DB_USERNAME=postgres
+      - DB_DATABASE_NAME=immich
+      - DB_HOSTNAME=immich_postgres
+      - REDIS_HOSTNAME=immich_redis
+      - TZ=Etc/UTC
+    ports:
+      - 2283:2283
+    volumes:
+      - /home/test/data/media/pictures:/data
+      - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      - immich_redis
+      - immich_postgres
+    restart: unless-stopped
+    healthcheck:
+      disable: false
+
+  immich_machine_learning:
+    image: ghcr.io/immich-app/immich-machine-learning:release
+    container_name: immich_machine_learning
+    volumes:
+      - immich-model-cache:/cache
+    environment:
+      - DB_PASSWORD=testpass
+      - DB_USERNAME=postgres
+      - DB_DATABASE_NAME=immich
+      - DB_HOSTNAME=immich_postgres
+      - REDIS_HOSTNAME=immich_redis
+    restart: unless-stopped
+    healthcheck:
+      disable: false
+
+  immich_redis:
+    image: docker.io/valkey/valkey:9
+    container_name: immich_redis
+    healthcheck:
+      test: redis-cli ping || exit 1
+    restart: unless-stopped
+
+  immich_postgres:
+    image: ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0
+    container_name: immich_postgres
+    environment:
+      - POSTGRES_PASSWORD=testpass
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=immich
+      - POSTGRES_INITDB_ARGS=--data-checksums
+    volumes:
+      - /home/test/immich/postgres:/var/lib/postgresql/data
+    shm_size: 128mb
+    restart: unless-stopped
+    healthcheck:
+      disable: false
+
+volumes:
+  immich-model-cache:
+"
+`;
+
+exports[`generateCompose app with containerPort mapping (Excalidraw) 1`] = `
+"services:
+  excalidraw:
+    image: excalidraw/excalidraw:latest
+    container_name: excalidraw
+    environment:
+      - TZ=Etc/UTC
+    ports:
+      - 5000:80
+    volumes:
+      - /home/test/excalidraw/config:/config
+    restart: unless-stopped
+"
+`;
