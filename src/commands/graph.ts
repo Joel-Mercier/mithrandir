@@ -55,7 +55,7 @@ export async function runGraph(): Promise<void> {
     `  ${i("seerr")}        ${a} ${i("radarr")}, ${i("sonarr")}, ${i("jellyfin")}  ${DIM}(media requests & discovery)${RESET}`,
     `  ${i("profilarr")}   ${a} ${i("radarr")}, ${i("sonarr")}  ${DIM}(quality profile management)${RESET}`,
     ``,
-    sectionTitle("Recommended Installation Order"),
+    `  ${BOLD}${WHITE}Recommended Installation Order${RESET}`,
     ``,
     `  ${DIM}1.${RESET} qBittorrent  ${DIM}(download client — no dependencies)${RESET}`,
     `  ${DIM}2.${RESET} Prowlarr     ${DIM}(indexer manager, auto-installs FlareSolverr)${RESET}`,
