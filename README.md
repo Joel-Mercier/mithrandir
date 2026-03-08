@@ -408,11 +408,31 @@ scripts/generate-changelog.sh
 |---------|-------------|
 | `bun run start` | Run the CLI in dev mode (unbundled) |
 | `bun run build` | Bundle into `dist/mithrandir.js` |
+| `bun test` | Run unit and snapshot tests |
 | `bun run typecheck` | TypeScript type checking (`tsc --noEmit`) |
 | `bun run docs:dev` | Local VitePress dev server with hot reload |
 | `bun run docs:build` | Build the documentation site for production |
 | `bun run docs:preview` | Preview the built documentation site |
 | `bun run release <version>` | Create a new release |
+
+## Testing
+
+Tests use Bun's built-in test runner (`bun test`). Test files are in `src/__tests__/`:
+
+- **App registry** (`apps.test.ts`) — validates app lookups, container names, config paths, conflict filtering, stacks, and registry integrity
+- **Config parsing** (`config.test.ts`) — tests `.env` loading (KEY=VALUE, quotes, `export` prefix, comments) and backup config defaults
+- **Compose generation** (`compose.test.ts`) — snapshot tests for docker-compose.yml output across all app types (standard, host-networked, secrets, healthchecks, capabilities, multi-config, port remapping, rawCompose)
+- **Caddy generation** (`caddy.test.ts`) — tests domain derivation, Caddyfile generation, 404 page, and Dockerfile output
+
+Snapshot files are stored in `src/__tests__/__snapshots__/` and committed to git. When compose or caddy generation logic changes, update snapshots with:
+
+```bash
+bun test --update-snapshots
+```
+
+### CI
+
+A GitHub Actions workflow runs on every push and pull request to `main`. It runs `bun run typecheck`, `bun run build`, and `bun test`.
 
 ## TODO
 

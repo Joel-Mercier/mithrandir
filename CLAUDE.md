@@ -43,6 +43,7 @@ mithrandir completions <bash|zsh|fish>     # Generate shell completion script
 mithrandir docs                    # Build and serve docs website
 mithrandir docs stop               # Stop docs website
 bun run docs:dev                        # Local VitePress dev server (hot reload)
+bun test                       # Run unit and snapshot tests
 bun run typecheck              # TypeScript type checking (tsc --noEmit)
 bun run src/index.tsx --help         # Dev mode (unbundled)
 ```
@@ -96,6 +97,25 @@ These allow programmatic access to the APIs of the above services.
 
 ### Changelog (`docs/changelog.md`)
 Auto-generated from git commits via `scripts/generate-changelog.sh`, grouped by git tags. Each tag becomes a version section; commits after the latest tag appear under "Unreleased". The script categorizes commits by message prefix (add/fix/update/etc.). To create a release, run `scripts/release.sh <version>` — this bumps the version in `package.json` and the nav dropdown in `docs/.vitepress/config.ts`, generates the changelog, commits everything, and creates the git tag.
+
+## Testing
+
+Tests use Bun's built-in test runner. All test files live in `src/__tests__/`.
+
+- **`apps.test.ts`** — App registry unit tests: `getApp()`, `getContainerName()`, `getConfigPaths()`, `filterConflicts()`, stacks, and registry integrity validation
+- **`config.test.ts`** — Config parsing: `getBackupConfig()` retention/defaults, `loadEnvConfig()` with temp `.env` files (KEY=VALUE, quotes, `export` prefix, comments)
+- **`compose.test.ts`** — Compose generation snapshot tests: standard apps, host networking, secrets, healthchecks, capabilities/sysctls, multi-config dirs, Pi-hole port remapping, rawCompose apps
+- **`caddy.test.ts`** — Caddy generation: `getDuckDnsDomain()`, Caddyfile snapshots, 404 page, Dockerfile
+
+Snapshots are stored in `src/__tests__/__snapshots__/` and committed to git. Update with `bun test --update-snapshots` when compose/caddy generation logic changes.
+
+### CI Pipeline
+
+GitHub Actions workflow (`.github/workflows/ci.yml`) runs on every push/PR to `main`:
+1. `bun install`
+2. `bun run typecheck`
+3. `bun run build`
+4. `bun test`
 
 ## Key Constraints
 
