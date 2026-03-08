@@ -7,6 +7,6 @@ RUN bun install --frozen-lockfile
 COPY docs/ docs/
 RUN VITEPRESS_BASE=/ bun run docs:build
 
-FROM nginx:alpine
-COPY --from=builder /app/docs/.vitepress/dist /usr/share/nginx/html
+FROM caddy:alpine
+COPY --from=builder /app/docs/.vitepress/dist /srv
 EXPOSE 80

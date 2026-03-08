@@ -18,7 +18,7 @@ mithrandir docs stop
 
 ## Description
 
-Construit une image Docker contenant la documentation VitePress et la sert via nginx sur le port `4173`.
+Construit une image Docker contenant la documentation VitePress et la sert via Caddy sur le port `4173`.
 
 Lorsque Caddy HTTPS est activé, le Caddyfile est automatiquement mis à jour pour inclure une entrée de reverse proxy pour le site de documentation.
 
