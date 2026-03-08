@@ -16,11 +16,6 @@ Privacy-focused knowledge base and workspace — an open-source alternative to N
 mithrandir install affine
 ```
 
-## Setup
-
-1. Open the web UI at `http://your-server:3010`
-2. Create an account and start using AFFiNE
-
 ## Architecture
 
 AFFiNE runs as a multi-container stack:
@@ -38,3 +33,12 @@ AFFiNE runs as a multi-container stack:
 | --- | --- |
 | `AFFINE_DB_PASSWORD` | PostgreSQL password (default: `affine`) |
 | `AFFINE_DB_USERNAME` | PostgreSQL username (default: `affine`) |
+
+## Setup
+
+- Open the web UI at `http://your-server:3010`
+- Create an account and start using AFFiNE
+
+## Clients
+
+Mobile clients for AFFiNE are available for [iOS](https://apps.apple.com/us/app/notes-whiteboard-ai-affine/id6736937980) and [Android](https://play.google.com/store/apps/details?id=app.affine.pro).

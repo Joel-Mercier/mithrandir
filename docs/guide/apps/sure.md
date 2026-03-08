@@ -18,11 +18,6 @@ mithrandir install sure
 
 Also see [Actual Budget](./actualbudget) for an alternative finance app.
 
-## Setup
-
-1. Open the web UI at `http://your-server:3005`
-2. Create an account and start tracking your finances
-
 ## Architecture
 
 Sure runs as a multi-container stack:
@@ -45,3 +40,12 @@ Sure runs as a multi-container stack:
 | `SURE_OPENAI_MODEL` | OpenAI model to use (optional) |
 
 When HTTPS is enabled via Caddy, `RAILS_ASSUME_SSL` is automatically set to `true` so Sure correctly handles HTTPS traffic behind the reverse proxy.
+
+## Setup
+
+- Open the web UI at `http://your-server:3005`
+- Create an account and start tracking your finances
+
+## Clients
+
+Mobile apps are being built for iOS and Android but are not yet finished and available.

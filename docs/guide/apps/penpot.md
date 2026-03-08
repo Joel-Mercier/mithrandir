@@ -16,11 +16,6 @@ Open-source design and prototyping platform — an alternative to Figma.
 mithrandir install penpot
 ```
 
-## Setup
-
-1. Open the web UI at `http://your-server:9001`
-2. Create an account and start designing
-
 ## Architecture
 
 Penpot runs as a multi-container stack:
@@ -41,3 +36,8 @@ Penpot runs as a multi-container stack:
 | `PENPOT_SECRET_KEY` | Secret key for session signing (auto-generated) |
 | `PENPOT_DB_PASSWORD` | PostgreSQL password (default: `penpot`) |
 | `PENPOT_PUBLIC_URI` | Public URI for the instance (default: `http://localhost:9001`) |
+
+## Setup
+
+- Open the web UI at `http://your-server:9001`
+- Create an account and start designing

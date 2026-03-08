@@ -20,7 +20,11 @@ Also see [Sure](./sure) for an alternative finance tracker.
 
 ## Setup
 
-1. Open the web UI at `http://your-server:5006`
-2. Create a password for your server
-3. Create a new budget or import an existing one
-4. Optionally set up bank syncing via GoCardless or SimpleFIN
+- Open the web UI at `http://your-server:5006`
+- Create a password for your server
+- Create a new budget or import an existing one
+- Optionally set up bank syncing via GoCardless or SimpleFIN
+
+## Clients
+
+Clients for Windows, macOS, and Linux are available [here](https://github.com/actualbudget/actual/releases).

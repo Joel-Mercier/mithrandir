@@ -18,9 +18,9 @@ mithrandir install n8n
 
 ## Setup
 
-1. Open the web UI at `http://your-server:5678`
-2. Create an owner account on first launch
-3. Start building workflows
+- Open the web UI at `http://your-server:5678`
+- Create an owner account on first launch
+- Start building workflows
 
 ## Local files
 
