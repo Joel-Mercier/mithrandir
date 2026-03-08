@@ -716,15 +716,13 @@ function InstallFirewall() {
 
 function InstallApp({ appName }: { appName: string }) {
   const { exit } = useApp();
-  const [completedSteps, setCompletedSteps] = useState<CompletedStep[]>([]);
-  const [phase, setPhase] = useState<"init" | "pulling" | "installing" | "caddy" | "done">("init");
-  const [currentLabel, setCurrentLabel] = useState("Initializing...");
+  const [appResults, setAppResults] = useState<
+    Array<{ name: string; status: "done" | "error" | "skipped"; message?: string }>
+  >([]);
+  const [phase, setPhase] = useState<"init" | "pulling" | "composing" | "caddy" | "done">("init");
+  const [currentAppName, setCurrentAppName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pullProgress, setPullProgress] = useState(0);
-
-  function addStep(step: CompletedStep) {
-    setCompletedSteps((prev) => [...prev, step]);
-  }
 
   useEffect(() => {
     run();
@@ -771,47 +769,45 @@ function InstallApp({ appName }: { appName: string }) {
       }
       if (envChanged) {
         await saveEnvConfig(env);
-        addStep({ name: "Secrets", status: "done", message: "Auto-generated" });
       }
     }
 
-    // Pull image
-    setPhase("pulling");
-    setCurrentLabel(`Pulling ${app.image}...`);
-    setPullProgress(0);
-    await pullImageWithProgress(app.image, (pct) => setPullProgress(pct));
-    addStep({ name: "Pull image", status: "done", message: app.image });
-
-    // Install
-    setPhase("installing");
-    setCurrentLabel(`Installing ${appName}...`);
-    await writeComposeAndStart(app, env);
-    addStep({ name: "Install", status: "done", message: `${appName} is running` });
-
-    // Install companion apps
+    // Build list of apps to install (main + companions)
+    const appsToInstall = [app];
     const companions = getCompanionApps(appName);
     for (const companion of companions) {
       const companionCompose = getComposePath(companion, env.BASE_DIR);
       if (existsSync(companionCompose)) {
-        addStep({ name: companion.displayName, status: "done", message: "Already installed" });
-        continue;
+        setAppResults((prev) => [...prev, { name: companion.displayName, status: "done", message: "Already installed" }]);
+      } else {
+        appsToInstall.push(companion);
       }
-      setCurrentLabel(`Pulling ${companion.image}...`);
-      await pullImageWithProgress(companion.image, (pct) => setPullProgress(pct));
-      setCurrentLabel(`Installing ${companion.name}...`);
-      await writeComposeAndStart(companion, env);
-      addStep({ name: companion.displayName, status: "done", message: `${companion.name} is running` });
+    }
+
+    const results: Array<{ name: string; status: "done" | "error" | "skipped"; message?: string }> = [];
+
+    // Install each app
+    for (const installApp of appsToInstall) {
+      setCurrentAppName(installApp.displayName);
+      setPhase("pulling");
+      setPullProgress(0);
+      await pullImageWithProgress(installApp.image, (pct) => setPullProgress(pct));
+
+      setPhase("composing");
+      await writeComposeAndStart(installApp, env);
+      results.push({ name: installApp.displayName, status: "done" });
+      setAppResults((prev) => [...prev, { name: installApp.displayName, status: "done" }]);
     }
 
     // Regenerate Caddyfile if HTTPS is enabled
     if (env.ENABLE_HTTPS === "true") {
       setPhase("caddy");
-      setCurrentLabel("Updating HTTPS configuration...");
+      setCurrentAppName("HTTPS");
       try {
         await regenerateCaddyfile(env);
-        addStep({ name: "HTTPS", status: "done", message: "Caddyfile updated" });
+        setAppResults((prev) => [...prev, { name: "HTTPS", status: "done", message: "Caddyfile updated" }]);
       } catch {
-        addStep({ name: "HTTPS", status: "skipped", message: "Failed to update Caddyfile" });
+        setAppResults((prev) => [...prev, { name: "HTTPS", status: "skipped", message: "Failed to update Caddyfile" }]);
       }
 
       // When Pi-hole is being installed with HTTPS active, write wildcard DNS config
@@ -822,7 +818,7 @@ function InstallApp({ appName }: { appName: string }) {
           const dnsmasqDir = `${env.BASE_DIR}/pihole/etc-dnsmasq.d`;
           await shell("mkdir", ["-p", dnsmasqDir], { sudo: true });
           await Bun.write(`${dnsmasqDir}/10-wildcard-domain.conf`, `address=/${domain}/${ip}\n`);
-          addStep({ name: "DNS", status: "done", message: `Wildcard *.${domain} → ${ip}` });
+          setAppResults((prev) => [...prev, { name: "DNS", status: "done", message: `Wildcard *.${domain} → ${ip}` }]);
         }
       }
     }
@@ -830,13 +826,12 @@ function InstallApp({ appName }: { appName: string }) {
     // Add UFW rules if firewall is enabled
     if (env.ENABLE_FIREWALL === "true" && await isUfwActive()) {
       try {
-        await allowAppPorts(app);
-        for (const companion of companions) {
-          await allowAppPorts(companion);
+        for (const installApp of appsToInstall) {
+          await allowAppPorts(installApp);
         }
-        addStep({ name: "Firewall", status: "done", message: "UFW rules added" });
+        setAppResults((prev) => [...prev, { name: "Firewall", status: "done", message: "UFW rules added" }]);
       } catch {
-        addStep({ name: "Firewall", status: "skipped", message: "Failed to add UFW rules" });
+        setAppResults((prev) => [...prev, { name: "Firewall", status: "skipped", message: "Failed to add UFW rules" }]);
       }
     }
 
@@ -857,22 +852,25 @@ function InstallApp({ appName }: { appName: string }) {
     <Box flexDirection="column">
       <Header title={`Install: ${appName}`} />
 
-      {completedSteps.map((step, i) => (
+      {appResults.map((r, i) => (
         <AppStatus
           key={i}
-          name={step.name}
-          status={step.status}
-          message={step.message}
+          name={r.name}
+          status={r.status}
+          message={r.message}
         />
       ))}
 
-      {(phase === "init" || phase === "pulling" || phase === "installing" || phase === "caddy") && (
+      {phase !== "done" && (
         <Box flexDirection="column">
           <Text>
-            <Text color="green">
+            <Text color="yellow">
               <Spinner type="dots" />
             </Text>
-            {" "}{currentLabel}
+            {" "}{currentAppName}
+            {phase === "pulling" && " — pulling image..."}
+            {phase === "composing" && " — starting container..."}
+            {phase === "caddy" && " — updating HTTPS..."}
           </Text>
           {phase === "pulling" && pullProgress > 0 && pullProgress < 100 && (
             <ProgressBar percent={pullProgress} />
@@ -895,17 +893,17 @@ function InstallApp({ appName }: { appName: string }) {
 
 function InstallStack({ stackName }: { stackName: string }) {
   const { exit } = useApp();
-  const [completedSteps, setCompletedSteps] = useState<CompletedStep[]>([]);
-  const [phase, setPhase] = useState<"init" | "pulling" | "installing" | "caddy" | "done">("init");
-  const [currentLabel, setCurrentLabel] = useState("Initializing...");
+  const [appResults, setAppResults] = useState<
+    Array<{ name: string; status: "done" | "error" | "skipped"; message?: string }>
+  >([]);
+  const [phase, setPhase] = useState<"init" | "pulling" | "composing" | "caddy" | "done">("init");
+  const [currentAppName, setCurrentAppName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pullProgress, setPullProgress] = useState(0);
+  const [installIdx, setInstallIdx] = useState(0);
+  const [totalApps, setTotalApps] = useState(0);
 
   const stack = getStack(stackName)!;
-
-  function addStep(step: CompletedStep) {
-    setCompletedSteps((prev) => [...prev, step]);
-  }
 
   useEffect(() => {
     run();
@@ -924,10 +922,10 @@ function InstallStack({ stackName }: { stackName: string }) {
     }
 
     // Filter out caddy (installed via `install https`) and already-installed apps
-    const appsToInstall: Array<{ app: NonNullable<ReturnType<typeof getApp>>; skipped?: string }> = [];
+    const appsToInstall: Array<{ app: NonNullable<ReturnType<typeof getApp>> }> = [];
     for (const name of appNames) {
       if (name === "caddy") {
-        addStep({ name: "Caddy", status: "skipped", message: "Install separately via: mithrandir install https" });
+        setAppResults((prev) => [...prev, { name: "Caddy", status: "skipped", message: "Install separately via: mithrandir install https" }]);
         continue;
       }
       const app = getApp(name);
@@ -935,12 +933,12 @@ function InstallStack({ stackName }: { stackName: string }) {
 
       const composePath = getComposePath(app, env.BASE_DIR);
       if (existsSync(composePath)) {
-        addStep({ name: app.displayName, status: "done", message: "Already installed" });
+        setAppResults((prev) => [...prev, { name: app.displayName, status: "done", message: "Already installed" }]);
         continue;
       }
 
       if (app.requiresHttps && env.ENABLE_HTTPS !== "true") {
-        addStep({ name: app.displayName, status: "skipped", message: "Requires HTTPS (run: mithrandir install https)" });
+        setAppResults((prev) => [...prev, { name: app.displayName, status: "skipped", message: "Requires HTTPS (run: mithrandir install https)" }]);
         continue;
       }
 
@@ -953,29 +951,31 @@ function InstallStack({ stackName }: { stackName: string }) {
       return;
     }
 
+    setTotalApps(appsToInstall.length);
+
     // Install each app
-    for (const { app } of appsToInstall) {
+    for (let i = 0; i < appsToInstall.length; i++) {
+      const { app } = appsToInstall[i];
+      setInstallIdx(i);
+      setCurrentAppName(app.displayName);
       setPhase("pulling");
-      setCurrentLabel(`Pulling ${app.image}...`);
       setPullProgress(0);
       await pullImageWithProgress(app.image, (pct) => setPullProgress(pct));
-      addStep({ name: `Pull ${app.displayName}`, status: "done", message: app.image });
 
-      setPhase("installing");
-      setCurrentLabel(`Installing ${app.name}...`);
+      setPhase("composing");
       await writeComposeAndStart(app, env);
-      addStep({ name: app.displayName, status: "done", message: `${app.name} is running` });
+      setAppResults((prev) => [...prev, { name: app.displayName, status: "done" }]);
     }
 
     // Regenerate Caddyfile if HTTPS is enabled
     if (env.ENABLE_HTTPS === "true") {
       setPhase("caddy");
-      setCurrentLabel("Updating HTTPS configuration...");
+      setCurrentAppName("HTTPS");
       try {
         await regenerateCaddyfile(env);
-        addStep({ name: "HTTPS", status: "done", message: "Caddyfile updated" });
+        setAppResults((prev) => [...prev, { name: "HTTPS", status: "done", message: "Caddyfile updated" }]);
       } catch {
-        addStep({ name: "HTTPS", status: "skipped", message: "Failed to update Caddyfile" });
+        setAppResults((prev) => [...prev, { name: "HTTPS", status: "skipped", message: "Failed to update Caddyfile" }]);
       }
     }
 
@@ -985,9 +985,9 @@ function InstallStack({ stackName }: { stackName: string }) {
         for (const { app } of appsToInstall) {
           await allowAppPorts(app);
         }
-        addStep({ name: "Firewall", status: "done", message: "UFW rules added" });
+        setAppResults((prev) => [...prev, { name: "Firewall", status: "done", message: "UFW rules added" }]);
       } catch {
-        addStep({ name: "Firewall", status: "skipped", message: "Failed to add UFW rules" });
+        setAppResults((prev) => [...prev, { name: "Firewall", status: "skipped", message: "Failed to add UFW rules" }]);
       }
     }
 
@@ -1006,25 +1006,28 @@ function InstallStack({ stackName }: { stackName: string }) {
 
   return (
     <Box flexDirection="column">
-      <Header title={`Install stack: ${stack.label}`} />
+      <Header title={`Install stack: ${stack.label} (${installIdx + 1}/${totalApps})`} />
       <Text dimColor>  {stack.description}</Text>
       <Box marginTop={1} flexDirection="column">
-        {completedSteps.map((step, i) => (
+        {appResults.map((r, i) => (
           <AppStatus
             key={i}
-            name={step.name}
-            status={step.status}
-            message={step.message}
+            name={r.name}
+            status={r.status}
+            message={r.message}
           />
         ))}
 
-        {(phase === "init" || phase === "pulling" || phase === "installing" || phase === "caddy") && (
+        {phase !== "done" && (
           <Box flexDirection="column">
             <Text>
-              <Text color="green">
+              <Text color="yellow">
                 <Spinner type="dots" />
               </Text>
-              {" "}{currentLabel}
+              {" "}{currentAppName}
+              {phase === "pulling" && " — pulling image..."}
+              {phase === "composing" && " — starting container..."}
+              {phase === "caddy" && " — updating HTTPS..."}
             </Text>
             {phase === "pulling" && pullProgress > 0 && pullProgress < 100 && (
               <ProgressBar percent={pullProgress} />
