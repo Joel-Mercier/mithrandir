@@ -106,6 +106,11 @@ Tests use Bun's built-in test runner. All test files live in `src/__tests__/`.
 - **`config.test.ts`** — Config parsing: `getBackupConfig()` retention/defaults, `loadEnvConfig()` with temp `.env` files (KEY=VALUE, quotes, `export` prefix, comments)
 - **`compose.test.ts`** — Compose generation snapshot tests: standard apps, host networking, secrets, healthchecks, capabilities/sysctls, multi-config dirs, Pi-hole port remapping, rawCompose apps
 - **`caddy.test.ts`** — Caddy generation: `getDuckDnsDomain()`, Caddyfile snapshots, 404 page, Dockerfile
+- **`backup-utils.test.ts`** — Archive suffix stripping, backup archive detection, archive filename generation
+- **`crypto.test.ts`** — Encrypted backup file detection via `isEncryptedBackup()`
+- **`systemd.test.ts`** — Service and timer unit generation snapshots and content validation
+- **`swap.test.ts`** — `formatSwapSize()` GB/MB formatting and threshold edge cases
+- **`logger.test.ts`** — `Logger.format()` timestamp pattern, log path constants
 
 Snapshots are stored in `src/__tests__/__snapshots__/` and committed to git. Update with `bun test --update-snapshots` when compose/caddy generation logic changes.
 

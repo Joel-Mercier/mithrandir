@@ -423,6 +423,11 @@ Tests use Bun's built-in test runner (`bun test`). Test files are in `src/__test
 - **Config parsing** (`config.test.ts`) — tests `.env` loading (KEY=VALUE, quotes, `export` prefix, comments) and backup config defaults
 - **Compose generation** (`compose.test.ts`) — snapshot tests for docker-compose.yml output across all app types (standard, host-networked, secrets, healthchecks, capabilities, multi-config, port remapping, rawCompose)
 - **Caddy generation** (`caddy.test.ts`) — tests domain derivation, Caddyfile generation, 404 page, and Dockerfile output
+- **Backup utilities** (`backup-utils.test.ts`) — archive suffix stripping, backup archive detection, and archive filename generation
+- **Crypto** (`crypto.test.ts`) — encrypted backup file detection
+- **Systemd** (`systemd.test.ts`) — service and timer unit generation with snapshot tests
+- **Swap** (`swap.test.ts`) — swap size formatting (GB/MB thresholds, edge cases)
+- **Logger** (`logger.test.ts`) — log message formatting, timestamp pattern validation, and log path constants
 
 Snapshot files are stored in `src/__tests__/__snapshots__/` and committed to git. When compose or caddy generation logic changes, update snapshots with:
 
