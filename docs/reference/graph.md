@@ -12,7 +12,7 @@ Does not require root privileges.
 
 ## Output
 
-Displays a color-coded dependency graph organized into four sections:
+Displays a color-coded dependency graph organized into three sections:
 
 ### Media Pipeline
 
@@ -29,21 +29,7 @@ Seerr        ───► Radarr, Sonarr, Jellyfin  (media requests & discovery)
 Profilarr    ───► Radarr, Sonarr  (quality profile management)
 ```
 
-### Network & Security
-
-```
-DuckDNS ───► Caddy ───► all apps with ports  (wildcard HTTPS reverse proxy)
-Caddy   ───► Vaultwarden  (HTTPS required)
-Pi-hole  (standalone DNS, optional wildcard DNS for Caddy)
-```
-
-### Standalone
-
-Apps with no dependencies that can be installed independently:
-
-Home Assistant, Immich, Gatus, Homarr, WireGuard, Excalidraw, Omni Tools, Open WebUI
-
-### Recommended Installation Order
+#### Recommended Installation Order
 
 The suggested order for installing the full media stack, based on dependencies:
 
@@ -57,6 +43,20 @@ The suggested order for installing the full media stack, based on dependencies:
 8. Navidrome (music server)
 9. Seerr (media requests, optional)
 10. Profilarr (quality profiles, optional)
+
+### Network & Security
+
+```
+DuckDNS ───► Caddy ───► all apps with ports  (wildcard HTTPS reverse proxy)
+Caddy   ───► Vaultwarden  (HTTPS required)
+Pi-hole  (standalone DNS, optional wildcard DNS for Caddy)
+```
+
+### Standalone
+
+Apps with no dependencies that can be installed independently:
+
+Home Assistant, Immich, Gatus, Homarr, WireGuard, Excalidraw, Omni Tools, Open WebUI, Actual Budget, Sure, AFFiNE, n8n, Penpot
 
 ## Notes
 
