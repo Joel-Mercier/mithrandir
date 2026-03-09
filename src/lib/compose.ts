@@ -216,6 +216,12 @@ export function generateCompose(
       lines.push(`      retries: ${app.healthcheck.retries}`);
   }
 
+  // Command override
+  if (app.command && app.command.length > 0) {
+    const quoted = app.command.map((c) => `"${c}"`).join(", ");
+    lines.push(`    command: [${quoted}]`);
+  }
+
   lines.push(`    restart: ${restartPolicy}`);
 
   return lines.join("\n") + "\n";
@@ -235,6 +241,8 @@ function getContainerConfigPath(app: AppDefinition): string {
       return "/app/backend/data";
     case "pihole":
       return "/etc/pihole";
+    case "trip":
+      return "/app/storage";
     default:
       return "/config";
   }

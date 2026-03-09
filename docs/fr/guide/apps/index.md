@@ -83,6 +83,12 @@ mithrandir log <app>          # Voir les logs
 | [DuckDNS](./duckdns) | — | Service DNS dynamique gratuit |
 | [Vaultwarden](./vaultwarden) | 8222 | Gestionnaire de mots de passe léger compatible Bitwarden |
 
+### Voyage
+
+| Application | Port | Description |
+| --- | --- | --- |
+| [TRIP](./trip) | 8085 | Planification de voyages et journal de bord |
+
 ### Utilitaires
 
 | Application | Port | Description |

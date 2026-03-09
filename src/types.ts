@@ -51,6 +51,8 @@ export interface AppDefinition {
   };
   /** Additional port mappings beyond the main port: [host, container, protocol?] */
   extraPorts?: Array<{ host: number; container: number; protocol?: "tcp" | "udp" }>;
+  /** Custom command to override the default entrypoint */
+  command?: string[];
   /** Restart policy (default: "unless-stopped") */
   restartPolicy?: string;
   /** Music dir mount for navidrome */

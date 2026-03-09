@@ -382,6 +382,7 @@ Checks configuration correctness across three categories: System (.env file, Doc
 | Actual Budget | 5006 | Privacy-focused personal finance and budgeting app |
 | Vaultwarden | 8222 | Lightweight Bitwarden-compatible password manager (requires HTTPS) |
 | Sure | 3005 | Privacy-focused personal finance tracker |
+| TRIP | 8085 | Travel planning and trip journal |
 
 ## Local Development
 

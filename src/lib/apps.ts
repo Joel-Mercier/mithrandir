@@ -822,6 +822,17 @@ export const APP_REGISTRY: AppDefinition[] = [
     needsDataDir: false,
   },
   {
+    name: "trip",
+    displayName: "TRIP",
+    description: "Travel planning and trip journal",
+    image: "ghcr.io/itskovacs/trip:1",
+    port: 8085,
+    containerPort: 8000,
+    configSubdir: "storage",
+    needsDataDir: false,
+    command: ["fastapi", "run", "/app/trip/main.py", "--host", "0.0.0.0"],
+  },
+  {
     name: "pihole",
     displayName: "Pi-hole",
     description: "Network-wide ad blocker and DNS server",
@@ -1018,6 +1029,12 @@ export const APP_CATEGORIES: AppCategory[] = [
     value: "security",
     description: "Pi-hole, WireGuard, DuckDNS, Vaultwarden",
     apps: ["pihole", "wireguard", "duckdns", "vaultwarden"],
+  },
+  {
+    label: "Travel",
+    value: "travel",
+    description: "TRIP",
+    apps: ["trip"],
   },
   {
     label: "Utilities",
