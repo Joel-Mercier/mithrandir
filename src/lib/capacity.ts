@@ -69,12 +69,19 @@ async function getCpuInfo(): Promise<{ model: string; cores: number }> {
     };
   }
 
-  const [modelResult, coreResult] = await Promise.all([
+  const [modelNameResult, modelResult, hardwareResult, coreResult] = await Promise.all([
     shell("grep", ["-m1", "model name", "/proc/cpuinfo"], { ignoreError: true }),
+    shell("grep", ["-m1", "^Model", "/proc/cpuinfo"], { ignoreError: true }),
+    shell("grep", ["-m1", "^Hardware", "/proc/cpuinfo"], { ignoreError: true }),
     shell("nproc", [], { ignoreError: true }),
   ]);
 
-  const model = modelResult.stdout.trim().replace(/^model name\s*:\s*/, "") || "Unknown";
+  // x86 uses "model name", ARM uses "Model" or "Hardware"
+  const model =
+    modelNameResult.stdout.trim().replace(/^model name\s*:\s*/, "") ||
+    modelResult.stdout.trim().replace(/^Model\s*:\s*/, "") ||
+    hardwareResult.stdout.trim().replace(/^Hardware\s*:\s*/, "") ||
+    "Unknown";
   const cores = parseInt(coreResult.stdout.trim()) || 1;
   return { model, cores };
 }
@@ -161,14 +168,18 @@ export function getPerformanceVerdict(
   cpuCores: number,
   ramMB: number,
 ): { label: string; color: string } {
-  // Simple heuristic: each "point" of performance score needs ~0.5 cores and ~512MB RAM
-  const cpuHeadroom = cpuCores / Math.max(totalScore * 0.5, 1);
-  const ramHeadroom = ramMB / Math.max(totalScore * 512, 1);
+  // Weighted heuristic: low apps barely use resources, high apps use significant amounts.
+  // Each score point maps to: low(1)=0.1 core/128MB, medium(2)=0.25 core/256MB, high(3)=0.5 core/512MB
+  // For aggregate scoring, use average cost per point (~0.15 cores, ~200MB per point)
+  const estimatedCpuNeed = totalScore * 0.15;
+  const estimatedRamNeed = totalScore * 200;
+  const cpuHeadroom = cpuCores / Math.max(estimatedCpuNeed, 0.1);
+  const ramHeadroom = ramMB / Math.max(estimatedRamNeed, 1);
   const headroom = Math.min(cpuHeadroom, ramHeadroom);
 
-  if (headroom >= 2) return { label: "Comfortable", color: "green" };
-  if (headroom >= 1) return { label: "Adequate", color: "yellow" };
-  if (headroom >= 0.5) return { label: "Tight", color: "red" };
+  if (headroom >= 3) return { label: "Comfortable", color: "green" };
+  if (headroom >= 1.5) return { label: "Adequate", color: "yellow" };
+  if (headroom >= 0.8) return { label: "Tight", color: "red" };
   return { label: "Overloaded", color: "red" };
 }
 

@@ -29,25 +29,26 @@ describe("scoreColor", () => {
 
 describe("getPerformanceVerdict", () => {
   test("comfortable with plenty of resources", () => {
-    const result = getPerformanceVerdict(3, 8, 16384);
+    const result = getPerformanceVerdict(6, 8, 16384);
     expect(result.label).toBe("Comfortable");
     expect(result.color).toBe("green");
   });
 
   test("adequate with moderate resources", () => {
-    const result = getPerformanceVerdict(6, 4, 4096);
+    const result = getPerformanceVerdict(12, 4, 8192);
     expect(result.label).toBe("Adequate");
     expect(result.color).toBe("yellow");
   });
 
-  test("tight with limited resources", () => {
-    const result = getPerformanceVerdict(8, 4, 2048);
+  test("tight on a Raspberry Pi 5 4GB with 14 apps", () => {
+    // 18 score, 4 cores, 4GB — realistic RPi5 scenario
+    const result = getPerformanceVerdict(18, 4, 4096);
     expect(result.label).toBe("Tight");
     expect(result.color).toBe("red");
   });
 
   test("overloaded with very limited resources", () => {
-    const result = getPerformanceVerdict(10, 2, 2048);
+    const result = getPerformanceVerdict(20, 2, 2048);
     expect(result.label).toBe("Overloaded");
     expect(result.color).toBe("red");
   });
