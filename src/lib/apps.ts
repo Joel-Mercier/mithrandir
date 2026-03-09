@@ -874,7 +874,7 @@ export const APP_REGISTRY: AppDefinition[] = [
         `    image: ghcr.io/seanmorley15/adventurelog-frontend:latest`,
         `    container_name: adventurelog_frontend`,
         `    environment:`,
-        `      - PUBLIC_SERVER_URL=http://adventurelog-backend:80`,
+        `      - PUBLIC_SERVER_URL=http://adventurelog-backend:8000`,
         `      - ORIGIN=${origin}`,
         `      - BODY_SIZE_LIMIT=Infinity`,
         `    ports:`,
