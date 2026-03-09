@@ -10,6 +10,13 @@ Self-hosted AI chat interface — a ChatGPT-like UI for running local or remote 
 | **Website** | [openwebui.com](https://openwebui.com/) |
 | **Source code** | [GitHub](https://github.com/open-webui/open-webui) |
 
+## Resource Impact
+
+| | |
+| --- | --- |
+| **Performance** | High — Model inference |
+| **Storage** | Medium — AI model data |
+
 ## Installation
 
 ```sh

@@ -10,6 +10,13 @@ Travel planning and trip journal — plan your trips and keep a journal of your 
 | **Website** | [itskovacs.github.io/trip](https://itskovacs.github.io/trip/) |
 | **Source code** | [GitHub](https://github.com/itskovacs/trip) |
 
+## Resource Impact
+
+| | |
+| --- | --- |
+| **Performance** | Low — Web app |
+| **Storage** | Low — Small database |
+
 ## Installation
 
 ```sh

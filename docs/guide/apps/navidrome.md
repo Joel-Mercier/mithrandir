@@ -10,6 +10,13 @@ Modern music server and streamer — compatible with Subsonic clients (DSub, Sym
 | **Website** | [navidrome.org](https://navidrome.org/) |
 | **Source code** | [GitHub](https://github.com/navidrome/navidrome) |
 
+## Resource Impact
+
+| | |
+| --- | --- |
+| **Performance** | Low — Music streaming |
+| **Storage** | Low — Reads existing files |
+
 ## Installation
 
 ```sh

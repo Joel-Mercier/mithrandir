@@ -11,6 +11,13 @@ Serveur de streaming multimédia gratuit — une alternative open-source à Plex
 | **Site web** | [jellyfin.org](https://jellyfin.org/) |
 | **Code source** | [GitHub](https://github.com/jellyfin/jellyfin) |
 
+## Impact sur les ressources
+
+| | |
+| --- | --- |
+| **Performance** | High — Transcodage multimédia |
+| **Stockage** | High — Grandes bibliothèques multimédia |
+
 ## Installation
 
 ```sh

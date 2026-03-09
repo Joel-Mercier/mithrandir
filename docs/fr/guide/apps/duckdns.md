@@ -11,6 +11,13 @@ Service DNS dynamique gratuit — garde un nom de domaine pointé vers l'adresse
 | **Site web** | [duckdns.org](https://www.duckdns.org) |
 | **Code source** | [GitHub](https://github.com/linuxserver/docker-duckdns) |
 
+## Impact sur les ressources
+
+| | |
+| --- | --- |
+| **Performance** | Low — Mise à jour DNS |
+| **Stockage** | Low — Service en arrière-plan |
+
 ## Installation
 
 ```sh

@@ -10,6 +10,13 @@ Network-wide ad blocker and DNS server — blocks ads and trackers for every dev
 | **Website** | [pi-hole.net](https://pi-hole.net/) |
 | **Source code** | [GitHub](https://github.com/pi-hole/pi-hole) |
 
+## Resource Impact
+
+| | |
+| --- | --- |
+| **Performance** | Low — DNS server |
+| **Storage** | Low — Minimal resources |
+
 ## Installation
 
 ```sh

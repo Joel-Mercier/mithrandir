@@ -33,6 +33,7 @@ mithrandir uninstall <app>
 mithrandir status                      # Check system status
 mithrandir health                      # Check system health
 mithrandir doctor                     # Diagnose setup issues
+mithrandir capacity                    # Show system capacity and resource scores
 mithrandir update [app] [--yes]        # Update container images
 mithrandir log <app> [--follow] [--tail N] [--since TIME]  # View container logs
 mithrandir graph                           # Show inter-app dependency tree
@@ -77,6 +78,9 @@ The backup command runs from systemd timer (non-TTY) daily. `commands/backup.tsx
 
 ### Auto Update Check (`src/lib/update-check.ts`)
 On every CLI invocation (except `self-update`, `version`, `completions`), an update check runs concurrently with the command. It compares local `HEAD` with `origin/<branch>` via `git fetch --quiet`, caching the last check timestamp in `~/.cache/mithrandir/last-update-check` (24-hour interval). If behind, a yellow notice is printed after command output. The check is wrapped in try/catch so it never breaks the CLI.
+
+### Capacity Planning (`src/lib/capacity.ts`)
+Each `AppDefinition` has an optional `capacity` field with `performance` and `storage` scores ("low"/"medium"/"high") plus an optional `note`. `mithrandir capacity` gathers system specs (CPU, RAM, disk via platform-specific commands), detects installed apps, aggregates scores, and renders terminal graphs with verdicts. Verdicts compare aggregate scores against hardware: performance (Comfortable/Adequate/Tight/Overloaded) and storage (Healthy/Moderate/Warning/Critical based on disk usage percentage).
 
 ### API Wrappers
 There are API wrappers for the following services in `src/lib`:

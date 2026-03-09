@@ -9,6 +9,13 @@ Gestionnaire de mots de passe léger compatible Bitwarden — utilisez les clien
 | **Chemin de configuration** | `{BASE_DIR}/vaultwarden/data` |
 | **Code source** | [GitHub](https://github.com/dani-garcia/vaultwarden) |
 
+## Impact sur les ressources
+
+| | |
+| --- | --- |
+| **Performance** | Low — Coffre-fort de mots de passe |
+| **Stockage** | Low — Stockage minimal |
+
 ## Installation
 
 ```sh

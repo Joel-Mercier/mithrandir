@@ -11,6 +11,13 @@ Movie collection manager — automatically searches for, downloads, and organize
 | **Website** | [radarr.video](https://radarr.video/) |
 | **Source code** | [GitHub](https://github.com/Radarr/Radarr) |
 
+## Resource Impact
+
+| | |
+| --- | --- |
+| **Performance** | Low — Background monitoring |
+| **Storage** | Medium — Movie database |
+
 ## Installation
 
 ```sh

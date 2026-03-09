@@ -13,6 +13,13 @@ Gestion auto-hébergée de photos et vidéos — une alternative à Google Photo
 | **Application Android** | [Play Store](https://play.google.com/store/apps/details?id=app.alextran.immich) |
 | **Application iOS** | [App Store](https://apps.apple.com/us/app/immich/id1613945652) |
 
+## Impact sur les ressources
+
+| | |
+| --- | --- |
+| **Performance** | High — Traitement ML pour la détection de visages et la recherche |
+| **Stockage** | High — Stocke toutes les photos et vidéos |
+
 ## Installation
 
 ```sh

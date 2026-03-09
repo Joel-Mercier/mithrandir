@@ -11,6 +11,7 @@ function guideSidebar(prefix = ""): DefaultTheme.SidebarItem[] {
         { text: prefix ? "Sauvegarde & Restauration" : "Backup & Restore", link: `${prefix}/guide/backup` },
         { text: prefix ? "Configuration HTTPS" : "HTTPS Setup", link: `${prefix}/guide/https` },
         { text: prefix ? "Pare-feu" : "Firewall", link: `${prefix}/guide/firewall` },
+        { text: prefix ? "Planification de capacité" : "Capacity Planning", link: `${prefix}/guide/capacity` },
         {
           text: prefix ? "Applications" : "Apps",
           collapsed: false,
@@ -158,6 +159,7 @@ function referenceSidebar(prefix = ""): DefaultTheme.SidebarItem[] {
             { text: "health", link: `${prefix}/reference/health` },
             { text: "log", link: `${prefix}/reference/log` },
             { text: "graph", link: `${prefix}/reference/graph` },
+            { text: "capacity", link: `${prefix}/reference/capacity` },
           ],
         },
         {

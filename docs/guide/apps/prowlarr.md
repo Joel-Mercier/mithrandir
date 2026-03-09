@@ -10,6 +10,13 @@ Indexer manager for the *Arr stack — manages indexers in a single place and sy
 | **Website** | [prowlarr.com](https://prowlarr.com/) |
 | **Source code** | [GitHub](https://github.com/Prowlarr/Prowlarr) |
 
+## Resource Impact
+
+| | |
+| --- | --- |
+| **Performance** | Low — Indexer proxy |
+| **Storage** | Low — Minimal resources |
+
 ## Installation
 
 ```sh

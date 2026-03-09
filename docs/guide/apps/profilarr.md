@@ -10,6 +10,13 @@ Import, sync, and manage quality profiles for Radarr and Sonarr.
 | **Website** | [dictionarry.dev](https://dictionarry.dev/) |
 | **Source code** | [GitHub](https://github.com/Dictionarry-Hub/profilarr) |
 
+## Resource Impact
+
+| | |
+| --- | --- |
+| **Performance** | Low — Sync utility |
+| **Storage** | Low — Profile data |
+
 ## Installation
 
 ```sh

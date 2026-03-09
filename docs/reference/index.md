@@ -47,6 +47,7 @@ Mithrandir is invoked as `mithrandir <command> [options]`.
 | [`health`](./health) | Check system health |
 | [`log`](./log) | View container logs |
 | [`graph`](./graph) | Show inter-app dependency tree |
+| [`capacity`](./capacity) | Show system capacity and resource scores |
 
 ### Maintenance
 

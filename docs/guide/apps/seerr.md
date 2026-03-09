@@ -10,6 +10,13 @@ Media request manager for Jellyfin — lets users request movies and TV shows th
 | **Website** | [seerr.dev](https://seerr.dev/) |
 | **Source code** | [GitHub](https://github.com/seerr-team/seerr) |
 
+## Resource Impact
+
+| | |
+| --- | --- |
+| **Performance** | Low — Web interface |
+| **Storage** | Low — Request management only |
+
 ## Installation
 
 ```sh

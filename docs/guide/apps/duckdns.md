@@ -11,6 +11,13 @@ Free dynamic DNS service — keeps a domain name pointed at your home IP address
 | **Website** | [duckdns.org](https://www.duckdns.org) |
 | **Source code** | [GitHub](https://github.com/linuxserver/docker-duckdns) |
 
+## Resource Impact
+
+| | |
+| --- | --- |
+| **Performance** | Low — DNS updater |
+| **Storage** | Low — Background service |
+
 ## Installation
 
 ```sh

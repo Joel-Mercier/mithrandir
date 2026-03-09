@@ -11,6 +11,13 @@ Client BitTorrent avec interface web — utilisé comme client de téléchargeme
 | **Site web** | [qbittorrent.org](https://www.qbittorrent.org/) |
 | **Code source** | [GitHub](https://github.com/qbittorrent/qBittorrent) |
 
+## Impact sur les ressources
+
+| | |
+| --- | --- |
+| **Performance** | Low — Client de téléchargement léger |
+| **Stockage** | High — Stocke les torrents et les fichiers multimédia |
+
 ## Installation
 
 ```sh

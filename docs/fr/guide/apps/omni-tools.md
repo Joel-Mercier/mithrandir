@@ -10,6 +10,13 @@ Une collection d'outils de productivité utiles dans une seule interface web —
 | **Site web** | [omnitools.app](https://omnitools.app/) |
 | **Code source** | [GitHub](https://github.com/iib0011/omni-tools) |
 
+## Impact sur les ressources
+
+| | |
+| --- | --- |
+| **Performance** | Low — Outils statiques |
+| **Stockage** | Low — Collection d'outils statiques |
+
 ## Installation
 
 ```sh

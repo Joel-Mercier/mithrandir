@@ -10,6 +10,13 @@ Interface de chat IA auto-hébergée — une interface similaire à ChatGPT pour
 | **Site web** | [openwebui.com](https://openwebui.com/) |
 | **Code source** | [GitHub](https://github.com/open-webui/open-webui) |
 
+## Impact sur les ressources
+
+| | |
+| --- | --- |
+| **Performance** | High — Inférence de modèles |
+| **Stockage** | Medium — Données de modèles IA |
+
 ## Installation
 
 ```sh

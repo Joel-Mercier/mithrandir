@@ -10,6 +10,13 @@ Base de connaissances et espace de travail axé sur la confidentialité — une 
 | **Site web** | [affine.pro](https://affine.pro/) |
 | **Code source** | [GitHub](https://github.com/toeverything/AFFiNE) |
 
+## Impact sur les ressources
+
+| | |
+| --- | --- |
+| **Performance** | Medium — Moteur de base de connaissances |
+| **Stockage** | Medium — Base de données PostgreSQL |
+
 ## Installation
 
 ```sh

@@ -13,6 +13,13 @@ Self-hosted photo and video management — a Google Photos alternative with AI-p
 | **Android app** | [Play Store](https://play.google.com/store/apps/details?id=app.alextran.immich) |
 | **iOS app** | [App Store](https://apps.apple.com/us/app/immich/id1613945652) |
 
+## Resource Impact
+
+| | |
+| --- | --- |
+| **Performance** | High — ML processing for face detection and search |
+| **Storage** | High — Stores all photos and videos |
+
 ## Installation
 
 ```sh

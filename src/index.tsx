@@ -20,6 +20,7 @@ import { runVersion } from "@/commands/version.js";
 import { runConfig } from "@/commands/config.js";
 import { runCompletions } from "@/commands/completions.js";
 import { runGraph } from "@/commands/graph.js";
+import { runCapacity } from "@/commands/capacity.js";
 import { runRecover } from "@/commands/recover.js";
 import { runDocs, runDocsStop } from "@/commands/docs.js";
 import { ErrorBoundary } from "@/components/ErrorBoundary.js";
@@ -56,6 +57,7 @@ const cli = meow(
     doctor                             Diagnose setup issues with fix suggestions
     update [app]                       Update all or a specific app's container
     log <app> [service]                View container logs
+    capacity                           Show system capacity and resource scores
     graph                              Show inter-app dependency tree
     self-update                        Update the CLI itself from git
     version                            Show version and git commit
@@ -240,6 +242,10 @@ switch (command) {
 
   case "config":
     runConfig();
+    break;
+
+  case "capacity":
+    runCapacity();
     break;
 
   case "graph":

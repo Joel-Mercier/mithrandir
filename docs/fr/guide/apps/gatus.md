@@ -10,6 +10,13 @@ Surveillance automatisée de l'état des services — surveille vos services et 
 | **Site web** | [gatus.io](https://gatus.io/) |
 | **Code source** | [GitHub](https://github.com/twinproduction/gatus) |
 
+## Impact sur les ressources
+
+| | |
+| --- | --- |
+| **Performance** | Low — Vérifications de santé |
+| **Stockage** | Low — Empreinte minimale |
+
 ## Installation
 
 ```sh

@@ -11,6 +11,13 @@ Gestionnaire de collection musicale — recherche et télécharge automatiquemen
 | **Site web** | [lidarr.audio](https://lidarr.audio/) |
 | **Code source** | [GitHub](https://github.com/Lidarr/Lidarr) |
 
+## Impact sur les ressources
+
+| | |
+| --- | --- |
+| **Performance** | Low — Surveillance en arrière-plan |
+| **Stockage** | Medium — Base de données musicale |
+
 ## Installation
 
 ```sh

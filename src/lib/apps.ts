@@ -15,6 +15,7 @@ export const APP_REGISTRY: AppDefinition[] = [
     configSubdir: "data",
     networkMode: "host",
     needsDataDir: false,
+    capacity: { performance: "medium", storage: "low", note: "Automation engine with integrations and history database" },
   },
   {
     name: "qbittorrent",
@@ -24,6 +25,7 @@ export const APP_REGISTRY: AppDefinition[] = [
     port: 8080,
     configSubdir: "config",
     needsDataDir: true,
+    capacity: { performance: "low", storage: "high", note: "Download client, stores torrents and media files" },
     extraPorts: [
       { host: 6881, container: 6881, protocol: "tcp" },
       { host: 6881, container: 6881, protocol: "udp" },
@@ -38,6 +40,7 @@ export const APP_REGISTRY: AppDefinition[] = [
     port: 9696,
     configSubdir: "config",
     needsDataDir: false,
+    capacity: { performance: "low", storage: "low", note: "Indexer proxy, minimal resources" },
   },
   {
     name: "radarr",
@@ -47,6 +50,7 @@ export const APP_REGISTRY: AppDefinition[] = [
     port: 7878,
     configSubdir: "config",
     needsDataDir: true,
+    capacity: { performance: "low", storage: "medium", note: "Movie database and monitoring" },
   },
   {
     name: "sonarr",
@@ -56,6 +60,7 @@ export const APP_REGISTRY: AppDefinition[] = [
     port: 8989,
     configSubdir: "config",
     needsDataDir: true,
+    capacity: { performance: "low", storage: "medium", note: "TV database and monitoring" },
   },
   {
     name: "bazarr",
@@ -65,6 +70,7 @@ export const APP_REGISTRY: AppDefinition[] = [
     port: 6767,
     configSubdir: "config",
     needsDataDir: true,
+    capacity: { performance: "low", storage: "low", note: "Subtitle fetching, minimal resources" },
   },
   {
     name: "lidarr",
@@ -74,6 +80,7 @@ export const APP_REGISTRY: AppDefinition[] = [
     port: 8686,
     configSubdir: "config",
     needsDataDir: true,
+    capacity: { performance: "low", storage: "medium", note: "Music database and monitoring" },
   },
   {
     name: "seerr",
@@ -84,6 +91,7 @@ export const APP_REGISTRY: AppDefinition[] = [
     configSubdir: "app/config",
     needsDataDir: false,
     init: true,
+    capacity: { performance: "low", storage: "low", note: "Request management UI" },
     environment: {
       LOG_LEVEL: "info",
       PORT: "5055",
@@ -107,6 +115,7 @@ export const APP_REGISTRY: AppDefinition[] = [
     multipleConfigDirs: ["configs", "icons", "data"],
     needsDataDir: false,
     mountDockerSocket: true,
+    capacity: { performance: "low", storage: "low", note: "Dashboard, mostly static content" },
   },
   {
     name: "jellyfin",
@@ -117,6 +126,7 @@ export const APP_REGISTRY: AppDefinition[] = [
     configSubdir: "config",
     needsDataDir: true,
     dataDirReadOnly: true,
+    capacity: { performance: "high", storage: "high", note: "Media transcoding and large media libraries" },
     extraPorts: [
       { host: 8920, container: 8920, protocol: "tcp" },
       { host: 7359, container: 7359, protocol: "udp" },
@@ -131,6 +141,7 @@ export const APP_REGISTRY: AppDefinition[] = [
     configSubdir: "data",
     needsDataDir: false,
     mountMusicDir: true,
+    capacity: { performance: "low", storage: "low", note: "Music streaming, reads existing files" },
     environment: {
       ND_LOGLEVEL: "info",
     },
@@ -155,6 +166,7 @@ export const APP_REGISTRY: AppDefinition[] = [
     configSubdir: "config",
     networkMode: "host",
     needsDataDir: false,
+    capacity: { performance: "low", storage: "low", note: "DNS updater, background service" },
     environment: {
       UPDATE_IP: "ipv4",
       LOG_FILE: "false",
@@ -181,6 +193,7 @@ export const APP_REGISTRY: AppDefinition[] = [
     port: null,
     configSubdir: "config",
     needsDataDir: false,
+    capacity: { performance: "low", storage: "low", note: "VPN tunnel, kernel module" },
     capAdd: ["NET_ADMIN", "SYS_MODULE"],
     sysctls: { "net.ipv4.conf.all.src_valid_mark": "1" },
     extraPorts: [{ host: 51820, container: 51820, protocol: "udp" }],
@@ -207,6 +220,7 @@ export const APP_REGISTRY: AppDefinition[] = [
     configSubdir: "multiple",
     multipleConfigDirs: ["config", "data"],
     needsDataDir: false,
+    capacity: { performance: "low", storage: "low", note: "Health monitoring, tiny footprint" },
   },
   {
     name: "immich",
@@ -214,6 +228,7 @@ export const APP_REGISTRY: AppDefinition[] = [
     description: "Self-hosted photo and video management",
     image: "ghcr.io/immich-app/immich-server:release",
     containerName: "immich_server",
+    capacity: { performance: "high", storage: "high", note: "ML processing for face detection and search, stores all photos and videos" },
     additionalContainers: ["immich_machine_learning", "immich_redis", "immich_postgres"],
     port: 2283,
     configSubdir: "postgres",
@@ -304,6 +319,7 @@ export const APP_REGISTRY: AppDefinition[] = [
     containerPort: 80,
     configSubdir: "config",
     needsDataDir: false,
+    capacity: { performance: "low", storage: "low", note: "Client-side whiteboard, minimal server resources" },
   },
   {
     name: "openwebui",
@@ -314,6 +330,7 @@ export const APP_REGISTRY: AppDefinition[] = [
     containerPort: 8080,
     configSubdir: "data",
     needsDataDir: false,
+    capacity: { performance: "high", storage: "medium", note: "AI chat interface, model inference" },
   },
   {
     name: "flaresolverr",
@@ -325,6 +342,7 @@ export const APP_REGISTRY: AppDefinition[] = [
     needsDataDir: false,
     hidden: true,
     companionOf: "prowlarr",
+    capacity: { performance: "medium", storage: "low", note: "Headless browser for CAPTCHA solving" },
     environment: {
       LOG_LEVEL: "info",
       LOG_FILE: "none",
@@ -341,6 +359,7 @@ export const APP_REGISTRY: AppDefinition[] = [
     containerPort: 80,
     configSubdir: "config",
     needsDataDir: false,
+    capacity: { performance: "low", storage: "low", note: "Static tool collection" },
   },
   {
     name: "vaultwarden",
@@ -352,6 +371,7 @@ export const APP_REGISTRY: AppDefinition[] = [
     configSubdir: "data",
     needsDataDir: false,
     requiresHttps: true,
+    capacity: { performance: "low", storage: "low", note: "Password vault, minimal storage" },
     environment: {
       SIGNUPS_ALLOWED: "true",
     },
@@ -365,6 +385,7 @@ export const APP_REGISTRY: AppDefinition[] = [
     configSubdir: "config",
     needsDataDir: false,
     hidden: true,
+    capacity: { performance: "low", storage: "low", note: "Reverse proxy, minimal resources" },
     rawCompose: (envConfig: EnvConfig) => {
       const baseDir = envConfig.BASE_DIR;
       const appDir = `${baseDir}/caddy`;
@@ -397,6 +418,7 @@ export const APP_REGISTRY: AppDefinition[] = [
     port: 5006,
     configSubdir: "data",
     needsDataDir: false,
+    capacity: { performance: "low", storage: "low", note: "Personal finance, small database" },
     healthcheck: {
       test: "node src/scripts/health-check.js",
       startPeriod: "20s",
@@ -411,6 +433,7 @@ export const APP_REGISTRY: AppDefinition[] = [
     description: "Privacy-focused personal finance tracker",
     image: "ghcr.io/we-promise/sure:stable",
     containerName: "sure_web",
+    capacity: { performance: "medium", storage: "low", note: "Rails + Sidekiq workers" },
     additionalContainers: ["sure_worker", "sure_redis", "sure_postgres"],
     port: 3005,
     configSubdir: "postgres",
@@ -546,6 +569,7 @@ export const APP_REGISTRY: AppDefinition[] = [
     description: "Privacy-focused knowledge base and workspace",
     image: "ghcr.io/toeverything/affine:stable",
     containerName: "affine_server",
+    capacity: { performance: "medium", storage: "medium", note: "Knowledge base with PostgreSQL" },
     additionalContainers: ["affine_migration_job", "affine_redis", "affine_postgres"],
     port: 3010,
     configSubdir: "config",
@@ -644,6 +668,7 @@ export const APP_REGISTRY: AppDefinition[] = [
     port: 5678,
     configSubdir: "data",
     needsDataDir: false,
+    capacity: { performance: "medium", storage: "low", note: "Workflow automation engine" },
     environment: {
       N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true",
       N8N_PORT: "5678",
@@ -660,6 +685,7 @@ export const APP_REGISTRY: AppDefinition[] = [
     description: "Open-source design and prototyping platform",
     image: "penpotapp/frontend:latest",
     containerName: "penpot_frontend",
+    capacity: { performance: "medium", storage: "medium", note: "Design platform with multiple services" },
     additionalContainers: ["penpot_backend", "penpot_exporter", "penpot_postgres", "penpot_valkey", "penpot_mailcatch"],
     port: 9001,
     configSubdir: "postgres",
@@ -806,6 +832,7 @@ export const APP_REGISTRY: AppDefinition[] = [
     containerPort: 8080,
     configSubdir: "configs",
     needsDataDir: false,
+    capacity: { performance: "medium", storage: "low", note: "PDF processing on demand" },
     extraVolumes: [
       { host: "tessdata", container: "/usr/share/tessdata" },
       { host: "logs", container: "/logs" },
@@ -820,6 +847,7 @@ export const APP_REGISTRY: AppDefinition[] = [
     port: 6868,
     configSubdir: "config",
     needsDataDir: false,
+    capacity: { performance: "low", storage: "low", note: "Profile sync utility" },
   },
   {
     name: "trip",
@@ -830,6 +858,7 @@ export const APP_REGISTRY: AppDefinition[] = [
     containerPort: 8000,
     configSubdir: "storage",
     needsDataDir: false,
+    capacity: { performance: "low", storage: "low", note: "Travel journal, small database" },
     command: ["fastapi", "run", "/app/trip/main.py", "--host", "0.0.0.0"],
   },
   {
@@ -838,6 +867,7 @@ export const APP_REGISTRY: AppDefinition[] = [
     description: "Travel planning and adventure journal",
     image: "ghcr.io/seanmorley15/adventurelog-frontend:latest",
     containerName: "adventurelog_frontend",
+    capacity: { performance: "medium", storage: "medium", note: "Django backend with PostGIS database" },
     additionalContainers: ["adventurelog_backend", "adventurelog_db"],
     port: 8015,
     caddyExtraSubdomains: [{ subdomain: "adventurelog-api", port: 8016 }],
@@ -968,6 +998,7 @@ export const APP_REGISTRY: AppDefinition[] = [
     port: 80,
     configSubdir: "etc-pihole",
     needsDataDir: false,
+    capacity: { performance: "low", storage: "low", note: "DNS server, minimal resources" },
     capAdd: ["NET_ADMIN", "SYS_TIME", "SYS_NICE"],
     extraPorts: [
       { host: 53, container: 53, protocol: "tcp" },

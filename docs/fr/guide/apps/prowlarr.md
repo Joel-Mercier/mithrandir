@@ -10,6 +10,13 @@ Gestionnaire d'indexeurs pour la stack *Arr — gère les indexeurs en un seul e
 | **Site web** | [prowlarr.com](https://prowlarr.com/) |
 | **Code source** | [GitHub](https://github.com/Prowlarr/Prowlarr) |
 
+## Impact sur les ressources
+
+| | |
+| --- | --- |
+| **Performance** | Low — Proxy d'indexeurs |
+| **Stockage** | Low — Ressources minimales |
+
 ## Installation
 
 ```sh

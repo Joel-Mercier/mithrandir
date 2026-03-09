@@ -349,6 +349,12 @@ mithrandir health
 ```
 Validates system health across five dimensions: Docker daemon, disk space (warn at 80%, fail at 95%), backup age (warn >2 days, fail >7 days), container restart loops (fail if RestartCount >5 or status "restarting"), and remote backup connectivity via rclone. Exit code 0 if all pass/warn, 1 if any fail — useful for monitoring and automation.
 
+**Capacity planning:**
+```bash
+mithrandir capacity
+```
+Shows system hardware info (CPU, RAM, disk), per-app resource impact scores, and aggregate capacity verdicts. Helps you understand when your homelab is nearing its limits.
+
 **Doctor (diagnose setup issues):**
 ```bash
 mithrandir doctor

@@ -11,6 +11,13 @@ Gestionnaire de collection de séries TV — surveille les nouveaux épisodes et
 | **Site web** | [sonarr.tv](https://sonarr.tv/) |
 | **Code source** | [GitHub](https://github.com/Sonarr/Sonarr) |
 
+## Impact sur les ressources
+
+| | |
+| --- | --- |
+| **Performance** | Low — Surveillance en arrière-plan |
+| **Stockage** | Medium — Base de données de séries TV |
+
 ## Installation
 
 ```sh

@@ -11,6 +11,13 @@ Planification de voyages et journal d'aventures — planifiez vos voyages, enreg
 | **Site web** | [adventurelog.app](https://adventurelog.app) |
 | **Code source** | [GitHub](https://github.com/seanmorley15/AdventureLog) |
 
+## Impact sur les ressources
+
+| | |
+| --- | --- |
+| **Performance** | Medium — Django + PostGIS |
+| **Stockage** | Medium — Données d'aventures |
+
 ## Installation
 
 ```sh

@@ -11,6 +11,13 @@ Gestionnaire de sous-titres — télécharge automatiquement les sous-titres pou
 | **Site web** | [bazarr.media](https://bazarr.media/) |
 | **Code source** | [GitHub](https://github.com/morpheus65535/bazarr) |
 
+## Impact sur les ressources
+
+| | |
+| --- | --- |
+| **Performance** | Low — Récupération de sous-titres |
+| **Stockage** | Low — Ressources minimales |
+
 ## Installation
 
 ```sh

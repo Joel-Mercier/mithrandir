@@ -9,6 +9,13 @@ Lightweight Bitwarden-compatible password manager — use the official Bitwarden
 | **Config path** | `{BASE_DIR}/vaultwarden/data` |
 | **Source code** | [GitHub](https://github.com/dani-garcia/vaultwarden) |
 
+## Resource Impact
+
+| | |
+| --- | --- |
+| **Performance** | Low — Password vault |
+| **Storage** | Low — Minimal storage |
+
 ## Installation
 
 ```sh

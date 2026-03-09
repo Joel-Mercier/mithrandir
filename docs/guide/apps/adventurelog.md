@@ -11,6 +11,13 @@ Travel planning and adventure journal — plan your trips, log your adventures, 
 | **Website** | [adventurelog.app](https://adventurelog.app) |
 | **Source code** | [GitHub](https://github.com/seanmorley15/AdventureLog) |
 
+## Resource Impact
+
+| | |
+| --- | --- |
+| **Performance** | Medium — Django + PostGIS |
+| **Storage** | Medium — Adventure data |
+
 ## Installation
 
 ```sh

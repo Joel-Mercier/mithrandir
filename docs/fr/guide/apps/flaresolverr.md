@@ -9,6 +9,13 @@ Serveur proxy pour contourner la protection Cloudflare — utilisé par Prowlarr
 | **Chemin de configuration** | `{BASE_DIR}/flaresolverr/config` |
 | **Code source** | [GitHub](https://github.com/flaresolverr/flaresolverr) |
 
+## Impact sur les ressources
+
+| | |
+| --- | --- |
+| **Performance** | Medium — Navigateur headless |
+| **Stockage** | Low — Aucune donnée persistante |
+
 ## Installation
 
 FlareSolverr est installé automatiquement en tant que compagnon de [Prowlarr](./prowlarr). Vous n'avez pas besoin de l'installer séparément.

@@ -10,6 +10,13 @@ Virtual whiteboard for sketching — create diagrams, wireframes, and hand-drawn
 | **Website** | [excalidraw.com](https://excalidraw.com/) |
 | **Source code** | [GitHub](https://github.com/excalidraw/excalidraw) |
 
+## Resource Impact
+
+| | |
+| --- | --- |
+| **Performance** | Low — Client-side rendering |
+| **Storage** | Low — Minimal server resources |
+
 ## Installation
 
 ```sh

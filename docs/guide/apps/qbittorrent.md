@@ -11,6 +11,13 @@ BitTorrent client with a web UI — used as the download client for Sonarr, Rada
 | **Website** | [qbittorrent.org](https://www.qbittorrent.org/) |
 | **Source code** | [GitHub](https://github.com/qbittorrent/qBittorrent) |
 
+## Resource Impact
+
+| | |
+| --- | --- |
+| **Performance** | Low — Lightweight download client |
+| **Storage** | High — Stores torrents and media files |
+
 ## Installation
 
 ```sh

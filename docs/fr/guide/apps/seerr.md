@@ -10,6 +10,13 @@ Gestionnaire de demandes multimédia pour Jellyfin — permet aux utilisateurs d
 | **Site web** | [seerr.dev](https://seerr.dev/) |
 | **Code source** | [GitHub](https://github.com/seerr-team/seerr) |
 
+## Impact sur les ressources
+
+| | |
+| --- | --- |
+| **Performance** | Low — Interface web |
+| **Stockage** | Low — Gestion des demandes uniquement |
+
 ## Installation
 
 ```sh

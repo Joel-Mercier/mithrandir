@@ -47,6 +47,7 @@ Mithrandir s'invoque avec `mithrandir <commande> [options]`.
 | [`health`](./health) | Vérifier la santé du système |
 | [`log`](./log) | Consulter les journaux des conteneurs |
 | [`graph`](./graph) | Afficher l'arbre de dépendances inter-applications |
+| [`capacity`](./capacity) | Afficher la capacité du système et les scores de ressources |
 
 ### Maintenance
 

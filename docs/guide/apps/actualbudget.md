@@ -10,6 +10,13 @@ Privacy-focused personal finance and budgeting app with local-first data storage
 | **Website** | [actualbudget.org](https://actualbudget.org/) |
 | **Source code** | [GitHub](https://github.com/actualbudget/actual) |
 
+## Resource Impact
+
+| | |
+| --- | --- |
+| **Performance** | Low — Web app |
+| **Storage** | Low — Small database |
+
 ## Installation
 
 ```sh

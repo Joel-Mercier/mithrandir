@@ -12,6 +12,13 @@ Tunnel VPN rapide et moderne — accédez à votre homelab à distance depuis n'
 | **Application Android** | [Play Store](https://play.google.com/store/apps/details?id=com.wireguard.android) |
 | **Application iOS** | [App Store](https://apps.apple.com/us/app/wireguard/id1441195209) |
 
+## Impact sur les ressources
+
+| | |
+| --- | --- |
+| **Performance** | Low — Module noyau |
+| **Stockage** | Low — Tunnel VPN |
+
 ## Installation
 
 ```sh

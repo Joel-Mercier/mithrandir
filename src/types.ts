@@ -71,6 +71,15 @@ export interface AppDefinition {
   caddyExtraSubdomains?: Array<{ subdomain: string; port: number }>;
   /** Custom compose generator for multi-container apps (bypasses generateCompose) */
   rawCompose?: (envConfig: EnvConfig) => string;
+  /** Resource impact scores for capacity planning */
+  capacity?: {
+    /** CPU/RAM impact */
+    performance: "low" | "medium" | "high";
+    /** Disk storage growth */
+    storage: "low" | "medium" | "high";
+    /** Human-readable note about resource usage */
+    note?: string;
+  };
 }
 
 export interface SecretDefinition {

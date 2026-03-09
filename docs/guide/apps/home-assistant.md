@@ -11,6 +11,13 @@ Open-source home automation platform — control and automate your smart home de
 | **Website** | [home-assistant.io](https://www.home-assistant.io/) |
 | **Source code** | [GitHub](https://github.com/home-assistant/core) |
 
+## Resource Impact
+
+| | |
+| --- | --- |
+| **Performance** | Medium — Automation engine with integrations |
+| **Storage** | Low — Minimal disk usage |
+
 ## Installation
 
 ```sh

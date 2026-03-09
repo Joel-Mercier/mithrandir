@@ -11,6 +11,13 @@ Plateforme domotique open-source — contrôlez et automatisez vos appareils con
 | **Site web** | [home-assistant.io](https://www.home-assistant.io/) |
 | **Code source** | [GitHub](https://github.com/home-assistant/core) |
 
+## Impact sur les ressources
+
+| | |
+| --- | --- |
+| **Performance** | Medium — Moteur d'automatisation avec intégrations |
+| **Stockage** | Low — Utilisation disque minimale |
+
 ## Installation
 
 ```sh

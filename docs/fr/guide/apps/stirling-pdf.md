@@ -10,6 +10,13 @@ Outil tout-en-un de manipulation de PDF — fusionner, diviser, convertir, compr
 | **Site web** | [stirlingpdf.com](https://stirlingpdf.com/) |
 | **Code source** | [GitHub](https://github.com/Stirling-Tools/Stirling-PDF) |
 
+## Impact sur les ressources
+
+| | |
+| --- | --- |
+| **Performance** | Medium — Traitement PDF |
+| **Stockage** | Low — Traitement à la demande |
+
 ## Installation
 
 ```sh

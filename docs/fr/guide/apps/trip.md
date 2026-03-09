@@ -10,6 +10,13 @@ Planification de voyages et journal de bord — planifiez vos voyages et gardez 
 | **Site web** | [itskovacs.github.io/trip](https://itskovacs.github.io/trip/) |
 | **Code source** | [GitHub](https://github.com/itskovacs/trip) |
 
+## Impact sur les ressources
+
+| | |
+| --- | --- |
+| **Performance** | Low — Application web |
+| **Stockage** | Low — Petite base de données |
+
 ## Installation
 
 ```sh

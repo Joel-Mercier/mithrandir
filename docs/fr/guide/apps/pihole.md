@@ -10,6 +10,13 @@ Bloqueur de publicités et serveur DNS à l'échelle du réseau — bloque les p
 | **Site web** | [pi-hole.net](https://pi-hole.net/) |
 | **Code source** | [GitHub](https://github.com/pi-hole/pi-hole) |
 
+## Impact sur les ressources
+
+| | |
+| --- | --- |
+| **Performance** | Low — Serveur DNS |
+| **Stockage** | Low — Ressources minimales |
+
 ## Installation
 
 ```sh

@@ -10,6 +10,13 @@ Serveur et lecteur de musique moderne — compatible avec les clients Subsonic (
 | **Site web** | [navidrome.org](https://navidrome.org/) |
 | **Code source** | [GitHub](https://github.com/navidrome/navidrome) |
 
+## Impact sur les ressources
+
+| | |
+| --- | --- |
+| **Performance** | Low — Streaming musical |
+| **Stockage** | Low — Lit les fichiers existants |
+
 ## Installation
 
 ```sh

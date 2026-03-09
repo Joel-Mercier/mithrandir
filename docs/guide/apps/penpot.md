@@ -10,6 +10,13 @@ Open-source design and prototyping platform — an alternative to Figma.
 | **Website** | [penpot.app](https://penpot.app/) |
 | **Source code** | [GitHub](https://github.com/penpot/penpot) |
 
+## Resource Impact
+
+| | |
+| --- | --- |
+| **Performance** | Medium — Multiple services |
+| **Storage** | Medium — Design assets |
+
 ## Installation
 
 ```sh

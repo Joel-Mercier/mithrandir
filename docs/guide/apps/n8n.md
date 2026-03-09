@@ -10,6 +10,13 @@ Workflow automation platform — connect apps and automate tasks with a visual e
 | **Website** | [n8n.io](https://n8n.io/) |
 | **Source code** | [GitHub](https://github.com/n8n-io/n8n) |
 
+## Resource Impact
+
+| | |
+| --- | --- |
+| **Performance** | Medium — Workflow engine |
+| **Storage** | Low — Workflow data |
+
 ## Installation
 
 ```sh

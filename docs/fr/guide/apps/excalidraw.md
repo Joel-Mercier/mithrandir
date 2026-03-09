@@ -10,6 +10,13 @@ Tableau blanc virtuel pour dessiner — créez des diagrammes, des maquettes et 
 | **Site web** | [excalidraw.com](https://excalidraw.com/) |
 | **Code source** | [GitHub](https://github.com/excalidraw/excalidraw) |
 
+## Impact sur les ressources
+
+| | |
+| --- | --- |
+| **Performance** | Low — Rendu côté client |
+| **Stockage** | Low — Ressources serveur minimales |
+
 ## Installation
 
 ```sh

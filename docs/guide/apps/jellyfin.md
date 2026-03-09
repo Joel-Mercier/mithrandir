@@ -11,6 +11,13 @@ Free media streaming server — an open-source alternative to Plex and Emby.
 | **Website** | [jellyfin.org](https://jellyfin.org/) |
 | **Source code** | [GitHub](https://github.com/jellyfin/jellyfin) |
 
+## Resource Impact
+
+| | |
+| --- | --- |
+| **Performance** | High — Media transcoding |
+| **Storage** | High — Large media libraries |
+
 ## Installation
 
 ```sh

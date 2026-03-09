@@ -10,6 +10,13 @@ Suivi de finances personnelles axé sur la confidentialité, avec support multi-
 | **Site web** | [sure.am](https://sure.am/) |
 | **Code source** | [GitHub](https://github.com/we-promise/sure) |
 
+## Impact sur les ressources
+
+| | |
+| --- | --- |
+| **Performance** | Medium — Rails + workers Sidekiq |
+| **Stockage** | Low — Petite base de données |
+
 ## Installation
 
 ```sh

@@ -10,6 +10,13 @@ Plateforme d'automatisation de workflows — connectez des applications et autom
 | **Site web** | [n8n.io](https://n8n.io/) |
 | **Code source** | [GitHub](https://github.com/n8n-io/n8n) |
 
+## Impact sur les ressources
+
+| | |
+| --- | --- |
+| **Performance** | Medium — Moteur de workflows |
+| **Stockage** | Low — Données de workflows |
+
 ## Installation
 
 ```sh

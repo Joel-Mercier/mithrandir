@@ -10,6 +10,13 @@ Application de finances personnelles et de budget axée sur la confidentialité,
 | **Site web** | [actualbudget.org](https://actualbudget.org/) |
 | **Code source** | [GitHub](https://github.com/actualbudget/actual) |
 
+## Impact sur les ressources
+
+| | |
+| --- | --- |
+| **Performance** | Low — Application web |
+| **Stockage** | Low — Petite base de données |
+
 ## Installation
 
 ```sh

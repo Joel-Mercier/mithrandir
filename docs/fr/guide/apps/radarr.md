@@ -11,6 +11,13 @@ Gestionnaire de collection de films — recherche, télécharge et organise auto
 | **Site web** | [radarr.video](https://radarr.video/) |
 | **Code source** | [GitHub](https://github.com/Radarr/Radarr) |
 
+## Impact sur les ressources
+
+| | |
+| --- | --- |
+| **Performance** | Low — Surveillance en arrière-plan |
+| **Stockage** | Medium — Base de données de films |
+
 ## Installation
 
 ```sh

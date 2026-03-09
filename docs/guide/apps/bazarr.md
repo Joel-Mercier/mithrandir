@@ -11,6 +11,13 @@ Subtitle manager — automatically downloads subtitles for your Sonarr and Radar
 | **Website** | [bazarr.media](https://bazarr.media/) |
 | **Source code** | [GitHub](https://github.com/morpheus65535/bazarr) |
 
+## Resource Impact
+
+| | |
+| --- | --- |
+| **Performance** | Low — Subtitle fetching |
+| **Storage** | Low — Minimal resources |
+
 ## Installation
 
 ```sh

@@ -11,6 +11,13 @@ TV series collection manager — monitors for new episodes and automatically dow
 | **Website** | [sonarr.tv](https://sonarr.tv/) |
 | **Source code** | [GitHub](https://github.com/Sonarr/Sonarr) |
 
+## Resource Impact
+
+| | |
+| --- | --- |
+| **Performance** | Low — Background monitoring |
+| **Storage** | Medium — TV database |
+
 ## Installation
 
 ```sh

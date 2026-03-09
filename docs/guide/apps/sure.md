@@ -10,6 +10,13 @@ Privacy-focused personal finance tracker with multi-currency support, bank synci
 | **Website** | [sure.am](https://sure.am/) |
 | **Source code** | [GitHub](https://github.com/we-promise/sure) |
 
+## Resource Impact
+
+| | |
+| --- | --- |
+| **Performance** | Medium — Rails + Sidekiq workers |
+| **Storage** | Low — Small database |
+
 ## Installation
 
 ```sh

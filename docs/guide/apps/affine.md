@@ -10,6 +10,13 @@ Privacy-focused knowledge base and workspace — an open-source alternative to N
 | **Website** | [affine.pro](https://affine.pro/) |
 | **Source code** | [GitHub](https://github.com/toeverything/AFFiNE) |
 
+## Resource Impact
+
+| | |
+| --- | --- |
+| **Performance** | Medium — Knowledge base engine |
+| **Storage** | Medium — PostgreSQL database |
+
 ## Installation
 
 ```sh

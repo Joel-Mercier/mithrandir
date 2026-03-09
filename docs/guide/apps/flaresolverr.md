@@ -9,6 +9,13 @@ Proxy server to bypass Cloudflare protection — used by Prowlarr to access Clou
 | **Config path** | `{BASE_DIR}/flaresolverr/config` |
 | **Source code** | [GitHub](https://github.com/flaresolverr/flaresolverr) |
 
+## Resource Impact
+
+| | |
+| --- | --- |
+| **Performance** | Medium — Headless browser |
+| **Storage** | Low — No persistent data |
+
 ## Installation
 
 FlareSolverr is installed automatically as a companion to [Prowlarr](./prowlarr). You don't need to install it separately.

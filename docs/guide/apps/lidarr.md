@@ -11,6 +11,13 @@ Music collection manager — automatically searches for and downloads music albu
 | **Website** | [lidarr.audio](https://lidarr.audio/) |
 | **Source code** | [GitHub](https://github.com/Lidarr/Lidarr) |
 
+## Resource Impact
+
+| | |
+| --- | --- |
+| **Performance** | Low — Background monitoring |
+| **Storage** | Medium — Music database |
+
 ## Installation
 
 ```sh

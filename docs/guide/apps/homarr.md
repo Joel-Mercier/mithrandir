@@ -10,6 +10,13 @@ Customizable server dashboard — a beautiful home page for all your self-hosted
 | **Website** | [homarr.vercel.app](https://homarr.vercel.app/) |
 | **Source code** | [GitHub](https://github.com/ajnart/homarr) |
 
+## Resource Impact
+
+| | |
+| --- | --- |
+| **Performance** | Low — Static dashboard |
+| **Storage** | Low — Mostly static content |
+
 ## Installation
 
 ```sh

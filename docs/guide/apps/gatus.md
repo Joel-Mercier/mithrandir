@@ -10,6 +10,13 @@ Automated service health monitoring — monitors your services and displays thei
 | **Website** | [gatus.io](https://gatus.io/) |
 | **Source code** | [GitHub](https://github.com/twinproduction/gatus) |
 
+## Resource Impact
+
+| | |
+| --- | --- |
+| **Performance** | Low — Health checks |
+| **Storage** | Low — Tiny footprint |
+
 ## Installation
 
 ```sh

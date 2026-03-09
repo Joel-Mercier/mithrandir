@@ -10,6 +10,13 @@ Tableau de bord serveur personnalisable — une belle page d'accueil pour tous v
 | **Site web** | [homarr.vercel.app](https://homarr.vercel.app/) |
 | **Code source** | [GitHub](https://github.com/ajnart/homarr) |
 
+## Impact sur les ressources
+
+| | |
+| --- | --- |
+| **Performance** | Low — Tableau de bord statique |
+| **Stockage** | Low — Contenu principalement statique |
+
 ## Installation
 
 ```sh
