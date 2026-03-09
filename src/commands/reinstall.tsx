@@ -84,7 +84,7 @@ function ReinstallInteractive({
   async function deleteAndReinstall(dir: string, env: EnvConfig) {
     setPhase("deleting");
     setCurrentLabel("Removing app data...");
-    await shell("rm", ["-rf", dir]);
+    await shell("rm", ["-rf", dir], { sudo: true });
     addStep({ name: "Remove data", status: "done", message: `Removed ${dir}` });
 
     await reinstall(env);
