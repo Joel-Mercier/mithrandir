@@ -908,7 +908,7 @@ export const APP_REGISTRY: AppDefinition[] = [
         `    restart: unless-stopped`,
         ``,
         `  adventurelog_db:`,
-        `    image: postgis/postgis:16-3.5`,
+        `    image: imresamu/postgis:15-3.3-alpine3.21`,
         `    container_name: adventurelog_db`,
         `    environment:`,
         `      - POSTGRES_DB=adventurelog`,
