@@ -35,6 +35,15 @@ mithrandir log pihole --follow
 mithrandir log jellyfin --since 2h
 ```
 
+## Applications multi-conteneurs
+
+Pour les applications avec plusieurs conteneurs (Immich, Sure, AFFiNE, Penpot, AdventureLog), les journaux de tous les conteneurs sont affichés séquentiellement avec un séparateur entre chacun.
+
+```sh
+# Afficher les journaux de tous les conteneurs AdventureLog (frontend, backend, db)
+mithrandir log adventurelog
+```
+
 ## Remarques
 
 - Nécessite les privilèges root

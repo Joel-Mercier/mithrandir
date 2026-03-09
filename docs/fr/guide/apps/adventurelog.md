@@ -31,6 +31,14 @@ Lors de l'installation, vous serez invité à fournir :
 
 Après l'installation, ouvrez `http://your-server:8015` et connectez-vous avec les identifiants administrateur que vous avez configurés.
 
+::: warning Premier démarrage lent
+Le conteneur backend importe des données géographiques au premier lancement, ce qui peut prendre plusieurs minutes. L'application retournera des erreurs tant que ce processus n'est pas terminé. Vous pouvez suivre la progression avec :
+
+```sh
+mithrandir log adventurelog
+```
+:::
+
 ## Architecture
 
 AdventureLog fonctionne avec trois conteneurs :

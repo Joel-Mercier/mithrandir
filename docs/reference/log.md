@@ -35,6 +35,15 @@ mithrandir log pihole --follow
 mithrandir log jellyfin --since 2h
 ```
 
+## Multi-container apps
+
+For apps with multiple containers (Immich, Sure, AFFiNE, Penpot, AdventureLog), logs from all containers are shown sequentially with a separator between each one.
+
+```sh
+# Show logs for all AdventureLog containers (frontend, backend, db)
+mithrandir log adventurelog
+```
+
 ## Notes
 
 - Requires root privileges
