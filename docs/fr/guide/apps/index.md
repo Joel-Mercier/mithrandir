@@ -1,6 +1,6 @@
 # Applications
 
-Mithrandir prend en charge plus de 20 applications auto-hébergées. Chaque application est installée et gérée en tant que conteneur Docker avec une configuration et des données persistantes.
+Mithrandir prend en charge plus de 30 applications auto-hébergées. Chaque application est installée et gérée en tant que conteneur Docker avec une configuration et des données persistantes.
 
 ## Gestion des applications
 
@@ -29,6 +29,7 @@ mithrandir log <app> [service] # Voir les logs
 | [Prowlarr](./prowlarr) | 9696 | Gestionnaire d'indexeurs pour la stack *Arr |
 | [qBittorrent](./qbittorrent) | 8080 | Client BitTorrent avec interface web |
 | [Profilarr](./profilarr) | 6868 | Gestionnaire de profils de qualité pour Radarr et Sonarr |
+| [FlareSolverr](./flaresolverr) | 8191 | Serveur proxy pour contourner la protection Cloudflare |
 
 ### Média : Musique
 

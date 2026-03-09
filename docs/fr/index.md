@@ -18,7 +18,7 @@ features:
     title: Installation en une commande
     details: Un assistant interactif installe Docker, configure les services et démarre le tout avec une seule commande.
   - icon: "📦"
-    title: Plus de 20 applications auto-hébergées
+    title: Plus de 30 applications auto-hébergées
     details: Serveurs multimédias, domotique, blocage de publicités, VPN, gestion de mots de passe, chat IA, et bien plus — le tout depuis un seul outil.
   - icon: "🔄"
     title: Sauvegardes automatiques

@@ -14,7 +14,7 @@ Mithrandir has for now only been tested on a Raspberry Pi 5 with 4GB RAM and run
 
 - **One-command setup** — Interactive wizard installs Docker, configures services, and starts everything with a single `mithrandir setup` command
 - **Stack installs** — Install predefined app groups in one command (e.g., `mithrandir install media-movies-tv` for the full movie & TV stack)
-- **20+ self-hosted apps** — Media servers, download managers, home automation, ad blocking, VPN, password management, and more
+- **30+ self-hosted apps** — Media servers, download managers, home automation, ad blocking, VPN, password management, and more
 - **Automatic backups** — Daily scheduled backups to local storage and cloud (Google Drive, etc.) via rclone, with configurable retention
 - **Disaster recovery** — Restore your entire homelab on a fresh machine from a remote backup with `mithrandir recover`
 - **HTTPS out of the box** — Wildcard HTTPS via Caddy reverse proxy with automatic Let's Encrypt certificates using DuckDNS

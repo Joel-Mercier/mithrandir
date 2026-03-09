@@ -18,7 +18,7 @@ features:
     title: One-Command Setup
     details: Interactive wizard installs Docker, configures services, and starts everything with a single command.
   - icon: "\uD83D\uDCE6"
-    title: 20+ Self-Hosted Apps
+    title: 30+ Self-Hosted Apps
     details: Media servers, home automation, ad blocking, VPN, password management, AI chat, and more — all from one tool.
   - icon: "\uD83D\uDD04"
     title: Automatic Backups

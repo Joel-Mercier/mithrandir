@@ -1,6 +1,6 @@
 # Apps
 
-Mithrandir supports over 20 self-hosted applications. Each app is installed and managed as a Docker container with persistent configuration and data.
+Mithrandir supports over 30 self-hosted applications. Each app is installed and managed as a Docker container with persistent configuration and data.
 
 ## Managing Apps
 
@@ -29,6 +29,7 @@ mithrandir log <app> [service] # View logs
 | [Prowlarr](./prowlarr) | 9696 | Indexer manager for the *Arr stack |
 | [qBittorrent](./qbittorrent) | 8080 | BitTorrent client with web UI |
 | [Profilarr](./profilarr) | 6868 | Quality profile manager for Radarr and Sonarr |
+| [FlareSolverr](./flaresolverr) | 8191 | Proxy server to bypass Cloudflare protection |
 
 ### Media: Music
 
