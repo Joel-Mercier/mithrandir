@@ -840,6 +840,7 @@ export const APP_REGISTRY: AppDefinition[] = [
     containerName: "adventurelog_frontend",
     additionalContainers: ["adventurelog_backend", "adventurelog_db"],
     port: 8015,
+    caddyExtraSubdomains: [{ subdomain: "adventurelog-api", port: 8016 }],
     configSubdir: "postgres",
     needsDataDir: false,
     rawCompose: (envConfig: EnvConfig) => {

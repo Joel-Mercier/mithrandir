@@ -67,6 +67,8 @@ export interface AppDefinition {
   companionOf?: string;
   /** Additional container names for multi-container apps (for orphan cleanup during reinstall/install) */
   additionalContainers?: string[];
+  /** Extra Caddy subdomains beyond the app name (e.g. adventurelog-api → backend port) */
+  caddyExtraSubdomains?: Array<{ subdomain: string; port: number }>;
   /** Custom compose generator for multi-container apps (bypasses generateCompose) */
   rawCompose?: (envConfig: EnvConfig) => string;
 }

@@ -59,6 +59,17 @@ export function generateCaddyfile(
     lines.push(`    handle @${app.name} {`);
     lines.push(`        reverse_proxy localhost:${proxyPort}`);
     lines.push("    }");
+
+    // Extra subdomains (e.g. adventurelog-api for the backend)
+    if (app.caddyExtraSubdomains) {
+      for (const extra of app.caddyExtraSubdomains) {
+        lines.push("");
+        lines.push(`    @${extra.subdomain} host ${extra.subdomain}.${domain}`);
+        lines.push(`    handle @${extra.subdomain} {`);
+        lines.push(`        reverse_proxy localhost:${extra.port}`);
+        lines.push("    }");
+      }
+    }
   }
 
   // Docs site (not in app registry, managed separately)
