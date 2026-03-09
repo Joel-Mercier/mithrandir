@@ -378,6 +378,7 @@ Checks configuration correctness across three categories: System (.env file, Doc
 | Omni Tools | 8079 | Collection of useful productivity tools |
 | Open WebUI | 3000 | Self-hosted AI chat interface |
 | Penpot | 9001 | Open-source design and prototyping platform |
+| Stirling PDF | 8084 | All-in-one PDF manipulation tool |
 | Actual Budget | 5006 | Privacy-focused personal finance and budgeting app |
 | Vaultwarden | 8222 | Lightweight Bitwarden-compatible password manager (requires HTTPS) |
 | Sure | 3005 | Privacy-focused personal finance tracker |

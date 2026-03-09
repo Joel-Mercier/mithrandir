@@ -70,6 +70,7 @@ function guideSidebar(prefix = ""): DefaultTheme.SidebarItem[] {
                 { text: "Omni Tools", link: `${prefix}/guide/apps/omni-tools` },
                 { text: "Open WebUI", link: `${prefix}/guide/apps/open-webui` },
                 { text: "Penpot", link: `${prefix}/guide/apps/penpot` },
+                { text: "Stirling PDF", link: `${prefix}/guide/apps/stirling-pdf` },
               ],
             },
             {

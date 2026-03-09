@@ -798,6 +798,21 @@ export const APP_REGISTRY: AppDefinition[] = [
     ],
   },
   {
+    name: "stirlingpdf",
+    displayName: "Stirling PDF",
+    description: "All-in-one PDF manipulation tool",
+    image: "stirlingtools/stirling-pdf:latest",
+    port: 8084,
+    containerPort: 8080,
+    configSubdir: "configs",
+    needsDataDir: false,
+    extraVolumes: [
+      { host: "tessdata", container: "/usr/share/tessdata" },
+      { host: "logs", container: "/logs" },
+      { host: "pipeline", container: "/pipeline" },
+    ],
+  },
+  {
     name: "profilarr",
     displayName: "Profilarr",
     description: "Import, sync, and manage quality profiles for Radarr and Sonarr",
@@ -989,8 +1004,8 @@ export const APP_CATEGORIES: AppCategory[] = [
   {
     label: "Productivity",
     value: "productivity",
-    description: "AFFiNE, Excalidraw, Omni Tools, Open WebUI, Penpot",
-    apps: ["affine", "excalidraw", "omnitools", "openwebui", "penpot"],
+    description: "AFFiNE, Excalidraw, Omni Tools, Open WebUI, Penpot, Stirling PDF",
+    apps: ["affine", "excalidraw", "omnitools", "openwebui", "penpot", "stirlingpdf"],
   },
   {
     label: "Finance",

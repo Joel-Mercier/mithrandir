@@ -65,6 +65,7 @@ mithrandir log <app>          # View logs
 | [Omni Tools](./omni-tools) | 8079 | Collection of useful productivity tools |
 | [Open WebUI](./open-webui) | 3000 | Self-hosted AI chat interface |
 | [Penpot](./penpot) | 9001 | Open-source design and prototyping platform |
+| [Stirling PDF](./stirling-pdf) | 8084 | All-in-one PDF manipulation tool |
 
 ### Finance
 

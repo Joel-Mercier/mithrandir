@@ -229,6 +229,8 @@ function getContainerConfigPath(app: AppDefinition): string {
     case "navidrome":
     case "vaultwarden":
       return "/data";
+    case "stirlingpdf":
+      return "/configs";
     case "openwebui":
       return "/app/backend/data";
     case "pihole":

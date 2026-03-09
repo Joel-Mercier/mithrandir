@@ -54,7 +54,7 @@ bun run src/index.tsx --help         # Dev mode (unbundled)
 Single source of truth for all services. Each `AppDefinition` encodes everything needed across all commands: Docker image, ports, config paths, volume mounts, secrets, capabilities. This replaces the duplicated `get_app_config()` case statements in backup.sh/restore.sh and per-app compose blocks in setup.sh. **Any new service must be added here.** Multi-container apps with `rawCompose` generators: Immich (postgres/redis/ML), Sure (postgres/redis/worker), AFFiNE (postgres/redis/migration), Penpot (postgres/valkey/backend/exporter/mailcatch). Also defines `APP_STACKS` — installable groups of interdependent apps (media, media-movies-tv, media-music, media-pictures, security) used by `install <stack>`, and `APP_CATEGORIES` — broader groupings (media, automation, monitoring, productivity, finance, security, utilities) used by the setup wizard's category picker.
 
 ### Compose Generation (`src/lib/compose.ts`)
-Generates docker-compose.yml deterministically from an `AppDefinition` + `EnvConfig`. Handles special cases: host networking (Home Assistant, DuckDNS), multiple config dirs (Homarr), non-standard container paths (Seerr → `/app/config`), capabilities/sysctls (WireGuard), healthchecks (Seerr).
+Generates docker-compose.yml deterministically from an `AppDefinition` + `EnvConfig`. Handles special cases: host networking (Home Assistant, DuckDNS), multiple config dirs (Homarr), non-standard container paths (Seerr → `/app/config`, Stirling PDF → `/configs`), capabilities/sysctls (WireGuard), healthchecks (Seerr).
 
 Secret env var names are mapped between .env and compose: `DUCKDNS_SUBDOMAINS` → `SUBDOMAINS`, `DUCKDNS_TOKEN` → `TOKEN`, `WG_SERVERURL` → `SERVERURL`, `WG_PEERS` → `PEERS`.
 

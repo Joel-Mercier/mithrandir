@@ -65,6 +65,7 @@ mithrandir log <app>          # Voir les logs
 | [Omni Tools](./omni-tools) | 8079 | Collection d'outils de productivité utiles |
 | [Open WebUI](./open-webui) | 3000 | Interface de chat IA auto-hébergée |
 | [Penpot](./penpot) | 9001 | Plateforme open-source de design et prototypage |
+| [Stirling PDF](./stirling-pdf) | 8084 | Outil tout-en-un de manipulation de PDF |
 
 ### Finance
 
