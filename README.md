@@ -2,6 +2,14 @@
 
 Automated setup and backup system for Docker-based homelab applications.
 
+![GitHub package.json version](https://img.shields.io/github/package-json/v/Joel-Mercier/mithrandir)
+![GitHub Release](https://img.shields.io/github/v/release/Joel-Mercier/mithrandir)
+![GitHub deployments](https://img.shields.io/github/deployments/Joel-Mercier/mithrandir/github-pages)
+![GitHub License](https://img.shields.io/github/license/Joel-Mercier/mithrandir)
+![GitHub last commit](https://img.shields.io/github/last-commit/Joel-Mercier/mithrandir)
+![CI](https://img.shields.io/github/actions/workflow/status/Joel-Mercier/mithrandir/ci.yml)
+![Deploy](https://img.shields.io/github/actions/workflow/status/Joel-Mercier/mithrandir/deploy.yml)
+
 ## Quick Start
 
 ```bash
