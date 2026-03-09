@@ -5,7 +5,7 @@ View container logs for an app.
 ## Usage
 
 ```sh
-mithrandir log <app> [--follow] [--tail N] [--since TIME]
+mithrandir log <app> [service] [--follow] [--tail N] [--since TIME]
 ```
 
 ## Arguments
@@ -13,6 +13,7 @@ mithrandir log <app> [--follow] [--tail N] [--since TIME]
 | Argument | Description |
 | --- | --- |
 | `app` | **Required.** App name to view logs for |
+| `service` | Service name for multi-container apps (e.g., `backend`, `db`) |
 
 ## Flags
 
@@ -33,16 +34,25 @@ mithrandir log pihole --follow
 
 # Show Jellyfin logs from the last 2 hours
 mithrandir log jellyfin --since 2h
+
+# Show AdventureLog backend logs
+mithrandir log adventurelog backend
+
+# Follow Immich postgres logs
+mithrandir log immich postgres --follow
 ```
 
 ## Multi-container apps
 
-For apps with multiple containers (Immich, Sure, AFFiNE, Penpot, AdventureLog), logs from all containers are shown sequentially with a separator between each one.
+For apps with multiple containers, you must specify a service name. Running `mithrandir log <app>` without a service will list the available services:
 
-```sh
-# Show logs for all AdventureLog containers (frontend, backend, db)
-mithrandir log adventurelog
-```
+| App | Services |
+| --- | --- |
+| AdventureLog | `frontend`, `backend`, `db` |
+| Immich | `server`, `machine-learning`, `redis`, `postgres` |
+| Sure | `web`, `worker`, `redis`, `postgres` |
+| AFFiNE | `server`, `migration-job`, `redis`, `postgres` |
+| Penpot | `frontend`, `backend`, `exporter`, `postgres`, `valkey`, `mailcatch` |
 
 ## Notes
 

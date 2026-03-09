@@ -12,7 +12,7 @@ mithrandir restart <app>      # Redémarrer une application
 mithrandir update <app>       # Mettre à jour vers la dernière image
 mithrandir reinstall <app>    # Réinstaller depuis zéro
 mithrandir uninstall <app>    # Supprimer une application
-mithrandir log <app>          # Voir les logs
+mithrandir log <app> [service] # Voir les logs
 ```
 
 ## Applications disponibles

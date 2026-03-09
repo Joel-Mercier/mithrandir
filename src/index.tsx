@@ -55,7 +55,7 @@ const cli = meow(
     health                             Check system health (Docker, disk, backups)
     doctor                             Diagnose setup issues with fix suggestions
     update [app]                       Update all or a specific app's container
-    log <app>                          View container logs
+    log <app> [service]                View container logs
     graph                              Show inter-app dependency tree
     self-update                        Update the CLI itself from git
     version                            Show version and git commit

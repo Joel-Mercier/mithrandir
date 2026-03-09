@@ -35,7 +35,7 @@ After installation, open `http://your-server:8015` and log in with the admin cre
 The backend container imports geographic data on first launch, which can take several minutes. The app will return errors until this process completes. You can monitor progress with:
 
 ```sh
-mithrandir log adventurelog
+mithrandir log adventurelog backend
 ```
 :::
 

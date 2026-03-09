@@ -12,7 +12,7 @@ mithrandir restart <app>      # Restart an app
 mithrandir update <app>       # Update to the latest image
 mithrandir reinstall <app>    # Reinstall from scratch
 mithrandir uninstall <app>    # Remove an app
-mithrandir log <app>          # View logs
+mithrandir log <app> [service] # View logs
 ```
 
 ## Available Apps

@@ -1,6 +1,19 @@
 import { execa } from "execa";
-import { getApp, getAllContainerNames, getAppNames } from "@/lib/apps.js";
+import { getApp, getContainerName, getAllContainerNames, getAppNames } from "@/lib/apps.js";
 import { dockerNeedsSudo } from "@/lib/shell.js";
+
+/** Map container name → friendly service name (e.g. "adventurelog_backend" → "backend") */
+function getServiceNames(appName: string, containers: string[]): Map<string, string> {
+  const prefix = `${appName}_`;
+  const map = new Map<string, string>();
+  for (const c of containers) {
+    const service = c.startsWith(prefix)
+      ? c.slice(prefix.length).replace(/_/g, "-")
+      : c;
+    map.set(service, c);
+  }
+  return map;
+}
 
 export async function runLog(
   args: string[],
@@ -10,7 +23,7 @@ export async function runLog(
 
   if (!appName) {
     console.error(
-      `Usage: mithrandir log <app> [--follow] [--tail N] [--since TIME]\nAvailable apps: ${getAppNames().join(", ")}`,
+      `Usage: mithrandir log <app> [service] [--follow] [--tail N] [--since TIME]\nAvailable apps: ${getAppNames().join(", ")}`,
     );
     process.exit(1);
   }
@@ -24,43 +37,50 @@ export async function runLog(
   }
 
   const containers = getAllContainerNames(app);
-  const useSudo = await dockerNeedsSudo();
+  const serviceName = args[1];
+  let targetContainer: string;
 
+  if (containers.length > 1 && serviceName) {
+    // Resolve service name to container name
+    const serviceMap = getServiceNames(app.name, containers);
+    const resolved = serviceMap.get(serviceName);
+    if (!resolved) {
+      const available = [...serviceMap.keys()].join(", ");
+      console.error(
+        `Unknown service "${serviceName}" for ${app.displayName}\nAvailable services: ${available}`,
+      );
+      process.exit(1);
+    }
+    targetContainer = resolved;
+  } else if (containers.length > 1 && !serviceName) {
+    // No service specified for multi-container app — show available services
+    const serviceMap = getServiceNames(app.name, containers);
+    const services = [...serviceMap.keys()];
+    console.error(
+      `${app.displayName} has multiple containers. Specify a service:\n\n` +
+      services.map((s) => `  mithrandir log ${appName} ${s}`).join("\n") +
+      "\n",
+    );
+    process.exit(1);
+  } else {
+    targetContainer = getContainerName(app);
+  }
+
+  const useSudo = await dockerNeedsSudo();
   const dockerArgs = useSudo ? ["docker", "logs"] : ["logs"];
 
   if (flags.follow) dockerArgs.push("--follow");
   if (flags.tail) dockerArgs.push("--tail", flags.tail);
   if (flags.since) dockerArgs.push("--since", flags.since);
 
-  // Single-container app: show logs directly
-  if (containers.length === 1) {
-    try {
-      await execa(useSudo ? "sudo" : "docker", [...dockerArgs, containers[0]], { stdio: "inherit" });
-    } catch (error: any) {
-      if (error.exitCode === 130 || error.signal === "SIGINT") {
-        process.exit(0);
-      }
-      throw error;
-    }
-    return;
-  }
+  dockerArgs.push(targetContainer);
 
-  // Multi-container app: show logs for each container sequentially
-  for (const container of containers) {
-    const separator = `\n${"─".repeat(60)}\n  ${container}\n${"─".repeat(60)}\n`;
-    process.stdout.write(separator);
-    try {
-      await execa(useSudo ? "sudo" : "docker", [...dockerArgs, container], { stdio: "inherit" });
-    } catch (error: any) {
-      if (error.exitCode === 130 || error.signal === "SIGINT") {
-        process.exit(0);
-      }
-      // Container might not be running — show error and continue to next
-      if (error.exitCode === 1) {
-        console.error(`  (no logs available)`);
-        continue;
-      }
-      throw error;
+  try {
+    await execa(useSudo ? "sudo" : "docker", dockerArgs, { stdio: "inherit" });
+  } catch (error: any) {
+    if (error.exitCode === 130 || error.signal === "SIGINT") {
+      process.exit(0);
     }
+    throw error;
   }
 }

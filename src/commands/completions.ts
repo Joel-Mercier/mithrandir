@@ -1,4 +1,4 @@
-import { getAppNames, getStackNames } from "@/lib/apps.js";
+import { getAppNames, getStackNames, getApp, getAllContainerNames } from "@/lib/apps.js";
 
 const SUBCOMMANDS = [
   "setup", "backup", "restore", "recover", "start", "stop", "restart",
@@ -13,6 +13,22 @@ const APP_COMMANDS = [
 
 const BACKUP_SUBCOMMANDS = ["list", "delete", "verify"];
 
+/** Build a map of app name → service names for multi-container apps */
+function getLogServiceMap(): Map<string, string[]> {
+  const map = new Map<string, string[]>();
+  for (const name of getAppNames()) {
+    const app = getApp(name);
+    if (!app?.additionalContainers) continue;
+    const containers = getAllContainerNames(app);
+    const prefix = `${name}_`;
+    const services = containers.map((c) =>
+      c.startsWith(prefix) ? c.slice(prefix.length).replace(/_/g, "-") : c,
+    );
+    map.set(name, services);
+  }
+  return map;
+}
+
 function generateBash(): string {
   const apps = getAppNames().join(" ");
   const stacks = getStackNames().join(" ");
@@ -20,6 +36,11 @@ function generateBash(): string {
   const appCmds = APP_COMMANDS.join("|");
   const backupSubs = BACKUP_SUBCOMMANDS.join(" ");
   const installTargets = `docker backup https firewall ${stacks} ${apps}`;
+
+  const logServiceMap = getLogServiceMap();
+  const logServiceCases = [...logServiceMap.entries()]
+    .map(([app, services]) => `        ${app}) COMPREPLY=( $(compgen -W "${services.join(" ")}" -- "$cur") ) ;;`)
+    .join("\n");
 
   return `# mithrandir bash completions
 # Add to ~/.bashrc: eval "$(mithrandir completions bash)"
@@ -37,7 +58,13 @@ _mithrandir() {
       COMPREPLY=( $(compgen -W "${installTargets}" -- "$cur") )
       ;;
     ${appCmds})
-      COMPREPLY=( $(compgen -W "${apps}" -- "$cur") )
+      if [[ "\${words[1]}" == "log" && $cword -eq 3 ]]; then
+        case "\${words[2]}" in
+${logServiceCases}
+        esac
+      else
+        COMPREPLY=( $(compgen -W "${apps}" -- "$cur") )
+      fi
       ;;
     backup)
       if [[ $cword -eq 2 ]]; then
@@ -72,6 +99,7 @@ function generateZsh(): string {
   const stacks = getStackNames().join(" ");
   const cmds = SUBCOMMANDS.join(" ");
   const backupSubs = BACKUP_SUBCOMMANDS.join(" ");
+  const logServiceMap = getLogServiceMap();
 
   return `# mithrandir zsh completions
 # Add to ~/.zshrc: eval "$(mithrandir completions zsh)"
@@ -91,8 +119,17 @@ _mithrandir() {
         install)
           compadd -- docker backup https firewall ${stacks} ${apps}
           ;;
-        start|stop|restart|reinstall|uninstall|update|log)
+        start|stop|restart|reinstall|uninstall|update)
           compadd -- ${apps}
+          ;;
+        log)
+          if (( CURRENT == 3 )); then
+            compadd -- ${apps}
+          elif (( CURRENT == 4 )); then
+            case \${words[3]} in
+${[...logServiceMap.entries()].map(([app, services]) => `              ${app}) compadd -- ${services.join(" ")} ;;`).join("\n")}
+            esac
+          fi
           ;;
         backup)
           if (( CURRENT == 3 )); then
@@ -166,6 +203,14 @@ function generateFish(): string {
         `complete -c mithrandir -n '__fish_seen_subcommand_from ${cmd}' -a '${app}'`,
       );
     }
+  }
+
+  const logServiceMap = getLogServiceMap();
+  lines.push("", "# Log service names for multi-container apps");
+  for (const [app, services] of logServiceMap) {
+    lines.push(
+      `complete -c mithrandir -n '__fish_seen_subcommand_from log; and __fish_seen_subcommand_from ${app}' -a '${services.join(" ")}'`,
+    );
   }
 
   lines.push("", "# Backup subcommands");

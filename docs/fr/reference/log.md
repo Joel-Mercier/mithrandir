@@ -5,7 +5,7 @@ Consulter les journaux de conteneur d'une application.
 ## Utilisation
 
 ```sh
-mithrandir log <app> [--follow] [--tail N] [--since TIME]
+mithrandir log <app> [service] [--follow] [--tail N] [--since TIME]
 ```
 
 ## Arguments
@@ -13,6 +13,7 @@ mithrandir log <app> [--follow] [--tail N] [--since TIME]
 | Argument | Description |
 | --- | --- |
 | `app` | **Requis.** Nom de l'application dont consulter les journaux |
+| `service` | Nom du service pour les applications multi-conteneurs (par ex. `backend`, `db`) |
 
 ## Options
 
@@ -33,16 +34,25 @@ mithrandir log pihole --follow
 
 # Afficher les journaux de Jellyfin des 2 dernières heures
 mithrandir log jellyfin --since 2h
+
+# Afficher les journaux du backend AdventureLog
+mithrandir log adventurelog backend
+
+# Suivre les journaux postgres d'Immich
+mithrandir log immich postgres --follow
 ```
 
 ## Applications multi-conteneurs
 
-Pour les applications avec plusieurs conteneurs (Immich, Sure, AFFiNE, Penpot, AdventureLog), les journaux de tous les conteneurs sont affichés séquentiellement avec un séparateur entre chacun.
+Pour les applications avec plusieurs conteneurs, vous devez spécifier un nom de service. Exécuter `mithrandir log <app>` sans service affichera la liste des services disponibles :
 
-```sh
-# Afficher les journaux de tous les conteneurs AdventureLog (frontend, backend, db)
-mithrandir log adventurelog
-```
+| Application | Services |
+| --- | --- |
+| AdventureLog | `frontend`, `backend`, `db` |
+| Immich | `server`, `machine-learning`, `redis`, `postgres` |
+| Sure | `web`, `worker`, `redis`, `postgres` |
+| AFFiNE | `server`, `migration-job`, `redis`, `postgres` |
+| Penpot | `frontend`, `backend`, `exporter`, `postgres`, `valkey`, `mailcatch` |
 
 ## Remarques
 
