@@ -63,7 +63,7 @@ function ReinstallInteractive({
     // Phase 1: Stop and remove container
     setPhase("stopping");
     setCurrentLabel(`Stopping ${appName} container...`);
-    await shell("docker", ["compose", "down", "--volumes"], { cwd: dir, ignoreError: true });
+    await shell("docker", ["compose", "down", "--volumes"], { sudo: true, cwd: dir, ignoreError: true });
 
     // Remove orphaned containers and docker images for this app
     for (const name of getAllContainerNames(app)) {
