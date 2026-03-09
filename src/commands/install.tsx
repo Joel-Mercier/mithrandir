@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Box, render, Text, useApp } from "ink";
 import Spinner from "ink-spinner";
-import { StatusMessage, TextInput } from "@inkjs/ui";
+import { StatusMessage, TextInput, PasswordInput } from "@inkjs/ui";
+import type { SecretDefinition, EnvConfig } from "@/types.js";
 import { existsSync } from "fs";
 import { getApp, getAppNames, getAppDir, getComposePath, getCompanionApps, getStack, getStackNames, APP_REGISTRY } from "@/lib/apps.js";
 import { loadEnvConfig, saveEnvConfig } from "@/lib/config.js";
@@ -719,14 +720,31 @@ function InstallApp({ appName }: { appName: string }) {
   const [appResults, setAppResults] = useState<
     Array<{ name: string; status: "done" | "error" | "skipped"; message?: string }>
   >([]);
-  const [phase, setPhase] = useState<"init" | "pulling" | "composing" | "caddy" | "done">("init");
+  const [phase, setPhase] = useState<"init" | "secrets" | "pulling" | "composing" | "caddy" | "done">("init");
   const [currentAppName, setCurrentAppName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pullProgress, setPullProgress] = useState(0);
+  const [missingSecrets, setMissingSecrets] = useState<SecretDefinition[]>([]);
+  const [secretIdx, setSecretIdx] = useState(0);
+  const [envRef, setEnvRef] = useState<EnvConfig | null>(null);
+  const [secretResolver, setSecretResolver] = useState<{ resolve: () => void } | null>(null);
 
   useEffect(() => {
     run();
   }, []);
+
+  function handleSecretSubmit(value: string) {
+    const trimmed = value.trim();
+    if (!trimmed) return;
+    const secret = missingSecrets[secretIdx];
+    envRef![secret.envVar] = trimmed;
+
+    if (secretIdx + 1 < missingSecrets.length) {
+      setSecretIdx(secretIdx + 1);
+    } else {
+      secretResolver?.resolve();
+    }
+  }
 
   async function run() {
     const app = getApp(appName);
@@ -736,6 +754,7 @@ function InstallApp({ appName }: { appName: string }) {
     }
 
     const env = await loadEnvConfig();
+    setEnvRef(env);
     const composePath = getComposePath(app, env.BASE_DIR);
 
     if (existsSync(composePath)) {
@@ -768,6 +787,20 @@ function InstallApp({ appName }: { appName: string }) {
         }
       }
       if (envChanged) {
+        await saveEnvConfig(env);
+      }
+
+      // Prompt for missing required secrets
+      const missing = app.secrets.filter(
+        (s) => s.required && !s.generate && !env[s.envVar],
+      );
+      if (missing.length > 0) {
+        setMissingSecrets(missing);
+        setSecretIdx(0);
+        setPhase("secrets");
+        await new Promise<void>((resolve) => {
+          setSecretResolver({ resolve });
+        });
         await saveEnvConfig(env);
       }
     }
@@ -861,7 +894,32 @@ function InstallApp({ appName }: { appName: string }) {
         />
       ))}
 
-      {phase !== "done" && (
+      {phase === "secrets" && missingSecrets.length > 0 && (
+        <Box flexDirection="column">
+          <Text>
+            <Text bold>{missingSecrets[secretIdx].prompt}</Text>:
+          </Text>
+          <Box>
+            <Text color="blue">{">"} </Text>
+            {missingSecrets[secretIdx].sensitive ? (
+              <PasswordInput
+                key={`secret-${secretIdx}`}
+                onSubmit={handleSecretSubmit}
+              />
+            ) : (
+              <TextInput
+                key={`secret-${secretIdx}`}
+                onSubmit={handleSecretSubmit}
+              />
+            )}
+          </Box>
+          {missingSecrets.length > 1 && (
+            <Text dimColor>({secretIdx + 1}/{missingSecrets.length})</Text>
+          )}
+        </Box>
+      )}
+
+      {phase !== "done" && phase !== "secrets" && (
         <Box flexDirection="column">
           <Text>
             <Text color="yellow">

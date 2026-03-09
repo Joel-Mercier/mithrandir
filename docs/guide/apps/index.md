@@ -87,6 +87,7 @@ mithrandir log <app>          # View logs
 
 | App | Port | Description |
 | --- | --- | --- |
+| [AdventureLog](./adventurelog) | 8015 | Travel planning and adventure journal |
 | [TRIP](./trip) | 8085 | Travel planning and trip journal |
 
 ### Utilities

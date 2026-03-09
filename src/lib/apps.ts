@@ -833,6 +833,133 @@ export const APP_REGISTRY: AppDefinition[] = [
     command: ["fastapi", "run", "/app/trip/main.py", "--host", "0.0.0.0"],
   },
   {
+    name: "adventurelog",
+    displayName: "AdventureLog",
+    description: "Travel planning and adventure journal",
+    image: "ghcr.io/seanmorley15/adventurelog-frontend:latest",
+    containerName: "adventurelog_frontend",
+    additionalContainers: ["adventurelog_backend", "adventurelog_db"],
+    port: 8015,
+    configSubdir: "postgres",
+    needsDataDir: false,
+    rawCompose: (envConfig: EnvConfig) => {
+      const baseDir = envConfig.BASE_DIR;
+      const dbPassword = envConfig.ADVENTURELOG_DB_PASSWORD ?? "changeme123";
+      const secretKey = envConfig.ADVENTURELOG_SECRET_KEY ?? "changeme123";
+      const adminUsername = envConfig.ADVENTURELOG_ADMIN_USERNAME ?? "admin";
+      const adminPassword = envConfig.ADVENTURELOG_ADMIN_PASSWORD ?? "admin";
+      const adminEmail = envConfig.ADVENTURELOG_ADMIN_EMAIL ?? "admin@example.com";
+      const localIp = envConfig.LOCAL_IP ?? "localhost";
+      const duckdnsPrimary = envConfig.DUCKDNS_SUBDOMAINS?.split(",")[0].trim();
+      const frontendPort = "8015";
+      const backendPort = "8016";
+      let publicUrl: string;
+      let frontendUrl: string;
+      let csrfOrigins: string;
+      let origin: string;
+      if (envConfig.ENABLE_HTTPS === "true" && duckdnsPrimary) {
+        publicUrl = `https://adventurelog-api.${duckdnsPrimary}.duckdns.org`;
+        frontendUrl = `https://adventurelog.${duckdnsPrimary}.duckdns.org`;
+        csrfOrigins = `${publicUrl},${frontendUrl}`;
+        origin = frontendUrl;
+      } else {
+        publicUrl = `http://${localIp}:${backendPort}`;
+        frontendUrl = `http://${localIp}:${frontendPort}`;
+        csrfOrigins = `http://${localIp}:${backendPort},http://${localIp}:${frontendPort}`;
+        origin = frontendUrl;
+      }
+      const lines = [
+        `services:`,
+        `  adventurelog_frontend:`,
+        `    image: ghcr.io/seanmorley15/adventurelog-frontend:latest`,
+        `    container_name: adventurelog_frontend`,
+        `    environment:`,
+        `      - PUBLIC_SERVER_URL=http://adventurelog_backend:80`,
+        `      - ORIGIN=${origin}`,
+        `      - BODY_SIZE_LIMIT=Infinity`,
+        `    ports:`,
+        `      - ${frontendPort}:3000`,
+        `    depends_on:`,
+        `      - adventurelog_backend`,
+        `    restart: unless-stopped`,
+        ``,
+        `  adventurelog_backend:`,
+        `    image: ghcr.io/seanmorley15/adventurelog-backend:latest`,
+        `    container_name: adventurelog_backend`,
+        `    environment:`,
+        `      - PGHOST=adventurelog_db`,
+        `      - POSTGRES_DB=adventurelog`,
+        `      - POSTGRES_USER=adventurelog`,
+        `      - POSTGRES_PASSWORD=${dbPassword}`,
+        `      - SECRET_KEY=${secretKey}`,
+        `      - DJANGO_ADMIN_USERNAME=${adminUsername}`,
+        `      - DJANGO_ADMIN_PASSWORD=${adminPassword}`,
+        `      - DJANGO_ADMIN_EMAIL=${adminEmail}`,
+        `      - PUBLIC_URL=${publicUrl}`,
+        `      - CSRF_TRUSTED_ORIGINS=${csrfOrigins}`,
+        `      - FRONTEND_URL=${frontendUrl}`,
+        `      - DEBUG=False`,
+        `    ports:`,
+        `      - ${backendPort}:80`,
+        `    depends_on:`,
+        `      - adventurelog_db`,
+        `    volumes:`,
+        `      - adventurelog-media:/code/media/`,
+        `    restart: unless-stopped`,
+        ``,
+        `  adventurelog_db:`,
+        `    image: postgis/postgis:16-3.5`,
+        `    container_name: adventurelog_db`,
+        `    environment:`,
+        `      - POSTGRES_DB=adventurelog`,
+        `      - POSTGRES_USER=adventurelog`,
+        `      - POSTGRES_PASSWORD=${dbPassword}`,
+        `    volumes:`,
+        `      - ${baseDir}/adventurelog/postgres:/var/lib/postgresql/data`,
+        `    restart: unless-stopped`,
+        `    healthcheck:`,
+        `      test: ["CMD-SHELL", "pg_isready -U adventurelog -d adventurelog"]`,
+        `      interval: 5s`,
+        `      timeout: 5s`,
+        `      retries: 5`,
+        ``,
+        `volumes:`,
+        `  adventurelog-media:`,
+      ];
+      return lines.join("\n") + "\n";
+    },
+    secrets: [
+      {
+        envVar: "ADVENTURELOG_SECRET_KEY",
+        prompt: "AdventureLog Django secret key",
+        sensitive: true,
+        required: true,
+        generate: "openssl rand -hex 32",
+      },
+      {
+        envVar: "ADVENTURELOG_DB_PASSWORD",
+        prompt: "AdventureLog database password",
+        sensitive: true,
+      },
+      {
+        envVar: "ADVENTURELOG_ADMIN_USERNAME",
+        prompt: "AdventureLog admin username (default: admin)",
+        required: true,
+      },
+      {
+        envVar: "ADVENTURELOG_ADMIN_PASSWORD",
+        prompt: "AdventureLog admin password",
+        sensitive: true,
+        required: true,
+      },
+      {
+        envVar: "ADVENTURELOG_ADMIN_EMAIL",
+        prompt: "AdventureLog admin email (default: admin@example.com)",
+        required: true,
+      },
+    ],
+  },
+  {
     name: "pihole",
     displayName: "Pi-hole",
     description: "Network-wide ad blocker and DNS server",
@@ -1033,8 +1160,8 @@ export const APP_CATEGORIES: AppCategory[] = [
   {
     label: "Travel",
     value: "travel",
-    description: "TRIP",
-    apps: ["trip"],
+    description: "AdventureLog, TRIP",
+    apps: ["adventurelog", "trip"],
   },
   {
     label: "Utilities",

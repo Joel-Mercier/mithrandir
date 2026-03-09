@@ -95,6 +95,7 @@ function guideSidebar(prefix = ""): DefaultTheme.SidebarItem[] {
               text: prefix ? "Voyage" : "Travel",
               collapsed: true,
               items: [
+                { text: "AdventureLog", link: `${prefix}/guide/apps/adventurelog` },
                 { text: "TRIP", link: `${prefix}/guide/apps/trip` },
               ],
             },

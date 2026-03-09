@@ -52,6 +52,11 @@ All configuration lives in a single `.env` file at the project root.
 - `PENPOT_SECRET_KEY`: Required secret key for Penpot
 - `PENPOT_DB_PASSWORD`: Optional database password for Penpot
 - `PENPOT_PUBLIC_URI`: Optional public URI for Penpot (default: `http://localhost:9001`)
+- `ADVENTURELOG_SECRET_KEY`: Required Django secret key for AdventureLog
+- `ADVENTURELOG_DB_PASSWORD`: Optional database password for AdventureLog
+- `ADVENTURELOG_ADMIN_USERNAME`: Optional admin username for AdventureLog (default: `admin`)
+- `ADVENTURELOG_ADMIN_PASSWORD`: Optional admin password for AdventureLog
+- `ADVENTURELOG_ADMIN_EMAIL`: Optional admin email for AdventureLog
 - `PIHOLE_PASSWORD`: Optional web interface password for Pi-hole
 - `GATUS_DISCORD_WEBHOOK_URL`: Optional Discord webhook URL for Gatus alerts
 
@@ -382,6 +387,7 @@ Checks configuration correctness across three categories: System (.env file, Doc
 | Actual Budget | 5006 | Privacy-focused personal finance and budgeting app |
 | Vaultwarden | 8222 | Lightweight Bitwarden-compatible password manager (requires HTTPS) |
 | Sure | 3005 | Privacy-focused personal finance tracker |
+| AdventureLog | 8015 | Travel planning and adventure journal |
 | TRIP | 8085 | Travel planning and trip journal |
 
 ## Local Development

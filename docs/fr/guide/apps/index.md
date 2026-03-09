@@ -87,6 +87,7 @@ mithrandir log <app>          # Voir les logs
 
 | Application | Port | Description |
 | --- | --- | --- |
+| [AdventureLog](./adventurelog) | 8015 | Planification de voyages et journal d'aventures |
 | [TRIP](./trip) | 8085 | Planification de voyages et journal de bord |
 
 ### Utilitaires
