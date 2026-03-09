@@ -61,7 +61,7 @@ async function getContainerStatus(app: AppDefinition): Promise<string> {
   const result = await shell(
     "docker",
     ["inspect", "--format", "{{.State.Status}}", containerName],
-    { sudo: true, ignoreError: true },
+    { sudo: true, ignoreError: true, timeout: 10000 },
   );
   if (result.exitCode !== 0) return "not found";
   return result.stdout.trim() || "not found";
@@ -98,6 +98,7 @@ async function getDiskUsage(app: AppDefinition, baseDir: string): Promise<string
   const result = await shell("du", ["-sh", appDir], {
     sudo: true,
     ignoreError: true,
+    timeout: 10000,
   });
   if (result.exitCode !== 0 || !result.stdout.trim()) return "—";
   return result.stdout.trim().split(/\s+/)[0] || "—";
@@ -132,6 +133,7 @@ async function gatherSystemInfo(): Promise<SystemInfo> {
     const result = await shell("docker", ["info"], {
       sudo: true,
       ignoreError: true,
+      timeout: 10000,
     });
     dockerRunning = result.exitCode === 0;
   }
@@ -220,15 +222,17 @@ function StatusCommand() {
       .then((result) => {
         setInfo(result);
         setPhase("done");
-        setTimeout(() => exit(), 100);
+        const t = setTimeout(() => exit(), 100);
+        t.unref();
       })
       .catch((err) => {
         setError(err.message);
         setPhase("error");
-        setTimeout(() => {
+        const t = setTimeout(() => {
           process.exitCode = 1;
           exit();
         }, 100);
+        t.unref();
       });
   }, []);
 

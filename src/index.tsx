@@ -145,6 +145,14 @@ const cli = meow(
 
 const command = cli.input[0];
 
+// Ensure Ctrl+C always exits immediately, even when child processes hang
+process.on("SIGINT", () => {
+  process.exit(130);
+});
+process.on("SIGTERM", () => {
+  process.exit(143);
+});
+
 // Start update check in background (skip for self-update/version/completions)
 const skipUpdateCheck = ["self-update", "version", "completions"].includes(command ?? "");
 const updateCheckPromise = skipUpdateCheck ? null : checkForUpdate();

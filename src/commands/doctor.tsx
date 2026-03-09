@@ -439,18 +439,20 @@ function DoctorCommand() {
         setResults(checks);
         setPhase("done");
         const hasFail = checks.some((c) => c.status === "fail");
-        setTimeout(() => {
+        const t1 = setTimeout(() => {
           if (hasFail) process.exitCode = 1;
           exit();
         }, 100);
+        t1.unref();
       })
       .catch((err) => {
         setError(err.message);
         setPhase("error");
-        setTimeout(() => {
+        const t2 = setTimeout(() => {
           process.exitCode = 1;
           exit();
         }, 100);
+        t2.unref();
       });
   }, []);
 

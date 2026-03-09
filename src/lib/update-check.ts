@@ -35,6 +35,7 @@ export async function checkForUpdate(): Promise<string | null> {
     const fetch = await shell("git", ["fetch", "--quiet"], {
       cwd: root,
       ignoreError: true,
+      timeout: 5000,
       ...userOpts,
     });
     if (fetch.exitCode !== 0) return null;
