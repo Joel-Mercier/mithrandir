@@ -12,6 +12,7 @@ function guideSidebar(prefix = ""): DefaultTheme.SidebarItem[] {
         { text: prefix ? "Configuration HTTPS" : "HTTPS Setup", link: `${prefix}/guide/https` },
         { text: prefix ? "Pare-feu" : "Firewall", link: `${prefix}/guide/firewall` },
         { text: prefix ? "Planification de capacité" : "Capacity Planning", link: `${prefix}/guide/capacity` },
+        { text: prefix ? "Développement local" : "Local Development", link: `${prefix}/guide/development` },
         {
           text: prefix ? "Applications" : "Apps",
           collapsed: false,
