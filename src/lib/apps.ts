@@ -991,6 +991,85 @@ export const APP_REGISTRY: AppDefinition[] = [
     ],
   },
   {
+    name: "yourspotify",
+    displayName: "Your Spotify",
+    description: "Spotify listening statistics and history tracker",
+    image: "yooooomi/your_spotify_server",
+    containerName: "yourspotify_server",
+    capacity: { performance: "low", storage: "medium", note: "Spotify history tracking with MongoDB" },
+    additionalContainers: ["yourspotify_mongo", "yourspotify_web"],
+    port: 3456,
+    configSubdir: "db",
+    needsDataDir: false,
+    rawCompose: (envConfig: EnvConfig) => {
+      const baseDir = envConfig.BASE_DIR;
+      const localIp = envConfig.LOCAL_IP ?? "localhost";
+      const duckdnsPrimary = envConfig.DUCKDNS_SUBDOMAINS?.split(",")[0].trim();
+      let apiEndpoint: string;
+      let clientEndpoint: string;
+      if (envConfig.ENABLE_HTTPS === "true" && duckdnsPrimary) {
+        apiEndpoint = `https://yourspotify-api.${duckdnsPrimary}.duckdns.org`;
+        clientEndpoint = `https://yourspotify.${duckdnsPrimary}.duckdns.org`;
+      } else {
+        apiEndpoint = `http://${localIp}:8085`;
+        clientEndpoint = `http://${localIp}:3456`;
+      }
+      const spotifyPublic = envConfig.YOURSPOTIFY_CLIENT_ID ?? "";
+      const spotifySecret = envConfig.YOURSPOTIFY_CLIENT_SECRET ?? "";
+      const lines = [
+        `services:`,
+        `  yourspotify-server:`,
+        `    image: yooooomi/your_spotify_server`,
+        `    container_name: yourspotify_server`,
+        `    environment:`,
+        `      - API_ENDPOINT=${apiEndpoint}`,
+        `      - CLIENT_ENDPOINT=${clientEndpoint}`,
+        `      - SPOTIFY_PUBLIC=${spotifyPublic}`,
+        `      - SPOTIFY_SECRET=${spotifySecret}`,
+        `      - MONGO_ENDPOINT=mongodb://yourspotify-mongo:27017/your_spotify`,
+        `      - TZ=${envConfig.TZ}`,
+        `    ports:`,
+        `      - 8085:8080`,
+        `    depends_on:`,
+        `      - yourspotify-mongo`,
+        `    restart: unless-stopped`,
+        ``,
+        `  yourspotify-mongo:`,
+        `    image: mongo:6`,
+        `    container_name: yourspotify_mongo`,
+        `    volumes:`,
+        `      - ${baseDir}/yourspotify/db:/data/db`,
+        `    restart: unless-stopped`,
+        ``,
+        `  yourspotify-web:`,
+        `    image: yooooomi/your_spotify_client`,
+        `    container_name: yourspotify_web`,
+        `    environment:`,
+        `      - API_ENDPOINT=${apiEndpoint}`,
+        `    ports:`,
+        `      - 3456:3000`,
+        `    depends_on:`,
+        `      - yourspotify-server`,
+        `    restart: unless-stopped`,
+      ];
+      return lines.join("\n") + "\n";
+    },
+    caddyExtraSubdomains: [{ subdomain: "yourspotify-api", port: 8085 }],
+    secrets: [
+      {
+        envVar: "YOURSPOTIFY_CLIENT_ID",
+        prompt: "Spotify application Client ID (from developer.spotify.com)",
+        required: true,
+      },
+      {
+        envVar: "YOURSPOTIFY_CLIENT_SECRET",
+        prompt: "Spotify application Client Secret",
+        sensitive: true,
+        required: true,
+      },
+    ],
+  },
+  {
     name: "pihole",
     displayName: "Pi-hole",
     description: "Network-wide ad blocker and DNS server",
@@ -1194,6 +1273,12 @@ export const APP_CATEGORIES: AppCategory[] = [
     value: "travel",
     description: "AdventureLog, TRIP",
     apps: ["adventurelog", "trip"],
+  },
+  {
+    label: "Statistics",
+    value: "statistics",
+    description: "Your Spotify",
+    apps: ["yourspotify"],
   },
   {
     label: "Utilities",

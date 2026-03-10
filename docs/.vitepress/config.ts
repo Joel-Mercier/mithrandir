@@ -101,6 +101,13 @@ function guideSidebar(prefix = ""): DefaultTheme.SidebarItem[] {
               ],
             },
             {
+              text: prefix ? "Statistiques" : "Statistics",
+              collapsed: true,
+              items: [
+                { text: "Your Spotify", link: `${prefix}/guide/apps/your-spotify` },
+              ],
+            },
+            {
               text: prefix ? "Utilitaires" : "Utilities",
               collapsed: true,
               items: [

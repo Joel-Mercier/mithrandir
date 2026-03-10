@@ -66,6 +66,8 @@ All configuration lives in a single `.env` file at the project root.
 - `ADVENTURELOG_ADMIN_PASSWORD`: Optional admin password for AdventureLog
 - `ADVENTURELOG_ADMIN_EMAIL`: Optional admin email for AdventureLog
 - `PIHOLE_PASSWORD`: Optional web interface password for Pi-hole
+- `YOURSPOTIFY_CLIENT_ID`: Required Spotify Client ID for Your Spotify
+- `YOURSPOTIFY_CLIENT_SECRET`: Required Spotify Client Secret for Your Spotify
 - `GATUS_DISCORD_WEBHOOK_URL`: Optional Discord webhook URL for Gatus alerts
 
 ### Rclone configuration
@@ -403,6 +405,7 @@ Checks configuration correctness across three categories: System (.env file, Doc
 | Sure | 3005 | Privacy-focused personal finance tracker |
 | AdventureLog | 8015 | Travel planning and adventure journal |
 | TRIP | 8085 | Travel planning and trip journal |
+| Your Spotify | 3456 | Spotify listening statistics and history tracker |
 
 ## Local Development
 

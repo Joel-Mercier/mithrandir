@@ -91,6 +91,12 @@ mithrandir log <app> [service] # View logs
 | [AdventureLog](./adventurelog) | 8015 | Travel planning and adventure journal |
 | [TRIP](./trip) | 8085 | Travel planning and trip journal |
 
+### Statistics
+
+| App | Port | Description |
+| --- | --- | --- |
+| [Your Spotify](./your-spotify) | 3456 | Spotify listening statistics and history tracker |
+
 ### Utilities
 
 | App | Port | Description |
