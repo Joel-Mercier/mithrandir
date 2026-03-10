@@ -1070,6 +1070,64 @@ export const APP_REGISTRY: AppDefinition[] = [
     ],
   },
   {
+    name: "paperlessngx",
+    displayName: "Paperless-ngx",
+    description: "Document management system with OCR",
+    image: "ghcr.io/paperless-ngx/paperless-ngx:latest",
+    containerName: "paperlessngx_webserver",
+    capacity: { performance: "medium", storage: "medium", note: "OCR processing with Redis broker and SQLite database" },
+    additionalContainers: ["paperlessngx_broker"],
+    port: 8000,
+    configSubdir: "data",
+    needsDataDir: false,
+    rawCompose: (envConfig: EnvConfig) => {
+      const baseDir = envConfig.BASE_DIR;
+      const duckdnsPrimary = envConfig.DUCKDNS_SUBDOMAINS?.split(",")[0].trim();
+      const paperlessUrl = envConfig.ENABLE_HTTPS === "true" && duckdnsPrimary
+        ? `https://paperlessngx.${duckdnsPrimary}.duckdns.org`
+        : "";
+      const ocrLanguage = envConfig.PAPERLESS_OCR_LANGUAGE ?? "eng";
+      const urlEnv = paperlessUrl ? [`      - PAPERLESS_URL=${paperlessUrl}`] : [];
+      const lines = [
+        `services:`,
+        `  paperlessngx-broker:`,
+        `    image: docker.io/library/redis:8`,
+        `    container_name: paperlessngx_broker`,
+        `    volumes:`,
+        `      - ${baseDir}/paperlessngx/redisdata:/data`,
+        `    restart: unless-stopped`,
+        ``,
+        `  paperlessngx-webserver:`,
+        `    image: ghcr.io/paperless-ngx/paperless-ngx:latest`,
+        `    container_name: paperlessngx_webserver`,
+        `    depends_on:`,
+        `      - paperlessngx-broker`,
+        `    ports:`,
+        `      - 8000:8000`,
+        `    volumes:`,
+        `      - ${baseDir}/paperlessngx/data:/usr/src/paperless/data`,
+        `      - ${baseDir}/paperlessngx/media:/usr/src/paperless/media`,
+        `      - ${baseDir}/paperlessngx/export:/usr/src/paperless/export`,
+        `      - ${baseDir}/paperlessngx/consume:/usr/src/paperless/consume`,
+        `    environment:`,
+        `      - PAPERLESS_REDIS=redis://paperlessngx-broker:6379`,
+        `      - PAPERLESS_OCR_LANGUAGE=${ocrLanguage}`,
+        `      - PAPERLESS_TIME_ZONE=${envConfig.TZ}`,
+        `      - USERMAP_UID=${envConfig.PUID}`,
+        `      - USERMAP_GID=${envConfig.PGID}`,
+        ...urlEnv,
+        `    restart: unless-stopped`,
+      ];
+      return lines.join("\n") + "\n";
+    },
+    secrets: [
+      {
+        envVar: "PAPERLESS_OCR_LANGUAGE",
+        prompt: "OCR language (see https://tesseract-ocr.github.io/tessdoc/Data-Files-in-different-versions.html)",
+      },
+    ],
+  },
+  {
     name: "pihole",
     displayName: "Pi-hole",
     description: "Network-wide ad blocker and DNS server",
@@ -1253,8 +1311,8 @@ export const APP_CATEGORIES: AppCategory[] = [
   {
     label: "Productivity",
     value: "productivity",
-    description: "AFFiNE, Excalidraw, Omni Tools, Open WebUI, Penpot, Stirling PDF",
-    apps: ["affine", "excalidraw", "omnitools", "openwebui", "penpot", "stirlingpdf"],
+    description: "AFFiNE, Excalidraw, Omni Tools, Open WebUI, Paperless-ngx, Penpot, Stirling PDF",
+    apps: ["affine", "excalidraw", "omnitools", "openwebui", "paperlessngx", "penpot", "stirlingpdf"],
   },
   {
     label: "Finance",

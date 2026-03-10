@@ -65,6 +65,7 @@ mithrandir log <app> [service] # View logs
 | [Excalidraw](./excalidraw) | 5000 | Virtual whiteboard for sketching |
 | [Omni Tools](./omni-tools) | 8079 | Collection of useful productivity tools |
 | [Open WebUI](./open-webui) | 3000 | Self-hosted AI chat interface |
+| [Paperless-ngx](./paperless-ngx) | 8000 | Document management system with OCR |
 | [Penpot](./penpot) | 9001 | Open-source design and prototyping platform |
 | [Stirling PDF](./stirling-pdf) | 8084 | All-in-one PDF manipulation tool |
 

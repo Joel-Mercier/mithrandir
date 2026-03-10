@@ -7,8 +7,8 @@ Automated setup and backup system for Docker-based homelab applications.
 ![GitHub deployments](https://img.shields.io/github/deployments/Joel-Mercier/mithrandir/github-pages)
 ![GitHub License](https://img.shields.io/github/license/Joel-Mercier/mithrandir)
 ![GitHub last commit](https://img.shields.io/github/last-commit/Joel-Mercier/mithrandir)
-![CI](https://img.shields.io/github/actions/workflow/status/Joel-Mercier/mithrandir/ci.yml)
-![Deploy](https://img.shields.io/github/actions/workflow/status/Joel-Mercier/mithrandir/deploy.yml)
+[![CI](https://github.com/Joel-Mercier/mithrandir/actions/workflows/ci.yml/badge.svg)](https://github.com/Joel-Mercier/mithrandir/actions/workflows/ci.yml)
+[![Deploy VitePress site to Pages](https://github.com/Joel-Mercier/mithrandir/actions/workflows/deploy.yml/badge.svg)](https://github.com/Joel-Mercier/mithrandir/actions/workflows/deploy.yml)
 
 ## Quick Start
 
@@ -57,6 +57,7 @@ All configuration lives in a single `.env` file at the project root.
 - `SURE_DB_PASSWORD`: Optional database password for Sure
 - `AFFINE_DB_PASSWORD`: Optional database password for AFFiNE
 - `AFFINE_DB_USERNAME`: Optional database username for AFFiNE (default: `affine`)
+- `PAPERLESS_OCR_LANGUAGE`: OCR language for Paperless-ngx (default: `eng`)
 - `PENPOT_SECRET_KEY`: Required secret key for Penpot
 - `PENPOT_DB_PASSWORD`: Optional database password for Penpot
 - `PENPOT_PUBLIC_URI`: Optional public URI for Penpot (default: `http://localhost:9001`)
@@ -398,6 +399,7 @@ Checks configuration correctness across three categories: System (.env file, Doc
 | Excalidraw | 5000 | Virtual whiteboard for sketching |
 | Omni Tools | 8079 | Collection of useful productivity tools |
 | Open WebUI | 3000 | Self-hosted AI chat interface |
+| Paperless-ngx | 8000 | Document management system with OCR |
 | Penpot | 9001 | Open-source design and prototyping platform |
 | Stirling PDF | 8084 | All-in-one PDF manipulation tool |
 | Actual Budget | 5006 | Privacy-focused personal finance and budgeting app |

@@ -65,6 +65,7 @@ mithrandir log <app> [service] # Voir les logs
 | [Excalidraw](./excalidraw) | 5000 | Tableau blanc virtuel pour dessiner |
 | [Omni Tools](./omni-tools) | 8079 | Collection d'outils de productivité utiles |
 | [Open WebUI](./open-webui) | 3000 | Interface de chat IA auto-hébergée |
+| [Paperless-ngx](./paperless-ngx) | 8000 | Système de gestion de documents avec OCR |
 | [Penpot](./penpot) | 9001 | Plateforme open-source de design et prototypage |
 | [Stirling PDF](./stirling-pdf) | 8084 | Outil tout-en-un de manipulation de PDF |
 
