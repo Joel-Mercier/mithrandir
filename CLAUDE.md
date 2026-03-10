@@ -118,6 +118,10 @@ Tests use Bun's built-in test runner. All test files live in `src/__tests__/`.
 
 Snapshots are stored in `src/__tests__/__snapshots__/` and committed to git. Update with `bun test --update-snapshots` when compose/caddy generation logic changes.
 
+### Integration Tests (`integration-tests/`)
+
+VM-based end-to-end tests using [nix-vm-test](https://github.com/numtide/nix-vm-test). A Nix flake in `integration-tests/flake.nix` defines tests that spin up Debian 13 QEMU VMs, clone the repo, run `install.sh`, and verify `mithrandir --help`. Uses the NixOS test driver Python API (`vm.succeed()`, `vm.wait_for_unit()`, etc.). Requires Linux with KVM — cannot run on macOS directly.
+
 ### CI Pipeline
 
 GitHub Actions workflow (`.github/workflows/ci.yml`) runs on every push/PR to `main`:
@@ -125,6 +129,7 @@ GitHub Actions workflow (`.github/workflows/ci.yml`) runs on every push/PR to `m
 2. `bun run typecheck`
 3. `bun run build`
 4. `bun test`
+5. Integration test (separate job): enables KVM, installs Nix, builds and runs the VM test with Nix store caching via `nix-community/cache-nix-action`
 
 ## Key Constraints
 

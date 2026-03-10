@@ -457,13 +457,19 @@ Snapshot files are stored in `src/__tests__/__snapshots__/` and committed to git
 bun test --update-snapshots
 ```
 
+### Integration Tests
+
+VM-based end-to-end tests live in `integration-tests/` using [nix-vm-test](https://github.com/numtide/nix-vm-test). A Debian 13 VM is spun up via QEMU, the repo is cloned, `install.sh` is run, and `mithrandir --help` is verified. Requires a Linux host with KVM (runs in CI on GitHub Actions with hardware-accelerated KVM).
+
+See `integration-tests/README.md` for details on running locally and writing new tests.
+
 ### CI
 
-A GitHub Actions workflow runs on every push and pull request to `main`. It runs `bun run typecheck`, `bun run build`, and `bun test`.
+A GitHub Actions workflow runs on every push and pull request to `main`. It runs `bun run typecheck`, `bun run build`, and `bun test`. A separate integration test job spins up a Debian VM and verifies the full install flow.
 
 ## TODO
 
 - [ ] Add screenshots to the docs
 - [ ] Make sure that empty env vars in .env are considered as not set and not as empty strings since this might cause issues with some apps where a value is expected
-- [ ] Setup a local test environment with docker. This would allow to test the CLI on a wider range of hardware and operating systems, and also help us catch any regressions before releasing a new version.
+- [x] ~~Setup a local test environment with docker.~~ VM-based integration tests with nix-vm-test (see `integration-tests/`)
 - [ ] Add a \[CERTIFICATE_EXPIRATION\] > 72h check for each app during the Gatus setup to warn the user if their certificate is about to expire. Caddy is handling the certificate renewal automatically.
