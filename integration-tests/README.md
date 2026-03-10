@@ -1,6 +1,6 @@
 # Mithrandir Integration Tests
 
-VM-based end-to-end tests using [nix-vm-test](https://github.com/numtide/nix-vm-test). Spins up a real Debian VM via QEMU and runs the full getting-started flow.
+VM-based end-to-end tests using [nix-vm-test](https://github.com/numtide/nix-vm-test). Spins up real Debian 13 VMs via QEMU and runs critical CLI workflows.
 
 ## Prerequisites
 
@@ -14,42 +14,57 @@ LC_ALL=C.UTF-8 lscpu | grep Virtualization
 
 > **macOS note**: These tests require a Linux host with KVM. Run them in CI on GitHub Actions Linux runners, or locally inside a Linux VM (e.g. Lima/OrbStack) with KVM passthrough.
 
+## Tests
+
+| Test | Description | Disk |
+|------|-------------|------|
+| `getting-started` | Clone → `install.sh` → `mithrandir --help` | +4G |
+| `docker-install` | `mithrandir install docker` + idempotency check | +6G |
+| `app-lifecycle` | Install/status/stop/start/restart/uninstall (Prowlarr) | +6G |
+| `backup-restore` | Backup, verify, verify --extract, restore | +8G |
+| `diagnostics` | version, config, health, doctor, capacity, status | +6G |
+| `update` | `mithrandir update prowlarr --yes` + backup verification | +8G |
+
 ## Running Tests
 
 ```sh
 cd integration-tests
 
-# Run the test (non-interactive)
-nix build .# -L && ./result/bin/test-driver
+# Run a specific test
+nix build .#checks.x86_64-linux.getting-started -L
+nix build .#checks.x86_64-linux.docker-install -L
+nix build .#checks.x86_64-linux.app-lifecycle -L
+nix build .#checks.x86_64-linux.backup-restore -L
+nix build .#checks.x86_64-linux.diagnostics -L
+nix build .#checks.x86_64-linux.update -L
 
-# Run interactively (opens QEMU window + Python console for debugging)
-nix build .#interactive -L && ./result/bin/test-driver
+# Run all tests
+nix flake check -L
+
+# Interactive mode (opens QEMU window + Python console for debugging)
+nix build .#app-lifecycle-interactive -L && ./result/bin/test-driver
 ```
 
-## What It Tests
-
-The **getting-started** test replicates what a real user does:
-
-1. Boot a fresh Debian 13 VM
-2. `apt-get install git`
-3. `git clone` the mithrandir repo
-4. Run `bash install.sh`
-5. Verify `mithrandir --help` works and shows expected output
-
 ## CI Integration
+
+Tests run in parallel via a GitHub Actions matrix strategy:
 
 ```yaml
 integration-test:
   runs-on: ubuntu-latest
+  strategy:
+    fail-fast: false
+    matrix:
+      test: [getting-started, docker-install, app-lifecycle, backup-restore, diagnostics, update]
   steps:
-    - uses: actions/checkout@v4
-    - uses: cachix/install-nix-action@v27
-      with:
-        extra_nix_config: |
-          experimental-features = nix-command flakes
-    - name: Run getting-started test
-      working-directory: integration-tests
+    - uses: actions/checkout@v5
+    - name: Enable KVM
       run: |
-        nix build .# -L
-        ./result/bin/test-driver
+        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+        sudo udevadm control --reload-rules
+        sudo udevadm trigger --name-match=kvm
+    - uses: cachix/install-nix-action@v27
+    - name: Run ${{ matrix.test }} test
+      working-directory: integration-tests
+      run: nix build .#checks.x86_64-linux.${{ matrix.test }} -L
 ```

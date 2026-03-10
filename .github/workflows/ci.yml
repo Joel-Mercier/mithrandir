@@ -20,6 +20,10 @@ jobs:
 
   integration-test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        test: [getting-started, docker-install, app-lifecycle, backup-restore, diagnostics, update]
     steps:
       - uses: actions/checkout@v5
       - name: Enable KVM
@@ -36,8 +40,7 @@ jobs:
         with:
           primary-key: nix-${{ runner.os }}-${{ hashFiles('integration-tests/flake.lock') }}
           restore-prefixes-first-match: nix-${{ runner.os }}-
-      - name: Run getting-started test
+      - name: Run ${{ matrix.test }} test
         working-directory: integration-tests
         run: |
-          nix build .# -L
-          ./result/bin/test-driver
+          nix build .#checks.x86_64-linux.${{ matrix.test }} -L

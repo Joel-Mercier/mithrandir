@@ -120,7 +120,15 @@ Snapshots are stored in `src/__tests__/__snapshots__/` and committed to git. Upd
 
 ### Integration Tests (`integration-tests/`)
 
-VM-based end-to-end tests using [nix-vm-test](https://github.com/numtide/nix-vm-test). A Nix flake in `integration-tests/flake.nix` defines tests that spin up Debian 13 QEMU VMs, clone the repo, run `install.sh`, and verify `mithrandir --help`. Uses the NixOS test driver Python API (`vm.succeed()`, `vm.wait_for_unit()`, etc.). Requires Linux with KVM — cannot run on macOS directly.
+VM-based end-to-end tests using [nix-vm-test](https://github.com/numtide/nix-vm-test). A Nix flake in `integration-tests/flake.nix` defines tests that spin up Debian 13 QEMU VMs. Uses the NixOS test driver Python API (`vm.succeed()`, `vm.wait_for_unit()`, etc.). Requires Linux with KVM — cannot run on macOS directly.
+
+Tests (all use Prowlarr as the test app):
+- **`getting-started`** — Clone → `install.sh` → `mithrandir --help`
+- **`docker-install`** — `mithrandir install docker` + idempotency
+- **`app-lifecycle`** — Install/status/stop/start/restart/uninstall
+- **`backup-restore`** — Backup, verify, verify --extract, restore
+- **`diagnostics`** — version, config, health, doctor, capacity, status
+- **`update`** — `mithrandir update prowlarr --yes` + backup verification
 
 ### CI Pipeline
 
@@ -129,7 +137,7 @@ GitHub Actions workflow (`.github/workflows/ci.yml`) runs on every push/PR to `m
 2. `bun run typecheck`
 3. `bun run build`
 4. `bun test`
-5. Integration test (separate job): enables KVM, installs Nix, builds and runs the VM test with Nix store caching via `nix-community/cache-nix-action`
+5. Integration tests (parallel matrix of 6 jobs): enables KVM, installs Nix, runs each VM test with Nix store caching via `nix-community/cache-nix-action`
 
 ## Key Constraints
 

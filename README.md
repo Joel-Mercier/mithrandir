@@ -459,13 +459,13 @@ bun test --update-snapshots
 
 ### Integration Tests
 
-VM-based end-to-end tests live in `integration-tests/` using [nix-vm-test](https://github.com/numtide/nix-vm-test). A Debian 13 VM is spun up via QEMU, the repo is cloned, `install.sh` is run, and `mithrandir --help` is verified. Requires a Linux host with KVM (runs in CI on GitHub Actions with hardware-accelerated KVM).
+VM-based end-to-end tests live in `integration-tests/` using [nix-vm-test](https://github.com/numtide/nix-vm-test). Debian 13 VMs are spun up via QEMU to test critical CLI paths: install flow, Docker setup, app lifecycle, backup/restore, diagnostics, and updates. Requires a Linux host with KVM (runs in CI on GitHub Actions with hardware-accelerated KVM).
 
 See `integration-tests/README.md` for details on running locally and writing new tests.
 
 ### CI
 
-A GitHub Actions workflow runs on every push and pull request to `main`. It runs `bun run typecheck`, `bun run build`, and `bun test`. A separate integration test job spins up a Debian VM and verifies the full install flow.
+A GitHub Actions workflow runs on every push and pull request to `main`. It runs `bun run typecheck`, `bun run build`, and `bun test`. A parallel matrix of integration tests spins up Debian VMs to verify the install flow, Docker setup, app lifecycle, backup/restore, diagnostics, and update commands.
 
 ## TODO
 
