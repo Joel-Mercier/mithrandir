@@ -9,6 +9,7 @@ import { loadEnvConfig } from "@/lib/config.js";
 import { Header } from "@/components/Header.js";
 import { AppStatus } from "@/components/AppStatus.js";
 import { writeComposeAndStart } from "@/commands/setup.js";
+import { regenerateGatusConfig } from "@/lib/gatus.js";
 import type { EnvConfig } from "@/types.js";
 
 interface CompletedStep {
@@ -96,6 +97,15 @@ function ReinstallInteractive({
     setCurrentLabel(`Reinstalling ${appName}...`);
     await writeComposeAndStart(app, env);
     addStep({ name: "Reinstall", status: "done", message: `${appName} is running` });
+
+    // Regenerate Gatus config (updates endpoints when reinstalling Gatus itself,
+    // or refreshes the monitored app's entry for other apps)
+    try {
+      await regenerateGatusConfig(env);
+      addStep({ name: "Gatus", status: "done", message: "Health checks updated" });
+    } catch {
+      // Non-fatal: Gatus may not be installed
+    }
 
     setPhase("done");
     setTimeout(() => exit(), 500);
