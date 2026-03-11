@@ -27,6 +27,8 @@ export interface AppDefinition {
   sysctls?: Record<string, string>;
   /** Whether this app mounts BASE_DIR/data */
   needsDataDir: boolean;
+  /** Whether the image needs to be built locally (no remote pull) */
+  needsBuild?: boolean;
   /** Whether data dir should be read-only */
   dataDirReadOnly?: boolean;
   /** Extra volume mounts beyond config and data: [hostRelative, container, options?] */

@@ -243,8 +243,6 @@ function getContainerConfigPath(app: AppDefinition): string {
       return "/etc/pihole";
     case "trip":
       return "/app/storage";
-    case "cookcli":
-      return "/recipes";
     default:
       return "/config";
   }

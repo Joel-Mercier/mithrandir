@@ -865,11 +865,31 @@ export const APP_REGISTRY: AppDefinition[] = [
     name: "cookcli",
     displayName: "CookCLI",
     description: "Recipe manager using the Cooklang markup language",
-    image: "ghcr.io/cooklang/cookcli:latest",
+    image: "mithrandir/cookcli:latest",
     port: 9080,
     configSubdir: "recipes",
     needsDataDir: false,
+    needsBuild: true,
     capacity: { performance: "low", storage: "low", note: "Recipe server, minimal resources" },
+    rawCompose: (envConfig: EnvConfig) => {
+      const baseDir = envConfig.BASE_DIR;
+      const appDir = `${baseDir}/cookcli`;
+      return [
+        "services:",
+        "  cookcli:",
+        "    build: https://github.com/cooklang/cookcli.git",
+        "    image: mithrandir/cookcli:latest",
+        "    container_name: cookcli",
+        "    environment:",
+        `      - TZ=${envConfig.TZ}`,
+        "    ports:",
+        "      - 9080:9080",
+        "    volumes:",
+        `      - ${appDir}/recipes:/recipes`,
+        "    restart: unless-stopped",
+        "",
+      ].join("\n") + "\n";
+    },
   },
   {
     name: "adventurelog",

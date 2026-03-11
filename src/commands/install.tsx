@@ -822,9 +822,14 @@ function InstallApp({ appName }: { appName: string }) {
     // Install each app
     for (const installApp of appsToInstall) {
       setCurrentAppName(installApp.displayName);
-      setPhase("pulling");
-      setPullProgress(0);
-      await pullImageWithProgress(installApp.image, (pct) => setPullProgress(pct));
+      if (installApp.needsBuild) {
+        // Apps with needsBuild are built locally via docker compose build
+        setPhase("pulling");
+      } else {
+        setPhase("pulling");
+        setPullProgress(0);
+        await pullImageWithProgress(installApp.image, (pct) => setPullProgress(pct));
+      }
 
       setPhase("composing");
       await writeComposeAndStart(installApp, env);
@@ -1016,9 +1021,11 @@ function InstallStack({ stackName }: { stackName: string }) {
       const { app } = appsToInstall[i];
       setInstallIdx(i);
       setCurrentAppName(app.displayName);
-      setPhase("pulling");
-      setPullProgress(0);
-      await pullImageWithProgress(app.image, (pct) => setPullProgress(pct));
+      if (!app.needsBuild) {
+        setPhase("pulling");
+        setPullProgress(0);
+        await pullImageWithProgress(app.image, (pct) => setPullProgress(pct));
+      }
 
       setPhase("composing");
       await writeComposeAndStart(app, env);

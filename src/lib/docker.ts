@@ -282,10 +282,13 @@ function parseSize(s: string): number {
 /** Start a container using docker compose (runs from app dir, matching setup.sh) */
 export async function composeUp(
   composePath: string,
+  options?: { build?: boolean },
 ): Promise<void> {
+  const args = ["compose", "up", "-d"];
+  if (options?.build) args.push("--build");
   await shell(
     "docker",
-    ["compose", "up", "-d"],
+    args,
     { sudo: true, cwd: dirname(composePath) },
   );
 }

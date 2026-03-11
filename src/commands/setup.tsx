@@ -1140,7 +1140,12 @@ function InstallAppsStep({ selectedApps, envConfig, autoYes, onComplete }: Insta
         const containerName = getContainerName(app);
         const running = await isContainerRunning(containerName);
 
-        if (running) {
+        if (app.needsBuild) {
+          // Apps built locally — skip pull, compose up --build handles it
+          setInstallPhase("composing");
+          await writeComposeAndStart(app, envConfig);
+          results.push({ app, status: running ? "updated" : "done" });
+        } else if (running) {
           // Check for updates
           const currentId = await getRunningImageId(containerName);
           const latestId = await pullImageWithProgress(
@@ -1351,8 +1356,10 @@ function HttpsSetupStep({ selectedApps, envConfig, autoYes, onComplete, onEnvUpd
       setPhase("installing-https-apps");
       for (const app of skippedHttpsApps) {
         try {
-          setPullProgress(0);
-          await pullImageWithProgress(app.image, (pct) => setPullProgress(pct));
+          if (!app.needsBuild) {
+            setPullProgress(0);
+            await pullImageWithProgress(app.image, (pct) => setPullProgress(pct));
+          }
           await writeComposeAndStart(app, updated);
           addStep({ name: app.displayName, status: "done", message: "Installed (requires HTTPS)" });
           // Regenerate Caddyfile to include the new app
@@ -2191,6 +2198,6 @@ export async function writeComposeAndStart(
     await removeContainer(name);
   }
 
-  // Start container
-  await composeUp(composePath);
+  // Start container (build from source if app requires it)
+  await composeUp(composePath, { build: app.needsBuild });
 }
