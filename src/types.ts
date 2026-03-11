@@ -71,6 +71,8 @@ export interface AppDefinition {
   caddyExtraSubdomains?: Array<{ subdomain: string; port: number }>;
   /** Custom compose generator for multi-container apps (bypasses generateCompose) */
   rawCompose?: (envConfig: EnvConfig) => string;
+  /** Files to create (with content) when the app is first installed */
+  seedFiles?: Array<{ path: string; content: string }>;
   /** Resource impact scores for capacity planning */
   capacity?: {
     /** CPU/RAM impact */

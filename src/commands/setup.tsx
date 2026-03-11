@@ -2165,6 +2165,17 @@ export async function writeComposeAndStart(
     }
   }
 
+  // Create seed files (empty config files needed before first start)
+  if (app.seedFiles) {
+    for (const sf of app.seedFiles) {
+      const filePath = `${appDir}/${sf.path}`;
+      await shell("bash", [
+        "-c",
+        `[ -f "${filePath}" ] || cat > "${filePath}" << 'SEED_EOF'\n${sf.content}SEED_EOF`,
+      ], { sudo: true });
+    }
+  }
+
   // Generate and write docker-compose.yml
   const compose = generateCompose(app, envConfig);
   await shell("bash", [
