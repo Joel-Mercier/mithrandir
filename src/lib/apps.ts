@@ -867,13 +867,12 @@ export const APP_REGISTRY: AppDefinition[] = [
     description: "Recipe manager using the Cooklang markup language",
     image: "ghcr.io/cooklang/cookcli:latest",
     port: 9080,
-    configSubdir: "multiple",
-    multipleConfigDirs: ["recipes", "config"],
+    configSubdir: "recipes",
     needsDataDir: false,
     capacity: { performance: "low", storage: "low", note: "Recipe server, minimal resources" },
     seedFiles: [
-      { path: "config/aisle.conf", content: "" },
-      { path: "config/pantry.conf", content: "" },
+      { path: "recipes/config/aisle.conf", content: "" },
+      { path: "recipes/config/pantry.conf", content: "" },
     ],
   },
   {

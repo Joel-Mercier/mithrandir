@@ -2171,7 +2171,7 @@ export async function writeComposeAndStart(
       const filePath = `${appDir}/${sf.path}`;
       await shell("bash", [
         "-c",
-        `[ -f "${filePath}" ] || cat > "${filePath}" << 'SEED_EOF'\n${sf.content}SEED_EOF`,
+        `mkdir -p "$(dirname "${filePath}")" && [ -f "${filePath}" ] || cat > "${filePath}" << 'SEED_EOF'\n${sf.content}SEED_EOF`,
       ], { sudo: true });
     }
   }
