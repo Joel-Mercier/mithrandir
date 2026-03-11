@@ -1,5 +1,6 @@
 import { execa } from "execa";
 import { getApp, getContainerName, getAllContainerNames, getAppNames } from "@/lib/apps.js";
+import { isContainerRunning } from "@/lib/docker.js";
 import { dockerNeedsSudo } from "@/lib/shell.js";
 
 /** Map container name → friendly service name (e.g. "adventurelog_backend" → "backend") */
@@ -66,6 +67,13 @@ export async function runLog(
     targetContainer = getContainerName(app);
   }
 
+  if (!(await isContainerRunning(targetContainer))) {
+    console.error(
+      `Container '${targetContainer}' is not running.\nIs ${app.displayName} installed? Try: mithrandir install ${appName}`,
+    );
+    process.exit(1);
+  }
+
   const useSudo = await dockerNeedsSudo();
   const dockerArgs = useSudo ? ["docker", "logs"] : ["logs"];
 
@@ -81,12 +89,7 @@ export async function runLog(
     if (error.exitCode === 130 || error.signal === "SIGINT") {
       process.exit(0);
     }
-    if (error.stderr?.includes("No such container")) {
-      console.error(
-        `Container '${targetContainer}' is not running.\nIs ${app.displayName} installed? Try: mithrandir install ${appName}`,
-      );
-      process.exit(1);
-    }
-    throw error;
+    console.error(`Failed to read logs for ${appName}: ${error.message}`);
+    process.exit(1);
   }
 }
