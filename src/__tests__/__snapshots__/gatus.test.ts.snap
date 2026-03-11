@@ -1,0 +1,62 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`generateGatusConfig snapshot: full config with mixed apps 1`] = `
+"web:
+  port: 3001
+
+storage:
+  type: sqlite
+  path: /data/data.db
+
+security:
+  basic:
+    username: admin
+    password-bcrypt-base64: dGVzdGhhc2g=
+
+alerting:
+  discord:
+    webhook-url: https://discord.com/api/webhooks/test
+
+endpoints:
+  - name: Sonarr
+    group: single-container
+    url: http://192.168.1.100:8989
+    interval: 1m
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: discord
+        description: "healthcheck failed"
+        send-on-resolved: true
+  - name: Immich
+    group: multi-container
+    url: http://192.168.1.100:2283
+    interval: 1m
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: discord
+        description: "healthcheck failed"
+        send-on-resolved: true
+  - name: AdventureLog
+    group: multi-container
+    url: http://192.168.1.100:8015
+    interval: 1m
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: discord
+        description: "healthcheck failed"
+        send-on-resolved: true
+  - name: "AdventureLog (adventurelog-api)"
+    group: multi-container
+    url: http://192.168.1.100:8016
+    interval: 1m
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: discord
+        description: "healthcheck failed"
+        send-on-resolved: true
+"
+`;

@@ -26,6 +26,7 @@ import {
 import { shell } from "@/lib/shell.js";
 import { generateCompose } from "@/lib/compose.js";
 import { generate404Page, generateCaddyfile, generateCaddyDockerfile, getDuckDnsDomain, regenerateCaddyfile } from "@/lib/caddy.js";
+import { regenerateGatusConfig } from "@/lib/gatus.js";
 import { getLocalIp } from "@/lib/distro.js";
 import {
   isUfwInstalled,
@@ -720,7 +721,7 @@ function InstallApp({ appName }: { appName: string }) {
   const [appResults, setAppResults] = useState<
     Array<{ name: string; status: "done" | "error" | "skipped"; message?: string }>
   >([]);
-  const [phase, setPhase] = useState<"init" | "secrets" | "pulling" | "composing" | "caddy" | "done">("init");
+  const [phase, setPhase] = useState<"init" | "secrets" | "pulling" | "composing" | "caddy" | "gatus" | "done">("init");
   const [currentAppName, setCurrentAppName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pullProgress, setPullProgress] = useState(0);
@@ -868,6 +869,18 @@ function InstallApp({ appName }: { appName: string }) {
       }
     }
 
+    // Regenerate Gatus config if Gatus is installed (and we're not installing Gatus itself)
+    if (appName !== "gatus") {
+      setPhase("gatus");
+      setCurrentAppName("Gatus");
+      try {
+        await regenerateGatusConfig(env);
+        setAppResults((prev) => [...prev, { name: "Gatus", status: "done", message: "Health checks updated" }]);
+      } catch {
+        // Non-fatal: Gatus may not be installed
+      }
+    }
+
     setPhase("done");
     setTimeout(() => exit(), 500);
   }
@@ -929,6 +942,7 @@ function InstallApp({ appName }: { appName: string }) {
             {phase === "pulling" && " — pulling image..."}
             {phase === "composing" && " — starting container..."}
             {phase === "caddy" && " — updating HTTPS..."}
+            {phase === "gatus" && " — updating health checks..."}
           </Text>
           {phase === "pulling" && pullProgress > 0 && pullProgress < 100 && (
             <ProgressBar percent={pullProgress} />
@@ -1047,6 +1061,16 @@ function InstallStack({ stackName }: { stackName: string }) {
       } catch {
         setAppResults((prev) => [...prev, { name: "Firewall", status: "skipped", message: "Failed to add UFW rules" }]);
       }
+    }
+
+    // Regenerate Gatus config if Gatus is installed
+    setPhase("caddy");
+    setCurrentAppName("Gatus");
+    try {
+      await regenerateGatusConfig(env);
+      setAppResults((prev) => [...prev, { name: "Gatus", status: "done", message: "Health checks updated" }]);
+    } catch {
+      // Non-fatal: Gatus may not be installed
     }
 
     setPhase("done");

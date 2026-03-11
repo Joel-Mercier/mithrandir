@@ -8,6 +8,7 @@ import { getApp, getAppNames, getAppDir, getCompanionApps, getComposePath } from
 import { shell, commandExists } from "@/lib/shell.js";
 import { loadEnvConfig } from "@/lib/config.js";
 import { regenerateCaddyfile } from "@/lib/caddy.js";
+import { regenerateGatusConfig } from "@/lib/gatus.js";
 import { isUfwActive, removeAppPorts } from "@/lib/ufw.js";
 import { BACKUP_LOG_PATH } from "@/lib/logger.js";
 import { Header } from "@/components/Header.js";
@@ -147,6 +148,16 @@ function AppUninstallInteractive({
         addStep({ name: "HTTPS", status: "done", message: "Caddyfile updated" });
       } catch {
         addStep({ name: "HTTPS", status: "skipped", message: "Failed to update Caddyfile" });
+      }
+    }
+
+    // Regenerate Gatus config to remove uninstalled app (skip if uninstalling Gatus itself)
+    if (appName !== "gatus") {
+      try {
+        await regenerateGatusConfig(env);
+        addStep({ name: "Gatus", status: "done", message: "Health checks updated" });
+      } catch {
+        // Non-fatal: Gatus may not be installed
       }
     }
   }

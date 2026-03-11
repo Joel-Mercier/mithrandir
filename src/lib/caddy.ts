@@ -106,7 +106,7 @@ export function generate404Page(
   if (!domain) throw new Error("DUCKDNS_SUBDOMAINS is not set");
 
   const proxyApps = installedApps.filter(
-    (app) => app.port !== null && app.name !== "caddy",
+    (app) => app.port !== null && !app.hidden,
   );
 
   const appLinks = proxyApps

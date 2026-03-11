@@ -34,6 +34,7 @@ import {
   generateCaddyDockerfile,
   regenerateCaddyfile,
 } from "@/lib/caddy.js";
+import { generateGatusConfig } from "@/lib/gatus.js";
 import {
   hasSystemd,
   isWsl,
@@ -1976,51 +1977,12 @@ function AutoSetupAppsStep({ selectedApps, envConfig, localIp, autoYes, onComple
           const bcryptHash = await Bun.password.hash(defaultPassword, { algorithm: "bcrypt", cost: 9 });
           const b64Hash = btoa(bcryptHash);
 
-          // Build endpoints for all installed apps that have a port
-          const endpoints: string[] = [];
-          for (const installed of selectedApps) {
-            if (!installed.port || installed.name === "gatus") continue;
-            endpoints.push(`  - name: ${installed.displayName}`);
-            endpoints.push(`    url: http://${localIp}:${installed.port}`);
-            endpoints.push(`    interval: 1m`);
-            endpoints.push(`    conditions:`);
-            endpoints.push(`      - "[STATUS] == 200"`);
-            if (discordWebhook) {
-              endpoints.push(`    alerts:`);
-              endpoints.push(`      - type: discord`);
-              endpoints.push(`        description: "healthcheck failed"`);
-              endpoints.push(`        send-on-resolved: true`);
-            }
-          }
+          const configYaml = generateGatusConfig(selectedApps, localIp, {
+            username: defaultUsername,
+            passwordBcryptBase64: b64Hash,
+            discordWebhook: discordWebhook || undefined,
+          });
 
-          // Build config.yaml
-          const configLines: string[] = [];
-          configLines.push(`web:`);
-          configLines.push(`  port: 3001`);
-          configLines.push(``);
-          configLines.push(`storage:`);
-          configLines.push(`  type: sqlite`);
-          configLines.push(`  path: /data/data.db`);
-          configLines.push(``);
-          configLines.push(`security:`);
-          configLines.push(`  basic:`);
-          configLines.push(`    username: ${defaultUsername}`);
-          configLines.push(`    password-bcrypt-base64: ${b64Hash}`);
-
-          if (discordWebhook) {
-            configLines.push(``);
-            configLines.push(`alerting:`);
-            configLines.push(`  discord:`);
-            configLines.push(`    webhook-url: ${discordWebhook}`);
-          }
-
-          if (endpoints.length > 0) {
-            configLines.push(``);
-            configLines.push(`endpoints:`);
-            configLines.push(...endpoints);
-          }
-
-          const configYaml = configLines.join("\n") + "\n";
           const gatusConfigDir = `${envConfig.BASE_DIR}/gatus/config`;
           await shell("mkdir", ["-p", gatusConfigDir], { sudo: true });
           await shell("bash", [
