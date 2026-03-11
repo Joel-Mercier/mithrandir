@@ -865,7 +865,7 @@ export const APP_REGISTRY: AppDefinition[] = [
     name: "cookcli",
     displayName: "CookCLI",
     description: "Recipe manager using the Cooklang markup language",
-    image: "ghcr.io/cooklang/cookcli:latest",
+    image: "ghcr.io/cooklang/cookcli:0.25.1",
     port: 9080,
     configSubdir: "recipes",
     needsDataDir: false,
