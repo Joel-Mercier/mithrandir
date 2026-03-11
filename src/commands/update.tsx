@@ -231,21 +231,6 @@ function UpdateInteractive({
           setCurrentLabel(`Pulling ${app.displayName}...`);
           setPullProgress(0);
           try {
-            if (app.needsBuild) {
-              // Rebuild from source
-              setCurrentLabel(`Rebuilding ${app.displayName}...`);
-              await composeDown(composePath);
-              await composeUp(composePath, { build: true });
-
-              addStep({
-                name: app.displayName,
-                status: "done",
-                message: "Rebuilt from source",
-              });
-              updated++;
-              continue;
-            }
-
             // Get current image ID (empty string if container not running)
             const oldImageId = await getRunningImageId(containerName);
 

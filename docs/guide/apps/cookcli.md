@@ -4,7 +4,7 @@ Recipe manager using the [Cooklang](https://cooklang.org/) markup language — w
 
 | | |
 | --- | --- |
-| **Image** | `mithrandir/cookcli:latest` (built from [source](https://github.com/cooklang/cookcli)) |
+| **Image** | `ghcr.io/cooklang/cookcli:latest` |
 | **Web UI** | `http://your-server:9080` |
 | **Config path** | `{BASE_DIR}/cookcli/recipes` |
 | **Website** | [cooklang.org](https://cooklang.org/) |
