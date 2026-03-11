@@ -1,9 +1,19 @@
 import { describe, expect, test } from "bun:test";
 import { generateGatusConfig } from "@/lib/gatus.js";
 import { getApp } from "@/lib/apps.js";
-import type { AppDefinition } from "@/types.js";
+import type { EnvConfig } from "@/types.js";
 
 const LOCAL_IP = "192.168.1.100";
+
+const httpsEnv: EnvConfig = {
+  BASE_DIR: "/home/test",
+  PUID: "1000",
+  PGID: "1000",
+  TZ: "Etc/UTC",
+  ENABLE_HTTPS: "true",
+  DUCKDNS_SUBDOMAINS: "mylab",
+  DUCKDNS_TOKEN: "test-token",
+};
 
 describe("generateGatusConfig", () => {
   test("generates config with single-container apps", () => {
@@ -91,6 +101,37 @@ describe("generateGatusConfig", () => {
     expect(config).not.toContain("username:");
   });
 
+  test("uses HTTPS subdomain URLs when ENABLE_HTTPS is true", () => {
+    const apps = [getApp("sonarr")!, getApp("pihole")!];
+    const config = generateGatusConfig(apps, LOCAL_IP, {
+      envConfig: httpsEnv,
+    });
+
+    expect(config).toContain("url: https://sonarr.mylab.duckdns.org");
+    expect(config).toContain("url: https://pihole.mylab.duckdns.org");
+    expect(config).not.toContain(`http://${LOCAL_IP}`);
+  });
+
+  test("uses HTTP IP:port URLs when HTTPS is not enabled", () => {
+    const apps = [getApp("sonarr")!, getApp("pihole")!];
+    const config = generateGatusConfig(apps, LOCAL_IP, {});
+
+    expect(config).toContain(`url: http://${LOCAL_IP}:8989`);
+    expect(config).toContain(`url: http://${LOCAL_IP}:80`);
+    expect(config).not.toContain("https://");
+  });
+
+  test("HTTPS: extra subdomains use subdomain URLs", () => {
+    const apps = [getApp("adventurelog")!];
+    const config = generateGatusConfig(apps, LOCAL_IP, {
+      envConfig: httpsEnv,
+    });
+
+    expect(config).toContain("url: https://adventurelog.mylab.duckdns.org");
+    expect(config).toContain("url: https://adventurelog-api.mylab.duckdns.org");
+    expect(config).not.toContain(`http://${LOCAL_IP}`);
+  });
+
   test("snapshot: full config with mixed apps", () => {
     const apps = [
       getApp("sonarr")!,
@@ -101,6 +142,21 @@ describe("generateGatusConfig", () => {
       username: "admin",
       passwordBcryptBase64: "dGVzdGhhc2g=",
       discordWebhook: "https://discord.com/api/webhooks/test",
+    });
+
+    expect(config).toMatchSnapshot();
+  });
+
+  test("snapshot: HTTPS config with Pi-hole", () => {
+    const apps = [
+      getApp("sonarr")!,
+      getApp("pihole")!,
+      getApp("adventurelog")!,
+    ];
+    const config = generateGatusConfig(apps, LOCAL_IP, {
+      username: "admin",
+      passwordBcryptBase64: "dGVzdGhhc2g=",
+      envConfig: httpsEnv,
     });
 
     expect(config).toMatchSnapshot();

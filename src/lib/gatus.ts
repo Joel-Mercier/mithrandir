@@ -1,5 +1,7 @@
 import { existsSync, readFileSync } from "fs";
 import { APP_REGISTRY, getComposePath } from "@/lib/apps.js";
+import { PIHOLE_HTTPS_PORT } from "@/lib/compose.js";
+import { getDuckDnsDomain } from "@/lib/caddy.js";
 import { isContainerRunning, composeDown, composeUp } from "@/lib/docker.js";
 import { shell } from "@/lib/shell.js";
 import { getLocalIp } from "@/lib/distro.js";
@@ -17,25 +19,50 @@ function detectInstalledApps(baseDir: string): AppDefinition[] {
 }
 
 /**
+ * Build the healthcheck URL for an app.
+ * When HTTPS is enabled, apps behind Caddy are checked via their subdomain.
+ * Pi-hole's port is remapped to PIHOLE_HTTPS_PORT when Caddy owns port 80.
+ */
+function getAppUrl(
+  app: AppDefinition,
+  localIp: string,
+  domain: string | null,
+  httpsEnabled: boolean,
+): string {
+  if (httpsEnabled && domain) {
+    return `https://${app.name}.${domain}`;
+  }
+  // When HTTPS is enabled but we somehow don't have a domain, use remapped port for Pi-hole
+  const port = app.name === "pihole" && httpsEnabled ? PIHOLE_HTTPS_PORT : app.port;
+  return `http://${localIp}:${port}`;
+}
+
+/**
  * Generate Gatus endpoint entries for a single app.
  * Returns an array of endpoint objects that will be serialized to YAML.
  *
+ * When HTTPS is enabled, endpoints use the Caddy subdomain URL instead of
+ * direct IP:port, which also validates that the reverse proxy is working.
+ *
  * For multi-container apps with caddyExtraSubdomains (e.g. AdventureLog),
- * additional endpoints are created for each extra subdomain/port.
+ * additional endpoints are created for each extra subdomain.
  */
 function generateAppEndpoints(
   app: AppDefinition,
   localIp: string,
   discordWebhook: string | undefined,
+  domain: string | null,
+  httpsEnabled: boolean,
 ): string[] {
   if (!app.port || app.name === "gatus") return [];
 
   const lines: string[] = [];
+  const url = getAppUrl(app, localIp, domain, httpsEnabled);
 
   // Main endpoint
   lines.push(`  - name: ${app.displayName}`);
   lines.push(`    group: ${app.additionalContainers ? "multi-container" : "single-container"}`);
-  lines.push(`    url: http://${localIp}:${app.port}`);
+  lines.push(`    url: ${url}`);
   lines.push(`    interval: 1m`);
   lines.push(`    conditions:`);
   lines.push(`      - "[STATUS] == 200"`);
@@ -49,9 +76,12 @@ function generateAppEndpoints(
   // Extra subdomains (e.g. adventurelog-api backend)
   if (app.caddyExtraSubdomains) {
     for (const extra of app.caddyExtraSubdomains) {
+      const extraUrl = httpsEnabled && domain
+        ? `https://${extra.subdomain}.${domain}`
+        : `http://${localIp}:${extra.port}`;
       lines.push(`  - name: "${app.displayName} (${extra.subdomain})"`);
       lines.push(`    group: multi-container`);
-      lines.push(`    url: http://${localIp}:${extra.port}`);
+      lines.push(`    url: ${extraUrl}`);
       lines.push(`    interval: 1m`);
       lines.push(`    conditions:`);
       lines.push(`      - "[STATUS] == 200"`);
@@ -69,6 +99,10 @@ function generateAppEndpoints(
 
 /**
  * Generate the full Gatus config.yaml content from installed apps.
+ *
+ * When envConfig is provided and HTTPS is enabled, endpoints use Caddy
+ * subdomain URLs (e.g. https://pihole.mylab.duckdns.org) instead of
+ * direct IP:port, which also validates that the reverse proxy is working.
  */
 export function generateGatusConfig(
   installedApps: AppDefinition[],
@@ -77,8 +111,12 @@ export function generateGatusConfig(
     username?: string;
     passwordBcryptBase64?: string;
     discordWebhook?: string;
+    envConfig?: EnvConfig;
   },
 ): string {
+  const httpsEnabled = options.envConfig?.ENABLE_HTTPS === "true";
+  const domain = options.envConfig ? getDuckDnsDomain(options.envConfig) : null;
+
   const lines: string[] = [];
 
   lines.push(`web:`);
@@ -106,7 +144,7 @@ export function generateGatusConfig(
   // Build endpoints for all installed apps
   const endpoints: string[] = [];
   for (const app of installedApps) {
-    endpoints.push(...generateAppEndpoints(app, localIp, options.discordWebhook));
+    endpoints.push(...generateAppEndpoints(app, localIp, options.discordWebhook, domain, httpsEnabled));
   }
 
   if (endpoints.length > 0) {
@@ -183,6 +221,7 @@ export async function regenerateGatusConfig(
     username: existing.username,
     passwordBcryptBase64: existing.passwordBcryptBase64,
     discordWebhook,
+    envConfig,
   });
 
   // Write config

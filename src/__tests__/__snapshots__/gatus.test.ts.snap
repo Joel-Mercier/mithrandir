@@ -60,3 +60,44 @@ endpoints:
         send-on-resolved: true
 "
 `;
+
+exports[`generateGatusConfig snapshot: HTTPS config with Pi-hole 1`] = `
+"web:
+  port: 3001
+
+storage:
+  type: sqlite
+  path: /data/data.db
+
+security:
+  basic:
+    username: admin
+    password-bcrypt-base64: dGVzdGhhc2g=
+
+endpoints:
+  - name: Sonarr
+    group: single-container
+    url: https://sonarr.mylab.duckdns.org
+    interval: 1m
+    conditions:
+      - "[STATUS] == 200"
+  - name: Pi-hole
+    group: single-container
+    url: https://pihole.mylab.duckdns.org
+    interval: 1m
+    conditions:
+      - "[STATUS] == 200"
+  - name: AdventureLog
+    group: multi-container
+    url: https://adventurelog.mylab.duckdns.org
+    interval: 1m
+    conditions:
+      - "[STATUS] == 200"
+  - name: "AdventureLog (adventurelog-api)"
+    group: multi-container
+    url: https://adventurelog-api.mylab.duckdns.org
+    interval: 1m
+    conditions:
+      - "[STATUS] == 200"
+"
+`;

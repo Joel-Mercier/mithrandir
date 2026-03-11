@@ -1981,6 +1981,7 @@ function AutoSetupAppsStep({ selectedApps, envConfig, localIp, autoYes, onComple
             username: defaultUsername,
             passwordBcryptBase64: b64Hash,
             discordWebhook: discordWebhook || undefined,
+            envConfig,
           });
 
           const gatusConfigDir = `${envConfig.BASE_DIR}/gatus/config`;
