@@ -4,7 +4,7 @@ Gestionnaire de recettes utilisant le langage de balisage [Cooklang](https://coo
 
 | | |
 | --- | --- |
-| **Image** | `ghcr.io/cooklang/cookcli:latest` |
+| **Image** | `mithrandir/cookcli:latest` (construite depuis les [sources](https://github.com/cooklang/cookcli)) |
 | **Interface web** | `http://your-server:9080` |
 | **Chemin de configuration** | `{BASE_DIR}/cookcli/recipes` |
 | **Site web** | [cooklang.org](https://cooklang.org/) |
