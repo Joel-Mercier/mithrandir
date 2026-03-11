@@ -98,6 +98,12 @@ mithrandir log <app> [service] # Voir les logs
 | --- | --- | --- |
 | [Your Spotify](./your-spotify) | 3456 | Statistiques d'écoute et historique Spotify |
 
+### Cuisine
+
+| Application | Port | Description |
+| --- | --- | --- |
+| [CookCLI](./cookcli) | 9080 | Gestionnaire de recettes utilisant le langage de balisage Cooklang |
+
 ### Utilitaires
 
 | Application | Port | Description |

@@ -408,6 +408,7 @@ Checks configuration correctness across three categories: System (.env file, Doc
 | AdventureLog | 8015 | Travel planning and adventure journal |
 | TRIP | 8085 | Travel planning and trip journal |
 | Your Spotify | 3456 | Spotify listening statistics and history tracker |
+| CookCLI | 9080 | Recipe manager using the Cooklang markup language |
 
 ## Local Development
 
@@ -476,5 +477,4 @@ A GitHub Actions workflow runs on every push and pull request to `main`. It runs
 
 - [ ] Add screenshots to the docs
 - [ ] Make sure that empty env vars in .env are considered as not set and not as empty strings since this might cause issues with some apps where a value is expected
-- [x] ~~Setup a local test environment with docker.~~ VM-based integration tests with nix-vm-test (see `integration-tests/`)
 - [ ] Add a \[CERTIFICATE_EXPIRATION\] > 72h check for each app during the Gatus setup to warn the user if their certificate is about to expire. Caddy is handling the certificate renewal automatically.

@@ -862,6 +862,16 @@ export const APP_REGISTRY: AppDefinition[] = [
     command: ["fastapi", "run", "/app/trip/main.py", "--host", "0.0.0.0"],
   },
   {
+    name: "cookcli",
+    displayName: "CookCLI",
+    description: "Recipe manager using the Cooklang markup language",
+    image: "ghcr.io/cooklang/cookcli:latest",
+    port: 9080,
+    configSubdir: "recipes",
+    needsDataDir: false,
+    capacity: { performance: "low", storage: "low", note: "Recipe server, minimal resources" },
+  },
+  {
     name: "adventurelog",
     displayName: "AdventureLog",
     description: "Travel planning and adventure journal",
@@ -1337,6 +1347,12 @@ export const APP_CATEGORIES: AppCategory[] = [
     value: "statistics",
     description: "Your Spotify",
     apps: ["yourspotify"],
+  },
+  {
+    label: "Cooking",
+    value: "cooking",
+    description: "CookCLI",
+    apps: ["cookcli"],
   },
   {
     label: "Utilities",

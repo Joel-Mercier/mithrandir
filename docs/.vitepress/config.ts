@@ -110,6 +110,13 @@ function guideSidebar(prefix = ""): DefaultTheme.SidebarItem[] {
               ],
             },
             {
+              text: prefix ? "Cuisine" : "Cooking",
+              collapsed: true,
+              items: [
+                { text: "CookCLI", link: `${prefix}/guide/apps/cookcli` },
+              ],
+            },
+            {
               text: prefix ? "Utilitaires" : "Utilities",
               collapsed: true,
               items: [
