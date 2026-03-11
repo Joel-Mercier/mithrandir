@@ -30,6 +30,11 @@ export async function runStop(args: string[]): Promise<void> {
   const composePath = getComposePath(app, env.BASE_DIR);
 
   console.log(`Stopping ${appName}...`);
-  await composeDown(composePath);
+  try {
+    await composeDown(composePath);
+  } catch (error: any) {
+    console.error(`Failed to stop ${appName}: ${error.stderr || error.message}`);
+    process.exit(1);
+  }
   console.log(`${appName} stopped successfully.`);
 }

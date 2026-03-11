@@ -36,6 +36,11 @@ export async function runStart(args: string[]): Promise<void> {
   }
 
   console.log(`Starting ${appName}...`);
-  await composeUp(composePath);
+  try {
+    await composeUp(composePath);
+  } catch (error: any) {
+    console.error(`Failed to start ${appName}: ${error.stderr || error.message}`);
+    process.exit(1);
+  }
   console.log(`${appName} started successfully.`);
 }

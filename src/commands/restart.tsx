@@ -51,17 +51,22 @@ function RestartApp({ appName }: { appName: string }) {
       return;
     }
 
-    // Stop
-    setPhase("stopping");
-    setCurrentLabel(`Stopping ${appName}...`);
-    await composeDown(composePath);
-    addStep({ name: "Stop container", status: "done", message: appName });
+    try {
+      // Stop
+      setPhase("stopping");
+      setCurrentLabel(`Stopping ${appName}...`);
+      await composeDown(composePath);
+      addStep({ name: "Stop container", status: "done", message: appName });
 
-    // Start
-    setPhase("starting");
-    setCurrentLabel(`Starting ${appName}...`);
-    await composeUp(composePath);
-    addStep({ name: "Start container", status: "done", message: appName });
+      // Start
+      setPhase("starting");
+      setCurrentLabel(`Starting ${appName}...`);
+      await composeUp(composePath);
+      addStep({ name: "Start container", status: "done", message: appName });
+    } catch (err: any) {
+      setError(`Failed to restart ${appName}: ${err.stderr || err.message}`);
+      return;
+    }
 
     setPhase("done");
     setTimeout(() => exit(), 500);

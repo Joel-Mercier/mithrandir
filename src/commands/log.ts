@@ -81,6 +81,12 @@ export async function runLog(
     if (error.exitCode === 130 || error.signal === "SIGINT") {
       process.exit(0);
     }
+    if (error.stderr?.includes("No such container")) {
+      console.error(
+        `Container '${targetContainer}' is not running.\nIs ${app.displayName} installed? Try: mithrandir install ${appName}`,
+      );
+      process.exit(1);
+    }
     throw error;
   }
 }
