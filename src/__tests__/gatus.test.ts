@@ -101,35 +101,32 @@ describe("generateGatusConfig", () => {
     expect(config).not.toContain("username:");
   });
 
-  test("uses HTTPS subdomain URLs when ENABLE_HTTPS is true", () => {
-    const apps = [getApp("sonarr")!, getApp("pihole")!];
+  test("Pi-hole uses remapped port 8880 when HTTPS is enabled", () => {
+    const apps = [getApp("pihole")!];
     const config = generateGatusConfig(apps, LOCAL_IP, {
       envConfig: httpsEnv,
     });
 
-    expect(config).toContain("url: https://sonarr.mylab.duckdns.org");
-    expect(config).toContain("url: https://pihole.mylab.duckdns.org");
-    expect(config).not.toContain(`http://${LOCAL_IP}`);
+    expect(config).toContain(`url: http://${LOCAL_IP}:8880`);
+    expect(config).not.toContain(":80");
   });
 
-  test("uses HTTP IP:port URLs when HTTPS is not enabled", () => {
-    const apps = [getApp("sonarr")!, getApp("pihole")!];
+  test("Pi-hole uses standard port 80 without HTTPS", () => {
+    const apps = [getApp("pihole")!];
     const config = generateGatusConfig(apps, LOCAL_IP, {});
 
-    expect(config).toContain(`url: http://${LOCAL_IP}:8989`);
     expect(config).toContain(`url: http://${LOCAL_IP}:80`);
-    expect(config).not.toContain("https://");
   });
 
-  test("HTTPS: extra subdomains use subdomain URLs", () => {
-    const apps = [getApp("adventurelog")!];
+  test("always uses http://IP:port, never HTTPS subdomain URLs", () => {
+    const apps = [getApp("sonarr")!, getApp("pihole")!];
     const config = generateGatusConfig(apps, LOCAL_IP, {
       envConfig: httpsEnv,
     });
 
-    expect(config).toContain("url: https://adventurelog.mylab.duckdns.org");
-    expect(config).toContain("url: https://adventurelog-api.mylab.duckdns.org");
-    expect(config).not.toContain(`http://${LOCAL_IP}`);
+    expect(config).not.toContain("https://");
+    expect(config).toContain(`url: http://${LOCAL_IP}:8989`);
+    expect(config).toContain(`url: http://${LOCAL_IP}:8880`);
   });
 
   test("snapshot: full config with mixed apps", () => {
@@ -147,7 +144,7 @@ describe("generateGatusConfig", () => {
     expect(config).toMatchSnapshot();
   });
 
-  test("snapshot: HTTPS config with Pi-hole", () => {
+  test("snapshot: config with Pi-hole and HTTPS enabled", () => {
     const apps = [
       getApp("sonarr")!,
       getApp("pihole")!,
