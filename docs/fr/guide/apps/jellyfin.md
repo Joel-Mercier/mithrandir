@@ -47,5 +47,5 @@ Un guide supplémentaire pour Jellyfin est disponible [ici (Yams)](https://yams.
 Quelques bons clients pour Jellyfin :
 
 - Les clients officiels pour [Android](https://play.google.com/store/apps/details?id=org.jellyfin.mobile), [iOS](https://apps.apple.com/us/app/jellyfin-mobile/id1480192618) et [AndroidTV](https://play.google.com/store/apps/details?id=org.jellyfin.androidtv) (également disponible pour [Fire TV](https://www.amazon.com/gp/aw/d/B07TX7Z725))
-- [Wholphin (AndroidTV)](https://github.com/damontecres/Wholphin) - intègre le support de Seerr
-- [Moonfin (AndroidTV)](https://github.com/Moonfin-Client/AndroidTV-FireTV) - supporte Seerr mais pas encore disponible sur le Play Store, il faut installer l'APK manuellement.
+- [Wholphin (AndroidTV)](https://github.com/damontecres/Wholphin) - intègre le support de Seerr, disponible sur le [Google Play Store](https://play.google.com/store/apps/details?id=com.github.damontecres.wholphin)
+- [Moonfin (AndroidTV)](https://github.com/Moonfin-Client/AndroidTV-FireTV) - supporte Seerr, disponible sur le [Google Play Store](https://play.google.com/store/apps/details?id=org.moonfin.androidtv)

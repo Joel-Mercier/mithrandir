@@ -1325,8 +1325,14 @@ export const APP_CATEGORIES: AppCategory[] = [
   {
     label: "Productivity",
     value: "productivity",
-    description: "AFFiNE, Excalidraw, Omni Tools, Open WebUI, Paperless-ngx, Penpot, Stirling PDF",
-    apps: ["affine", "excalidraw", "omnitools", "openwebui", "paperlessngx", "penpot", "stirlingpdf"],
+    description: "AFFiNE, Excalidraw, Omni Tools, Paperless-ngx, Penpot, Stirling PDF",
+    apps: ["affine", "excalidraw", "omnitools", "paperlessngx", "penpot", "stirlingpdf"],
+  },
+  {
+    label: "AI",
+    value: "ai",
+    description: "Open WebUI",
+    apps: ["openwebui"],
   },
   {
     label: "Finance",

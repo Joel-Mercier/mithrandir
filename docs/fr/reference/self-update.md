@@ -10,12 +10,12 @@ mithrandir self-update
 
 ## Description
 
-Met à jour le CLI vers la dernière version en :
+Met à jour la CLI vers la dernière version en :
 
 1. Vérifiant l'état du dépôt git
 2. Récupérant et tirant les derniers changements
 3. Installant les dépendances (`bun install`)
-4. Reconstruisant le CLI (`bun run build`)
+4. Reconstruisant la CLI (`bun run build`)
 5. Vérifiant le lien symbolique `/usr/local/bin/mithrandir`
 
 ## Remarques

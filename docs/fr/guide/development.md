@@ -16,7 +16,7 @@ bun install
 
 | Commande | Description |
 |----------|-------------|
-| `bun run start` | Lancer le CLI en mode dev (non bundlé) |
+| `bun run start` | Lancer la CLI en mode dev (non bundlé) |
 | `bun run build` | Bundler dans `dist/mithrandir.js` |
 | `bun test` | Lancer les tests unitaires et de snapshot |
 | `bun run typecheck` | Vérification de types TypeScript (`tsc --noEmit`) |
@@ -64,7 +64,7 @@ bun test --update-snapshots
 
 ## Tests d'intégration
 
-Les tests end-to-end basés sur des VMs se trouvent dans `integration-tests/` et utilisent [nix-vm-test](https://github.com/numtide/nix-vm-test). Des VMs Debian 13 sont lancées via QEMU pour tester les chemins critiques du CLI. Tous les tests utilisent Prowlarr comme app de test.
+Les tests end-to-end basés sur des VMs se trouvent dans `integration-tests/` et utilisent [nix-vm-test](https://github.com/numtide/nix-vm-test). Des VMs Debian 13 sont lancées via QEMU pour tester les chemins critiques de la CLI. Tous les tests utilisent Prowlarr comme app de test.
 
 ### Suite de tests
 

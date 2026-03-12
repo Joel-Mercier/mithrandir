@@ -13,7 +13,7 @@ Avant d'installer Mithrandir, assurez-vous d'avoir :
 Clonez le dépôt et lancez le script d'installation :
 
 ```sh
-git clone https://github.com/your-username/homelab.git
+git clone https://github.com/Joel-Mercier/homelab.git
 cd homelab
 sudo bash install.sh
 ```
@@ -72,10 +72,10 @@ mithrandir setup
 
 ## Mise à jour
 
-Pour mettre à jour le CLI vers la dernière version :
+Pour mettre à jour la CLI vers la dernière version :
 
 ```sh
 mithrandir self-update
 ```
 
-Cela récupère les derniers changements depuis git, réinstalle les dépendances et recompile le CLI.
+Cela récupère les derniers changements depuis git, réinstalle les dépendances et recompile la CLI.

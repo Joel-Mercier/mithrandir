@@ -1,6 +1,6 @@
 # Pour commencer
 
-Mithrandir est un système automatisé de configuration, sauvegarde et restauration de homelab basé sur Docker pour les serveurs Raspberry Pi OS, Debian et Ubuntu. Il fournit un seul CLI pour installer, configurer et gérer une suite complète de services auto-hébergés — du streaming multimédia à la domotique en passant par la sécurité réseau.
+Mithrandir est un système automatisé de configuration, sauvegarde et restauration de homelab basé sur Docker pour les serveurs Raspberry Pi OS, Debian et Ubuntu. Il fournit une seule CLI pour installer, configurer et gérer une suite complète de services auto-hébergés — du streaming multimédia à la domotique en passant par la sécurité réseau.
 
 ::: warning
 Ce projet est développé avec l'aide de LLMs et de codage agentique. Bien que je sois un développeur logiciel professionnel, j'ai davantage d'expérience dans le développement de sites web et d'applications mobiles.
@@ -15,12 +15,12 @@ Mithrandir n'a pour l'instant été testé que sur un Raspberry Pi 5 avec 4 Go d
 - **Installation en une commande** — Un assistant interactif installe Docker, configure les services et démarre le tout avec une seule commande `mithrandir setup`
 - **Installation par stack** — Installez des groupes d'applications prédéfinies en une seule commande (par ex. `mithrandir install media-movies-tv` pour la stack complète films et séries TV)
 - **Plus de 30 applications auto-hébergées** — Serveurs multimédias, gestionnaires de téléchargement, domotique, blocage de publicités, VPN, gestion de mots de passe, et bien plus
-- **Sauvegardes automatiques** — Sauvegardes quotidiennes planifiées vers le stockage local et le cloud (Google Drive, etc.) via rclone, avec rétention configurable
+- **Sauvegardes automatiques** — Sauvegardes quotidiennes planifiées sur le stockage local et le cloud (Google Drive, etc.) via rclone, avec rétention configurable
 - **Reprise après sinistre** — Restaurez l'intégralité de votre homelab sur une nouvelle machine à partir d'une sauvegarde distante avec `mithrandir recover`
 - **HTTPS prêt à l'emploi** — HTTPS wildcard via le reverse proxy Caddy avec des certificats Let's Encrypt automatiques via DuckDNS
 - **Configuration automatique** — Configuration automatique optionnelle des intégrations entre applications (Prowlarr → Sonarr/Radarr, bibliothèques Jellyfin, etc.)
 - **Surveillance de la santé** — Vérifications de santé intégrées pour Docker, l'espace disque, la fraîcheur des sauvegardes et l'état des conteneurs
-- **Mise à jour automatique** — Mettez à jour le CLI et toutes les images de conteneurs avec de simples commandes
+- **Mise à jour automatique** — Mettez à jour la CLI et toutes les images de conteneurs avec de simples commandes
 
 ## Prérequis
 
@@ -44,7 +44,7 @@ sudo bash install.sh
 mithrandir setup
 ```
 
-Le script d'installation gère tout — installation de Bun, compilation du CLI et création de la commande `mithrandir`. Consultez les pages [Installation](./installation) et [Configuration](./setup) pour des instructions détaillées.
+Le script d'installation gère tout — installation de Bun, compilation de la CLI et création de la commande `mithrandir`. Consultez les pages [Installation](./installation) et [Configuration](./setup) pour des instructions détaillées.
 
 ::: tip
 Il est fortement recommandé d'attribuer une adresse IP DHCP statique à votre serveur afin que son adresse IP ne change jamais. Vous pouvez configurer cela dans les paramètres de baux statiques DHCP de l'interface web de votre routeur.

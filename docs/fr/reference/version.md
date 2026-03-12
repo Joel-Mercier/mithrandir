@@ -1,6 +1,6 @@
 # version
 
-Afficher la version du CLI et le hash du commit git.
+Afficher la version de la CLI et le hash du commit git.
 
 ## Utilisation
 

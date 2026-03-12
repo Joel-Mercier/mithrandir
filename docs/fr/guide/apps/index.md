@@ -29,7 +29,6 @@ mithrandir log <app> [service] # Voir les logs
 | [Prowlarr](./prowlarr) | 9696 | Gestionnaire d'indexeurs pour la stack *Arr |
 | [qBittorrent](./qbittorrent) | 8080 | Client BitTorrent avec interface web |
 | [Profilarr](./profilarr) | 6868 | Gestionnaire de profils de qualité pour Radarr et Sonarr |
-| [FlareSolverr](./flaresolverr) | 8191 | Serveur proxy pour contourner la protection Cloudflare |
 
 ### Média : Musique
 
@@ -64,10 +63,16 @@ mithrandir log <app> [service] # Voir les logs
 | [AFFiNE](./affine) | 3010 | Base de connaissances et espace de travail axé sur la confidentialité |
 | [Excalidraw](./excalidraw) | 5000 | Tableau blanc virtuel pour dessiner |
 | [Omni Tools](./omni-tools) | 8079 | Collection d'outils de productivité utiles |
-| [Open WebUI](./open-webui) | 3000 | Interface de chat IA auto-hébergée |
 | [Paperless-ngx](./paperless-ngx) | 8000 | Système de gestion de documents avec OCR |
 | [Penpot](./penpot) | 9001 | Plateforme open-source de design et prototypage |
 | [Stirling PDF](./stirling-pdf) | 8084 | Outil tout-en-un de manipulation de PDF |
+
+
+### IA
+
+| Application | Port | Description |
+| --- | --- | --- |
+| [Open WebUI](./open-webui) | 3000 | Interface de chat IA auto-hébergée |
 
 ### Finance
 
@@ -109,3 +114,5 @@ mithrandir log <app> [service] # Voir les logs
 | Application | Port | Description |
 | --- | --- | --- |
 | [Homarr](./homarr) | 7575 | Tableau de bord serveur personnalisable |
+| [FlareSolverr](./flaresolverr) | 8191 | Serveur proxy pour contourner la protection Cloudflare |
+

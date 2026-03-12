@@ -45,7 +45,7 @@ Certaines applications ont des dépendances qui sont automatiquement incluses. P
 ## Configuration automatique
 
 ::: warning
-En raison des limitations des API et du comportement temporel de certaines applications, la configuration automatique peut ne pas toujours se terminer complètement. Certaines applications peuvent ne pas être prêtes à accepter des appels API immédiatement après leur démarrage, et certains paramètres ne peuvent être configurés qu'à travers l'interface web de l'application. Vérifiez toujours la configuration de chaque application une fois l'assistant terminé.
+En raison des limitations des API et du comportement au démarrage de certaines applications, la configuration automatique peut ne pas toujours se terminer complètement. Certaines applications peuvent ne pas être prêtes à accepter des appels API immédiatement après leur démarrage, et certains paramètres ne peuvent être configurés qu'à travers l'interface web de l'application. Vérifiez toujours la configuration de chaque application une fois l'assistant terminé.
 :::
 
 Après l'installation des applications, l'assistant propose optionnellement de configurer automatiquement les intégrations entre les services :

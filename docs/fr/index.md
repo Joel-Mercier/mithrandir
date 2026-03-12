@@ -4,7 +4,7 @@ layout: home
 hero:
   name: "Mithrandir"
   text: "Votre homelab, automatisé"
-  tagline: Un seul CLI pour installer, sauvegarder et gérer des services auto-hébergés sous Docker sur Raspberry Pi OS, Debian et Ubuntu
+  tagline: Une seule CLI pour installer, sauvegarder et gérer des services auto-hébergés sous Docker sur Raspberry Pi OS, Debian et Ubuntu
   actions:
     - theme: brand
       text: Commencer
@@ -19,10 +19,10 @@ features:
     details: Un assistant interactif installe Docker, configure les services et démarre le tout avec une seule commande.
   - icon: "📦"
     title: Plus de 30 applications auto-hébergées
-    details: Serveurs multimédias, domotique, blocage de publicités, VPN, gestion de mots de passe, chat IA, et bien plus — le tout depuis un seul outil.
+    details: Serveurs multimédias, domotique, blocage de publicités, VPN, gestion de mots de passe, chat IA, et bien plus — le tout avec un seul outil.
   - icon: "🔄"
     title: Sauvegardes automatiques
-    details: Sauvegardes quotidiennes planifiées vers le stockage local et le cloud via rclone, avec rétention configurable et vérification d'intégrité.
+    details: Sauvegardes quotidiennes planifiées sur le disque local et dans le cloud via rclone, avec rétention configurable et vérification d'intégrité.
   - icon: "🛡️"
     title: Reprise après sinistre
     details: Restaurez l'intégralité de votre homelab sur une nouvelle machine à partir d'une sauvegarde distante avec une seule commande.

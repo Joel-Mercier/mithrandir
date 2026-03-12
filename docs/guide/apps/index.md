@@ -29,7 +29,6 @@ mithrandir log <app> [service] # View logs
 | [Prowlarr](./prowlarr) | 9696 | Indexer manager for the *Arr stack |
 | [qBittorrent](./qbittorrent) | 8080 | BitTorrent client with web UI |
 | [Profilarr](./profilarr) | 6868 | Quality profile manager for Radarr and Sonarr |
-| [FlareSolverr](./flaresolverr) | 8191 | Proxy server to bypass Cloudflare protection |
 
 ### Media: Music
 
@@ -64,10 +63,15 @@ mithrandir log <app> [service] # View logs
 | [AFFiNE](./affine) | 3010 | Privacy-focused knowledge base and workspace |
 | [Excalidraw](./excalidraw) | 5000 | Virtual whiteboard for sketching |
 | [Omni Tools](./omni-tools) | 8079 | Collection of useful productivity tools |
-| [Open WebUI](./open-webui) | 3000 | Self-hosted AI chat interface |
 | [Paperless-ngx](./paperless-ngx) | 8000 | Document management system with OCR |
 | [Penpot](./penpot) | 9001 | Open-source design and prototyping platform |
 | [Stirling PDF](./stirling-pdf) | 8084 | All-in-one PDF manipulation tool |
+
+### AI
+
+| App | Port | Description |
+| --- | --- | --- |
+| [Open WebUI](./open-webui) | 3000 | Self-hosted AI chat interface |
 
 ### Finance
 
@@ -109,3 +113,4 @@ mithrandir log <app> [service] # View logs
 | App | Port | Description |
 | --- | --- | --- |
 | [Homarr](./homarr) | 7575 | Customizable server dashboard |
+| [FlareSolverr](./flaresolverr) | 8191 | Proxy server to bypass Cloudflare protection |

@@ -374,41 +374,42 @@ Checks configuration correctness across three categories: System (.env file, Doc
 
 ## Available Apps
 
-| App | Port | Description |
-|-----|------|-------------|
-| Home Assistant | 8123 | Open-source home automation platform |
-| qBittorrent | 8080 | BitTorrent client with web UI |
-| Prowlarr | 9696 | Indexer manager for the *Arr stack (also installs Flaresolverr) |
-| Radarr | 7878 | Movie collection manager |
-| Sonarr | 8989 | TV series collection manager |
-| Bazarr | 6767 | Subtitle manager for Sonarr and Radarr |
-| Lidarr | 8686 | Music collection manager |
-| Profilarr | 6868 | Quality profile manager for Radarr and Sonarr |
-| Seerr | 5055 | Media request manager for Jellyfin |
-| Homarr | 7575 | Customizable dashboard for your server |
-| Jellyfin | 8096 | Free media streaming server |
-| Navidrome | 4533 | Modern music server and streamer |
-| DuckDNS | — | Free dynamic DNS service |
-| WireGuard | 51820/udp | Fast, modern VPN tunnel |
-| Gatus | 3001 | Automated service health monitoring |
-| Immich | 2283 | Self-hosted photo and video management |
-| Caddy | — | HTTPS reverse proxy with automatic certificates (hidden, installed via `install https`) |
-| Pi-hole | 80 | Network-wide ad blocker and DNS server |
-| n8n | 5678 | Workflow automation platform |
-| AFFiNE | 3010 | Privacy-focused knowledge base and workspace |
-| Excalidraw | 5000 | Virtual whiteboard for sketching |
-| Omni Tools | 8079 | Collection of useful productivity tools |
-| Open WebUI | 3000 | Self-hosted AI chat interface |
-| Paperless-ngx | 8000 | Document management system with OCR |
-| Penpot | 9001 | Open-source design and prototyping platform |
-| Stirling PDF | 8084 | All-in-one PDF manipulation tool |
-| Actual Budget | 5006 | Privacy-focused personal finance and budgeting app |
-| Vaultwarden | 8222 | Lightweight Bitwarden-compatible password manager (requires HTTPS) |
-| Sure | 3005 | Privacy-focused personal finance tracker |
-| AdventureLog | 8015 | Travel planning and adventure journal |
-| TRIP | 8085 | Travel planning and trip journal |
-| Your Spotify | 3456 | Spotify listening statistics and history tracker |
-| CookCLI | 9080 | Recipe manager using the Cooklang markup language |
+| App            | Port      | Description                                                                             |
+| -------------- | --------- | --------------------------------------------------------------------------------------- |
+| Actual Budget  | 5006      | Privacy-focused personal finance and budgeting app                                      |
+| AdventureLog   | 8015      | Travel planning and adventure journal                                                   |
+| AFFiNE         | 3010      | Privacy-focused knowledge base and workspace                                            |
+| Bazarr         | 6767      | Subtitle manager for Sonarr and Radarr                                                  |
+| Caddy          | —         | HTTPS reverse proxy with automatic certificates (hidden, installed via `install https`) |
+| CookCLI        | 9080      | Recipe manager using the Cooklang markup language                                       |
+| DuckDNS        | —         | Free dynamic DNS service                                                                |
+| Excalidraw     | 5000      | Virtual whiteboard for sketching                                                        |
+| Gatus          | 3001      | Automated service health monitoring                                                     |
+| Home Assistant | 8123      | Open-source home automation platform                                                    |
+| Homarr         | 7575      | Customizable dashboard for your server                                                  |
+| Immich         | 2283      | Self-hosted photo and video management                                                  |
+| Jellyfin       | 8096      | Free media streaming server                                                             |
+| Lidarr         | 8686      | Music collection manager                                                                |
+| n8n            | 5678      | Workflow automation platform                                                            |
+| Navidrome      | 4533      | Modern music server and streamer                                                        |
+| Omni Tools     | 8079      | Collection of useful productivity tools                                                 |
+| Open WebUI     | 3000      | Self-hosted AI chat interface                                                           |
+| Paperless-ngx  | 8000      | Document management system with OCR                                                     |
+| Penpot         | 9001      | Open-source design and prototyping platform                                             |
+| Pi-hole        | 80        | Network-wide ad blocker and DNS server                                                  |
+| Profilarr      | 6868      | Quality profile manager for Radarr and Sonarr                                           |
+| Prowlarr       | 9696      | Indexer manager for the *Arr stack (also installs Flaresolverr)                         |
+| qBittorrent    | 8080      | BitTorrent client with web UI                                                           |
+| Radarr         | 7878      | Movie collection manager                                                                |
+| Seerr          | 5055      | Media request manager for Jellyfin                                                      |
+| Sonarr         | 8989      | TV series collection manager                                                            |
+| Stirling PDF   | 8084      | All-in-one PDF manipulation tool                                                        |
+| Sure           | 3005      | Privacy-focused personal finance tracker                                                |
+| TRIP           | 8085      | Travel planning and trip journal                                                        |
+| Vaultwarden    | 8222      | Lightweight Bitwarden-compatible password manager (requires HTTPS)                      |
+| WireGuard      | 51820/udp | Fast, modern VPN tunnel                                                                 |
+| Your Spotify   | 3456      | Spotify listening statistics and history tracker                                        |
+
 
 ## Local Development
 
@@ -475,6 +476,11 @@ A GitHub Actions workflow runs on every push and pull request to `main`. It runs
 
 ## TODO
 
+- [ ] Pihole not working with Gatus (https url doesn't work, local ip with port 8880 not workins as well)
+- [ ] Make sure the self-update command doesn't install deps, build and symlink if git pull shows already up to date message
+- [ ] Refactor all commands that don't render any jsx with ink (ending in .ts) to use Ink and Ink components instead of using console.log
+- [ ] Check if the general usage of the cli is in line with posix standards and best practices https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap12.html show which commands don't comply and how they differ before making any changes
+- [ ] Make backup timer systemd timer start hour configurable with a env var. Also update the docs, README, CLAUDE.md
 - [ ] Add screenshots to the docs
 - [ ] Make sure that empty env vars in .env are considered as not set and not as empty strings since this might cause issues with some apps where a value is expected
 - [ ] Add a \[CERTIFICATE_EXPIRATION\] > 72h check for each app during the Gatus setup to warn the user if their certificate is about to expire. Caddy is handling the certificate renewal automatically.

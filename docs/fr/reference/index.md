@@ -53,7 +53,7 @@ Mithrandir s'invoque avec `mithrandir <commande> [options]`.
 
 | Commande | Description |
 | --- | --- |
-| [`self-update`](./self-update) | Mettre à jour le CLI depuis git |
+| [`self-update`](./self-update) | Mettre à jour la CLI depuis git |
 | [`version`](./version) | Afficher la version et le hash du commit git |
 | [`docs`](./docs) | Construire et servir le site de documentation |
 | [`completions`](./completions) | Générer les scripts d'autocomplétion shell |

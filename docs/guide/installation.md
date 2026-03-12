@@ -13,7 +13,7 @@ Before installing Mithrandir, make sure you have:
 Clone the repository and run the install script:
 
 ```sh
-git clone https://github.com/your-username/homelab.git
+git clone https://github.com/Joel-Mercier/homelab.git
 cd homelab
 sudo bash install.sh
 ```

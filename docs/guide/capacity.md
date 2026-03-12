@@ -13,38 +13,41 @@ When you run `mithrandir capacity`, the CLI gathers your system's hardware specs
 
 ## Score Reference
 
-| App | Performance | Storage | Notes |
-| --- | --- | --- | --- |
-| Home Assistant | Medium | Low | Automation engine with integrations and history database |
-| qBittorrent | Low | High | Download client, stores torrents and media files |
-| Prowlarr | Low | Low | Indexer proxy, minimal resources |
-| Radarr | Low | Medium | Movie database and monitoring |
-| Sonarr | Low | Medium | TV database and monitoring |
-| Bazarr | Low | Low | Subtitle fetching, minimal resources |
-| Lidarr | Low | Medium | Music database and monitoring |
-| Seerr | Low | Low | Request management UI |
-| Homarr | Low | Low | Dashboard, mostly static content |
-| Jellyfin | High | High | Media transcoding and large media libraries |
-| Navidrome | Low | Low | Music streaming, reads existing files |
-| DuckDNS | Low | Low | DNS updater, background service |
-| WireGuard | Low | Low | VPN tunnel, kernel module |
-| Gatus | Low | Low | Health monitoring, tiny footprint |
-| Immich | High | High | ML processing for face detection and search, stores all photos and videos |
-| Excalidraw | Low | Low | Client-side whiteboard, minimal server resources |
-| Open WebUI | High | Medium | AI chat interface, model inference |
-| FlareSolverr | Medium | Low | Headless browser for CAPTCHA solving |
-| Omni Tools | Low | Low | Static tool collection |
-| Vaultwarden | Low | Low | Password vault, minimal storage |
-| Actual Budget | Low | Low | Personal finance, small database |
-| Sure | Medium | Low | Rails + Sidekiq workers |
-| AFFiNE | Medium | Medium | Knowledge base with PostgreSQL |
-| n8n | Medium | Low | Workflow automation engine |
-| Penpot | Medium | Medium | Design platform with multiple services |
-| Stirling PDF | Medium | Low | PDF processing on demand |
-| Profilarr | Low | Low | Profile sync utility |
-| TRIP | Low | Low | Travel journal, small database |
-| AdventureLog | Medium | Medium | Django backend with PostGIS database |
-| Pi-hole | Low | Low | DNS server, minimal resources |
+| App            | Performance | Storage | Notes                                                                     |
+| -------------- | ----------- | ------- | ------------------------------------------------------------------------- |
+| Actual Budget  | Low         | Low     | Personal finance, small database                                          |
+| AdventureLog   | Medium      | Medium  | Django backend with PostGIS database                                      |
+| AFFiNE         | Medium      | Medium  | Knowledge base with PostgreSQL                                            |
+| Bazarr         | Low         | Low     | Subtitle fetching, minimal resources                                      |
+| CookCLI        | Low         | Low     | Recipe manager using the Cooklang markup language                         |
+| DuckDNS        | Low         | Low     | DNS updater, background service                                           |
+| Excalidraw     | Low         | Low     | Client-side whiteboard, minimal server resources                          |
+| FlareSolverr   | Medium      | Low     | Headless browser for CAPTCHA solving                                      |
+| Gatus          | Low         | Low     | Health monitoring, tiny footprint                                         |
+| Home Assistant | Medium      | Low     | Automation engine with integrations and history database                  |
+| Homarr         | Low         | Low     | Dashboard, mostly static content                                          |
+| Immich         | High        | High    | ML processing for face detection and search, stores all photos and videos |
+| Jellyfin       | High        | High    | Media transcoding and large media libraries                               |
+| Lidarr         | Low         | Medium  | Music database and monitoring                                             |
+| n8n            | Medium      | Low     | Workflow automation engine                                                |
+| Navidrome      | Low         | Low     | Music streaming, reads existing files                                     |
+| Omni Tools     | Low         | Low     | Static tool collection                                                    |
+| Open WebUI     | High        | Medium  | AI chat interface, model inference                                        |
+| Paperless-ngx  | Medium      | Medium  | Document management system with OCR                                       |
+| Penpot         | Medium      | Medium  | Design platform with multiple services                                    |
+| Pi-hole        | Low         | Low     | DNS server, minimal resources                                             |
+| Profilarr      | Low         | Low     | Profile sync utility                                                      |
+| Prowlarr       | Low         | Low     | Indexer proxy, minimal resources                                          |
+| qBittorrent    | Low         | High    | Download client, stores torrents and media files                          |
+| Radarr         | Low         | Medium  | Movie database and monitoring                                             |
+| Seerr          | Low         | Low     | Request management UI                                                     |
+| Sonarr         | Low         | Medium  | TV database and monitoring                                                |
+| Stirling PDF   | Medium      | Low     | PDF processing on demand                                                  |
+| Sure           | Medium      | Low     | Rails + Sidekiq workers                                                   |
+| TRIP           | Low         | Low     | Travel journal, small database                                            |
+| Vaultwarden    | Low         | Low     | Password vault, minimal storage                                           |
+| WireGuard      | Low         | Low     | VPN tunnel, kernel module                                                 |
+| Your Spotify   | Low         | Medium  | Spotify listening statistics and history tracker                          |
 
 ## Verdicts
 

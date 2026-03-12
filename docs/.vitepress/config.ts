@@ -30,7 +30,6 @@ function guideSidebar(prefix = ""): DefaultTheme.SidebarItem[] {
                 { text: "Prowlarr", link: `${prefix}/guide/apps/prowlarr` },
                 { text: "qBittorrent", link: `${prefix}/guide/apps/qbittorrent` },
                 { text: "Profilarr", link: `${prefix}/guide/apps/profilarr` },
-                { text: "FlareSolverr", link: `${prefix}/guide/apps/flaresolverr` },
               ],
             },
             {
@@ -70,10 +69,16 @@ function guideSidebar(prefix = ""): DefaultTheme.SidebarItem[] {
                 { text: "AFFiNE", link: `${prefix}/guide/apps/affine` },
                 { text: "Excalidraw", link: `${prefix}/guide/apps/excalidraw` },
                 { text: "Omni Tools", link: `${prefix}/guide/apps/omni-tools` },
-                { text: "Open WebUI", link: `${prefix}/guide/apps/open-webui` },
                 { text: "Paperless-ngx", link: `${prefix}/guide/apps/paperless-ngx` },
                 { text: "Penpot", link: `${prefix}/guide/apps/penpot` },
                 { text: "Stirling PDF", link: `${prefix}/guide/apps/stirling-pdf` },
+              ],
+            },
+            {
+              text: prefix ? "IA" : "AI",
+              collapsed: true,
+              items: [
+                { text: "Open WebUI", link: `${prefix}/guide/apps/open-webui` },
               ],
             },
             {
@@ -121,6 +126,7 @@ function guideSidebar(prefix = ""): DefaultTheme.SidebarItem[] {
               collapsed: true,
               items: [
                 { text: "Homarr", link: `${prefix}/guide/apps/homarr` },
+                { text: "FlareSolverr", link: `${prefix}/guide/apps/flaresolverr` },
               ],
             },
           ],

@@ -1,6 +1,6 @@
 # Configuration HTTPS
 
-Mithrandir peut configurer un HTTPS wildcard pour tous vos services en utilisant Caddy et DuckDNS. Une fois activé, chaque application est accessible à `https://appname.yourdomain.duckdns.org`.
+Mithrandir peut configurer un HTTPS wildcard pour tous vos services en utilisant Caddy et DuckDNS. Une fois activé, chaque application est accessible via `https://appname.yourdomain.duckdns.org`.
 
 ## Prérequis
 
@@ -38,7 +38,7 @@ Caddy agit comme un reverse proxy situé devant tous vos services. Il :
 2. Renouvelle automatiquement les certificats avant leur expiration
 3. Redirige `https://appname.yourdomain.duckdns.org` vers le port de conteneur correspondant
 
-Le Caddyfile est régénéré automatiquement chaque fois que vous installez ou désinstallez une application, de sorte que les nouveaux services sont immédiatement disponibles en HTTPS.
+Le Caddyfile est régénéré automatiquement chaque fois que vous installez ou désinstallez une application, de sorte que les nouveaux services soient immédiatement disponibles en HTTPS.
 
 ## Configuration
 
