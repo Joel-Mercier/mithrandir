@@ -1,4 +1,5 @@
 import { shell } from "@/lib/shell.js";
+import { resolveOwnership } from "@/lib/tar.js";
 import { ENCRYPTED_EXT } from "@/lib/backup-utils.js";
 
 /**
@@ -27,15 +28,18 @@ export async function encryptFile(
       "-pass",
       `pass:${password}`,
     ],
-    { ignoreError: true },
+    { sudo: true, ignoreError: true },
   );
   if ((result.exitCode ?? 0) !== 0) {
     throw new Error(
       `Encryption failed (exit ${result.exitCode}): ${result.stderr}`,
     );
   }
+  // Fix ownership so non-root user can manage the file
+  const ownership = await resolveOwnership();
+  await shell("chown", [ownership, outputPath], { sudo: true });
   // Remove the original unencrypted file
-  await shell("rm", ["-f", inputPath]);
+  await shell("rm", ["-f", inputPath], { sudo: true });
   return outputPath;
 }
 

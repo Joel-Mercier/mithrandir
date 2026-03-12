@@ -15,34 +15,51 @@
 
       mkTest = nix-vm-test.lib.${system}.debian."13";
 
-      # Shared bootstrap snippet: clone → install.sh → .env → optionally Docker
-      # Usage: interpolate ${bootstrap} then optionally ${installDocker} in testScript
+      # Python helper to run a command as the non-root test user.
+      # All mithrandir commands should use as_user() to ensure the CLI
+      # exercises its sudo codepaths (backup encryption, docker, etc.).
+      asUser = ''
+        def as_user(cmd):
+            escaped = cmd.replace("'", "'\\''")
+            return f"su - testuser -c '{escaped}'"
+      '';
+
+      # Create a non-root user with passwordless sudo
+      createUser = ''
+        vm.succeed("useradd -m -s /bin/bash testuser")
+        vm.succeed("echo 'testuser ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/testuser")
+      '';
+
+      # Shared bootstrap snippet: create user → clone → install.sh → .env
       bootstrap = ''
+        ${asUser}
         vm.wait_for_unit("multi-user.target")
+
+        ${createUser}
 
         # Install git
         vm.succeed("apt-get update -qq && apt-get install -y -qq git")
 
-        # Clone the repo
-        vm.succeed("git clone https://github.com/Joel-Mercier/mithrandir.git /root/homelab")
+        # Clone the repo as testuser
+        vm.succeed(as_user("git clone https://github.com/Joel-Mercier/mithrandir.git /home/testuser/homelab"))
 
-        # Run the install script (installs bun + builds CLI)
-        vm.succeed("cd /root/homelab && bash install.sh")
+        # Run the install script with sudo (as testuser would in real life)
+        vm.succeed(as_user("cd /home/testuser/homelab && sudo bash install.sh"), timeout=300)
 
-        # Create .env
-        vm.succeed("""cat > /root/homelab/.env << 'ENVEOF'
+        # Create .env (owned by testuser)
+        vm.succeed(as_user("""cat > /home/testuser/homelab/.env << 'ENVEOF'
 BASE_DIR=/opt/homelab
 BACKUP_DIR=/backups
-PUID=0
-PGID=0
+PUID=1000
+PGID=1000
 TZ=Etc/UTC
 APPS=auto
-ENVEOF""")
+ENVEOF"""))
       '';
 
       installDocker = ''
-        # Install Docker via the CLI
-        vm.succeed("mithrandir install docker", timeout=300)
+        # Install Docker via the CLI (as non-root user with sudo)
+        vm.succeed(as_user("mithrandir install docker"), timeout=300)
         vm.succeed("docker info")
       '';
 
@@ -52,19 +69,22 @@ ENVEOF""")
       gettingStartedTest = mkTest {
         diskSize = "+4G";
         testScript = ''
+          ${asUser}
           vm.wait_for_unit("multi-user.target")
+
+          ${createUser}
 
           # Install git (needed to clone the repo)
           vm.succeed("apt-get update -qq && apt-get install -y -qq git")
 
-          # Clone the repo just like a real user would
-          vm.succeed("git clone https://github.com/Joel-Mercier/mithrandir.git /root/homelab")
+          # Clone the repo as testuser
+          vm.succeed(as_user("git clone https://github.com/Joel-Mercier/mithrandir.git /home/testuser/homelab"))
 
-          # Run the install script
-          vm.succeed("cd /root/homelab && bash install.sh")
+          # Run the install script with sudo
+          vm.succeed(as_user("cd /home/testuser/homelab && sudo bash install.sh"), timeout=300)
 
-          # Verify mithrandir is installed and responds to --help
-          output = vm.succeed("mithrandir --help")
+          # Verify mithrandir is installed and responds to --help (as non-root)
+          output = vm.succeed(as_user("mithrandir --help"))
           assert "setup" in output.lower(), f"Expected 'setup' in help output, got: {output}"
         '';
       };
@@ -77,15 +97,15 @@ ENVEOF""")
         testScript = ''
           ${bootstrap}
 
-          # Install Docker via CLI
-          vm.succeed("mithrandir install docker", timeout=300)
+          # Install Docker via CLI (as non-root user)
+          vm.succeed(as_user("mithrandir install docker"), timeout=300)
 
           # Verify Docker works
           vm.succeed("docker info")
           vm.succeed("docker run --rm hello-world")
 
           # Idempotency: running install docker again should succeed
-          vm.succeed("mithrandir install docker", timeout=300)
+          vm.succeed(as_user("mithrandir install docker"), timeout=300)
           vm.succeed("docker info")
         '';
       };
@@ -99,8 +119,8 @@ ENVEOF""")
           ${bootstrap}
           ${installDocker}
 
-          # Install prowlarr
-          vm.succeed("mithrandir install prowlarr", timeout=300)
+          # Install prowlarr (as non-root user)
+          vm.succeed(as_user("mithrandir install prowlarr"), timeout=300)
 
           # Verify container is running
           vm.succeed("docker ps --format '{{.Names}}' | grep -q prowlarr")
@@ -110,32 +130,32 @@ ENVEOF""")
           vm.succeed("test -d /opt/homelab/prowlarr/config")
 
           # Verify status shows prowlarr
-          output = vm.succeed("mithrandir status")
+          output = vm.succeed(as_user("mithrandir status"))
           assert "prowlarr" in output.lower(), f"Expected 'prowlarr' in status output, got: {output}"
 
           # Wait for port to be open
           vm.wait_for_open_port(9696)
 
           # Stop
-          vm.succeed("mithrandir stop prowlarr", timeout=120)
+          vm.succeed(as_user("mithrandir stop prowlarr"), timeout=120)
           vm.fail("docker ps --format '{{.Names}}' | grep -q prowlarr")
 
           # Start
-          vm.succeed("mithrandir start prowlarr", timeout=120)
+          vm.succeed(as_user("mithrandir start prowlarr"), timeout=120)
           vm.succeed("docker ps --format '{{.Names}}' | grep -q prowlarr")
 
           # Restart
-          vm.succeed("mithrandir restart prowlarr", timeout=120)
+          vm.succeed(as_user("mithrandir restart prowlarr"), timeout=120)
           vm.succeed("docker ps --format '{{.Names}}' | grep -q prowlarr")
 
           # Uninstall
-          vm.succeed("mithrandir uninstall prowlarr --yes", timeout=120)
+          vm.succeed(as_user("mithrandir uninstall prowlarr --yes"), timeout=120)
           vm.fail("docker ps -a --format '{{.Names}}' | grep -q prowlarr")
         '';
       };
 
       # ---------------------------------------------------------------
-      # Test: backup-restore — backup, verify, restore
+      # Test: backup-restore — backup with encryption, verify, restore
       # ---------------------------------------------------------------
       backupRestoreTest = mkTest {
         diskSize = "+8G";
@@ -144,25 +164,32 @@ ENVEOF""")
           ${installDocker}
 
           # Install prowlarr and let it initialize
-          vm.succeed("mithrandir install prowlarr", timeout=300)
+          vm.succeed(as_user("mithrandir install prowlarr"), timeout=300)
           vm.wait_for_open_port(9696)
           vm.succeed("sleep 5")
 
-          # Create backup directory
-          vm.succeed("mkdir -p /backups")
+          # Enable backup encryption
+          vm.succeed(as_user("echo 'BACKUP_PASSWORD=testpass123' >> /home/testuser/homelab/.env"))
 
-          # Run backup (non-TTY path)
-          vm.succeed("mithrandir backup", timeout=300)
+          # Run backup (non-TTY path, as non-root user exercising sudo codepaths)
+          vm.succeed(as_user("mithrandir backup"), timeout=300)
 
-          # Verify backup archive exists
-          vm.succeed("test -f /backups/latest/prowlarr.tar.zst")
+          # Verify encrypted backup archive exists
+          vm.succeed("test -f /backups/latest/prowlarr.tar.zst.enc")
+
+          # Verify no unencrypted duplicates (the bug this test guards against)
+          vm.fail("test -f /backups/latest/prowlarr.tar.zst")
+
+          # Verify encrypted secrets backup
+          vm.succeed("test -f /backups/latest/secrets.tar.zst.enc")
+          vm.fail("test -f /backups/latest/secrets.tar.zst")
 
           # Verify backup integrity
-          vm.succeed("mithrandir backup verify", timeout=120)
-          vm.succeed("mithrandir backup verify --extract", timeout=120)
+          vm.succeed(as_user("mithrandir backup verify"), timeout=120)
+          vm.succeed(as_user("mithrandir backup verify --extract"), timeout=120)
 
-          # Restore
-          vm.succeed("mithrandir restore prowlarr --yes", timeout=300)
+          # Restore from encrypted backup
+          vm.succeed(as_user("mithrandir restore prowlarr --yes"), timeout=300)
 
           # Verify container is running after restore
           vm.succeed("docker ps --format '{{.Names}}' | grep -q prowlarr")
@@ -180,28 +207,28 @@ ENVEOF""")
           ${installDocker}
 
           # Install prowlarr for status/health checks
-          vm.succeed("mithrandir install prowlarr", timeout=300)
+          vm.succeed(as_user("mithrandir install prowlarr"), timeout=300)
 
           # version
-          output = vm.succeed("mithrandir version")
+          output = vm.succeed(as_user("mithrandir version"))
           assert "." in output or "v" in output.lower() or len(output.strip()) > 0, f"Expected version output, got: {output}"
 
           # config
-          output = vm.succeed("mithrandir config")
+          output = vm.succeed(as_user("mithrandir config"))
           assert "BASE_DIR" in output, f"Expected 'BASE_DIR' in config output, got: {output}"
 
           # health
-          output = vm.succeed("mithrandir health")
+          output = vm.succeed(as_user("mithrandir health"))
           assert "docker" in output.lower(), f"Expected 'docker' in health output, got: {output}"
 
           # doctor
-          vm.succeed("mithrandir doctor")
+          vm.succeed(as_user("mithrandir doctor"))
 
           # capacity
-          vm.succeed("mithrandir capacity")
+          vm.succeed(as_user("mithrandir capacity"))
 
           # status
-          output = vm.succeed("mithrandir status")
+          output = vm.succeed(as_user("mithrandir status"))
           assert "prowlarr" in output.lower(), f"Expected 'prowlarr' in status output, got: {output}"
         '';
       };
@@ -215,21 +242,24 @@ ENVEOF""")
           ${bootstrap}
           ${installDocker}
 
-          # Create backup dir and install prowlarr
-          vm.succeed("mkdir -p /backups")
-          vm.succeed("mithrandir install prowlarr", timeout=300)
+          # Install prowlarr
+          vm.succeed(as_user("mithrandir install prowlarr"), timeout=300)
           vm.wait_for_open_port(9696)
           vm.succeed("sleep 5")
 
-          # Update (exercises backup + pull + restart)
-          vm.succeed("mithrandir update prowlarr --yes", timeout=600)
+          # Enable backup encryption
+          vm.succeed(as_user("echo 'BACKUP_PASSWORD=testpass123' >> /home/testuser/homelab/.env"))
+
+          # Update (exercises backup + pull + restart, as non-root)
+          vm.succeed(as_user("mithrandir update prowlarr --yes"), timeout=600)
 
           # Verify container still running
           vm.succeed("docker ps --format '{{.Names}}' | grep -q prowlarr")
           vm.wait_for_open_port(9696)
 
-          # Verify pre-update backup was created
-          vm.succeed("test -f /backups/latest/prowlarr.tar.zst")
+          # Verify pre-update backup was created (encrypted)
+          vm.succeed("test -f /backups/latest/prowlarr.tar.zst.enc")
+          vm.fail("test -f /backups/latest/prowlarr.tar.zst")
         '';
       };
 
