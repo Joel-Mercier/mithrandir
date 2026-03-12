@@ -19,9 +19,9 @@
       # All mithrandir commands should use as_user() to ensure the CLI
       # exercises its sudo codepaths (backup encryption, docker, etc.).
       asUser = ''
+        import shlex
         def as_user(cmd):
-            escaped = cmd.replace("'", "'\\''")
-            return f"su - testuser -c '{escaped}'"
+            return "su - testuser -c " + shlex.quote(cmd)
       '';
 
       # Create a non-root user with passwordless sudo
