@@ -482,5 +482,6 @@ A GitHub Actions workflow runs on every push and pull request to `main`. It runs
 - [ ] Check if the general usage of the cli is in line with posix standards and best practices https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap12.html show which commands don't comply and how they differ before making any changes
 - [ ] Make backup timer systemd timer start hour configurable with a env var. Also update the docs, README, CLAUDE.md
 - [ ] Add screenshots to the docs
+- [ ] Extend the backup feature to support multiple backup locations using the rclone dependency. Add a new command to select a drive to be use as backup or a network storage. Also extend remote options to support multiple cloud storage options not just Google Drive
 - [ ] Make sure that empty env vars in .env are considered as not set and not as empty strings since this might cause issues with some apps where a value is expected
 - [ ] Add a \[CERTIFICATE_EXPIRATION\] > 72h check for each app during the Gatus setup to warn the user if their certificate is about to expire. Caddy is handling the certificate renewal automatically.
