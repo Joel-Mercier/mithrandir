@@ -98,9 +98,11 @@ function SelfUpdateCommand() {
 
       if (before === after) {
         addStep({ name: "Git pull", status: "done", message: `Already up to date on ${branch} (${before})` });
-      } else {
-        addStep({ name: "Git pull", status: "done", message: `${branch}: ${before} → ${after}` });
+        setPhase("done");
+        return;
       }
+
+      addStep({ name: "Git pull", status: "done", message: `${branch}: ${before} → ${after}` });
 
       // Step 3: Install dependencies
       // Ensure the project directory is writable by the original user
