@@ -26,7 +26,6 @@ Automated setup and backup system for Docker-based homelab applications.
 - [Available Apps](#available-apps)
 - [Local Development](#local-development)
 - [Testing](#testing)
-- [TODO](#todo)
 
 ## Quick Start
 
@@ -492,12 +491,3 @@ See `integration-tests/README.md` for details on running locally and writing new
 ### CI
 
 A GitHub Actions workflow runs on every push and pull request to `main`. It runs `bun run typecheck`, `bun run build`, and `bun test`. A parallel matrix of integration tests spins up Debian VMs to verify the install flow, Docker setup, app lifecycle, backup/restore, diagnostics, and update commands.
-
-## TODO
-
-- [ ] Pihole not working with Gatus (https url doesn't work, local ip with port 8880 not workins as well)
-- [ ] Refactor all commands that don't render any jsx with ink (ending in .ts) to use Ink and Ink components instead of using console.log
-- [ ] Add screenshots to the docs
-- [ ] Extend the backup feature to support multiple backup locations using the rclone dependency. Add a new command to select a drive to be use as backup or a network storage. Also extend remote options to support multiple cloud storage options not just Google Drive
-- [ ] Make sure that empty env vars in .env are considered as not set and not as empty strings since this might cause issues with some apps where a value is expected
-- [ ] Add a \[CERTIFICATE_EXPIRATION\] > 72h check for each app during the Gatus setup to warn the user if their certificate is about to expire. Caddy is handling the certificate renewal automatically.
