@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from "fs";
 import { APP_REGISTRY, getComposePath } from "@/lib/apps.js";
+import { getDuckDnsDomain } from "@/lib/caddy.js";
 import { PIHOLE_HTTPS_PORT } from "@/lib/compose.js";
 import { isContainerRunning, composeDown, composeUp } from "@/lib/docker.js";
 import { shell } from "@/lib/shell.js";
@@ -50,19 +51,25 @@ function generateAppEndpoints(
   localIp: string,
   discordWebhook: string | undefined,
   httpsEnabled: boolean,
+  domain: string | null,
 ): string[] {
   if (!app.port || app.name === "gatus") return [];
 
   const lines: string[] = [];
   const url = getAppUrl(app, localIp, httpsEnabled);
+  const certCheck = httpsEnabled && domain;
 
-  // Main endpoint
+  // Main endpoint — use HTTPS subdomain URL when available for combined health + cert check
+  const mainUrl = certCheck ? `https://${app.name}.${domain}` : url;
   lines.push(`  - name: ${app.displayName}`);
   lines.push(`    group: ${app.additionalContainers ? "multi-container" : "single-container"}`);
-  lines.push(`    url: ${url}`);
+  lines.push(`    url: ${mainUrl}`);
   lines.push(`    interval: 1m`);
   lines.push(`    conditions:`);
   lines.push(`      - "[STATUS] == 200"`);
+  if (certCheck) {
+    lines.push(`      - "[CERTIFICATE_EXPIRATION] > 72h"`);
+  }
   if (discordWebhook) {
     lines.push(`    alerts:`);
     lines.push(`      - type: discord`);
@@ -73,12 +80,16 @@ function generateAppEndpoints(
   // Extra subdomains (e.g. adventurelog-api backend)
   if (app.caddyExtraSubdomains) {
     for (const extra of app.caddyExtraSubdomains) {
+      const extraUrl = certCheck ? `https://${extra.subdomain}.${domain}` : `http://${localIp}:${extra.port}`;
       lines.push(`  - name: "${app.displayName} (${extra.subdomain})"`);
       lines.push(`    group: multi-container`);
-      lines.push(`    url: http://${localIp}:${extra.port}`);
+      lines.push(`    url: ${extraUrl}`);
       lines.push(`    interval: 1m`);
       lines.push(`    conditions:`);
       lines.push(`      - "[STATUS] == 200"`);
+      if (certCheck) {
+        lines.push(`      - "[CERTIFICATE_EXPIRATION] > 72h"`);
+      }
       if (discordWebhook) {
         lines.push(`    alerts:`);
         lines.push(`      - type: discord`);
@@ -109,6 +120,7 @@ export function generateGatusConfig(
   },
 ): string {
   const httpsEnabled = options.envConfig?.ENABLE_HTTPS === "true";
+  const domain = options.envConfig ? getDuckDnsDomain(options.envConfig) : null;
 
   const lines: string[] = [];
 
@@ -137,7 +149,7 @@ export function generateGatusConfig(
   // Build endpoints for all installed apps
   const endpoints: string[] = [];
   for (const app of installedApps) {
-    endpoints.push(...generateAppEndpoints(app, localIp, options.discordWebhook, httpsEnabled));
+    endpoints.push(...generateAppEndpoints(app, localIp, options.discordWebhook, httpsEnabled, domain));
   }
 
   if (endpoints.length > 0) {

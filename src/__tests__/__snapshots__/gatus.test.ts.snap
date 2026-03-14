@@ -77,27 +77,31 @@ security:
 endpoints:
   - name: Sonarr
     group: single-container
-    url: http://192.168.1.100:8989
+    url: https://sonarr.mylab.duckdns.org
     interval: 1m
     conditions:
       - "[STATUS] == 200"
+      - "[CERTIFICATE_EXPIRATION] > 72h"
   - name: Pi-hole
     group: single-container
-    url: http://192.168.1.100:8880
+    url: https://pihole.mylab.duckdns.org
     interval: 1m
     conditions:
       - "[STATUS] == 200"
+      - "[CERTIFICATE_EXPIRATION] > 72h"
   - name: AdventureLog
     group: multi-container
-    url: http://192.168.1.100:8015
+    url: https://adventurelog.mylab.duckdns.org
     interval: 1m
     conditions:
       - "[STATUS] == 200"
+      - "[CERTIFICATE_EXPIRATION] > 72h"
   - name: "AdventureLog (adventurelog-api)"
     group: multi-container
-    url: http://192.168.1.100:8016
+    url: https://adventurelog-api.mylab.duckdns.org
     interval: 1m
     conditions:
       - "[STATUS] == 200"
+      - "[CERTIFICATE_EXPIRATION] > 72h"
 "
 `;

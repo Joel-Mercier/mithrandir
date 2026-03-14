@@ -101,14 +101,14 @@ describe("generateGatusConfig", () => {
     expect(config).not.toContain("username:");
   });
 
-  test("Pi-hole uses remapped port 8880 when HTTPS is enabled", () => {
+  test("Pi-hole uses HTTPS subdomain URL when HTTPS is enabled", () => {
     const apps = [getApp("pihole")!];
     const config = generateGatusConfig(apps, LOCAL_IP, {
       envConfig: httpsEnv,
     });
 
-    expect(config).toContain(`url: http://${LOCAL_IP}:8880`);
-    expect(config).not.toContain(":80");
+    expect(config).toContain("url: https://pihole.mylab.duckdns.org");
+    expect(config).not.toContain(`http://${LOCAL_IP}`);
   });
 
   test("Pi-hole uses standard port 80 without HTTPS", () => {
@@ -118,15 +118,20 @@ describe("generateGatusConfig", () => {
     expect(config).toContain(`url: http://${LOCAL_IP}:80`);
   });
 
-  test("always uses http://IP:port, never HTTPS subdomain URLs", () => {
+  test("uses HTTPS subdomain URLs with cert check when HTTPS enabled", () => {
     const apps = [getApp("sonarr")!, getApp("pihole")!];
     const config = generateGatusConfig(apps, LOCAL_IP, {
       envConfig: httpsEnv,
     });
 
-    expect(config).not.toContain("https://");
-    expect(config).toContain(`url: http://${LOCAL_IP}:8989`);
-    expect(config).toContain(`url: http://${LOCAL_IP}:8880`);
+    // Uses HTTPS subdomain URLs instead of direct IP:port
+    expect(config).toContain("url: https://sonarr.mylab.duckdns.org");
+    expect(config).toContain("url: https://pihole.mylab.duckdns.org");
+    expect(config).not.toContain(`url: http://${LOCAL_IP}`);
+
+    // Both status and cert conditions on the same endpoint
+    expect(config).toContain("[STATUS] == 200");
+    expect(config).toContain("[CERTIFICATE_EXPIRATION] > 72h");
   });
 
   test("snapshot: full config with mixed apps", () => {
