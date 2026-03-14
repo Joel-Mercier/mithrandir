@@ -35,7 +35,7 @@ Mithrandir is invoked as `mithrandir <command> [options]`.
 
 | Command | Description |
 | --- | --- |
-| [`backup`](./backup) | Backup apps (with subcommands for list, delete, verify) |
+| [`backup`](./backup) | Backup apps (with subcommands for list, delete, verify, config) |
 | [`restore`](./restore) | Restore app(s) from backup |
 | [`recover`](./recover) | Full disaster recovery from remote backup |
 

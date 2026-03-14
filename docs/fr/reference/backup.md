@@ -9,6 +9,7 @@ mithrandir backup [app]
 mithrandir backup list [local|remote]
 mithrandir backup delete [--yes] <local|remote> [date]
 mithrandir backup verify [options] [date]
+mithrandir backup config
 ```
 
 ## Arguments
@@ -68,6 +69,28 @@ mithrandir backup verify [options] [date]
 | `--remote`, `-r` | Vérifier les sauvegardes distantes au lieu des locales |
 | `--extract`, `-x` | Tester l'extraction pendant la vérification |
 
+### `backup config`
+
+Afficher et modifier les paramètres de sauvegarde de manière interactive.
+
+```sh
+mithrandir backup config
+```
+
+Parcourt chaque paramètre de sauvegarde un par un, affichant la valeur actuelle et proposant d'en saisir une nouvelle. Appuyez sur Entrée pour conserver la valeur actuelle.
+
+| Paramètre | Défaut | Description |
+| --- | --- | --- |
+| `BACKUP_DIR` | `/backups` | Répertoire de sauvegarde local |
+| `LOCAL_RETENTION` | `5` | Nombre de sauvegardes locales à conserver |
+| `REMOTE_RETENTION` | `10` | Nombre de sauvegardes distantes à conserver |
+| `RCLONE_REMOTE` | `gdrive` | Nom du remote rclone |
+| `APPS` | `auto` | Applications à sauvegarder — `auto` pour toutes les installées, ou liste séparée par des virgules |
+| `BACKUP_HOUR` | `2` | Heure de la journée (0-23) à laquelle les sauvegardes automatiques s'exécutent |
+| `BACKUP_PASSWORD` | *(aucun)* | Mot de passe de chiffrement optionnel (la saisie est masquée) |
+
+Si `BACKUP_HOUR` est modifié et que systemd est disponible, le timer de sauvegarde est automatiquement mis à jour avec le nouvel horaire.
+
 ## Description
 
 Crée des archives tar horodatées des répertoires de configuration et de données de chaque application. Les archives sont stockées localement dans `BACKUP_DIR` (par défaut `/backups`) et synchronisées vers le remote rclone configuré.
@@ -95,4 +118,5 @@ Si une sauvegarde est chiffrée mais qu'aucun mot de passe n'est disponible :
 | `REMOTE_RETENTION` | `10` | Nombre de sauvegardes distantes à conserver |
 | `RCLONE_REMOTE` | `gdrive` | Nom du remote rclone |
 | `APPS` | `auto` | Liste d'applications séparées par des virgules, ou `auto` pour toutes les applications installées |
+| `BACKUP_HOUR` | `2` | Heure de la journée (0-23) à laquelle les sauvegardes automatiques s'exécutent |
 | `BACKUP_PASSWORD` | *(aucun)* | Mot de passe de chiffrement optionnel pour les sauvegardes |

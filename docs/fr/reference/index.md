@@ -35,7 +35,7 @@ Mithrandir s'invoque avec `mithrandir <commande> [options]`.
 
 | Commande | Description |
 | --- | --- |
-| [`backup`](./backup) | Sauvegarder les applications (avec sous-commandes pour lister, supprimer, vérifier) |
+| [`backup`](./backup) | Sauvegarder les applications (avec sous-commandes pour lister, supprimer, vérifier, configurer) |
 | [`restore`](./restore) | Restaurer une ou plusieurs applications depuis une sauvegarde |
 | [`recover`](./recover) | Reprise après sinistre complète depuis une sauvegarde distante |
 
