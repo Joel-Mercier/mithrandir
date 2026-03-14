@@ -243,9 +243,9 @@ function generateFish(): string {
   lines.push(`complete -c mithrandir -l yes -s y -d 'Skip confirmation prompts'`);
   lines.push(`complete -c mithrandir -l follow -s f -d 'Follow log output'`);
   lines.push(`complete -c mithrandir -l tail -s n -d 'Number of lines to show'`);
-  lines.push(`complete -c mithrandir -l since -d 'Show logs since timestamp'`);
-  lines.push(`complete -c mithrandir -l remote -d 'Verify remote backups'`);
-  lines.push(`complete -c mithrandir -l extract -d 'Test extraction during verify'`);
+  lines.push(`complete -c mithrandir -l since -s s -d 'Show logs since timestamp'`);
+  lines.push(`complete -c mithrandir -l remote -s r -d 'Verify remote backups'`);
+  lines.push(`complete -c mithrandir -l extract -s x -d 'Test extraction during verify'`);
   lines.push("");
 
   return lines.join("\n");

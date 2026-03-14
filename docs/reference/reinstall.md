@@ -5,7 +5,7 @@ Reinstall an app from scratch.
 ## Usage
 
 ```sh
-mithrandir reinstall <app>
+mithrandir reinstall [--yes] <app>
 ```
 
 ## Arguments

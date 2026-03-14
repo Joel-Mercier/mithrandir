@@ -5,7 +5,7 @@ Réinstaller une application de zéro.
 ## Utilisation
 
 ```sh
-mithrandir reinstall <app>
+mithrandir reinstall [--yes] <app>
 ```
 
 ## Arguments

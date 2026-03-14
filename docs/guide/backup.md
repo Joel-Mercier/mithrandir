@@ -80,10 +80,10 @@ mithrandir backup verify
 mithrandir backup verify 2024-01-15
 
 # Verify remote backups
-mithrandir backup verify --remote
+mithrandir backup verify -r
 
 # Also test extraction
-mithrandir backup verify --extract
+mithrandir backup verify -x
 ```
 
 ## Restoring from Backup
@@ -190,5 +190,5 @@ mithrandir backup delete local 2024-01-10
 mithrandir backup delete remote 2024-01-10
 
 # Skip confirmation
-mithrandir backup delete local 2024-01-10 --yes
+mithrandir backup delete --yes local 2024-01-10
 ```

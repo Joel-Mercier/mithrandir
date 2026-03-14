@@ -5,7 +5,7 @@ Restore app(s) from a backup.
 ## Usage
 
 ```sh
-mithrandir restore <target> [date]
+mithrandir restore [--yes] <target> [date]
 ```
 
 ## Arguments

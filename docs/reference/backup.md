@@ -7,8 +7,8 @@ Backup apps to local and remote storage.
 ```sh
 mithrandir backup [app]
 mithrandir backup list [local|remote]
-mithrandir backup delete <local|remote> [date] [--yes]
-mithrandir backup verify [date] [--remote] [--extract]
+mithrandir backup delete [--yes] <local|remote> [date]
+mithrandir backup verify [options] [date]
 ```
 
 ## Arguments
@@ -39,7 +39,7 @@ If no argument is given, lists both local and remote backups.
 Delete backups by location and optional date.
 
 ```sh
-mithrandir backup delete <local|remote> [date] [--yes]
+mithrandir backup delete [--yes] <local|remote> [date]
 ```
 
 | Argument | Description |
@@ -56,7 +56,7 @@ mithrandir backup delete <local|remote> [date] [--yes]
 Verify the integrity of backup archives.
 
 ```sh
-mithrandir backup verify [date] [--remote] [--extract]
+mithrandir backup verify [options] [date]
 ```
 
 | Argument | Description |
@@ -65,8 +65,8 @@ mithrandir backup verify [date] [--remote] [--extract]
 
 | Flag | Description |
 | --- | --- |
-| `--remote` | Verify remote backups instead of local |
-| `--extract` | Test extraction during verification |
+| `--remote`, `-r` | Verify remote backups instead of local |
+| `--extract`, `-x` | Test extraction during verification |
 
 ## Description
 

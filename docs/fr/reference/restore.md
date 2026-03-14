@@ -5,7 +5,7 @@ Restaurer une ou plusieurs applications depuis une sauvegarde.
 ## Utilisation
 
 ```sh
-mithrandir restore <cible> [date]
+mithrandir restore [--yes] <cible> [date]
 ```
 
 ## Arguments

@@ -7,8 +7,8 @@ Sauvegarder les applications vers le stockage local et distant.
 ```sh
 mithrandir backup [app]
 mithrandir backup list [local|remote]
-mithrandir backup delete <local|remote> [date] [--yes]
-mithrandir backup verify [date] [--remote] [--extract]
+mithrandir backup delete [--yes] <local|remote> [date]
+mithrandir backup verify [options] [date]
 ```
 
 ## Arguments
@@ -39,7 +39,7 @@ Si aucun argument n'est donné, liste les sauvegardes locales et distantes.
 Supprimer des sauvegardes par emplacement et date optionnelle.
 
 ```sh
-mithrandir backup delete <local|remote> [date] [--yes]
+mithrandir backup delete [--yes] <local|remote> [date]
 ```
 
 | Argument | Description |
@@ -56,7 +56,7 @@ mithrandir backup delete <local|remote> [date] [--yes]
 Vérifier l'intégrité des archives de sauvegarde.
 
 ```sh
-mithrandir backup verify [date] [--remote] [--extract]
+mithrandir backup verify [options] [date]
 ```
 
 | Argument | Description |
@@ -65,8 +65,8 @@ mithrandir backup verify [date] [--remote] [--extract]
 
 | Option | Description |
 | --- | --- |
-| `--remote` | Vérifier les sauvegardes distantes au lieu des locales |
-| `--extract` | Tester l'extraction pendant la vérification |
+| `--remote`, `-r` | Vérifier les sauvegardes distantes au lieu des locales |
+| `--extract`, `-x` | Tester l'extraction pendant la vérification |
 
 ## Description
 

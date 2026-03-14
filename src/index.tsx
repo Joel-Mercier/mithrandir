@@ -36,8 +36,8 @@ const cli = meow(
     backup [app]                       Backup all or a specific app
     backup list [local|remote]          List local and/or remote backups
     backup delete <local|remote> [date] Delete local or remote backups
-    backup verify [date]               Verify backup archive integrity
-    restore <app|full> [date]          Restore app(s) from backup
+    backup verify [options] [date]     Verify backup archive integrity
+    restore [options] <app|full> [date] Restore app(s) from backup
     recover                            Recover full system from remote backup
     start <app>                        Start a stopped app container
     stop <app>                         Stop a running app container
@@ -68,9 +68,9 @@ const cli = meow(
     --yes, -y                 Skip confirmation prompts
     --follow, -f              Follow log output (log command)
     --tail, -n                Number of lines to show from end (log command)
-    --since                   Show logs since timestamp or relative (log command)
-    --remote                  Verify remote backups (backup verify)
-    --extract                 Test extraction during verify (backup verify)
+    --since, -s               Show logs since timestamp or relative (log command)
+    --remote, -r              Verify remote backups (backup verify)
+    --extract, -x             Test extraction during verify (backup verify)
     --help                    Show this help
     --version                 Show version
 
@@ -84,10 +84,10 @@ const cli = meow(
     $ mithrandir backup delete local
     $ mithrandir backup delete remote 2025-01-01
     $ mithrandir backup verify
-    $ mithrandir backup verify 2025-01-01 --remote --extract
+    $ mithrandir backup verify --remote --extract 2025-01-01
     $ mithrandir restore jellyfin
     $ mithrandir restore full 2025-01-01
-    $ mithrandir restore full latest --yes
+    $ mithrandir restore --yes full latest
     $ mithrandir recover
     $ mithrandir recover --yes
     $ mithrandir uninstall radarr
@@ -102,8 +102,8 @@ const cli = meow(
     $ mithrandir restart radarr
     $ mithrandir install radarr
     $ mithrandir reinstall radarr
-    $ mithrandir reinstall radarr --yes
-    $ mithrandir log radarr --follow --tail 100
+    $ mithrandir reinstall --yes radarr
+    $ mithrandir log --follow --tail 100 radarr
     $ mithrandir self-update
     $ mithrandir version
     $ mithrandir config
@@ -132,13 +132,16 @@ const cli = meow(
       },
       since: {
         type: "string",
+        shortFlag: "s",
       },
       remote: {
         type: "boolean",
+        shortFlag: "r",
         default: false,
       },
       extract: {
         type: "boolean",
+        shortFlag: "x",
         default: false,
       },
     },
