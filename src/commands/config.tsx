@@ -13,9 +13,6 @@ function isSensitive(key: string): boolean {
   return lower.includes("token") || lower.includes("secret") || lower.includes("password");
 }
 
-function truncate(str: string, maxLen: number): string {
-  return str.length > maxLen ? str.slice(0, maxLen - 1) + "…" : str;
-}
 
 function ConfigDisplay() {
   const { exit } = useApp();
@@ -56,7 +53,7 @@ function ConfigDisplay() {
         setExtraData(
           extras.map(([key, value]) => ({
             Setting: key,
-            Value: isSensitive(key) ? "****" : truncate(String(value), 40),
+            Value: isSensitive(key) ? "****" : String(value),
           })),
         );
       }
@@ -117,7 +114,7 @@ function ConfigDisplay() {
           <Box marginTop={1}>
             <Divider title="Environment Variables" width={50} titleColor="cyan" />
           </Box>
-          <DataTable data={extraData} />
+          <DataTable data={extraData} maxColWidth={40} />
         </>
       )}
 
