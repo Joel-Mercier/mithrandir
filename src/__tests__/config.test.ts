@@ -57,6 +57,29 @@ describe("getBackupConfig", () => {
     const config = getBackupConfig(env);
     expect(config.BACKUP_PASSWORD).toBe("secret123");
   });
+
+  test("defaults BACKUP_HOUR to 2", () => {
+    const env: EnvConfig = {
+      BASE_DIR: "/home/test",
+      PUID: "1000",
+      PGID: "1000",
+      TZ: "Etc/UTC",
+    };
+    const config = getBackupConfig(env);
+    expect(config.BACKUP_HOUR).toBe(2);
+  });
+
+  test("parses BACKUP_HOUR when set", () => {
+    const env: EnvConfig = {
+      BASE_DIR: "/home/test",
+      PUID: "1000",
+      PGID: "1000",
+      TZ: "Etc/UTC",
+      BACKUP_HOUR: "5",
+    };
+    const config = getBackupConfig(env);
+    expect(config.BACKUP_HOUR).toBe(5);
+  });
 });
 
 describe("loadEnvConfig", () => {

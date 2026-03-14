@@ -80,6 +80,7 @@ export function getBackupConfig(env: EnvConfig): BackupConfig {
     APPS: env.APPS ?? "auto",
     BASE_DIR: env.BASE_DIR,
     BACKUP_PASSWORD: env.BACKUP_PASSWORD || undefined,
+    BACKUP_HOUR: parseInt(env.BACKUP_HOUR ?? "2", 10),
   };
 }
 

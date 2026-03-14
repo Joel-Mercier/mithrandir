@@ -114,6 +114,7 @@ export interface EnvConfig {
   RCLONE_REMOTE?: string;
   APPS?: string;
   BACKUP_PASSWORD?: string;
+  BACKUP_HOUR?: string;
   ENABLE_HTTPS?: string;
   ACME_EMAIL?: string;
   [key: string]: string | undefined;
@@ -127,6 +128,7 @@ export interface BackupConfig {
   APPS: string;
   BASE_DIR: string;
   BACKUP_PASSWORD: string | undefined;
+  BACKUP_HOUR: number;
 }
 
 export interface CliFlags {

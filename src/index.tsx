@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 import meow from "meow";
 import { render } from "ink";
-import { runBackup, runBackupDelete, runBackupList, runBackupVerify } from "@/commands/backup.js";
+import { runBackup, runBackupConfig, runBackupDelete, runBackupList, runBackupVerify } from "@/commands/backup.js";
 import { runRestore } from "@/commands/restore.js";
 import { SetupCommand } from "@/commands/setup.js";
 import { runUninstall } from "@/commands/uninstall.js";
@@ -36,6 +36,7 @@ const cli = meow(
     backup [app]                       Backup all or a specific app
     backup list [local|remote]          List local and/or remote backups
     backup delete <local|remote> [date] Delete local or remote backups
+    backup config                      View and edit backup settings
     backup verify [options] [date]     Verify backup archive integrity
     restore [options] <app|full> [date] Restore app(s) from backup
     recover                            Recover full system from remote backup
@@ -178,6 +179,8 @@ switch (command) {
       runBackupDelete(cli.input.slice(2), cli.flags);
     } else if (cli.input[1] === "verify") {
       runBackupVerify(cli.input.slice(2), cli.flags);
+    } else if (cli.input[1] === "config") {
+      runBackupConfig();
     } else {
       runBackup(cli.flags, cli.input[1]);
     }

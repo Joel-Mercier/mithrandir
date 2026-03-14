@@ -37,12 +37,13 @@ WantedBy=multi-user.target
 }
 
 /** Generate the systemd timer unit content */
-export function generateTimerUnit(): string {
+export function generateTimerUnit(hour: number = 2): string {
+  const h = String(Math.max(0, Math.min(23, hour))).padStart(2, "0");
   return `[Unit]
 Description=Mithrandir Backup Timer
 
 [Timer]
-OnCalendar=*-*-* 02:00:00
+OnCalendar=*-*-* ${h}:00:00
 RandomizedDelaySec=1800
 Persistent=true
 
@@ -52,11 +53,11 @@ WantedBy=timers.target
 }
 
 /** Install the systemd service and timer */
-export async function installSystemdUnits(): Promise<void> {
+export async function installSystemdUnits(hour: number = 2): Promise<void> {
   const paths = getPaths();
 
   const serviceContent = generateServiceUnit();
-  const timerContent = generateTimerUnit();
+  const timerContent = generateTimerUnit(hour);
 
   // Write unit files via temp files + sudo mv
   const tmpService = join(tmpdir(), `${SERVICE_NAME}.service.tmp`);

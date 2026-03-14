@@ -38,5 +38,7 @@ export async function runConfig(): Promise<void> {
   console.log(`  ${"REMOTE_RETENTION".padEnd(pad)}${backup.REMOTE_RETENTION}`);
   console.log(`  ${"RCLONE_REMOTE".padEnd(pad)}${backup.RCLONE_REMOTE}`);
   console.log(`  ${"APPS".padEnd(pad)}${backup.APPS}`);
+  const hourStr = String(backup.BACKUP_HOUR).padStart(2, "0");
+  console.log(`  ${"BACKUP_HOUR".padEnd(pad)}${hourStr}:00`);
   console.log("");
 }

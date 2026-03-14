@@ -16,6 +16,7 @@ mithrandir setup                       # Interactive setup wizard
 mithrandir backup                      # Backup all apps
 mithrandir backup list [local|remote]     # List existing backups
 mithrandir backup delete <local|remote> [date] [--yes]  # Delete backups
+mithrandir backup config                                 # View and edit backup settings
 mithrandir backup verify [date] [--remote] [--extract]  # Verify backup integrity
 mithrandir restore <app|full> [date] [--yes]
 mithrandir recover [--yes]              # Full disaster recovery from remote backup
@@ -96,7 +97,7 @@ These allow programmatic access to the APIs of the above services.
 
 ## Configuration
 
-- **.env** — All configuration lives here. Core settings: `BASE_DIR`, `PUID`/`PGID`, `TZ`. Per-app secrets: DuckDNS, WireGuard, Spotify. Backup settings: `BACKUP_DIR` (default `/backups`), `LOCAL_RETENTION` (5), `REMOTE_RETENTION` (10), `RCLONE_REMOTE` (gdrive), `APPS` (auto or comma-separated), `BACKUP_PASSWORD` (optional, encrypts backups with AES-256-CBC). HTTPS settings: `ENABLE_HTTPS`, `ACME_EMAIL`. Firewall: `ENABLE_FIREWALL`. Not in git.
+- **.env** — All configuration lives here. Core settings: `BASE_DIR`, `PUID`/`PGID`, `TZ`. Per-app secrets: DuckDNS, WireGuard, Spotify. Backup settings: `BACKUP_DIR` (default `/backups`), `LOCAL_RETENTION` (5), `REMOTE_RETENTION` (10), `RCLONE_REMOTE` (gdrive), `APPS` (auto or comma-separated), `BACKUP_HOUR` (0-23, default 2 — hour when systemd timer runs), `BACKUP_PASSWORD` (optional, encrypts backups with AES-256-CBC). HTTPS settings: `ENABLE_HTTPS`, `ACME_EMAIL`. Firewall: `ENABLE_FIREWALL`. Not in git.
 - **.env.example** — Template with all available env vars and defaults. **When adding new env vars (e.g. app secrets), always add them to `.env.example` too.**
 
 ### Changelog (`docs/changelog.md`)

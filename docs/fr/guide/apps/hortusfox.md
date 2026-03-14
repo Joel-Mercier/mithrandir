@@ -7,7 +7,7 @@ Systeme de gestion de plantes auto-heberge — suivez vos plantes, gerez les cal
 | **Image** | `ghcr.io/danielbrendel/hortusfox-web:latest` |
 | **Interface web** | `http://your-server:8089` |
 | **Chemin de configuration** | `{BASE_DIR}/hortusfox/db` |
-| **Site web** | [hortusfox.com](https://hortusfox.com/) |
+| **Site web** | [hortusfox.com](https://www.hortusfox.com/) |
 | **Code source** | [GitHub](https://github.com/danielbrendel/hortusfox-web) |
 
 ## Impact sur les ressources

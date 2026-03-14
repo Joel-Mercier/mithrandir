@@ -10,6 +10,24 @@ Automated setup and backup system for Docker-based homelab applications.
 [![CI](https://github.com/Joel-Mercier/mithrandir/actions/workflows/ci.yml/badge.svg)](https://github.com/Joel-Mercier/mithrandir/actions/workflows/ci.yml)
 [![Deploy VitePress site to Pages](https://github.com/Joel-Mercier/mithrandir/actions/workflows/deploy.yml/badge.svg)](https://github.com/Joel-Mercier/mithrandir/actions/workflows/deploy.yml)
 
+> [!WARNING]
+> This project is being developed with the help of LLMs and agentic coding. Altough I'm a professional software developer, I'm more experienced in developing websites and mobile apps.
+
+> [!WARNING]
+> Mithrandir has for now only been tested on a Raspberry Pi 5 with 4GB RAM and running Raspberry Pi OS in headless mode. It may not work on other hardware or operating systems.
+
+**Documentation website:** https://joel-mercier.github.io/mithrandir/
+
+## Table of Contents
+
+- [Quick Start](#quick-start)
+- [Configuration](#configuration)
+- [Usage](#usage)
+- [Available Apps](#available-apps)
+- [Local Development](#local-development)
+- [Testing](#testing)
+- [TODO](#todo)
+
 ## Quick Start
 
 ```bash
@@ -17,14 +35,6 @@ git clone <repo> && cd mithrandir
 sudo bash install.sh          # Installs Bun + dependencies
 mithrandir setup              # No sudo needed — CLI elevates internally when required
 ```
-
-**Documentation website:** https://joel-mercier.github.io/mithrandir/
-
-> [!WARNING]
-> This project is being developed with the help of LLMs and agentic coding. Altough I'm a professional software developer, I'm more experienced in developing websites and mobile apps.
-
-> [!WARNING]
-> Mithrandir has for now only been tested on a Raspberry Pi 5 with 4GB RAM and running Raspberry Pi OS in headless mode. It may not work on other hardware or operating systems.
 
 ## Configuration
 
@@ -42,6 +52,7 @@ All configuration lives in a single `.env` file at the project root.
 - `REMOTE_RETENTION`: Number of Google Drive backups to keep (default: `10`)
 - `RCLONE_REMOTE`: rclone remote name for Google Drive (default: `gdrive`)
 - `APPS`: Apps to backup - `"auto"` to detect installed apps, or comma-separated list
+- `BACKUP_HOUR`: Hour of the day when automatic backups run (0-23, default: `2` for 2:00 AM)
 - `BACKUP_PASSWORD`: Optional encryption password — when set, backups are encrypted with AES-256-CBC
 
 **HTTPS settings (Caddy reverse proxy):**
@@ -81,7 +92,8 @@ Automatically generated and installed by setup to `/etc/systemd/system/`:
   - Runs backup as a oneshot service
   - Path is automatically configured during setup
 - **Timer**: `homelab-backup.timer`
-  - Runs daily at 2:00 AM with 0-30 minute randomization
+  - Runs daily at the configured hour (default: 2:00 AM) with 0-30 minute randomization
+  - Configurable via `BACKUP_HOUR` env var or `mithrandir backup config`
   - Persistent: runs immediately if system was off during scheduled time
 
 ## Usage
@@ -131,6 +143,12 @@ mithrandir backup delete local 2025-06-01       # Delete a specific local backup
 mithrandir backup delete remote --yes           # Delete all remote backups (no prompt)
 mithrandir backup delete remote 2025-06-01      # Delete a specific remote backup
 ```
+
+**Configure backup settings:**
+```bash
+mithrandir backup config
+```
+Interactive command to view and edit all backup settings: backup directory, retention counts, rclone remote, apps to backup, backup hour, and encryption password. Saves changes to `.env` and updates the systemd timer automatically if the backup hour changes.
 
 **Verify backups:**
 ```bash
@@ -477,11 +495,8 @@ A GitHub Actions workflow runs on every push and pull request to `main`. It runs
 
 ## TODO
 
-- [ ] Add hortusfox to the list of installable apps in @src/lib/apps.ts. It should be in a new "Household" category (also move cookcli app to this new category instead of "Cooking" make sure to reflect that in the docs as well). Here is the official docker-compose.yml file : https://github.com/danielbrendel/hortusfox-web/blob/main/docker-compose.yml. Add env vars for APP_ADMIN_EMAIL & APP_ADMIN_PASSWORD. Also the setup command @src/commands/setup.tsx should prompt for these (make sure to use the correct input for password) if this app is selected. Make sure to update the README, CLAUDE.md and docs.
 - [ ] Pihole not working with Gatus (https url doesn't work, local ip with port 8880 not workins as well)
 - [ ] Refactor all commands that don't render any jsx with ink (ending in .ts) to use Ink and Ink components instead of using console.log
-- [ ] Check if the general usage of the cli is in line with posix standards and best practices https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap12.html show which commands don't comply and how they differ before making any changes
-- [ ] Make backup timer systemd timer start hour configurable with a env var. Also update the docs, README, CLAUDE.md
 - [ ] Add screenshots to the docs
 - [ ] Extend the backup feature to support multiple backup locations using the rclone dependency. Add a new command to select a drive to be use as backup or a network storage. Also extend remote options to support multiple cloud storage options not just Google Drive
 - [ ] Make sure that empty env vars in .env are considered as not set and not as empty strings since this might cause issues with some apps where a value is expected

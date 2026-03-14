@@ -43,12 +43,20 @@ describe("generateServiceUnit", () => {
 describe("generateTimerUnit", () => {
   const unit = generateTimerUnit();
 
-  test("contains correct Description", () => {
-    expect(unit).toContain("Description=Mithrandir Backup Timer");
+  test("defaults to 2 AM daily", () => {
+    expect(unit).toContain("OnCalendar=*-*-* 02:00:00");
   });
 
-  test("fires at 2 AM daily", () => {
-    expect(unit).toContain("OnCalendar=*-*-* 02:00:00");
+  test("accepts custom hour", () => {
+    expect(generateTimerUnit(5)).toContain("OnCalendar=*-*-* 05:00:00");
+    expect(generateTimerUnit(14)).toContain("OnCalendar=*-*-* 14:00:00");
+    expect(generateTimerUnit(0)).toContain("OnCalendar=*-*-* 00:00:00");
+    expect(generateTimerUnit(23)).toContain("OnCalendar=*-*-* 23:00:00");
+  });
+
+  test("clamps out-of-range hours", () => {
+    expect(generateTimerUnit(-1)).toContain("OnCalendar=*-*-* 00:00:00");
+    expect(generateTimerUnit(25)).toContain("OnCalendar=*-*-* 23:00:00");
   });
 
   test("has randomized delay", () => {

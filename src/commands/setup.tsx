@@ -830,10 +830,12 @@ export function SetupCommand({ flags }: SetupCommandProps) {
         // Could add a confirm here, but matching bash behavior of auto-install
       }
 
+      const backupHour = parseInt(envConfig.BACKUP_HOUR ?? "2", 10);
+      const hourStr = String(Math.max(0, Math.min(23, backupHour))).padStart(2, "0");
       try {
-        await installSystemdUnits();
+        await installSystemdUnits(backupHour);
         setStatus("done");
-        addCompletedStep({ name: "Backup Timer", status: "done", message: "Daily at 2:00 AM" });
+        addCompletedStep({ name: "Backup Timer", status: "done", message: `Daily at ${hourStr}:00` });
       } catch {
         setStatus("skipped");
         addCompletedStep({ name: "Backup Timer", status: "skipped", message: "Failed to install" });

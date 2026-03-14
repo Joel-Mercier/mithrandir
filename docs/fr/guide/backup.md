@@ -31,7 +31,7 @@ Si vous devez effectuer une récupération sur une nouvelle machine, redirigez v
 
 ## Sauvegardes automatiques
 
-L'assistant de configuration installe un timer systemd qui exécute les sauvegardes quotidiennement à 2h00 du matin. Vous pouvez vérifier l'état du timer avec :
+L'assistant de configuration installe un timer systemd qui exécute les sauvegardes quotidiennement à 2h00 du matin (configurable). Vous pouvez vérifier l'état du timer avec :
 
 ```sh
 mithrandir status
@@ -42,6 +42,16 @@ Ou installer/réinstaller le timer de sauvegarde manuellement :
 ```sh
 mithrandir install backup
 ```
+
+### Modifier l'horaire de sauvegarde
+
+Utilisez la commande de configuration de sauvegarde pour changer l'heure d'exécution des sauvegardes automatiques :
+
+```sh
+mithrandir backup config
+```
+
+Cette commande interactive parcourt tous les paramètres de sauvegarde et met à jour le timer systemd automatiquement. Vous pouvez aussi définir la variable `BACKUP_HOUR` dans `.env` directement (0-23, par défaut : `2` pour 2h00) et réinstaller le timer avec `mithrandir install backup`.
 
 ## Sauvegardes manuelles
 
@@ -179,6 +189,7 @@ Les anciennes sauvegardes sont automatiquement purgées après chaque exécution
 | `REMOTE_RETENTION` | `10` | Nombre de sauvegardes distantes à conserver |
 | `RCLONE_REMOTE` | `gdrive` | Nom du remote rclone |
 | `APPS` | `auto` | Applications à sauvegarder — `auto` pour toutes les installées, ou liste séparée par des virgules |
+| `BACKUP_HOUR` | `2` | Heure de la journée (0-23) à laquelle les sauvegardes automatiques s'exécutent |
 
 ## Supprimer des sauvegardes manuellement
 

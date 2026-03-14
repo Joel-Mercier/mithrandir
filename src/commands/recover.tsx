@@ -270,9 +270,12 @@ async function runHeadlessRecover(autoYes: boolean): Promise<void> {
   const systemdAvailable = await hasSystemd();
   const wsl = await isWsl();
   if (systemdAvailable && !wsl) {
+    const reloadedEnvForTimer = await loadEnvConfig();
+    const backupHour = parseInt(reloadedEnvForTimer.BACKUP_HOUR ?? "2", 10);
+    const hourStr = String(Math.max(0, Math.min(23, backupHour))).padStart(2, "0");
     try {
-      await installSystemdUnits();
-      await logger.info("Backup timer installed (daily at 2:00 AM)");
+      await installSystemdUnits(backupHour);
+      await logger.info(`Backup timer installed (daily at ${hourStr}:00)`);
     } catch {
       await logger.warn("Failed to install backup timer");
     }
@@ -905,12 +908,15 @@ function RecoverCommand({ autoYes }: { autoYes: boolean }) {
         return;
       }
 
+      const timerEnv = await loadEnvConfig();
+      const backupHour = parseInt(timerEnv.BACKUP_HOUR ?? "2", 10);
+      const hourStr = String(Math.max(0, Math.min(23, backupHour))).padStart(2, "0");
       try {
-        await installSystemdUnits();
+        await installSystemdUnits(backupHour);
         addStep({
           name: "Backup Timer",
           status: "done",
-          message: "Daily at 2:00 AM",
+          message: `Daily at ${hourStr}:00`,
         });
       } catch {
         addStep({

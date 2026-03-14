@@ -31,7 +31,7 @@ If you need to recover on a new machine, re-point your apps at the same media st
 
 ## Automatic Backups
 
-The setup wizard installs a systemd timer that runs backups daily at 2:00 AM. You can check the timer status with:
+The setup wizard installs a systemd timer that runs backups daily at 2:00 AM (configurable). You can check the timer status with:
 
 ```sh
 mithrandir status
@@ -42,6 +42,16 @@ Or install/reinstall the backup timer manually:
 ```sh
 mithrandir install backup
 ```
+
+### Changing the Backup Schedule
+
+Use the backup config command to change the hour when automatic backups run:
+
+```sh
+mithrandir backup config
+```
+
+This interactive command walks through all backup settings and updates the systemd timer automatically. You can also set the `BACKUP_HOUR` variable in `.env` directly (0-23, default: `2` for 2:00 AM) and reinstall the timer with `mithrandir install backup`.
 
 ## Manual Backups
 
@@ -179,6 +189,7 @@ Old backups are pruned automatically after each backup run. Configure retention 
 | `REMOTE_RETENTION` | `10` | Number of remote backups to keep |
 | `RCLONE_REMOTE` | `gdrive` | rclone remote name |
 | `APPS` | `auto` | Apps to backup — `auto` for all installed, or comma-separated list |
+| `BACKUP_HOUR` | `2` | Hour of the day (0-23) when automatic backups run |
 
 ## Deleting Backups Manually
 

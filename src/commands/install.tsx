@@ -232,13 +232,16 @@ function InstallBackup() {
         message: systemdAvailable ? "WSL detected (systemd timers not reliable)" : "systemd not available",
       });
     } else {
+      const env = await loadEnvConfig();
+      const backupHour = parseInt(env.BACKUP_HOUR ?? "2", 10);
+      const hourStr = String(Math.max(0, Math.min(23, backupHour))).padStart(2, "0");
       const alreadyActive = await isTimerActive();
       if (alreadyActive) {
-        addStep({ name: "Backup timer", status: "done", message: "Already active (daily at 2:00 AM)" });
+        addStep({ name: "Backup timer", status: "done", message: `Already active (daily at ${hourStr}:00)` });
       } else {
         try {
-          await installSystemdUnits();
-          addStep({ name: "Backup timer", status: "done", message: "Installed (daily at 2:00 AM)" });
+          await installSystemdUnits(backupHour);
+          addStep({ name: "Backup timer", status: "done", message: `Installed (daily at ${hourStr}:00)` });
         } catch {
           addStep({ name: "Backup timer", status: "skipped", message: "Failed to install" });
         }

@@ -7,7 +7,7 @@ Self-hosted plant management system — track your plants, manage watering sched
 | **Image** | `ghcr.io/danielbrendel/hortusfox-web:latest` |
 | **Web UI** | `http://your-server:8089` |
 | **Config path** | `{BASE_DIR}/hortusfox/db` |
-| **Website** | [hortusfox.com](https://hortusfox.com/) |
+| **Website** | [hortusfox.com](https://www.hortusfox.com/) |
 | **Source code** | [GitHub](https://github.com/danielbrendel/hortusfox-web) |
 
 ## Resource Impact

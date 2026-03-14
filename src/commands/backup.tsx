@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { render, Box, Text, useApp } from "ink";
 import Spinner from "ink-spinner";
-import { StatusMessage, ConfirmInput } from "@inkjs/ui";
-import { loadEnvConfig, getBackupConfig, getProjectRoot } from "@/lib/config.js";
+import { StatusMessage, ConfirmInput, TextInput } from "@inkjs/ui";
+import { loadEnvConfig, getBackupConfig, getProjectRoot, saveEnvConfig } from "@/lib/config.js";
 import {
   APP_REGISTRY,
   getApp,
@@ -31,6 +31,7 @@ import {
   isBackupArchive,
   ENCRYPTED_EXT,
 } from "@/lib/backup-utils.js";
+import { hasSystemd, isWsl, installSystemdUnits, isTimerActive } from "@/lib/systemd.js";
 import type { AppDefinition, BackupConfig, EnvConfig } from "@/types.js";
 import { existsSync } from "fs";
 
@@ -1494,4 +1495,155 @@ export async function runBackupVerify(
   } else {
     await runHeadlessVerify(date, flags.remote, flags.extract);
   }
+}
+
+// ─── Backup Config ────────────────────────────────────────────────────────────
+
+type ConfigField = "backup_dir" | "local_retention" | "remote_retention" | "rclone_remote" | "apps" | "backup_hour" | "backup_password";
+
+const CONFIG_FIELDS: { key: ConfigField; envVar: string; label: string; description: string }[] = [
+  { key: "backup_dir", envVar: "BACKUP_DIR", label: "Backup directory", description: "Local directory where backup archives are stored" },
+  { key: "local_retention", envVar: "LOCAL_RETENTION", label: "Local retention", description: "Number of local backup copies to keep before old ones are pruned" },
+  { key: "remote_retention", envVar: "REMOTE_RETENTION", label: "Remote retention", description: "Number of remote (cloud) backup copies to keep before old ones are pruned" },
+  { key: "rclone_remote", envVar: "RCLONE_REMOTE", label: "Rclone remote", description: "Name of the rclone remote used for cloud backup sync (e.g. gdrive)" },
+  { key: "apps", envVar: "APPS", label: "Apps to backup", description: "Which apps to include — \"auto\" detects all installed apps, or a comma-separated list (e.g. jellyfin,radarr)" },
+  { key: "backup_hour", envVar: "BACKUP_HOUR", label: "Backup hour (0-23)", description: "Hour of the day (in 24h format) when the automatic backup runs via systemd timer" },
+  { key: "backup_password", envVar: "BACKUP_PASSWORD", label: "Encryption password", description: "When set, backups are encrypted with AES-256-CBC — leave empty to disable encryption" },
+];
+
+function BackupConfigCommand() {
+  const { exit } = useApp();
+  const [env, setEnv] = useState<EnvConfig | null>(null);
+  const [fieldIdx, setFieldIdx] = useState(-1);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [timerMessage, setTimerMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadEnvConfig().then(setEnv);
+  }, []);
+
+  // Start editing once env is loaded
+  useEffect(() => {
+    if (env && fieldIdx === -1) setFieldIdx(0);
+  }, [env]);
+
+  async function handleSubmit(value: string) {
+    if (!env) return;
+    const field = CONFIG_FIELDS[fieldIdx];
+    const trimmed = value.trim();
+
+    // Validate
+    if (field.key === "backup_hour") {
+      const num = parseInt(trimmed, 10);
+      if (isNaN(num) || num < 0 || num > 23) {
+        setError("Hour must be a number between 0 and 23");
+        return;
+      }
+    }
+    if (field.key === "local_retention" || field.key === "remote_retention") {
+      const num = parseInt(trimmed, 10);
+      if (isNaN(num) || num < 1) {
+        setError("Retention must be a positive number");
+        return;
+      }
+    }
+
+    setError(null);
+    const updated = { ...env, [field.envVar]: trimmed };
+    setEnv(updated);
+
+    if (fieldIdx < CONFIG_FIELDS.length - 1) {
+      setFieldIdx(fieldIdx + 1);
+    } else {
+      // Save and update timer
+      try {
+        await saveEnvConfig(updated);
+
+        // Update systemd timer if hour changed
+        const oldHour = parseInt(env.BACKUP_HOUR ?? "2", 10);
+        const newHour = parseInt(updated.BACKUP_HOUR ?? "2", 10);
+        const systemdAvailable = await hasSystemd();
+        const wsl = await isWsl();
+
+        if (systemdAvailable && !wsl) {
+          if (oldHour !== newHour || !(await isTimerActive())) {
+            await installSystemdUnits(newHour);
+            const h = String(newHour).padStart(2, "0");
+            setTimerMessage(`Backup timer updated (daily at ${h}:00)`);
+          }
+        }
+
+        setSaved(true);
+        setTimeout(() => exit(), 500);
+      } catch (err: any) {
+        setError(err.message);
+      }
+    }
+  }
+
+  if (!env) return <Text><Spinner /> Loading configuration...</Text>;
+
+  const currentField = CONFIG_FIELDS[fieldIdx];
+  const currentValue = currentField ? (env[currentField.envVar as keyof EnvConfig] ?? "") : "";
+
+  // Format display value for backup_hour
+  function formatCurrentValue(field: typeof CONFIG_FIELDS[number], val: string): string {
+    if (field.key === "backup_hour") {
+      const h = parseInt(val || "2", 10);
+      return `${String(h).padStart(2, "0")}:00`;
+    }
+    if (field.key === "backup_password") {
+      return val ? "****" : "(not set)";
+    }
+    return val || "(not set)";
+  }
+
+  return (
+    <Box flexDirection="column">
+      <Header title="Backup Configuration" />
+
+      {/* Show current values for completed fields */}
+      {CONFIG_FIELDS.slice(0, fieldIdx).map((field) => {
+        const val = env[field.envVar as keyof EnvConfig] ?? "";
+        return (
+          <Box key={field.key}>
+            <Text color="green">{"  \u2714 "}</Text>
+            <Text bold>{field.label}: </Text>
+            <Text>{formatCurrentValue(field, val as string)}</Text>
+          </Box>
+        );
+      })}
+
+      {/* Current field prompt */}
+      {!saved && currentField && (
+        <Box flexDirection="column" marginTop={fieldIdx > 0 ? 1 : 0}>
+          <Text bold>  {currentField.label}</Text>
+          <Text dimColor>  {currentField.description}</Text>
+          {error && <Text color="red">  {error}</Text>}
+          <Box>
+            <Text color="blue">{"  > "}</Text>
+            <TextInput
+              key={currentField.key}
+              defaultValue={currentValue as string}
+              onSubmit={handleSubmit}
+            />
+          </Box>
+        </Box>
+      )}
+
+      {/* Summary */}
+      {saved && (
+        <Box flexDirection="column" marginTop={1}>
+          <StatusMessage variant="success">Backup configuration saved to .env</StatusMessage>
+          {timerMessage && <StatusMessage variant="success">{timerMessage}</StatusMessage>}
+        </Box>
+      )}
+    </Box>
+  );
+}
+
+export async function runBackupConfig(): Promise<void> {
+  const { waitUntilExit } = render(<BackupConfigCommand />);
+  await waitUntilExit();
 }
