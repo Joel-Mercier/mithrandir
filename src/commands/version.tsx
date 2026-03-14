@@ -1,3 +1,5 @@
+import { Box, render, Text } from "ink";
+import { Header } from "@/components/Header.js";
 import { readFileSync } from "fs";
 import { execSync } from "child_process";
 import { resolve } from "path";
@@ -31,6 +33,15 @@ export function getVersionString(): string {
   return `v${version}${suffix}`;
 }
 
+function VersionDisplay() {
+  return (
+    <Box flexDirection="column">
+      <Header />
+    </Box>
+  );
+}
+
 export async function runVersion(): Promise<void> {
-  console.log(`mithrandir ${getVersionString()}`);
+  const { waitUntilExit } = render(<VersionDisplay />);
+  await waitUntilExit();
 }
