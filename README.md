@@ -476,6 +476,7 @@ A GitHub Actions workflow runs on every push and pull request to `main`. It runs
 
 ## TODO
 
+- [ ] Add hortusfox to the list of installable apps in @src/lib/apps.ts. It should be in a new "Household" category (also move cookcli app to this new category instead of "Cooking" make sure to reflect that in the docs as well). Here is the official docker-compose.yml file : https://github.com/danielbrendel/hortusfox-web/blob/main/docker-compose.yml. Add env vars for APP_ADMIN_EMAIL & APP_ADMIN_PASSWORD. Also the setup command @src/commands/setup.tsx should prompt for these (make sure to use the correct input for password) if this app is selected. Make sure to update the README, CLAUDE.md and docs.
 - [ ] Pihole not working with Gatus (https url doesn't work, local ip with port 8880 not workins as well)
 - [ ] Make sure the self-update command doesn't install deps, build and symlink if git pull shows already up to date message
 - [ ] Refactor all commands that don't render any jsx with ink (ending in .ts) to use Ink and Ink components instead of using console.log
