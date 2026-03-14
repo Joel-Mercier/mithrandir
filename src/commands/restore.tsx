@@ -79,49 +79,44 @@ async function findBackupFile(
     }
   }
 
-  // Try remote (encrypted first, then plain)
+  // Try remotes (encrypted first, then plain) — try each remote in order
   if (await isRcloneInstalled()) {
-    try {
-      let remoteDate = date;
-      if (date === "latest") {
-        const dirs = await listDirs(
-          config.RCLONE_REMOTE,
-          "/backups/archive",
-        );
-        if (dirs.length > 0) {
-          remoteDate = dirs[dirs.length - 1];
-        } else {
-          return null;
+    for (const remote of config.RCLONE_REMOTES) {
+      try {
+        let remoteDate = date;
+        if (date === "latest") {
+          const dirs = await listDirs(remote, "/backups/archive");
+          if (dirs.length > 0) {
+            remoteDate = dirs[dirs.length - 1];
+          } else {
+            continue;
+          }
         }
-      }
 
-      // Try encrypted first, then plain
-      const encPath = `/backups/archive/${remoteDate}/${appName}${ENCRYPTED_EXT}`;
-      const plainPath = `/backups/archive/${remoteDate}/${appName}${ARCHIVE_EXT}`;
-      let remotePath: string | null = null;
+        // Try encrypted first, then plain
+        const encPath = `/backups/archive/${remoteDate}/${appName}${ENCRYPTED_EXT}`;
+        const plainPath = `/backups/archive/${remoteDate}/${appName}${ARCHIVE_EXT}`;
+        let remotePath: string | null = null;
 
-      if (await remoteFileExists(config.RCLONE_REMOTE, encPath)) {
-        remotePath = encPath;
-      } else if (await remoteFileExists(config.RCLONE_REMOTE, plainPath)) {
-        remotePath = plainPath;
-      }
+        if (await remoteFileExists(remote, encPath)) {
+          remotePath = encPath;
+        } else if (await remoteFileExists(remote, plainPath)) {
+          remotePath = plainPath;
+        }
 
-      if (remotePath) {
-        const { stdout: tmpDir } = await shell("mktemp", ["-d"]);
-        const tempDir = tmpDir.trim();
-        await download(
-          config.RCLONE_REMOTE,
-          remotePath,
-          tempDir,
-        );
-        const filename = remotePath.split("/").pop()!;
-        return {
-          path: `${tempDir}/${filename}`,
-          tempDir,
-        };
+        if (remotePath) {
+          const { stdout: tmpDir } = await shell("mktemp", ["-d"]);
+          const tempDir = tmpDir.trim();
+          await download(remote, remotePath, tempDir);
+          const filename = remotePath.split("/").pop()!;
+          return {
+            path: `${tempDir}/${filename}`,
+            tempDir,
+          };
+        }
+      } catch {
+        continue;
       }
-    } catch {
-      // Remote failed, return null
     }
   }
 
@@ -208,17 +203,16 @@ async function findAvailableBackups(
     }
   }
 
-  // Check remote for apps not found locally
+  // Check remotes for apps not found locally
   if (await isRcloneInstalled()) {
-    const remoteCheck = await isRcloneRemoteConfigured(config.RCLONE_REMOTE, env);
-    if (remoteCheck.configured) {
+    for (const remote of config.RCLONE_REMOTES) {
+      const remoteCheck = await isRcloneRemoteConfigured(remote, env);
+      if (!remoteCheck.configured) continue;
+
       try {
         let remoteDate = date;
         if (date === "latest") {
-          const dirs = await listDirs(
-            config.RCLONE_REMOTE,
-            "/backups/archive",
-          );
+          const dirs = await listDirs(remote, "/backups/archive");
           if (dirs.length > 0) {
             remoteDate = dirs[dirs.length - 1];
           }
@@ -227,19 +221,18 @@ async function findAvailableBackups(
         if (remoteDate !== "latest") {
           for (const name of allNames) {
             if (foundApps.includes(name)) continue;
-            // Try encrypted first, then plain
             const encPath = `/backups/archive/${remoteDate}/${name}${ENCRYPTED_EXT}`;
             const plainPath = `/backups/archive/${remoteDate}/${name}${ARCHIVE_EXT}`;
             if (
-              (await remoteFileExists(config.RCLONE_REMOTE, encPath)) ||
-              (await remoteFileExists(config.RCLONE_REMOTE, plainPath))
+              (await remoteFileExists(remote, encPath)) ||
+              (await remoteFileExists(remote, plainPath))
             ) {
               foundApps.push(name);
             }
           }
         }
       } catch {
-        // Remote check failed, continue with what we have
+        continue;
       }
     }
   }

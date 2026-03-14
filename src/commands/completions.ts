@@ -11,7 +11,7 @@ const APP_COMMANDS = [
   "update", "log",
 ];
 
-const BACKUP_SUBCOMMANDS = ["list", "delete", "verify", "config"];
+const BACKUP_SUBCOMMANDS = ["list", "delete", "verify", "config", "remote"];
 
 /** Build a map of app name → service names for multi-container apps */
 function getLogServiceMap(): Map<string, string[]> {

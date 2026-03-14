@@ -316,10 +316,10 @@ export function SetupCommand({ flags }: SetupCommandProps) {
           status: "done",
           message: "Ready",
           notes: [
-            `Backup defaults: BACKUP_DIR=/backups, LOCAL_RETENTION=5, REMOTE_RETENTION=10, RCLONE_REMOTE=gdrive`,
+            `Backup defaults: BACKUP_DIR=/backups, LOCAL_RETENTION=5, REMOTE_RETENTION=10, RCLONE_REMOTES=gdrive`,
             `These can be changed in .env`,
             `TIP: Set RCLONE_GDRIVE_APP_ID, RCLONE_GDRIVE_APP_SECRET, and RCLONE_GDRIVE_TOKEN in .env to auto-configure rclone`,
-            `     Or run 'rclone config' manually. See: https://rclone.org/drive/#making-your-own-client-id`,
+            `     Or run 'mithrandir backup remote add' to add remotes. See: https://rclone.org/drive/#making-your-own-client-id`,
           ],
         });
         setStep("base-dir");
@@ -342,10 +342,10 @@ export function SetupCommand({ flags }: SetupCommandProps) {
           status: "done",
           message: "Installed",
           notes: [
-            `Backup defaults: BACKUP_DIR=/backups, LOCAL_RETENTION=5, REMOTE_RETENTION=10, RCLONE_REMOTE=gdrive`,
+            `Backup defaults: BACKUP_DIR=/backups, LOCAL_RETENTION=5, REMOTE_RETENTION=10, RCLONE_REMOTES=gdrive`,
             `These can be changed in .env`,
             `TIP: Set RCLONE_GDRIVE_APP_ID, RCLONE_GDRIVE_APP_SECRET, and RCLONE_GDRIVE_TOKEN in .env to auto-configure rclone`,
-            `     Or run 'rclone config' manually. See: https://rclone.org/drive/#making-your-own-client-id`,
+            `     Or run 'mithrandir backup remote add' to add remotes. See: https://rclone.org/drive/#making-your-own-client-id`,
           ],
         });
         setStep("base-dir");

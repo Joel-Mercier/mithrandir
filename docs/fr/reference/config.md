@@ -13,7 +13,7 @@ mithrandir config
 Affiche une vue formatée de tous les paramètres du fichier `.env`, regroupés par catégorie :
 
 - **Paramètres principaux** — `BASE_DIR`, `PUID`, `PGID`, `TZ`
-- **Paramètres de sauvegarde** — `BACKUP_DIR`, `LOCAL_RETENTION`, `REMOTE_RETENTION`, `RCLONE_REMOTE`
+- **Paramètres de sauvegarde** — `BACKUP_DIR`, `LOCAL_RETENTION`, `REMOTE_RETENTION`, `RCLONE_REMOTES`
 - **Secrets par application** — jetons et clés (les valeurs sont masquées)
 
 ## Variables d'environnement
@@ -25,7 +25,7 @@ Affiche une vue formatée de tous les paramètres du fichier `.env`, regroupés 
 | `BACKUP_DIR` | `/backups` | Répertoire de sauvegarde local |
 | `LOCAL_RETENTION` | `5` | Nombre de sauvegardes locales à conserver |
 | `REMOTE_RETENTION` | `10` | Nombre de sauvegardes distantes à conserver |
-| `RCLONE_REMOTE` | `gdrive` | Nom du remote rclone |
+| `RCLONE_REMOTES` | `gdrive` | Noms des remotes rclone, séparés par des virgules |
 | `APPS` | `auto` | Liste d'applications séparées par des virgules, ou `auto` pour toutes les applications installées |
 | `BACKUP_PASSWORD` | *(aucun)* | Mot de passe de chiffrement optionnel — chiffre les sauvegardes avec AES-256-CBC |
 

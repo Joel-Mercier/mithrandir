@@ -251,42 +251,47 @@ async function checkBackupEncryption(
 }
 
 async function checkRemoteBackup(
-  rcloneRemote: string,
+  rcloneRemotes: string[],
   env?: EnvConfig,
-): Promise<CheckResult> {
+): Promise<CheckResult[]> {
   const installed = await isRcloneInstalled();
   if (!installed) {
-    return {
+    return [{
       name: "Remote Backup",
       status: "warn",
       message: "rclone not installed",
-    };
+    }];
   }
 
-  const configured = await isRcloneRemoteConfigured(rcloneRemote, env);
-  if (!configured.configured) {
-    return {
-      name: "Remote Backup",
-      status: "warn",
-      message: `${rcloneRemote}: not configured`,
-    };
+  const results: CheckResult[] = [];
+  for (const remote of rcloneRemotes) {
+    const configured = await isRcloneRemoteConfigured(remote, env);
+    if (!configured.configured) {
+      results.push({
+        name: `Remote (${remote})`,
+        status: "warn",
+        message: "not configured",
+      });
+      continue;
+    }
+
+    const reachable = await isRemoteReachable(remote);
+    if (!reachable) {
+      results.push({
+        name: `Remote (${remote})`,
+        status: "fail",
+        message: "unreachable",
+      });
+    } else {
+      results.push({
+        name: `Remote (${remote})`,
+        status: "pass",
+        message: "reachable",
+      });
+    }
   }
 
-  // Test actual connectivity
-  const reachable = await isRemoteReachable(rcloneRemote);
-  if (!reachable) {
-    return {
-      name: "Remote Backup",
-      status: "fail",
-      message: `${rcloneRemote}: unreachable`,
-    };
-  }
-
-  return {
-    name: "Remote Backup",
-    status: "pass",
-    message: `${rcloneRemote}: reachable`,
-  };
+  return results;
 }
 
 /** Run all health checks and return results */
@@ -296,18 +301,18 @@ async function runChecks(): Promise<CheckResult[]> {
   const baseDir = envConfig.BASE_DIR;
   const backupDir = backupConfig.BACKUP_DIR;
 
-  const [docker, diskApps, diskBackups, backupAge, containers, remote, encryption] =
+  const [docker, diskApps, diskBackups, backupAge, containers, remoteResults, encryption] =
     await Promise.all([
       checkDocker(),
       checkDiskSpace("apps", baseDir),
       checkDiskSpace("backups", backupDir),
       checkBackupAge(backupDir),
       checkContainerRestarts(baseDir),
-      checkRemoteBackup(backupConfig.RCLONE_REMOTE, envConfig),
+      checkRemoteBackup(backupConfig.RCLONE_REMOTES, envConfig),
       checkBackupEncryption(backupDir, backupConfig.BACKUP_PASSWORD),
     ]);
 
-  const results = [docker, diskApps, diskBackups, backupAge, ...containers, remote];
+  const results = [docker, diskApps, diskBackups, backupAge, ...containers, ...remoteResults];
   if (encryption) results.push(encryption);
   return results;
 }

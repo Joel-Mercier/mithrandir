@@ -75,7 +75,7 @@ Les paramètres principaux incluent :
 | `BACKUP_DIR` | `/backups` | Répertoire de stockage local des sauvegardes |
 | `LOCAL_RETENTION` | `5` | Nombre de sauvegardes locales à conserver |
 | `REMOTE_RETENTION` | `10` | Nombre de sauvegardes distantes à conserver |
-| `RCLONE_REMOTE` | `gdrive` | Nom du remote rclone pour les sauvegardes cloud |
+| `RCLONE_REMOTES` | `gdrive` | Noms des remotes rclone pour les sauvegardes cloud, séparés par des virgules |
 | `ENABLE_HTTPS` | `false` | Activer le reverse proxy HTTPS Caddy |
 | `ENABLE_FIREWALL` | *(non défini)* | Activer le pare-feu UFW avec gestion automatique des règles |
 

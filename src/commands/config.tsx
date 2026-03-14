@@ -44,7 +44,7 @@ function ConfigDisplay() {
 
       const excludeKeys = new Set([
         "BASE_DIR", "PUID", "PGID", "TZ",
-        "BACKUP_DIR", "LOCAL_RETENTION", "REMOTE_RETENTION", "RCLONE_REMOTE", "APPS",
+        "BACKUP_DIR", "LOCAL_RETENTION", "REMOTE_RETENTION", "RCLONE_REMOTE", "RCLONE_REMOTES", "APPS",
       ]);
       const extras = Object.entries(env).filter(
         ([k, v]) => !excludeKeys.has(k) && v !== undefined && v !== "",
@@ -63,7 +63,7 @@ function ConfigDisplay() {
         { Setting: "BACKUP_DIR", Value: backup.BACKUP_DIR },
         { Setting: "LOCAL_RETENTION", Value: String(backup.LOCAL_RETENTION) },
         { Setting: "REMOTE_RETENTION", Value: String(backup.REMOTE_RETENTION) },
-        { Setting: "RCLONE_REMOTE", Value: backup.RCLONE_REMOTE },
+        { Setting: "RCLONE_REMOTES", Value: backup.RCLONE_REMOTES.join(", ") },
         { Setting: "APPS", Value: backup.APPS },
         { Setting: "BACKUP_HOUR", Value: `${hourStr}:00` },
       ]);

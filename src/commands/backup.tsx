@@ -19,6 +19,9 @@ import {
   purgeRemote,
   listDirs,
   listFiles,
+  uploadToAllRemotes,
+  rotateAllRemotes,
+  listDirsAllRemotes,
 } from "@/lib/rclone.js";
 import { shell } from "@/lib/shell.js";
 import { createBackupLogger, Logger } from "@/lib/logger.js";
@@ -256,52 +259,53 @@ async function runHeadlessBackup(appFilter?: string): Promise<void> {
     // Rotate local backups
     await rotateLocalBackups(config, logger);
 
-    // Upload to remote
+    // Upload to remotes
     if (await isRcloneInstalled()) {
-      const remoteCheck = await isRcloneRemoteConfigured(config.RCLONE_REMOTE, env);
-      if (remoteCheck.configured) {
+      for (const remote of config.RCLONE_REMOTES) {
+        const remoteCheck = await isRcloneRemoteConfigured(remote, env);
+        if (!remoteCheck.configured) {
+          await logger.warn(
+            `rclone remote '${remote}' not configured, skipping (${remoteCheck.reason})`,
+          );
+          continue;
+        }
+
         try {
           await logger.info(
-            `Uploading backup to remote (${config.RCLONE_REMOTE})...`,
+            `Uploading backup to ${remote}...`,
           );
           await upload(
             archiveDir,
-            config.RCLONE_REMOTE,
+            remote,
             `/backups/archive/${today}`,
           );
-          await logger.info("Successfully uploaded backup to remote");
+          await logger.info(`Successfully uploaded backup to ${remote}`);
         } catch (err: any) {
           await logger.warn(
-            `Failed to upload backup to remote: ${err.message}${err.stderr ? `\n  stderr: ${err.stderr}` : ""}`,
+            `Failed to upload backup to ${remote}: ${err.message}${err.stderr ? `\n  stderr: ${err.stderr}` : ""}`,
           );
         }
 
         // Rotate remote backups
         try {
           await logger.info(
-            `Rotating remote backups (keeping ${config.REMOTE_RETENTION} most recent)...`,
+            `Rotating remote backups on ${remote} (keeping ${config.REMOTE_RETENTION} most recent)...`,
           );
           const deleted = await rotateRemote(
-            config.RCLONE_REMOTE,
+            remote,
             "/backups/archive",
             config.REMOTE_RETENTION,
           );
           if (deleted.length > 0) {
             for (const dir of deleted) {
-              await logger.info(`Deleted old remote backup: ${dir}`);
+              await logger.info(`Deleted old remote backup on ${remote}: ${dir}`);
             }
           } else {
-            await logger.info("No remote rotation needed");
+            await logger.info(`No remote rotation needed on ${remote}`);
           }
-          await logger.info("Remote backup rotation complete");
         } catch (err: any) {
-          await logger.warn(`Remote rotation failed: ${err.message}${err.stderr ? `\n  stderr: ${err.stderr}` : ""}`);
+          await logger.warn(`Remote rotation on ${remote} failed: ${err.message}${err.stderr ? `\n  stderr: ${err.stderr}` : ""}`);
         }
-      } else {
-        await logger.warn(
-          `rclone remote '${config.RCLONE_REMOTE}' not configured, skipping remote upload`,
-        );
-        await logger.warn(remoteCheck.reason);
       }
     } else {
       await logger.warn("rclone not found, skipping remote upload");
@@ -480,65 +484,64 @@ function BackupInteractive({ appFilter }: { appFilter?: string }) {
         });
       }
 
-      // Upload + rotate remote
+      // Upload + rotate remotes
       if (await isRcloneInstalled()) {
-        const remoteCheck = await isRcloneRemoteConfigured(config.RCLONE_REMOTE, env);
-        if (remoteCheck.configured) {
+        for (const remote of config.RCLONE_REMOTES) {
+          const remoteCheck = await isRcloneRemoteConfigured(remote, env);
+          if (!remoteCheck.configured) {
+            addStep({
+              name: `Upload to ${remote}`,
+              status: "skipped",
+              message: remoteCheck.reason,
+            });
+            continue;
+          }
+
           // Upload
-          setCurrentLabel(
-            `Uploading to ${config.RCLONE_REMOTE}...`,
-          );
+          setCurrentLabel(`Uploading to ${remote}...`);
           try {
             await upload(
               archiveDir,
-              config.RCLONE_REMOTE,
+              remote,
               `/backups/archive/${today}`,
             );
-            addStep({ name: "Remote upload", status: "done" });
+            addStep({ name: `Upload to ${remote}`, status: "done" });
           } catch (err: any) {
             addStep({
-              name: "Remote upload",
+              name: `Upload to ${remote}`,
               status: "error",
               message: err.stderr?.trim() || err.message,
             });
           }
 
           // Rotate remote
-          setCurrentLabel(
-            `Rotating remote backups (keeping ${config.REMOTE_RETENTION} most recent)...`,
-          );
+          setCurrentLabel(`Rotating backups on ${remote}...`);
           try {
             const deleted = await rotateRemote(
-              config.RCLONE_REMOTE,
+              remote,
               "/backups/archive",
               config.REMOTE_RETENTION,
             );
             if (deleted.length > 0) {
               addStep({
-                name: "Remote rotation",
+                name: `Rotate ${remote}`,
                 status: "done",
                 message: `Removed ${deleted.length} old backup(s)`,
               });
             } else {
               addStep({
-                name: "Remote rotation",
+                name: `Rotate ${remote}`,
                 status: "done",
                 message: "No rotation needed",
               });
             }
           } catch (err: any) {
             addStep({
-              name: "Remote rotation",
+              name: `Rotate ${remote}`,
               status: "error",
               message: err.stderr?.trim() || err.message,
             });
           }
-        } else {
-          addStep({
-            name: "Remote backup",
-            status: "skipped",
-            message: remoteCheck.reason,
-          });
         }
       } else {
         addStep({
@@ -761,7 +764,15 @@ function BackupDelete({
       if (target === "local") {
         result = await deleteLocalBackups(config.BACKUP_DIR, date);
       } else {
-        result = await deleteRemoteBackups(config.RCLONE_REMOTE, date, env);
+        // Delete from all configured remotes
+        const allDeleted: string[] = [];
+        const allErrors: string[] = [];
+        for (const remote of config.RCLONE_REMOTES) {
+          const r = await deleteRemoteBackups(remote, date, env);
+          allDeleted.push(...r.deleted.map((d) => `${remote}:${d}`));
+          allErrors.push(...r.errors);
+        }
+        result = { deleted: allDeleted, errors: allErrors };
       }
       setResults(result);
       setPhase("done");
@@ -910,38 +921,41 @@ export async function runBackupList(args: string[]): Promise<void> {
   }
 
   if (showRemote) {
-    console.log(`Remote backups (${config.RCLONE_REMOTE}):`);
-
     if (!(await isRcloneInstalled())) {
+      console.log("Remote backups:");
       console.log("  rclone is not installed.\n");
       return;
     }
 
-    const remoteCheck = await isRcloneRemoteConfigured(config.RCLONE_REMOTE, env);
-    if (!remoteCheck.configured) {
-      console.log(`  rclone remote '${config.RCLONE_REMOTE}' not configured.\n`);
-      return;
-    }
+    for (const remote of config.RCLONE_REMOTES) {
+      console.log(`Remote backups (${remote}):`);
 
-    const dates = await listDirs(config.RCLONE_REMOTE, "/backups/archive");
-    if (dates.length === 0) {
-      console.log("  No remote backups found.\n");
-    } else {
-      for (const date of dates) {
-        console.log(`  ${date}`);
-        const files = await listFiles(
-          config.RCLONE_REMOTE,
-          `/backups/archive/${date}`,
-        );
-        const contents = files
-          .filter((f) => isBackupArchive(f))
-          .map(stripArchiveSuffix)
-          .sort();
-        if (contents.length > 0) {
-          console.log(`    ${contents.join(", ")}`);
-        }
+      const remoteCheck = await isRcloneRemoteConfigured(remote, env);
+      if (!remoteCheck.configured) {
+        console.log(`  rclone remote '${remote}' not configured.\n`);
+        continue;
       }
-      console.log();
+
+      const dates = await listDirs(remote, "/backups/archive");
+      if (dates.length === 0) {
+        console.log("  No remote backups found.\n");
+      } else {
+        for (const date of dates) {
+          console.log(`  ${date}`);
+          const files = await listFiles(
+            remote,
+            `/backups/archive/${date}`,
+          );
+          const contents = files
+            .filter((f) => isBackupArchive(f))
+            .map(stripArchiveSuffix)
+            .sort();
+          if (contents.length > 0) {
+            console.log(`    ${contents.join(", ")}`);
+          }
+        }
+        console.log();
+      }
     }
   }
 }
@@ -1176,15 +1190,15 @@ function BackupVerify({
           setError("rclone is not installed");
           return;
         }
-        const remoteCheck = await isRcloneRemoteConfigured(config.RCLONE_REMOTE, env);
+        const remoteCheck = await isRcloneRemoteConfigured(config.RCLONE_REMOTES[0], env);
         if (!remoteCheck.configured) {
-          setError(`rclone remote '${config.RCLONE_REMOTE}' not configured: ${remoteCheck.reason}`);
+          setError(`rclone remote '${config.RCLONE_REMOTES[0]}' not configured: ${remoteCheck.reason}`);
           return;
         }
 
         if (!resolvedDate) {
           setCurrentLabel("Finding most recent remote backup...");
-          const dates = await listDirs(config.RCLONE_REMOTE, "/backups/archive");
+          const dates = await listDirs(config.RCLONE_REMOTES[0], "/backups/archive");
           if (dates.length === 0) {
             setError("No remote backups found");
             return;
@@ -1199,7 +1213,7 @@ function BackupVerify({
 
         try {
           await download(
-            config.RCLONE_REMOTE,
+            config.RCLONE_REMOTES[0],
             `/backups/archive/${resolvedDate}`,
             tmpDir,
           );
@@ -1212,7 +1226,7 @@ function BackupVerify({
         addStep({
           name: "Download",
           status: "done",
-          message: `Downloaded ${resolvedDate} from ${config.RCLONE_REMOTE}`,
+          message: `Downloaded ${resolvedDate} from ${config.RCLONE_REMOTES[0]}`,
         });
       } else {
         // Local verification
@@ -1371,16 +1385,16 @@ async function runHeadlessVerify(
       console.error("Error: rclone is not installed");
       process.exit(1);
     }
-    const remoteCheck = await isRcloneRemoteConfigured(config.RCLONE_REMOTE, env);
+    const remoteCheck = await isRcloneRemoteConfigured(config.RCLONE_REMOTES[0], env);
     if (!remoteCheck.configured) {
       console.error(
-        `Error: rclone remote '${config.RCLONE_REMOTE}' not configured: ${remoteCheck.reason}`,
+        `Error: rclone remote '${config.RCLONE_REMOTES[0]}' not configured: ${remoteCheck.reason}`,
       );
       process.exit(1);
     }
 
     if (!resolvedDate) {
-      const dates = await listDirs(config.RCLONE_REMOTE, "/backups/archive");
+      const dates = await listDirs(config.RCLONE_REMOTES[0], "/backups/archive");
       if (dates.length === 0) {
         console.error("Error: No remote backups found");
         process.exit(1);
@@ -1395,7 +1409,7 @@ async function runHeadlessVerify(
 
     try {
       await download(
-        config.RCLONE_REMOTE,
+        config.RCLONE_REMOTES[0],
         `/backups/archive/${resolvedDate}`,
         tmpDir,
       );
@@ -1499,13 +1513,13 @@ export async function runBackupVerify(
 
 // ─── Backup Config ────────────────────────────────────────────────────────────
 
-type ConfigField = "backup_dir" | "local_retention" | "remote_retention" | "rclone_remote" | "apps" | "backup_hour" | "backup_password";
+type ConfigField = "backup_dir" | "local_retention" | "remote_retention" | "rclone_remotes" | "apps" | "backup_hour" | "backup_password";
 
 const CONFIG_FIELDS: { key: ConfigField; envVar: string; label: string; description: string }[] = [
   { key: "backup_dir", envVar: "BACKUP_DIR", label: "Backup directory", description: "Local directory where backup archives are stored" },
   { key: "local_retention", envVar: "LOCAL_RETENTION", label: "Local retention", description: "Number of local backup copies to keep before old ones are pruned" },
   { key: "remote_retention", envVar: "REMOTE_RETENTION", label: "Remote retention", description: "Number of remote (cloud) backup copies to keep before old ones are pruned" },
-  { key: "rclone_remote", envVar: "RCLONE_REMOTE", label: "Rclone remote", description: "Name of the rclone remote used for cloud backup sync (e.g. gdrive)" },
+  { key: "rclone_remotes", envVar: "RCLONE_REMOTES", label: "Rclone remotes", description: "Comma-separated list of rclone remotes for cloud backup sync (e.g. gdrive,my-s3)" },
   { key: "apps", envVar: "APPS", label: "Apps to backup", description: "Which apps to include — \"auto\" detects all installed apps, or a comma-separated list (e.g. jellyfin,radarr)" },
   { key: "backup_hour", envVar: "BACKUP_HOUR", label: "Backup hour (0-23)", description: "Hour of the day (in 24h format) when the automatic backup runs via systemd timer" },
   { key: "backup_password", envVar: "BACKUP_PASSWORD", label: "Encryption password", description: "When set, backups are encrypted with AES-256-CBC — leave empty to disable encryption" },

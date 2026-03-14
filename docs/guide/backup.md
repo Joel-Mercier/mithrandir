@@ -111,7 +111,7 @@ mithrandir restore sonarr 2024-01-15
 mithrandir restore full
 ```
 
-The restore process checks local backups first, then falls back to the remote.
+The restore process checks local backups first, then tries each configured remote in order until it finds the backup.
 
 ## Disaster Recovery
 
@@ -130,11 +130,11 @@ This walks you through a complete recovery:
 5. Downloads and restores all apps
 6. Reinstalls the backup timer
 
-## Cloud Backup with Google Drive
+## Cloud Backup with rclone
 
-Mithrandir uses [rclone](https://rclone.org) to sync backups to a cloud remote. The default remote is Google Drive.
+Mithrandir uses [rclone](https://rclone.org) to sync backups to one or more cloud remotes. Supported providers include Google Drive, SFTP, S3, Dropbox, OneDrive, and iCloud Drive.
 
-### Automatic rclone Setup
+### Automatic rclone Setup (Google Drive)
 
 If you set the following variables in your `.env`, rclone is configured automatically — no need to run `rclone config` manually:
 
@@ -152,9 +152,45 @@ To get these values:
 
 The rclone config is auto-generated the first time a backup runs. If a config already exists with the same remote name, it won't be overwritten (preserving refreshed tokens).
 
+> [!WARNING] Headless OAuth
+> OAuth providers (Google Drive, Dropbox, OneDrive) require a browser for authorization. If your server is headless, run `rclone authorize "<provider>"` on a machine with a browser first, then copy the resulting token to your server's rclone config or `.env`.
+
 ### Manual rclone Setup
 
 Alternatively, run `rclone config` interactively to set up any supported cloud provider (not just Google Drive).
+
+### Multi-Remote Setup
+
+You can sync backups to multiple remotes for redundancy. Configure this with `RCLONE_REMOTES` (comma-separated) in your `.env`:
+
+```
+RCLONE_REMOTES=gdrive,dropbox,sftp-nas
+```
+
+Or use the interactive remote management commands:
+
+```sh
+# Add a new remote
+mithrandir backup remote add
+
+# List configured remotes
+mithrandir backup remote list
+
+# Remove a remote
+mithrandir backup remote remove
+```
+
+When multiple remotes are configured:
+
+- **Backup** syncs to all configured remotes redundantly
+- **Restore** tries each remote in order until it finds the backup
+- **Verify** and **list** with `--remote` work across all remotes
+- **Retention** pruning applies to each remote independently
+
+The legacy `RCLONE_REMOTE` (singular) variable still works for backwards compatibility and is treated as a single-remote configuration.
+
+> [!WARNING] iCloud Drive (Experimental)
+> iCloud Drive is supported but considered experimental. The trust token expires after approximately 30 days and must be refreshed. Advanced Data Protection (ADP) is not supported.
 
 ## Encryption
 
@@ -187,7 +223,7 @@ Old backups are pruned automatically after each backup run. Configure retention 
 | `BACKUP_DIR` | `/backups` | Local backup directory |
 | `LOCAL_RETENTION` | `5` | Number of local backups to keep |
 | `REMOTE_RETENTION` | `10` | Number of remote backups to keep |
-| `RCLONE_REMOTE` | `gdrive` | rclone remote name |
+| `RCLONE_REMOTES` | `gdrive` | Comma-separated list of rclone remote names |
 | `APPS` | `auto` | Apps to backup — `auto` for all installed, or comma-separated list |
 | `BACKUP_HOUR` | `2` | Hour of the day (0-23) when automatic backups run |
 

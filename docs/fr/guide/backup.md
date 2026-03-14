@@ -111,7 +111,7 @@ mithrandir restore sonarr 2024-01-15
 mithrandir restore full
 ```
 
-Le processus de restauration vérifie d'abord les sauvegardes locales, puis se rabat sur les sauvegardes distantes.
+Le processus de restauration vérifie d'abord les sauvegardes locales, puis essaie chaque remote configuré dans l'ordre jusqu'à trouver la sauvegarde.
 
 ## Reprise après sinistre
 
@@ -130,9 +130,9 @@ Celle-ci vous guide à travers une récupération complète :
 5. Télécharge et restaure toutes les applications
 6. Réinstalle le timer de sauvegarde
 
-## Sauvegarde cloud avec Google Drive
+## Sauvegarde cloud avec rclone
 
-Mithrandir utilise [rclone](https://rclone.org) pour synchroniser les sauvegardes vers un stockage cloud distant. Le remote par défaut est Google Drive.
+Mithrandir utilise [rclone](https://rclone.org) pour synchroniser les sauvegardes vers un ou plusieurs stockages cloud distants. Les fournisseurs pris en charge incluent Google Drive, SFTP, S3, Dropbox, OneDrive et iCloud Drive.
 
 ### Configuration automatique de rclone
 
@@ -155,6 +155,48 @@ La configuration rclone est générée automatiquement lors de la première sauv
 ### Configuration manuelle de rclone
 
 Alternativement, exécutez `rclone config` de manière interactive pour configurer n'importe quel fournisseur cloud pris en charge (pas seulement Google Drive).
+
+> [!WARNING] OAuth en mode headless
+> Les fournisseurs OAuth (Google Drive, Dropbox, OneDrive) nécessitent un navigateur pour l'autorisation. Si votre serveur est headless, exécutez `rclone authorize "<fournisseur>"` sur une machine disposant d'un navigateur, puis copiez le jeton résultant dans la configuration rclone ou le `.env` de votre serveur.
+
+## Configuration multi-distant
+
+Mithrandir prend en charge la synchronisation des sauvegardes vers **plusieurs remotes** simultanément pour une redondance accrue. Par exemple, vous pouvez sauvegarder à la fois vers Google Drive et un serveur SFTP.
+
+### Gérer les remotes
+
+Utilisez les sous-commandes `backup remote` pour gérer vos remotes :
+
+```sh
+# Ajouter un nouveau remote
+mithrandir backup remote add
+
+# Lister les remotes configurés
+mithrandir backup remote list
+
+# Supprimer un remote
+mithrandir backup remote remove
+```
+
+### Variable d'environnement
+
+Définissez `RCLONE_REMOTES` dans votre `.env` avec une liste séparée par des virgules :
+
+```
+RCLONE_REMOTES=gdrive,sftp-nas,s3-backup
+```
+
+L'ancienne variable `RCLONE_REMOTE` (au singulier) reste fonctionnelle pour la rétrocompatibilité.
+
+### Comportement
+
+- **Sauvegarde :** Les archives sont synchronisées vers **tous** les remotes configurés de manière redondante.
+- **Restauration :** Les remotes sont essayés dans l'ordre jusqu'à ce que la sauvegarde soit trouvée.
+- **Vérification** et **liste** avec `--remote` fonctionnent sur tous les remotes.
+- **Rétention :** Les règles de purge s'appliquent indépendamment à chaque remote.
+
+> [!WARNING] iCloud Drive (Expérimental)
+> iCloud Drive est pris en charge mais considéré comme expérimental. Le jeton de confiance expire après environ 30 jours et doit être renouvelé. La Protection Avancée des Données (ADP) n'est pas prise en charge.
 
 ## Chiffrement
 
@@ -187,7 +229,7 @@ Les anciennes sauvegardes sont automatiquement purgées après chaque exécution
 | `BACKUP_DIR` | `/backups` | Répertoire de sauvegarde local |
 | `LOCAL_RETENTION` | `5` | Nombre de sauvegardes locales à conserver |
 | `REMOTE_RETENTION` | `10` | Nombre de sauvegardes distantes à conserver |
-| `RCLONE_REMOTE` | `gdrive` | Nom du remote rclone |
+| `RCLONE_REMOTES` | `gdrive` | Noms des remotes rclone, séparés par des virgules |
 | `APPS` | `auto` | Applications à sauvegarder — `auto` pour toutes les installées, ou liste séparée par des virgules |
 | `BACKUP_HOUR` | `2` | Heure de la journée (0-23) à laquelle les sauvegardes automatiques s'exécutent |
 

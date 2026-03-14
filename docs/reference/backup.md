@@ -10,6 +10,7 @@ mithrandir backup list [local|remote]
 mithrandir backup delete [--yes] <local|remote> [date]
 mithrandir backup verify [options] [date]
 mithrandir backup config
+mithrandir backup remote <add|list|remove>
 ```
 
 ## Arguments
@@ -84,16 +85,34 @@ Walks through each backup setting one by one, showing the current value and prom
 | `BACKUP_DIR` | `/backups` | Local backup directory |
 | `LOCAL_RETENTION` | `5` | Number of local backups to keep |
 | `REMOTE_RETENTION` | `10` | Number of remote backups to keep |
-| `RCLONE_REMOTE` | `gdrive` | rclone remote name |
+| `RCLONE_REMOTES` | `gdrive` | Comma-separated list of rclone remote names |
 | `APPS` | `auto` | Apps to backup — `auto` for all installed, or comma-separated list |
 | `BACKUP_HOUR` | `2` | Hour of the day (0-23) when automatic backups run |
 | `BACKUP_PASSWORD` | *(none)* | Optional encryption password (input is masked) |
 
 If `BACKUP_HOUR` is changed and systemd is available, the backup timer is automatically updated to the new schedule.
 
+### `backup remote`
+
+Manage rclone remotes used for backup syncing.
+
+```sh
+mithrandir backup remote add
+mithrandir backup remote list
+mithrandir backup remote remove
+```
+
+| Subcommand | Description |
+| --- | --- |
+| `add` | Interactively add a new rclone remote to `RCLONE_REMOTES` |
+| `list` | List all configured remotes and their status |
+| `remove` | Remove a remote from `RCLONE_REMOTES` |
+
+These commands update the `RCLONE_REMOTES` variable in `.env`. The underlying rclone remote configuration (credentials, tokens) is managed separately via `rclone config` or automatic setup.
+
 ## Description
 
-Creates timestamped tar archives of each app's configuration and data directories. Archives are stored locally in `BACKUP_DIR` (default `/backups`) and synced to the configured rclone remote.
+Creates timestamped tar archives of each app's configuration and data directories. Archives are stored locally in `BACKUP_DIR` (default `/backups`) and synced to all configured rclone remotes.
 
 Old backups are automatically pruned based on `LOCAL_RETENTION` and `REMOTE_RETENTION` settings.
 
@@ -116,7 +135,7 @@ If a backup is encrypted but no password is available:
 | `BACKUP_DIR` | `/backups` | Local backup directory |
 | `LOCAL_RETENTION` | `5` | Number of local backups to keep |
 | `REMOTE_RETENTION` | `10` | Number of remote backups to keep |
-| `RCLONE_REMOTE` | `gdrive` | rclone remote name |
+| `RCLONE_REMOTES` | `gdrive` | Comma-separated list of rclone remote names |
 | `APPS` | `auto` | Comma-separated app list, or `auto` for all installed |
 | `BACKUP_HOUR` | `2` | Hour of the day (0-23) when automatic backups run |
 | `BACKUP_PASSWORD` | *(none)* | Optional encryption password for backups |

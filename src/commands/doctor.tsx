@@ -338,7 +338,7 @@ async function checkFirewall(envConfig: EnvConfig): Promise<CheckResult[]> {
   return results;
 }
 
-async function checkRclone(rcloneRemote: string, env?: EnvConfig): Promise<CheckResult[]> {
+async function checkRclone(rcloneRemotes: string[], env?: EnvConfig): Promise<CheckResult[]> {
   const installed = await isRcloneInstalled();
   if (!installed) {
     return [{
@@ -350,23 +350,28 @@ async function checkRclone(rcloneRemote: string, env?: EnvConfig): Promise<Check
     }];
   }
 
-  const configured = await isRcloneRemoteConfigured(rcloneRemote, env);
-  if (!configured.configured) {
-    return [{
-      category: "Backup",
-      name: "rclone",
-      status: "fail",
-      message: `Installed, but remote "${rcloneRemote}" not configured`,
-      hint: "Run `rclone config` to set up the remote",
-    }];
+  const results: CheckResult[] = [];
+  for (const remote of rcloneRemotes) {
+    const configured = await isRcloneRemoteConfigured(remote, env);
+    if (!configured.configured) {
+      results.push({
+        category: "Backup",
+        name: `rclone (${remote})`,
+        status: "fail",
+        message: `Not configured`,
+        hint: "Run `mithrandir backup remote add` to set up the remote",
+      });
+    } else {
+      results.push({
+        category: "Backup",
+        name: `rclone (${remote})`,
+        status: "pass",
+        message: `Configured`,
+      });
+    }
   }
 
-  return [{
-    category: "Backup",
-    name: "rclone",
-    status: "pass",
-    message: `Installed, remote "${rcloneRemote}" configured`,
-  }];
+  return results;
 }
 
 // ─── Run all checks ─────────────────────────────────────────────────────────
@@ -400,7 +405,7 @@ async function runChecks(): Promise<CheckResult[]> {
     const serviceCheck = checkSystemdService();
     const [timerCheck, rcloneChecks] = await Promise.all([
       checkSystemdTimer(),
-      checkRclone(backupConfig.RCLONE_REMOTE, envConfig),
+      checkRclone(backupConfig.RCLONE_REMOTES, envConfig),
     ]);
     results.push(backupDirCheck, serviceCheck, timerCheck, ...rcloneChecks);
   }

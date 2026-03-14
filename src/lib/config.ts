@@ -72,11 +72,22 @@ export async function loadEnvConfig(
  * Returns a BackupConfig with typed number fields for retention values.
  */
 export function getBackupConfig(env: EnvConfig): BackupConfig {
+  // Priority: RCLONE_REMOTES > RCLONE_REMOTE > ["gdrive"]
+  let remotes: string[];
+  if (env.RCLONE_REMOTES) {
+    remotes = env.RCLONE_REMOTES.split(",").map((s) => s.trim()).filter(Boolean);
+  } else if (env.RCLONE_REMOTE) {
+    remotes = [env.RCLONE_REMOTE];
+  } else {
+    remotes = ["gdrive"];
+  }
+  if (remotes.length === 0) remotes = ["gdrive"];
+
   return {
     BACKUP_DIR: env.BACKUP_DIR ?? "/backups",
     LOCAL_RETENTION: parseInt(env.LOCAL_RETENTION ?? "5", 10),
     REMOTE_RETENTION: parseInt(env.REMOTE_RETENTION ?? "10", 10),
-    RCLONE_REMOTE: env.RCLONE_REMOTE ?? "gdrive",
+    RCLONE_REMOTES: remotes,
     APPS: env.APPS ?? "auto",
     BASE_DIR: env.BASE_DIR,
     BACKUP_PASSWORD: env.BACKUP_PASSWORD || undefined,

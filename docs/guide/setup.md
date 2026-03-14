@@ -75,7 +75,7 @@ Key settings include:
 | `BACKUP_DIR` | `/backups` | Local backup storage directory |
 | `LOCAL_RETENTION` | `5` | Number of local backups to keep |
 | `REMOTE_RETENTION` | `10` | Number of remote backups to keep |
-| `RCLONE_REMOTE` | `gdrive` | rclone remote name for cloud backups |
+| `RCLONE_REMOTES` | `gdrive` | Comma-separated list of rclone remotes for cloud backups |
 | `ENABLE_HTTPS` | `false` | Enable Caddy HTTPS reverse proxy |
 | `ENABLE_FIREWALL` | *(not set)* | Enable UFW firewall with automatic rule management |
 

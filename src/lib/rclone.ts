@@ -340,3 +340,151 @@ export async function rotateRemote(
 
   return deleted;
 }
+
+// ─── Multi-remote helpers ────────────────────────────────────────────────────
+
+/** Upload to all remotes sequentially, continue on failure */
+export async function uploadToAllRemotes(
+  localPath: string,
+  remotes: string[],
+  remotePath: string,
+  env?: EnvConfig,
+): Promise<{ succeeded: string[]; failed: { remote: string; error: string }[] }> {
+  const succeeded: string[] = [];
+  const failed: { remote: string; error: string }[] = [];
+
+  for (const remote of remotes) {
+    const check = await isRcloneRemoteConfigured(remote, env);
+    if (!check.configured) {
+      failed.push({ remote, error: `Not configured: ${check.reason}` });
+      continue;
+    }
+    try {
+      await upload(localPath, remote, remotePath);
+      succeeded.push(remote);
+    } catch (err: any) {
+      failed.push({ remote, error: err.stderr?.trim() || err.message });
+    }
+  }
+
+  return { succeeded, failed };
+}
+
+/** Rotate on all remotes */
+export async function rotateAllRemotes(
+  remotes: string[],
+  basePath: string,
+  retention: number,
+): Promise<{ remote: string; deleted: string[] }[]> {
+  const results: { remote: string; deleted: string[] }[] = [];
+
+  for (const remote of remotes) {
+    try {
+      const deleted = await rotateRemote(remote, basePath, retention);
+      results.push({ remote, deleted });
+    } catch {
+      results.push({ remote, deleted: [] });
+    }
+  }
+
+  return results;
+}
+
+/** Find backup file across remotes (first match wins) */
+export async function findBackupOnRemotes(
+  remotes: string[],
+  remotePath: string,
+): Promise<{ remote: string; found: true } | { found: false }> {
+  for (const remote of remotes) {
+    try {
+      if (await remoteFileExists(remote, remotePath)) {
+        return { remote, found: true };
+      }
+    } catch {
+      continue;
+    }
+  }
+  return { found: false };
+}
+
+/** List backup dates across all remotes */
+export async function listDirsAllRemotes(
+  remotes: string[],
+  remotePath: string,
+): Promise<{ remote: string; dirs: string[] }[]> {
+  const results: { remote: string; dirs: string[] }[] = [];
+
+  for (const remote of remotes) {
+    try {
+      const dirs = await listDirs(remote, remotePath);
+      results.push({ remote, dirs });
+    } catch {
+      results.push({ remote, dirs: [] });
+    }
+  }
+
+  return results;
+}
+
+/** Check all remotes configured */
+export async function checkAllRemotesConfigured(
+  remotes: string[],
+  env?: EnvConfig,
+): Promise<{ remote: string; configured: boolean; reason?: string }[]> {
+  const results: { remote: string; configured: boolean; reason?: string }[] = [];
+
+  for (const remote of remotes) {
+    const check = await isRcloneRemoteConfigured(remote, env);
+    if (check.configured) {
+      results.push({ remote, configured: true });
+    } else {
+      results.push({ remote, configured: false, reason: check.reason });
+    }
+  }
+
+  return results;
+}
+
+/** Get remote type from rclone listremotes --long */
+export async function getRemoteType(remote: string): Promise<string | null> {
+  const configArgs = await resolveRcloneConfigArgs();
+  const result = await shell("rclone", [...configArgs, "listremotes", "--long"], { ignoreError: true });
+  if (result.exitCode !== 0) return null;
+
+  for (const line of result.stdout.split("\n")) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith(`${remote}:`)) {
+      const parts = trimmed.split(/\s+/);
+      return parts[1] ?? null;
+    }
+  }
+  return null;
+}
+
+/** Create an rclone remote via `rclone config create` */
+export async function createRemote(
+  name: string,
+  type: string,
+  params: Record<string, string>,
+): Promise<void> {
+  const configArgs = await resolveRcloneConfigArgs();
+  const args = [...configArgs, "config", "create", name, type];
+  for (const [key, value] of Object.entries(params)) {
+    args.push(`${key}=${value}`);
+  }
+  await shell("rclone", args);
+  await restoreRcloneConfigOwnership();
+}
+
+/** Delete an rclone remote */
+export async function deleteRemote(name: string): Promise<void> {
+  const configArgs = await resolveRcloneConfigArgs();
+  await shell("rclone", [...configArgs, "config", "delete", name]);
+  await restoreRcloneConfigOwnership();
+}
+
+/** Obscure a password for rclone config (used by iCloud Drive) */
+export async function obscurePassword(password: string): Promise<string> {
+  const result = await shell("rclone", ["obscure", password]);
+  return result.stdout.trim();
+}

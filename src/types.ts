@@ -112,6 +112,7 @@ export interface EnvConfig {
   LOCAL_RETENTION?: string;
   REMOTE_RETENTION?: string;
   RCLONE_REMOTE?: string;
+  RCLONE_REMOTES?: string;
   APPS?: string;
   BACKUP_PASSWORD?: string;
   BACKUP_HOUR?: string;
@@ -124,7 +125,7 @@ export interface BackupConfig {
   BACKUP_DIR: string;
   LOCAL_RETENTION: number;
   REMOTE_RETENTION: number;
-  RCLONE_REMOTE: string;
+  RCLONE_REMOTES: string[];
   APPS: string;
   BASE_DIR: string;
   BACKUP_PASSWORD: string | undefined;

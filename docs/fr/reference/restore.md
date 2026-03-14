@@ -25,7 +25,7 @@ mithrandir restore [--yes] <cible> [date]
 
 Restaure une application (ou toutes les applications) depuis une archive de sauvegarde. Le processus de restauration :
 
-1. Découvre les sauvegardes disponibles — vérifie d'abord le stockage local, puis le distant
+1. Découvre les sauvegardes disponibles — vérifie d'abord le stockage local, puis essaie chaque remote configuré dans `RCLONE_REMOTES` dans l'ordre jusqu'à trouver la sauvegarde
 2. Restaure les secrets (`.env`, configuration rclone) avant les applications s'ils sont présents dans la sauvegarde
 3. Arrête l'application, extrait l'archive de sauvegarde et redémarre
 

@@ -187,21 +187,23 @@ function UpdateInteractive({
           }
         }
 
-        // Upload to remote if rclone is configured
+        // Upload to remotes if rclone is configured
         if (await isRcloneInstalled()) {
-          const remoteCheck = await isRcloneRemoteConfigured(config.RCLONE_REMOTE, await loadEnvConfig());
-          if (remoteCheck.configured) {
-            setCurrentLabel(`Uploading backup to ${config.RCLONE_REMOTE}...`);
+          const latestEnv = await loadEnvConfig();
+          for (const remote of config.RCLONE_REMOTES) {
+            const remoteCheck = await isRcloneRemoteConfigured(remote, latestEnv);
+            if (!remoteCheck.configured) continue;
+            setCurrentLabel(`Uploading backup to ${remote}...`);
             try {
               await upload(
                 archiveDir,
-                config.RCLONE_REMOTE,
+                remote,
                 `/backups/archive/${today}`,
               );
-              addStep({ name: "Remote upload", status: "done" });
+              addStep({ name: `Upload to ${remote}`, status: "done" });
             } catch (err: any) {
               addStep({
-                name: "Remote upload",
+                name: `Upload to ${remote}`,
                 status: "error",
                 message: err.stderr?.trim() || err.message,
               });

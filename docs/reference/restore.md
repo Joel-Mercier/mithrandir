@@ -25,7 +25,7 @@ mithrandir restore [--yes] <target> [date]
 
 Restores an app (or all apps) from a backup archive. The restore process:
 
-1. Discovers available backups — checks local storage first, then remote
+1. Discovers available backups — checks local storage first, then tries each configured remote in order until it finds the backup
 2. Restores secrets (`.env`, rclone config) before apps if present in the backup
 3. Stops the app, extracts the backup archive, and restarts
 

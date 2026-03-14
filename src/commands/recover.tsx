@@ -129,18 +129,24 @@ async function runHeadlessRecover(autoYes: boolean): Promise<void> {
     await logger.info("rclone installed");
   }
 
-  // 5. Check rclone remote
+  // 5. Check rclone remotes — use first configured+reachable one
   const env = await loadEnvConfig();
   const backupConfig = getBackupConfig(env);
-  const rcloneRemote = backupConfig.RCLONE_REMOTE;
-  const remoteCheck = await isRcloneRemoteConfigured(rcloneRemote, env);
-  if (!remoteCheck.configured) {
+  let rcloneRemote: string | null = null;
+  for (const remote of backupConfig.RCLONE_REMOTES) {
+    const remoteCheck = await isRcloneRemoteConfigured(remote, env);
+    if (remoteCheck.configured) {
+      rcloneRemote = remote;
+      break;
+    }
+  }
+  if (!rcloneRemote) {
     await logger.error(
-      `rclone remote '${rcloneRemote}' not configured. Run 'rclone config' first. (${remoteCheck.reason})`,
+      `No configured rclone remote found. Run 'mithrandir backup remote add' or 'rclone config' first.`,
     );
     process.exit(1);
   }
-  await logger.info(`rclone remote '${rcloneRemote}' configured`);
+  await logger.info(`Using rclone remote '${rcloneRemote}'`);
 
   // 6. Set BASE_DIR
   const baseDir = homedir();
@@ -362,7 +368,7 @@ function RecoverCommand({ autoYes }: { autoYes: boolean }) {
       // Load config to get rclone remote (uses default "gdrive" if no .env exists)
       const initEnv = await loadEnvConfig();
       const initBackupConfig = getBackupConfig(initEnv);
-      setRcloneRemote(initBackupConfig.RCLONE_REMOTE);
+      setRcloneRemote(initBackupConfig.RCLONE_REMOTES[0]);
 
       setStep("docker");
     } catch (err: any) {
@@ -811,7 +817,8 @@ function RecoverCommand({ autoYes }: { autoYes: boolean }) {
     const reloadedEnv = await loadEnvConfig();
     const finalEnv = { ...envConfig, ...reloadedEnv };
     setEnvConfig(finalEnv);
-    if (reloadedEnv.RCLONE_REMOTE) setRcloneRemote(reloadedEnv.RCLONE_REMOTE);
+    const reloadedBackupConfig = getBackupConfig(reloadedEnv);
+    setRcloneRemote(reloadedBackupConfig.RCLONE_REMOTES[0]);
     // Re-check password after secrets restore (may have gained BACKUP_PASSWORD from restored .env)
     const password = reloadedEnv.BACKUP_PASSWORD || backupPassword;
 

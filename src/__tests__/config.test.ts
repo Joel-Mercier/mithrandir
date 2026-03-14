@@ -31,8 +31,57 @@ describe("getBackupConfig", () => {
     expect(config.BACKUP_DIR).toBe("/backups");
     expect(config.LOCAL_RETENTION).toBe(5);
     expect(config.REMOTE_RETENTION).toBe(10);
-    expect(config.RCLONE_REMOTE).toBe("gdrive");
+    expect(config.RCLONE_REMOTES).toEqual(["gdrive"]);
     expect(config.APPS).toBe("auto");
+  });
+
+  test("parses RCLONE_REMOTES comma-separated", () => {
+    const env: EnvConfig = {
+      BASE_DIR: "/home/test",
+      PUID: "1000",
+      PGID: "1000",
+      TZ: "Etc/UTC",
+      RCLONE_REMOTES: "gdrive, my-s3",
+    };
+    const config = getBackupConfig(env);
+    expect(config.RCLONE_REMOTES).toEqual(["gdrive", "my-s3"]);
+  });
+
+  test("RCLONE_REMOTES with whitespace is trimmed", () => {
+    const env: EnvConfig = {
+      BASE_DIR: "/home/test",
+      PUID: "1000",
+      PGID: "1000",
+      TZ: "Etc/UTC",
+      RCLONE_REMOTES: "  gdrive ,  sftp-backup  ",
+    };
+    const config = getBackupConfig(env);
+    expect(config.RCLONE_REMOTES).toEqual(["gdrive", "sftp-backup"]);
+  });
+
+  test("legacy RCLONE_REMOTE wraps in array", () => {
+    const env: EnvConfig = {
+      BASE_DIR: "/home/test",
+      PUID: "1000",
+      PGID: "1000",
+      TZ: "Etc/UTC",
+      RCLONE_REMOTE: "my-drive",
+    };
+    const config = getBackupConfig(env);
+    expect(config.RCLONE_REMOTES).toEqual(["my-drive"]);
+  });
+
+  test("RCLONE_REMOTES takes precedence over RCLONE_REMOTE", () => {
+    const env: EnvConfig = {
+      BASE_DIR: "/home/test",
+      PUID: "1000",
+      PGID: "1000",
+      TZ: "Etc/UTC",
+      RCLONE_REMOTE: "old-drive",
+      RCLONE_REMOTES: "new-drive,s3-backup",
+    };
+    const config = getBackupConfig(env);
+    expect(config.RCLONE_REMOTES).toEqual(["new-drive", "s3-backup"]);
   });
 
   test("handles missing BACKUP_PASSWORD as undefined", () => {

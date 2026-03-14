@@ -21,9 +21,9 @@ Effectue une récupération complète du système sur une machine vierge. Exécu
 1. **Init** — Valider l'environnement
 2. **Docker** — Installer Docker si nécessaire
 3. **rclone** — Installer rclone
-4. **rclone-remote** — Configurer le remote rclone
+4. **rclone-remote** — Configurer les remotes rclone (tous les remotes dans `RCLONE_REMOTES`)
 5. **base-dir** — Créer le répertoire de base
-6. **discover** — Trouver les sauvegardes disponibles sur le remote
+6. **discover** — Trouver les sauvegardes disponibles en essayant chaque remote dans l'ordre
 7. **confirm** — Sélectionner quelle sauvegarde restaurer
 8. **restoring** — Télécharger et extraire les archives de sauvegarde
 9. **systemd** — Réinstaller le timer systemd pour les sauvegardes programmées
