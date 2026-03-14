@@ -13,6 +13,10 @@ function isSensitive(key: string): boolean {
   return lower.includes("token") || lower.includes("secret") || lower.includes("password");
 }
 
+function truncate(str: string, maxLen: number): string {
+  return str.length > maxLen ? str.slice(0, maxLen - 1) + "…" : str;
+}
+
 function ConfigDisplay() {
   const { exit } = useApp();
   const [phase, setPhase] = useState<"loading" | "done" | "error">("loading");
@@ -41,29 +45,36 @@ function ConfigDisplay() {
         { Setting: "TZ", Value: env.TZ },
       ]);
 
-      const coreKeys = new Set([
+      const excludeKeys = new Set([
         "BASE_DIR", "PUID", "PGID", "TZ",
         "BACKUP_DIR", "LOCAL_RETENTION", "REMOTE_RETENTION", "RCLONE_REMOTE", "APPS",
+        "BACKUP_PASSWORD", "BACKUP_HOUR",
       ]);
-      const extras = Object.entries(env).filter(([k]) => !coreKeys.has(k));
+      const extras = Object.entries(env).filter(
+        ([k, v]) => !excludeKeys.has(k) && v !== undefined && v !== "",
+      );
       if (extras.length > 0) {
         setExtraData(
           extras.map(([key, value]) => ({
             Setting: key,
-            Value: isSensitive(key) ? "****" : String(value),
+            Value: isSensitive(key) ? "****" : truncate(String(value), 40),
           })),
         );
       }
 
       const hourStr = String(backup.BACKUP_HOUR).padStart(2, "0");
-      setBackupData([
+      const backupRows = [
         { Setting: "BACKUP_DIR", Value: backup.BACKUP_DIR },
         { Setting: "LOCAL_RETENTION", Value: String(backup.LOCAL_RETENTION) },
         { Setting: "REMOTE_RETENTION", Value: String(backup.REMOTE_RETENTION) },
         { Setting: "RCLONE_REMOTE", Value: backup.RCLONE_REMOTE },
         { Setting: "APPS", Value: backup.APPS },
         { Setting: "BACKUP_HOUR", Value: `${hourStr}:00` },
-      ]);
+      ];
+      if (backup.BACKUP_PASSWORD) {
+        backupRows.push({ Setting: "BACKUP_PASSWORD", Value: "****" });
+      }
+      setBackupData(backupRows);
 
       setPhase("done");
     } catch (err: any) {
