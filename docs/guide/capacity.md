@@ -26,6 +26,7 @@ When you run `mithrandir capacity`, the CLI gathers your system's hardware specs
 | Gatus          | Low         | Low     | Health monitoring, tiny footprint                                         |
 | Home Assistant | Medium      | Low     | Automation engine with integrations and history database                  |
 | Homarr         | Low         | Low     | Dashboard, mostly static content                                          |
+| HortusFox      | Low         | Low     | Plant tracker with MariaDB database                                       |
 | Immich         | High        | High    | ML processing for face detection and search, stores all photos and videos |
 | Jellyfin       | High        | High    | Media transcoding and large media libraries                               |
 | Lidarr         | Low         | Medium  | Music database and monitoring                                             |

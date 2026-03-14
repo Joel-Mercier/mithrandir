@@ -387,6 +387,7 @@ Checks configuration correctness across three categories: System (.env file, Doc
 | Gatus          | 3001      | Automated service health monitoring                                                     |
 | Home Assistant | 8123      | Open-source home automation platform                                                    |
 | Homarr         | 7575      | Customizable dashboard for your server                                                  |
+| HortusFox      | 8089      | Self-hosted plant management system                                                     |
 | Immich         | 2283      | Self-hosted photo and video management                                                  |
 | Jellyfin       | 8096      | Free media streaming server                                                             |
 | Lidarr         | 8686      | Music collection manager                                                                |
@@ -478,7 +479,6 @@ A GitHub Actions workflow runs on every push and pull request to `main`. It runs
 
 - [ ] Add hortusfox to the list of installable apps in @src/lib/apps.ts. It should be in a new "Household" category (also move cookcli app to this new category instead of "Cooking" make sure to reflect that in the docs as well). Here is the official docker-compose.yml file : https://github.com/danielbrendel/hortusfox-web/blob/main/docker-compose.yml. Add env vars for APP_ADMIN_EMAIL & APP_ADMIN_PASSWORD. Also the setup command @src/commands/setup.tsx should prompt for these (make sure to use the correct input for password) if this app is selected. Make sure to update the README, CLAUDE.md and docs.
 - [ ] Pihole not working with Gatus (https url doesn't work, local ip with port 8880 not workins as well)
-- [ ] Make sure the self-update command doesn't install deps, build and symlink if git pull shows already up to date message
 - [ ] Refactor all commands that don't render any jsx with ink (ending in .ts) to use Ink and Ink components instead of using console.log
 - [ ] Check if the general usage of the cli is in line with posix standards and best practices https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap12.html show which commands don't comply and how they differ before making any changes
 - [ ] Make backup timer systemd timer start hour configurable with a env var. Also update the docs, README, CLAUDE.md

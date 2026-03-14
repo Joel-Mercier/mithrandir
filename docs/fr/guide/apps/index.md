@@ -103,11 +103,12 @@ mithrandir log <app> [service] # Voir les logs
 | --- | --- | --- |
 | [Your Spotify](./your-spotify) | 3456 | Statistiques d'écoute et historique Spotify |
 
-### Cuisine
+### Maison
 
 | Application | Port | Description |
 | --- | --- | --- |
 | [CookCLI](./cookcli) | 9080 | Gestionnaire de recettes utilisant le langage de balisage Cooklang |
+| [HortusFox](./hortusfox) | 8089 | Systeme de gestion de plantes auto-heberge |
 
 ### Utilitaires
 

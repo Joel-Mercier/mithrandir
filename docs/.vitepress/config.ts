@@ -115,10 +115,11 @@ function guideSidebar(prefix = ""): DefaultTheme.SidebarItem[] {
               ],
             },
             {
-              text: prefix ? "Cuisine" : "Cooking",
+              text: prefix ? "Maison" : "Household",
               collapsed: true,
               items: [
                 { text: "CookCLI", link: `${prefix}/guide/apps/cookcli` },
+                { text: "HortusFox", link: `${prefix}/guide/apps/hortusfox` },
               ],
             },
             {
