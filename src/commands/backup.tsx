@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { render, Box, Text, useApp } from "ink";
 import Spinner from "ink-spinner";
-import { StatusMessage, ConfirmInput, TextInput } from "@inkjs/ui";
+import { StatusMessage, ConfirmInput, TextInput, PasswordInput } from "@inkjs/ui";
 import { loadEnvConfig, getBackupConfig, getProjectRoot, saveEnvConfig } from "@/lib/config.js";
 import {
   APP_REGISTRY,
@@ -1550,7 +1550,11 @@ function BackupConfigCommand() {
     }
 
     setError(null);
-    const updated = { ...env, [field.envVar]: trimmed };
+    // For password, empty submission keeps the existing value
+    const resolvedValue = field.key === "backup_password" && !trimmed
+      ? (env[field.envVar as keyof EnvConfig] ?? "") as string
+      : trimmed;
+    const updated = { ...env, [field.envVar]: resolvedValue };
     setEnv(updated);
 
     if (fieldIdx < CONFIG_FIELDS.length - 1) {
@@ -1616,7 +1620,22 @@ function BackupConfigCommand() {
       })}
 
       {/* Current field prompt */}
-      {!saved && currentField && (
+      {!saved && currentField && currentField.key === "backup_password" && (
+        <Box flexDirection="column" marginTop={fieldIdx > 0 ? 1 : 0}>
+          <Text bold>  {currentField.label}</Text>
+          <Text dimColor>  {currentField.description}</Text>
+          {error && <Text color="red">  {error}</Text>}
+          <Box>
+            <Text color="blue">{"  > "}</Text>
+            <PasswordInput
+              key={currentField.key}
+              placeholder={currentValue ? "••••••••" : ""}
+              onSubmit={handleSubmit}
+            />
+          </Box>
+        </Box>
+      )}
+      {!saved && currentField && currentField.key !== "backup_password" && (
         <Box flexDirection="column" marginTop={fieldIdx > 0 ? 1 : 0}>
           <Text bold>  {currentField.label}</Text>
           <Text dimColor>  {currentField.description}</Text>
