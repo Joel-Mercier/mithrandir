@@ -48,8 +48,8 @@ All configuration lives in a single `.env` file at the project root.
 **Backup settings:**
 - `BACKUP_DIR`: Local backup storage directory (default: `/backups`)
 - `LOCAL_RETENTION`: Number of local backups to keep (default: `5`)
-- `REMOTE_RETENTION`: Number of Google Drive backups to keep (default: `10`)
-- `RCLONE_REMOTE`: rclone remote name for Google Drive (default: `gdrive`)
+- `REMOTE_RETENTION`: Number of remote backups to keep (default: `10`)
+- `RCLONE_REMOTES`: Comma-separated list of rclone remote names for cloud backups (default: `gdrive`)
 - `APPS`: Apps to backup - `"auto"` to detect installed apps, or comma-separated list
 - `BACKUP_HOUR`: Hour of the day when automatic backups run (0-23, default: `2` for 2:00 AM)
 - `BACKUP_PASSWORD`: Optional encryption password — when set, backups are encrypted with AES-256-CBC
@@ -82,7 +82,23 @@ All configuration lives in a single `.env` file at the project root.
 - `GATUS_DISCORD_WEBHOOK_URL`: Optional Discord webhook URL for Gatus alerts
 
 ### Rclone configuration
-You can setup remote backups by running `rclone config` in the terminal after running the setup wizard. This will set up the remote connection to your Google Drive. Make sure the remote name matches the `RCLONE_REMOTE` setting in `.env`. If you run a desktopless linux server, you'll need to execute a rclone command on another device with a browser to complete the remote setup. The documentation to setup a Google Drive remote with rclone is [here](https://rclone.org/drive/#making-your-own-client-id).
+Mithrandir uses [rclone](https://rclone.org) to sync backups to one or more cloud storage providers. Supported providers include Google Drive, SFTP, S3, Dropbox, OneDrive, and iCloud Drive.
+
+**Add a remote interactively:**
+```bash
+mithrandir backup remote add
+```
+This guided wizard walks you through selecting a provider, entering credentials, and testing connectivity. The remote is automatically added to `RCLONE_REMOTES` in `.env`.
+
+**Manage remotes:**
+```bash
+mithrandir backup remote list       # Show configured remotes with status
+mithrandir backup remote remove     # Remove a remote
+```
+
+Alternatively, run `rclone config` manually and ensure the remote name is listed in `RCLONE_REMOTES` in `.env`.
+
+> **Headless servers:** OAuth-based providers (Google Drive, Dropbox, OneDrive) require a browser for initial authorization. Run `rclone authorize "<provider>"` on a machine with a browser, then paste the resulting token during `mithrandir backup remote add`. This is a one-time setup — automated backups work without a browser afterward.
 
 ### Systemd Service
 
@@ -147,7 +163,7 @@ mithrandir backup delete remote 2025-06-01      # Delete a specific remote backu
 ```bash
 mithrandir backup config
 ```
-Interactive command to view and edit all backup settings: backup directory, retention counts, rclone remote, apps to backup, backup hour, and encryption password. Saves changes to `.env` and updates the systemd timer automatically if the backup hour changes.
+Interactive command to view and edit all backup settings: backup directory, retention counts, rclone remotes, apps to backup, backup hour, and encryption password. Saves changes to `.env` and updates the systemd timer automatically if the backup hour changes.
 
 **Verify backups:**
 ```bash
@@ -186,9 +202,9 @@ mithrandir restore full 2025-01-01 --yes
 ```bash
 mithrandir recover [--yes]
 ```
-Full disaster recovery for a fresh system (new server, reinstalled OS). Automates the entire process: installs Docker and rclone, verifies the rclone remote is configured, sets up the base directory, discovers the latest remote backup, restores secrets and all app configs, regenerates docker-compose files, starts all containers, and installs the backup timer. Unlike `restore` (which assumes Docker and compose files already exist), `recover` bootstraps everything from scratch.
+Full disaster recovery for a fresh system (new server, reinstalled OS). Automates the entire process: installs Docker and rclone, verifies rclone remotes are configured, sets up the base directory, discovers the latest remote backup (trying each configured remote in order), restores secrets and all app configs, regenerates docker-compose files, starts all containers, and installs the backup timer. Unlike `restore` (which assumes Docker and compose files already exist), `recover` bootstraps everything from scratch.
 
-In interactive mode, prompts for confirmation at each step. In `--yes` mode, uses all defaults and fails if the rclone remote isn't configured.
+In interactive mode, prompts for confirmation at each step. In `--yes` mode, uses all defaults and fails if no rclone remote is configured.
 
 Examples:
 ```bash
@@ -284,7 +300,7 @@ Installs Docker engine on the host. If Docker is already installed and running, 
 ```bash
 mithrandir install backup
 ```
-Installs rclone (for remote backups to Google Drive) and sets up the systemd backup timer (daily at 2:00 AM). Skips components that are already installed. Equivalent to the rclone and backup timer steps in the setup wizard.
+Installs rclone (for remote backups to cloud storage) and sets up the systemd backup timer (daily at 2:00 AM). Skips components that are already installed. Equivalent to the rclone and backup timer steps in the setup wizard.
 
 **Install HTTPS:**
 ```bash
