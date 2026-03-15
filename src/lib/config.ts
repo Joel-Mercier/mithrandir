@@ -35,7 +35,11 @@ function parseKeyValueFile(content: string): Record<string, string> {
     ) {
       value = value.slice(1, -1);
     }
-    result[key] = value;
+    // Treat empty values as not set (avoids overriding defaults
+    // and passing empty strings where apps expect real values)
+    if (value !== "") {
+      result[key] = value;
+    }
   }
   return result;
 }

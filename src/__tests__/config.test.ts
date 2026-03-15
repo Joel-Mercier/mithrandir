@@ -184,6 +184,20 @@ describe("loadEnvConfig", () => {
     expect(config.TZ).toBe("America/Chicago");
   });
 
+  test("treats empty values as not set (uses defaults)", async () => {
+    await Bun.write(
+      join(tempDir, ".env"),
+      "BASE_DIR=/opt/homelab\nBACKUP_PASSWORD=\nBACKUP_DIR=\nAPPS=\n",
+    );
+    const config = await loadEnvConfig(tempDir);
+    expect(config.BASE_DIR).toBe("/opt/homelab");
+    // Empty values should fall through to defaults
+    expect(config.BACKUP_DIR).toBe("/backups");
+    expect(config.APPS).toBe("auto");
+    // Optional vars with no default should remain undefined
+    expect(config.BACKUP_PASSWORD).toBeUndefined();
+  });
+
   test("skips comments and empty lines", async () => {
     await Bun.write(
       join(tempDir, ".env"),
