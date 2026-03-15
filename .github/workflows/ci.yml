@@ -38,9 +38,9 @@ jobs:
             system-features = nixos-test benchmark big-parallel kvm
       - uses: nix-community/cache-nix-action@v6
         with:
-          primary-key: nix-${{ runner.os }}-${{ hashFiles('integration-tests/flake.lock') }}
+          primary-key: nix-${{ runner.os }}-${{ hashFiles('cli/integration-tests/flake.lock') }}
           restore-prefixes-first-match: nix-${{ runner.os }}-
       - name: Run ${{ matrix.test }} test
-        working-directory: integration-tests
+        working-directory: cli/integration-tests
         run: |
           nix build .#checks.x86_64-linux.${{ matrix.test }} -L

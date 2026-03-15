@@ -5,6 +5,15 @@
 - Runtime [Bun](https://bun.sh/)
 - [Git](https://git-scm.com/)
 
+## Structure du monorepo
+
+Le projet est un monorepo [Bun workspaces](https://bun.sh/docs/install/workspaces). Chaque sous-projet a son propre `package.json` avec des dépendances par workspace, tandis que le `package.json` racine fournit des scripts proxy globaux et un seul `bun.lock`.
+
+| Workspace | Chemin | Description |
+|-----------|--------|-------------|
+| `@mithrandir/cli` | `cli/` | CLI terminal Bun/Ink |
+| `@mithrandir/docs` | `docs/` | Site de documentation VitePress |
+
 ## Pour commencer
 
 ```bash
@@ -16,10 +25,13 @@ bun install
 
 | Commande | Description |
 |----------|-------------|
-| `bun run start` | Lancer la CLI en mode dev (non bundlé) |
-| `bun run build` | Bundler dans `dist/mithrandir.js` |
-| `bun test` | Lancer les tests unitaires et de snapshot |
-| `bun run typecheck` | Vérification de types TypeScript (`tsc --noEmit`) |
+| `bun run cli:start` | Lancer la CLI en mode dev (non bundlé) |
+| `bun run cli:build` | Bundler dans `cli/dist/mithrandir.js` |
+| `bun run cli:test` | Lancer les tests unitaires et de snapshot de la CLI |
+| `bun run cli:typecheck` | Vérification de types TypeScript pour la CLI |
+| `bun run build` | Construire tous les workspaces |
+| `bun run test` | Lancer les tests de tous les workspaces |
+| `bun run typecheck` | Vérification de types pour tous les workspaces |
 | `bun run docs:dev` | Serveur de dev VitePress local avec rechargement à chaud |
 | `bun run docs:build` | Construire le site de documentation pour la production |
 | `bun run docs:preview` | Prévisualiser le site de documentation construit |
@@ -32,7 +44,7 @@ scripts/release.sh 1.1.0    # Incrémente la version, génère le changelog, com
 git push && git push --tags  # Pousser la version
 ```
 
-Le script de release incrémente la version dans `package.json` et `docs/.vitepress/config.ts`, régénère `docs/changelog.md` à partir des tags git, crée un commit et le tag. Le changelog regroupe les commits par tag, avec les commits non publiés affichés en haut.
+Le script de release incrémente la version dans `cli/package.json` et `docs/.vitepress/config.ts`, régénère `docs/changelog.md` à partir des tags git, crée un commit et le tag. Le changelog regroupe les commits par tag, avec les commits non publiés affichés en haut.
 
 Vous pouvez aussi régénérer le changelog manuellement à tout moment :
 
@@ -42,7 +54,7 @@ scripts/generate-changelog.sh
 
 ## Tests unitaires
 
-Les tests utilisent le runner de tests intégré de Bun (`bun test`). Les fichiers de test sont dans `src/__tests__/` :
+Les tests utilisent le runner de tests intégré de Bun. Les fichiers de test sont dans `cli/src/__tests__/` :
 
 - **Registre d'apps** (`apps.test.ts`) — valide les recherches d'apps, noms de conteneurs, chemins de config, filtrage de conflits, stacks et intégrité du registre
 - **Parsing de config** (`config.test.ts`) — teste le chargement de `.env` (KEY=VALUE, guillemets, préfixe `export`, commentaires) et les valeurs par défaut de config de backup
@@ -56,7 +68,7 @@ Les tests utilisent le runner de tests intégré de Bun (`bun test`). Les fichie
 
 ### Snapshots
 
-Les fichiers de snapshot sont stockés dans `src/__tests__/__snapshots__/` et commités dans git. Lorsque la logique de génération compose ou caddy change, mettez à jour les snapshots avec :
+Les fichiers de snapshot sont stockés dans `cli/src/__tests__/__snapshots__/` et commités dans git. Lorsque la logique de génération compose ou caddy change, mettez à jour les snapshots avec :
 
 ```bash
 bun test --update-snapshots
@@ -64,7 +76,7 @@ bun test --update-snapshots
 
 ## Tests d'intégration
 
-Les tests end-to-end basés sur des VMs se trouvent dans `integration-tests/` et utilisent [nix-vm-test](https://github.com/numtide/nix-vm-test). Des VMs Debian 13 sont lancées via QEMU pour tester les chemins critiques de la CLI. Tous les tests utilisent Prowlarr comme app de test.
+Les tests end-to-end basés sur des VMs se trouvent dans `cli/integration-tests/` et utilisent [nix-vm-test](https://github.com/numtide/nix-vm-test). Des VMs Debian 13 sont lancées via QEMU pour tester les chemins critiques de la CLI. Tous les tests utilisent Prowlarr comme app de test.
 
 ### Suite de tests
 
@@ -82,14 +94,14 @@ Les tests end-to-end basés sur des VMs se trouvent dans `integration-tests/` et
 - Hôte Linux avec support KVM (ne peut pas tourner sur macOS directement)
 - Gestionnaire de paquets [Nix](https://nixos.org/)
 
-Voir `integration-tests/README.md` pour les détails sur l'exécution locale et l'écriture de nouveaux tests.
+Voir `cli/integration-tests/README.md` pour les détails sur l'exécution locale et l'écriture de nouveaux tests.
 
 ## Pipeline CI
 
 Un workflow GitHub Actions s'exécute à chaque push et pull request sur `main` :
 
 1. `bun install`
-2. `bun run typecheck`
-3. `bun run build`
-4. `bun test`
+2. `bun run typecheck` — vérifie les types de tous les workspaces
+3. `bun run build` — construit tous les workspaces
+4. `bun run test` — lance les tests de tous les workspaces
 5. Tests d'intégration (matrice parallèle de 6 jobs) : active KVM, installe Nix, exécute chaque test VM avec cache du store Nix

@@ -145,7 +145,7 @@ function SelfUpdateCommand() {
       // Step 4: Build CLI
       setCurrentLabel("Building CLI...");
 
-      const distDir = join(root, "dist");
+      const distDir = join(root, "cli", "dist");
       const distFile = join(distDir, "mithrandir.js");
 
       const build = await shell(bunPath, ["run", "build"], { cwd: root, ignoreError: true, ...userOpts });
@@ -154,17 +154,13 @@ function SelfUpdateCommand() {
         setPhase("error");
         return;
       }
-      addStep({ name: "Build", status: "done", message: "dist/mithrandir.js rebuilt" });
+      addStep({ name: "Build", status: "done", message: "cli/dist/mithrandir.js rebuilt" });
 
-      // Step 5: Verify symlink
-      if (existsSync("/usr/local/bin/mithrandir")) {
-        addStep({ name: "Symlink", status: "done", message: "/usr/local/bin/mithrandir → dist/mithrandir.js" });
-      } else {
-        // Re-create symlink if missing
-        setCurrentLabel("Installing mithrandir command...");
-        await shell("ln", ["-sf", distFile, "/usr/local/bin/mithrandir"], { sudo: true });
-        addStep({ name: "Symlink", status: "done", message: "Re-created /usr/local/bin/mithrandir" });
-      }
+      // Step 5: Always re-create symlink to ensure it points to the correct path
+      // (handles architecture changes like dist/ → cli/dist/)
+      setCurrentLabel("Installing mithrandir command...");
+      await shell("ln", ["-sf", distFile, "/usr/local/bin/mithrandir"], { sudo: true });
+      addStep({ name: "Symlink", status: "done", message: "/usr/local/bin/mithrandir → cli/dist/mithrandir.js" });
 
       setPhase("done");
     } catch (err: any) {

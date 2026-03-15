@@ -1,8 +1,38 @@
 import { chmod } from "fs/promises";
-import { join } from "path";
+import { join, dirname } from "path";
 
 const outdir = join(import.meta.dir, "dist");
 const outfile = join(outdir, "mithrandir.js");
+
+// Resolve signal-exit v4 ESM path at build-time.
+// signal-exit is an indirect dep — locate it via Bun's resolver by
+// looking through the restore-exit-info dependency (which requires v4).
+import { existsSync } from "fs";
+
+function findSignalExitMjs(): string {
+  // Try direct resolution first (works with flat node_modules)
+  try {
+    const resolved = new URL(import.meta.resolve("signal-exit")).pathname;
+    const candidate = join(dirname(resolved), "dist", "mjs", "index.js");
+    if (existsSync(candidate)) return candidate;
+  } catch {}
+
+  // Bun stores deps in node_modules/.bun/ — scan for signal-exit@4
+  const bunCache = join(dirname(import.meta.dir), "node_modules", ".bun");
+  if (existsSync(bunCache)) {
+    const { readdirSync } = require("fs");
+    for (const entry of readdirSync(bunCache) as string[]) {
+      if (entry.startsWith("signal-exit@4")) {
+        const candidate = join(bunCache, entry, "node_modules", "signal-exit", "dist", "mjs", "index.js");
+        if (existsSync(candidate)) return candidate;
+      }
+    }
+  }
+
+  throw new Error("Could not find signal-exit ESM module");
+}
+
+const signalExitMjs = findSignalExitMjs();
 
 const result = await Bun.build({
   entrypoints: [join(import.meta.dir, "src/index.tsx")],
@@ -30,7 +60,7 @@ const result = await Bun.build({
           namespace: "shim",
         }));
         build.onLoad({ filter: /.*/, namespace: "shim" }, () => ({
-          contents: `export { onExit as default, onExit, load, unload, signals } from ${JSON.stringify(join(import.meta.dir, "node_modules/signal-exit/dist/mjs/index.js"))};`,
+          contents: `export { onExit as default, onExit, load, unload, signals } from ${JSON.stringify(signalExitMjs)};`,
           loader: "js",
         }));
       },

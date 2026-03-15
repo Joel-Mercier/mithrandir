@@ -5,6 +5,7 @@
 # Node/Bun
 node_modules/
 dist/
+cli/dist/
 .bun/
 
 # Logs
@@ -15,7 +16,7 @@ dist/
 
 # Nix
 result
-integration-tests/result
+cli/integration-tests/result
 
 # Vitepress
 /docs/.vitepress/cache/

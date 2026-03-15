@@ -1,18 +1,30 @@
 import { readFile } from "fs/promises";
-import { existsSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import { resolve, dirname, join } from "path";
 import { homedir } from "os";
 import type { EnvConfig, BackupConfig } from "@/types.js";
 
 /** Find the project root (where .env lives) */
 export function getProjectRoot(): string {
-  // Walk up until we find the directory containing package.json.
-  // Works from both source (src/lib/) and bundled (dist/) locations.
+  // Walk up until we find the workspace root (package.json with "workspaces").
+  // Falls back to the first package.json found for non-workspace setups.
+  // Works from both source (cli/src/lib/) and bundled (cli/dist/) locations.
   let dir = dirname(new URL(import.meta.url).pathname);
+  let firstPkgDir: string | null = null;
   while (dir !== dirname(dir)) {
-    if (existsSync(join(dir, "package.json"))) return dir;
+    const pkgPath = join(dir, "package.json");
+    if (existsSync(pkgPath)) {
+      if (!firstPkgDir) firstPkgDir = dir;
+      try {
+        const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
+        if (pkg.workspaces) return dir;
+      } catch {
+        // ignore parse errors
+      }
+    }
     dir = dirname(dir);
   }
+  if (firstPkgDir) return firstPkgDir;
   throw new Error("Could not find mithrandir project root");
 }
 

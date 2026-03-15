@@ -36,13 +36,13 @@ else
   SED_INPLACE=(sed -i '')
 fi
 
-"${SED_INPLACE[@]}" "s/\"version\": \"[^\"]*\"/\"version\": \"${VERSION}\"/" package.json
+"${SED_INPLACE[@]}" "s/\"version\": \"[^\"]*\"/\"version\": \"${VERSION}\"/" cli/package.json
 
 # Bump version in docs/.vitepress/config.ts nav dropdown
 "${SED_INPLACE[@]}" "s/text: \"v[0-9][^\"]*\"/text: \"${TAG}\"/" docs/.vitepress/config.ts
 
 # Create the tag first (lightweight) so generate-changelog.sh can see it
-git add package.json docs/.vitepress/config.ts
+git add cli/package.json docs/.vitepress/config.ts
 git commit -m "release ${TAG}"
 git tag "$TAG"
 

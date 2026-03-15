@@ -447,6 +447,8 @@ Checks configuration correctness across three categories: System (.env file, Doc
 
 ## Local Development
 
+The project is a [Bun workspaces](https://bun.sh/docs/install/workspaces) monorepo. Each subproject (`cli/`, `docs/`) has its own `package.json` with workspace-scoped dependencies, while the root `package.json` provides global proxy scripts and a single `bun.lock`. Running `bun install` at the root installs everything.
+
 ```bash
 git clone <repo> && cd mithrandir
 bun install
@@ -458,7 +460,7 @@ scripts/release.sh 1.1.0    # Bumps version, generates changelog, commits, and t
 git push && git push --tags  # Push the release
 ```
 
-The release script bumps the version in `package.json` and `docs/.vitepress/config.ts`, regenerates `docs/changelog.md` from git tags, creates a commit, and tags it. The changelog groups commits by tag, with unreleased commits shown at the top.
+The release script bumps the version in `cli/package.json` and `docs/.vitepress/config.ts`, regenerates `docs/changelog.md` from git tags, creates a commit, and tags it. The changelog groups commits by tag, with unreleased commits shown at the top.
 
 You can also regenerate the changelog manually at any time:
 ```bash
@@ -469,10 +471,13 @@ scripts/generate-changelog.sh
 
 | Command | Description |
 |---------|-------------|
-| `bun run start` | Run the CLI in dev mode (unbundled) |
-| `bun run build` | Bundle into `dist/mithrandir.js` |
-| `bun test` | Run unit and snapshot tests |
-| `bun run typecheck` | TypeScript type checking (`tsc --noEmit`) |
+| `bun run cli:start` | Run the CLI in dev mode (unbundled) |
+| `bun run cli:build` | Bundle into `cli/dist/mithrandir.js` |
+| `bun run cli:test` | Run CLI unit and snapshot tests |
+| `bun run cli:typecheck` | TypeScript type checking for CLI |
+| `bun run build` | Build all workspaces |
+| `bun run test` | Run tests across all workspaces |
+| `bun run typecheck` | TypeScript type checking for all workspaces |
 | `bun run docs:dev` | Local VitePress dev server with hot reload |
 | `bun run docs:build` | Build the documentation site for production |
 | `bun run docs:preview` | Preview the built documentation site |
@@ -480,7 +485,7 @@ scripts/generate-changelog.sh
 
 ## Testing
 
-Tests use Bun's built-in test runner (`bun test`). Test files are in `src/__tests__/`:
+Tests use Bun's built-in test runner. Test files are in `cli/src/__tests__/`:
 
 - **App registry** (`apps.test.ts`) — validates app lookups, container names, config paths, conflict filtering, stacks, and registry integrity
 - **Config parsing** (`config.test.ts`) — tests `.env` loading (KEY=VALUE, quotes, `export` prefix, comments) and backup config defaults
@@ -492,7 +497,7 @@ Tests use Bun's built-in test runner (`bun test`). Test files are in `src/__test
 - **Swap** (`swap.test.ts`) — swap size formatting (GB/MB thresholds, edge cases)
 - **Logger** (`logger.test.ts`) — log message formatting, timestamp pattern validation, and log path constants
 
-Snapshot files are stored in `src/__tests__/__snapshots__/` and committed to git. When compose or caddy generation logic changes, update snapshots with:
+Snapshot files are stored in `cli/src/__tests__/__snapshots__/` and committed to git. When compose or caddy generation logic changes, update snapshots with:
 
 ```bash
 bun test --update-snapshots
@@ -500,10 +505,10 @@ bun test --update-snapshots
 
 ### Integration Tests
 
-VM-based end-to-end tests live in `integration-tests/` using [nix-vm-test](https://github.com/numtide/nix-vm-test). Debian 13 VMs are spun up via QEMU to test critical CLI paths: install flow, Docker setup, app lifecycle, backup/restore, diagnostics, and updates. Requires a Linux host with KVM (runs in CI on GitHub Actions with hardware-accelerated KVM).
+VM-based end-to-end tests live in `cli/integration-tests/` using [nix-vm-test](https://github.com/numtide/nix-vm-test). Debian 13 VMs are spun up via QEMU to test critical CLI paths: install flow, Docker setup, app lifecycle, backup/restore, diagnostics, and updates. Requires a Linux host with KVM (runs in CI on GitHub Actions with hardware-accelerated KVM).
 
-See `integration-tests/README.md` for details on running locally and writing new tests.
+See `cli/integration-tests/README.md` for details on running locally and writing new tests.
 
 ### CI
 
-A GitHub Actions workflow runs on every push and pull request to `main`. It runs `bun run typecheck`, `bun run build`, and `bun test`. A parallel matrix of integration tests spins up Debian VMs to verify the install flow, Docker setup, app lifecycle, backup/restore, diagnostics, and update commands.
+A GitHub Actions workflow runs on every push and pull request to `main`. It runs `bun run typecheck`, `bun run build`, and `bun run test` across all workspaces. A parallel matrix of integration tests spins up Debian VMs to verify the install flow, Docker setup, app lifecycle, backup/restore, diagnostics, and update commands.

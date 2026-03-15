@@ -96,13 +96,13 @@ cd "$SCRIPT_DIR"
 sudo -u "$REAL_USER" "$BUN_INSTALL/bin/bun" install
 
 # Build the CLI bundle (as real user)
-mkdir -p "$SCRIPT_DIR/dist"
+mkdir -p "$SCRIPT_DIR/cli/dist"
 log "Building CLI..."
 sudo -u "$REAL_USER" "$BUN_INSTALL/bin/bun" run build
 
 # Install the mithrandir command
 log "Installing mithrandir command..."
-sudo ln -sf "$SCRIPT_DIR/dist/mithrandir.js" /usr/local/bin/mithrandir
+sudo ln -sf "$SCRIPT_DIR/cli/dist/mithrandir.js" /usr/local/bin/mithrandir
 
 log ""
 log "Setup complete! Run the CLI with:"
