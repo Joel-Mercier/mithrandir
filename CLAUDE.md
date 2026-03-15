@@ -105,6 +105,31 @@ bun run typecheck              # TypeScript type checking for all workspaces
 bun run cli:start -- --help    # Dev mode (unbundled)
 ```
 
+## UI Workspace (`ui/`)
+
+TanStack Start app with SSR, file-based routing, and Vite. Created via `create-tanstack-app` with add-ons: Biome, Form, shadcn, Better-Auth, TanStack Query.
+
+### Stack
+
+- **Framework**: TanStack Start (SSR) + React 19 + Vite 7
+- **Routing**: TanStack Router (file-based, auto-generates `src/routeTree.gen.ts`)
+- **Styling**: Tailwind CSS v4 (CSS-based config in `src/styles.css`, no `tailwind.config.js`) + shadcn/ui (New York style, zinc base, lucide icons)
+- **Data fetching**: TanStack Query (singleton `QueryClient` in `src/lib/tanstack-query/root-provider.tsx`, injected into router context)
+- **Forms**: TanStack Form (`createFormHook()` in `src/hooks/`) with Zod validation
+- **Auth**: Better-Auth with email/password, TanStack Start cookies plugin. Server config in `src/lib/auth.ts`, client in `src/lib/auth-client.ts`. API handler at `src/routes/api/auth/$.ts` (catch-all). Env vars: `BETTER_AUTH_URL`, `BETTER_AUTH_SECRET` in `ui/.env.local`.
+- **Linting/formatting**: Biome (tab indentation). Config in `biome.json`.
+- **Testing**: Vitest + Testing Library
+
+### Key Patterns
+
+- **Path aliases**: `#/*` and `@/*` both map to `./src/*` (tsconfig paths + `vite-tsconfig-paths`)
+- **Route files**: `src/routes/` directory. `__root.tsx` defines the root layout with `createRootRouteWithContext<{ queryClient: QueryClient }>()`. Pages use `createFileRoute()`.
+- **Server handlers**: API routes use TanStack Start server handlers pattern: `createFileRoute().server.handlers.{GET,POST}`
+- **shadcn components**: `src/components/ui/` — added via `npx shadcn@latest add <component>`. Config in `components.json`.
+- **Form components**: Custom field components (`TextField`, `Select`, `TextArea`, `Slider`, `Switch`) in `src/components/` wrap shadcn inputs with TanStack Form context and error display. `useAppForm` hook in `src/hooks/` bundles field + form components.
+- **Theme**: Light/dark/auto via CSS class on `<html>`, persisted to localStorage. Toggle in `src/components/ThemeToggle.tsx`.
+- **Root layout** (`src/routes/__root.tsx`): Wraps children with `TanStackQueryProvider`, includes devtools (Router + Query).
+
 ## Architecture
 
 ### App Registry Pattern (`cli/src/lib/apps.ts`)
