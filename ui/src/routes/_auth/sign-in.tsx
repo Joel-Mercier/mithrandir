@@ -12,6 +12,7 @@ import { Input } from "#/components/ui/input";
 import { Label } from "#/components/ui/label";
 import { LogIn } from "lucide-react";
 import { Spinner } from "#/components/ui/spinner";
+import { useSignIn } from "#/hooks/auth";
 
 export const Route = createFileRoute("/_auth/sign-in")({
 	component: SignInPage,
@@ -20,18 +21,11 @@ export const Route = createFileRoute("/_auth/sign-in")({
 function SignInPage() {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
-	const [loading, setLoading] = useState(false);
-	const [error, setError] = useState("");
+	const signIn = useSignIn();
 
 	function handleSubmit(e: React.FormEvent) {
 		e.preventDefault();
-		setError("");
-		setLoading(true);
-		// Mock — no actual auth call
-		setTimeout(() => {
-			setLoading(false);
-			setError("Authentication is not connected yet.");
-		}, 800);
+		signIn.mutate({ email, password });
 	}
 
 	return (
@@ -73,17 +67,23 @@ function SignInPage() {
 							/>
 						</div>
 
-						{error && (
-							<p className="text-sm text-status-critical">{error}</p>
+						{signIn.error && (
+							<p className="text-sm text-status-critical">
+								{signIn.error.message ?? "Sign in failed."}
+							</p>
 						)}
 
-						<Button type="submit" className="w-full gap-2" disabled={loading}>
-							{loading ? (
+						<Button
+							type="submit"
+							className="w-full gap-2"
+							disabled={signIn.isPending}
+						>
+							{signIn.isPending ? (
 								<Spinner size="sm" className="text-primary-foreground" />
 							) : (
 								<LogIn className="h-4 w-4" />
 							)}
-							{loading ? "Signing in..." : "Sign in"}
+							{signIn.isPending ? "Signing in..." : "Sign in"}
 						</Button>
 					</form>
 
@@ -99,5 +99,5 @@ function SignInPage() {
 				</CardContent>
 			</Card>
 		</div>
-	)
+	);
 }

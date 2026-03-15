@@ -1,6 +1,6 @@
 // ─── UI-facing types ────────────────────────────────────────────
 
-export type AppStatus = "running" | "stopped" | "error";
+export type AppStatus = "running" | "stopped" | "error" | "available";
 export type AppCategory =
 	| "media"
 	| "automation"
@@ -16,6 +16,8 @@ export interface DashboardApp {
 	status: AppStatus;
 	category: AppCategory;
 	uptime: string;
+	website?: string;
+	github?: string;
 }
 
 export interface AppDetail extends DashboardApp {
@@ -111,6 +113,8 @@ export const mockApps: DashboardApp[] = [
 		status: "running",
 		category: "media",
 		uptime: "14d 6h",
+		website: "https://jellyfin.org",
+		github: "https://github.com/jellyfin/jellyfin",
 	},
 	{
 		name: "radarr",
@@ -120,6 +124,8 @@ export const mockApps: DashboardApp[] = [
 		status: "running",
 		category: "media",
 		uptime: "14d 6h",
+		website: "https://radarr.video",
+		github: "https://github.com/Radarr/Radarr",
 	},
 	{
 		name: "sonarr",
@@ -129,6 +135,8 @@ export const mockApps: DashboardApp[] = [
 		status: "running",
 		category: "media",
 		uptime: "14d 6h",
+		website: "https://sonarr.tv",
+		github: "https://github.com/Sonarr/Sonarr",
 	},
 	{
 		name: "prowlarr",
@@ -138,6 +146,8 @@ export const mockApps: DashboardApp[] = [
 		status: "running",
 		category: "media",
 		uptime: "14d 6h",
+		website: "https://prowlarr.com",
+		github: "https://github.com/Prowlarr/Prowlarr",
 	},
 	{
 		name: "qbittorrent",
@@ -147,6 +157,8 @@ export const mockApps: DashboardApp[] = [
 		status: "running",
 		category: "media",
 		uptime: "14d 6h",
+		website: "https://www.qbittorrent.org",
+		github: "https://github.com/qbittorrent/qBittorrent",
 	},
 	{
 		name: "homeassistant",
@@ -156,6 +168,8 @@ export const mockApps: DashboardApp[] = [
 		status: "running",
 		category: "automation",
 		uptime: "30d 2h",
+		website: "https://www.home-assistant.io",
+		github: "https://github.com/home-assistant/core",
 	},
 	{
 		name: "pihole",
@@ -165,6 +179,8 @@ export const mockApps: DashboardApp[] = [
 		status: "running",
 		category: "security",
 		uptime: "30d 2h",
+		website: "https://pi-hole.net",
+		github: "https://github.com/pi-hole/pi-hole",
 	},
 	{
 		name: "homarr",
@@ -174,6 +190,151 @@ export const mockApps: DashboardApp[] = [
 		status: "stopped",
 		category: "utilities",
 		uptime: "—",
+		website: "https://homarr.dev",
+		github: "https://github.com/ajnart/homarr",
+	},
+	{
+		name: "bazarr",
+		displayName: "Bazarr",
+		description: "Subtitle manager for Sonarr & Radarr",
+		port: 6767,
+		status: "available",
+		category: "media",
+		uptime: "—",
+		website: "https://www.bazarr.media",
+		github: "https://github.com/morpheus65535/bazarr",
+	},
+	{
+		name: "lidarr",
+		displayName: "Lidarr",
+		description: "Music collection manager",
+		port: 8686,
+		status: "available",
+		category: "media",
+		uptime: "—",
+		website: "https://lidarr.audio",
+		github: "https://github.com/Lidarr/Lidarr",
+	},
+	{
+		name: "jellyseerr",
+		displayName: "Seerr",
+		description: "Media request management",
+		port: 5055,
+		status: "available",
+		category: "media",
+		uptime: "—",
+		website: "https://github.com/seerr-team/seerr",
+		github: "https://github.com/seerr-team/seerr",
+	},
+	{
+		name: "navidrome",
+		displayName: "Navidrome",
+		description: "Music server and streamer",
+		port: 4533,
+		status: "available",
+		category: "media",
+		uptime: "—",
+		website: "https://www.navidrome.org",
+		github: "https://github.com/navidrome/navidrome",
+	},
+	{
+		name: "immich",
+		displayName: "Immich",
+		description: "Self-hosted photo & video backup",
+		port: 2283,
+		status: "available",
+		category: "media",
+		uptime: "—",
+		website: "https://immich.app",
+		github: "https://github.com/immich-app/immich",
+	},
+	{
+		name: "gatus",
+		displayName: "Gatus",
+		description: "Automated service health dashboard",
+		port: 8084,
+		status: "available",
+		category: "monitoring",
+		uptime: "—",
+		website: "https://gatus.io",
+		github: "https://github.com/TwiN/gatus",
+	},
+	{
+		name: "wireguard",
+		displayName: "WireGuard",
+		description: "Fast VPN tunnel",
+		port: 51821,
+		status: "available",
+		category: "security",
+		uptime: "—",
+		website: "https://www.wireguard.com",
+		github: "https://github.com/linuxserver/docker-wireguard",
+	},
+	{
+		name: "vaultwarden",
+		displayName: "Vaultwarden",
+		description: "Lightweight Bitwarden-compatible server",
+		port: 8880,
+		status: "available",
+		category: "security",
+		uptime: "—",
+		website: "https://github.com/dani-garcia/vaultwarden",
+		github: "https://github.com/dani-garcia/vaultwarden",
+	},
+	{
+		name: "n8n",
+		displayName: "n8n",
+		description: "Workflow automation tool",
+		port: 5678,
+		status: "available",
+		category: "automation",
+		uptime: "—",
+		website: "https://n8n.io",
+		github: "https://github.com/n8n-io/n8n",
+	},
+	{
+		name: "excalidraw",
+		displayName: "Excalidraw",
+		description: "Collaborative whiteboard",
+		port: 3030,
+		status: "available",
+		category: "utilities",
+		uptime: "—",
+		website: "https://excalidraw.com",
+		github: "https://github.com/excalidraw/excalidraw",
+	},
+	{
+		name: "stirling-pdf",
+		displayName: "Stirling PDF",
+		description: "PDF manipulation tools",
+		port: 8085,
+		status: "available",
+		category: "utilities",
+		uptime: "—",
+		website: "https://stirlingpdf.io",
+		github: "https://github.com/Stirling-Tools/Stirling-PDF",
+	},
+	{
+		name: "actual-budget",
+		displayName: "Actual Budget",
+		description: "Privacy-focused budgeting app",
+		port: 5006,
+		status: "available",
+		category: "utilities",
+		uptime: "—",
+		website: "https://actualbudget.org",
+		github: "https://github.com/actualbudget/actual",
+	},
+	{
+		name: "paperless-ngx",
+		displayName: "Paperless-ngx",
+		description: "Document management system",
+		port: 8000,
+		status: "available",
+		category: "utilities",
+		uptime: "—",
+		website: "https://docs.paperless-ngx.com",
+		github: "https://github.com/paperless-ngx/paperless-ngx",
 	},
 ];
 

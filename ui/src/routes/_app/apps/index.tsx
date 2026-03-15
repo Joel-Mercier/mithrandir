@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowUpRight, Search } from "lucide-react";
+import { ArrowUpRight, Download, Search } from "lucide-react";
 import { useState } from "react";
 import Breadcrumbs from "#/components/Breadcrumbs";
 import { Badge } from "#/components/ui/badge";
@@ -16,6 +16,7 @@ const statusDot: Record<AppStatus, string> = {
 	running: "bg-status-healthy",
 	stopped: "bg-muted-foreground",
 	error: "bg-status-critical",
+	available: "bg-transparent",
 };
 
 const categories: Array<AppCategory | "all"> = [
@@ -31,17 +32,25 @@ function AppsPage() {
 	const [search, setSearch] = useState("");
 	const [category, setCategory] = useState<AppCategory | "all">("all");
 
-	const filtered = mockApps.filter((app) => {
+	const applyFilters = (app: DashboardApp) => {
 		const matchesSearch =
 			app.displayName.toLowerCase().includes(search.toLowerCase()) ||
 			app.description.toLowerCase().includes(search.toLowerCase());
 		const matchesCategory = category === "all" || app.category === category;
 		return matchesSearch && matchesCategory;
-	});
+	};
+
+	const installedApps = mockApps.filter(
+		(app) => app.status !== "available" && applyFilters(app),
+	);
+	const availableApps = mockApps.filter(
+		(app) => app.status === "available" && applyFilters(app),
+	);
 
 	const running = mockApps.filter((a) => a.status === "running").length;
 	const stopped = mockApps.filter((a) => a.status === "stopped").length;
 	const errored = mockApps.filter((a) => a.status === "error").length;
+	const available = mockApps.filter((a) => a.status === "available").length;
 
 	return (
 		<div className="mx-auto max-w-7xl px-4 py-8">
@@ -51,7 +60,7 @@ function AppsPage() {
 					Applications
 				</h1>
 				<p className="mt-1 text-sm text-muted-foreground">
-					Manage your installed services
+					Manage and install services
 				</p>
 			</div>
 
@@ -74,6 +83,11 @@ function AppsPage() {
 						<span className="text-muted-foreground">error</span>
 					</div>
 				)}
+				<div className="flex items-center gap-1.5 border-l pl-3">
+					<span className="inline-block h-2 w-2 rounded-full border border-dashed border-muted-foreground" />
+					<span className="font-mono-data">{available}</span>
+					<span className="text-muted-foreground">available</span>
+				</div>
 			</div>
 
 			{/* Filters */}
@@ -102,14 +116,35 @@ function AppsPage() {
 				</div>
 			</div>
 
-			{/* App grid */}
-			<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-				{filtered.map((app) => (
-					<AppListCard key={app.name} app={app} />
-				))}
-			</div>
+			{/* Installed apps */}
+			{installedApps.length > 0 && (
+				<>
+					<h2 className="mb-3 text-sm font-medium text-muted-foreground">
+						Installed
+					</h2>
+					<div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+						{installedApps.map((app) => (
+							<AppListCard key={app.name} app={app} />
+						))}
+					</div>
+				</>
+			)}
 
-			{filtered.length === 0 && (
+			{/* Available apps */}
+			{availableApps.length > 0 && (
+				<>
+					<h2 className="mb-3 text-sm font-medium text-muted-foreground">
+						Available to install
+					</h2>
+					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+						{availableApps.map((app) => (
+							<AvailableAppCard key={app.name} app={app} />
+						))}
+					</div>
+				</>
+			)}
+
+			{installedApps.length === 0 && availableApps.length === 0 && (
 				<div className="py-12 text-center text-sm text-muted-foreground">
 					No apps match your filters.
 				</div>
@@ -164,6 +199,49 @@ function AppListCard({ app }: { app: DashboardApp }) {
 						<span>Uptime</span>
 						<span className="font-mono-data">{app.uptime}</span>
 					</div>
+				</CardContent>
+			</Card>
+		</Link>
+	);
+}
+
+function AvailableAppCard({ app }: { app: DashboardApp }) {
+	return (
+		<Link to="/apps/$appName" params={{ appName: app.name }}>
+			<Card className="group border-dashed">
+				<CardHeader className="flex flex-row items-center justify-between pb-2">
+					<div className="flex items-center gap-2">
+						<span className="inline-block h-2 w-2 rounded-full border border-dashed border-muted-foreground" />
+						<CardTitle className="text-sm font-medium text-muted-foreground">
+							{app.displayName}
+						</CardTitle>
+					</div>
+					<ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+				</CardHeader>
+				<CardContent className="space-y-3">
+					<p className="text-xs text-muted-foreground">{app.description}</p>
+
+					<div className="flex items-center justify-between">
+						<span className="font-mono-data text-xs text-muted-foreground">
+							:{app.port}
+						</span>
+						<Badge variant="outline" className="text-xs capitalize">
+							{app.category}
+						</Badge>
+					</div>
+
+					<Button
+						variant="outline"
+						size="sm"
+						className="w-full gap-1.5"
+						onClick={(e) => {
+							e.preventDefault();
+							e.stopPropagation();
+						}}
+					>
+						<Download className="h-3.5 w-3.5" />
+						Install
+					</Button>
 				</CardContent>
 			</Card>
 		</Link>

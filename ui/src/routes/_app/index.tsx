@@ -29,7 +29,7 @@ function Dashboard() {
 				<SystemStatusCard data={mockHealth} />
 				<ResourcesCard data={mockResources} />
 				<BackupStatusCard data={mockBackup} />
-				<AppsGrid apps={mockApps} />
+				<AppsGrid apps={mockApps.filter((a) => a.status !== "available")} />
 				<ConfigCard data={mockConfig} />
 				<VersionCard data={mockVersion} />
 			</div>

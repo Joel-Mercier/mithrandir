@@ -12,7 +12,7 @@ import {
 const routeLabels: Record<string, string> = {
 	"/": "Dashboard",
 	"/apps": "Apps",
-	"/backup": "Backup",
+	"/backup-restore": "Backup & Restore",
 	"/settings": "Settings",
 	"/profile": "Profile",
 };
@@ -27,7 +27,8 @@ export default function Breadcrumbs() {
 
 	const crumbs: BreadcrumbEntry[] = [];
 	for (const match of matches) {
-		const path = match.pathname;
+		// Normalize trailing slashes so "/apps/" matches routeLabels["/apps"]
+		const path = match.pathname.replace(/\/+$/, "") || "/";
 		// Skip layout routes and root
 		if (path === "/" || routeLabels[path]) {
 			if (path !== "/") {

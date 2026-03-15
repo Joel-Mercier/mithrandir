@@ -12,6 +12,7 @@ import { Input } from "#/components/ui/input";
 import { Label } from "#/components/ui/label";
 import { UserPlus } from "lucide-react";
 import { Spinner } from "#/components/ui/spinner";
+import { useSignUp } from "#/hooks/auth";
 
 export const Route = createFileRoute("/_auth/sign-up")({
 	component: SignUpPage,
@@ -22,30 +23,27 @@ function SignUpPage() {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [confirmPassword, setConfirmPassword] = useState("");
-	const [loading, setLoading] = useState(false);
-	const [error, setError] = useState("");
+	const [validationError, setValidationError] = useState("");
+	const signUp = useSignUp();
 
 	function handleSubmit(e: React.FormEvent) {
 		e.preventDefault();
-		setError("");
+		setValidationError("");
 
 		if (password !== confirmPassword) {
-			setError("Passwords do not match.");
-			return
+			setValidationError("Passwords do not match.");
+			return;
 		}
 
 		if (password.length < 8) {
-			setError("Password must be at least 8 characters.");
-			return
+			setValidationError("Password must be at least 8 characters.");
+			return;
 		}
 
-		setLoading(true);
-		// Mock — no actual auth call
-		setTimeout(() => {
-			setLoading(false);
-			setError("Registration is not connected yet.");
-		}, 800);
+		signUp.mutate({ name, email, password });
 	}
+
+	const error = validationError || (signUp.error?.message ?? "");
 
 	return (
 		<div className="w-full px-4 py-12">
@@ -114,13 +112,17 @@ function SignUpPage() {
 							<p className="text-sm text-status-critical">{error}</p>
 						)}
 
-						<Button type="submit" className="w-full gap-2" disabled={loading}>
-							{loading ? (
+						<Button
+							type="submit"
+							className="w-full gap-2"
+							disabled={signUp.isPending}
+						>
+							{signUp.isPending ? (
 								<Spinner size="sm" className="text-primary-foreground" />
 							) : (
 								<UserPlus className="h-4 w-4" />
 							)}
-							{loading ? "Creating account..." : "Create account"}
+							{signUp.isPending ? "Creating account..." : "Create account"}
 						</Button>
 					</form>
 
@@ -136,5 +138,5 @@ function SignUpPage() {
 				</CardContent>
 			</Card>
 		</div>
-	)
+	);
 }

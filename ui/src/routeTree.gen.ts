@@ -16,7 +16,7 @@ import { Route as AuthSignUpRouteImport } from './routes/_auth/sign-up'
 import { Route as AuthSignInRouteImport } from './routes/_auth/sign-in'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppProfileRouteImport } from './routes/_app/profile'
-import { Route as AppBackupRouteImport } from './routes/_app/backup'
+import { Route as AppBackupRestoreRouteImport } from './routes/_app/backup-restore'
 import { Route as AppAppsIndexRouteImport } from './routes/_app/apps/index'
 import { Route as DemoFormSimpleRouteImport } from './routes/demo/form.simple'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
@@ -55,9 +55,9 @@ const AppProfileRoute = AppProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => AppRoute,
 } as any)
-const AppBackupRoute = AppBackupRouteImport.update({
-  id: '/backup',
-  path: '/backup',
+const AppBackupRestoreRoute = AppBackupRestoreRouteImport.update({
+  id: '/backup-restore',
+  path: '/backup-restore',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAppsIndexRoute = AppAppsIndexRouteImport.update({
@@ -83,7 +83,7 @@ const AppAppsAppNameRoute = AppAppsAppNameRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
-  '/backup': typeof AppBackupRoute
+  '/backup-restore': typeof AppBackupRestoreRoute
   '/profile': typeof AppProfileRoute
   '/settings': typeof AppSettingsRoute
   '/sign-in': typeof AuthSignInRoute
@@ -95,7 +95,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof AppIndexRoute
-  '/backup': typeof AppBackupRoute
+  '/backup-restore': typeof AppBackupRestoreRoute
   '/profile': typeof AppProfileRoute
   '/settings': typeof AppSettingsRoute
   '/sign-in': typeof AuthSignInRoute
@@ -109,7 +109,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_app': typeof AppRouteWithChildren
   '/_auth': typeof AuthRouteWithChildren
-  '/_app/backup': typeof AppBackupRoute
+  '/_app/backup-restore': typeof AppBackupRestoreRoute
   '/_app/profile': typeof AppProfileRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_auth/sign-in': typeof AuthSignInRoute
@@ -124,7 +124,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/backup'
+    | '/backup-restore'
     | '/profile'
     | '/settings'
     | '/sign-in'
@@ -136,7 +136,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/backup'
+    | '/backup-restore'
     | '/profile'
     | '/settings'
     | '/sign-in'
@@ -149,7 +149,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_app'
     | '/_auth'
-    | '/_app/backup'
+    | '/_app/backup-restore'
     | '/_app/profile'
     | '/_app/settings'
     | '/_auth/sign-in'
@@ -219,11 +219,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProfileRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/backup': {
-      id: '/_app/backup'
-      path: '/backup'
-      fullPath: '/backup'
-      preLoaderRoute: typeof AppBackupRouteImport
+    '/_app/backup-restore': {
+      id: '/_app/backup-restore'
+      path: '/backup-restore'
+      fullPath: '/backup-restore'
+      preLoaderRoute: typeof AppBackupRestoreRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/apps/': {
@@ -258,7 +258,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteChildren {
-  AppBackupRoute: typeof AppBackupRoute
+  AppBackupRestoreRoute: typeof AppBackupRestoreRoute
   AppProfileRoute: typeof AppProfileRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppIndexRoute: typeof AppIndexRoute
@@ -267,7 +267,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
-  AppBackupRoute: AppBackupRoute,
+  AppBackupRestoreRoute: AppBackupRestoreRoute,
   AppProfileRoute: AppProfileRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppIndexRoute: AppIndexRoute,

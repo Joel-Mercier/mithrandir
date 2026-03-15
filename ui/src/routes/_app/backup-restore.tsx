@@ -32,7 +32,7 @@ import {
 	mockConfig,
 } from "#/lib/mock-data";
 
-export const Route = createFileRoute("/_app/backup")({ component: BackupPage });
+export const Route = createFileRoute("/_app/backup-restore")({ component: BackupRestorePage });
 
 function formatDate(iso: string) {
 	return new Date(iso).toLocaleDateString("en-US", {
@@ -40,7 +40,7 @@ function formatDate(iso: string) {
 		day: "numeric",
 		hour: "2-digit",
 		minute: "2-digit",
-	});
+	})
 }
 
 function Row({
@@ -55,14 +55,14 @@ function Row({
 			<span className="text-muted-foreground">{label}</span>
 			<span className="font-mono-data text-xs">{children}</span>
 		</div>
-	);
+	)
 }
 
-function BackupPage() {
+function BackupRestorePage() {
 	const localBackups = mockBackupHistory.filter((b) => b.location === "local");
 	const remoteBackups = mockBackupHistory.filter(
 		(b) => b.location === "remote",
-	);
+	)
 
 	return (
 		<div className="mx-auto max-w-7xl px-4 py-8">
@@ -185,7 +185,7 @@ function BackupPage() {
 				</TabsContent>
 			</Tabs>
 		</div>
-	);
+	)
 }
 
 function BackupTable({ backups }: { backups: BackupEntry[] }) {
@@ -260,7 +260,7 @@ function BackupTable({ backups }: { backups: BackupEntry[] }) {
 				</Table>
 			</CardContent>
 		</Card>
-	);
+	)
 }
 
 function RestorePanel() {
@@ -347,5 +347,5 @@ function RestorePanel() {
 				</CardContent>
 			</Card>
 		</div>
-	);
+	)
 }
