@@ -29,6 +29,14 @@ bun install
 | `bun run cli:build` | Bundler dans `cli/dist/mithrandir.js` |
 | `bun run cli:test` | Lancer les tests unitaires et de snapshot de la CLI |
 | `bun run cli:typecheck` | Vérification de types TypeScript pour la CLI |
+| `bun run ui:dev` | Serveur de dev Vite local avec rechargement à chaud |
+| `bun run ui:build` | Construire l'UI pour la production |
+| `bun run ui:preview` | Prévisualiser l'UI construit |
+| `bun run ui:test` | Lancer les tests unitaires et de snapshot de l'UI |
+| `bun run ui:format` | Formater tous les fichiers de l'UI |
+| `bun run ui:lint` | Vérifier tous les fichiers de l'UI |
+| `bun run ui:check` | Vérification Biome pour l'UI |
+| `bun run ui:typecheck` | Vérification de types TypeScript pour l'UI |
 | `bun run build` | Construire tous les workspaces |
 | `bun run test` | Lancer les tests de tous les workspaces |
 | `bun run typecheck` | Vérification de types pour tous les workspaces |

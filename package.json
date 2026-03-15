@@ -18,6 +18,7 @@
     "ui:format": "bun run --bun --filter @mithrandir/ui format",
     "ui:lint": "bun run --bun --filter @mithrandir/ui lint",
     "ui:check": "bun run --bun --filter @mithrandir/ui check",
+    "ui:typecheck": "bun run --bun --filter @mithrandir/ui typecheck",
     "build": "bun run --filter '*' build",
     "typecheck": "bun run --filter '*' typecheck",
     "test": "bun run --filter '*' test",

@@ -474,6 +474,14 @@ scripts/generate-changelog.sh
 | `bun run cli:build` | Bundle into `cli/dist/mithrandir.js` |
 | `bun run cli:test` | Run CLI unit and snapshot tests |
 | `bun run cli:typecheck` | TypeScript type checking for CLI |
+| `bun run ui:dev` | Local Vite dev server with hot reload |
+| `bun run ui:build` | Build the UI for production |
+| `bun run ui:preview` | Preview the built UI |
+| `bun run ui:test` | Run UI unit and snapshot tests |
+| `bun run ui:format` | Format all UI files |
+| `bun run ui:lint` | Lint all UI files |
+| `bun run ui:check` | Biome checking for UI |
+| `bun run ui:typecheck` | TypeScript type checking for UI |
 | `bun run build` | Build all workspaces |
 | `bun run test` | Run tests across all workspaces |
 | `bun run typecheck` | TypeScript type checking for all workspaces |

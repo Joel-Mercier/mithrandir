@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Automated Docker-based homelab setup, backup, and restore system for Debian/Ubuntu servers. Bun workspaces monorepo with three subprojects: CLI (Bun/Ink), Docs (VitePress), and UI (Vite/React/TanStack Start — future).
+Automated Docker-based homelab setup, backup, and restore system for Debian/Ubuntu servers. Bun workspaces monorepo with three subprojects: CLI (Bun/Ink), Docs (VitePress), and UI (Vite/React/TanStack Start).
 
 ## Monorepo Structure
 
@@ -29,6 +29,13 @@ homelab/
     Dockerfile            # workspace-aware multi-stage build
     docker-compose.yml
     guide/ reference/ fr/
+  ui/                     # @mithrandir/ui workspace
+    package.json          # TanStack Start + React deps
+    tsconfig.json
+    vite.config.ts        # Vite + TanStack Router plugin
+    biome.json            # Biome linter/formatter config
+    src/                  # UI source code
+    public/               # static assets
 ```
 
 Root `package.json` has proxy scripts that delegate to workspaces via `bun run --filter`. All commands (`bun run build`, `bun run test`, etc.) work from the repo root.
@@ -84,6 +91,13 @@ mithrandir completions <bash|zsh|fish>     # Generate shell completion script
 mithrandir docs                    # Build and serve docs website
 mithrandir docs stop               # Stop docs website
 bun run docs:dev                        # Local VitePress dev server (hot reload)
+bun run ui:dev                          # TanStack Start dev server (port 3000)
+bun run ui:build                        # Build UI for production
+bun run ui:test                         # Run UI tests (Vitest)
+bun run ui:lint                         # Lint UI with Biome
+bun run ui:format                       # Format UI with Biome
+bun run ui:check                        # Biome check (lint + format)
+bun run ui:typecheck                    # TypeScript type checking for UI
 bun run cli:test               # Run CLI unit and snapshot tests
 bun run test                   # Run tests across all workspaces
 bun run cli:typecheck          # TypeScript type checking for CLI
