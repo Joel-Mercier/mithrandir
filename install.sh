@@ -98,7 +98,7 @@ sudo -u "$REAL_USER" "$BUN_INSTALL/bin/bun" install
 # Build the CLI bundle (as real user)
 mkdir -p "$SCRIPT_DIR/cli/dist"
 log "Building CLI..."
-sudo -u "$REAL_USER" "$BUN_INSTALL/bin/bun" run build
+sudo -u "$REAL_USER" "$BUN_INSTALL/bin/bun" run cli:build
 
 # Install the mithrandir command
 log "Installing mithrandir command..."
