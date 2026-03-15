@@ -1,0 +1,21 @@
+{
+  "projectName": "@mithrandir/ui",
+  "mode": "file-router",
+  "typescript": true,
+  "packageManager": "bun",
+  "includeExamples": true,
+  "tailwind": true,
+  "addOnOptions": {},
+  "envVarValues": {},
+  "git": false,
+  "routerOnly": false,
+  "version": 1,
+  "framework": "react",
+  "chosenAddOns": [
+    "biome",
+    "form",
+    "shadcn",
+    "better-auth",
+    "tanstack-query"
+  ]
+}

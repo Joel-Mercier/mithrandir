@@ -420,7 +420,6 @@ Checks configuration correctness across three categories: System (.env file, Doc
 | Gatus          | 3001      | Automated service health monitoring                                                     |
 | Home Assistant | 8123      | Open-source home automation platform                                                    |
 | Homarr         | 7575      | Customizable dashboard for your server                                                  |
-| HortusFox      | 8089      | Self-hosted plant management system                                                     |
 | Immich         | 2283      | Self-hosted photo and video management                                                  |
 | Jellyfin       | 8096      | Free media streaming server                                                             |
 | Lidarr         | 8686      | Music collection manager                                                                |

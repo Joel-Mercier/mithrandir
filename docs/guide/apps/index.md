@@ -107,7 +107,6 @@ mithrandir log <app> [service] # View logs
 | App | Port | Description |
 | --- | --- | --- |
 | [CookCLI](./cookcli) | 9080 | Recipe manager using the Cooklang markup language |
-| [HortusFox](./hortusfox) | 8089 | Self-hosted plant management system |
 
 ### Utilities
 

@@ -26,7 +26,6 @@ Lorsque vous exécutez `mithrandir capacity`, la CLI recueille les spécificatio
 | Gatus          | Faible      | Faible   | Surveillance de santé, empreinte minimale                                             |
 | Home Assistant | Moyen       | Faible   | Moteur d'automatisation avec intégrations et base de données d'historique             |
 | Homarr         | Faible      | Faible   | Tableau de bord, contenu principalement statique                                      |
-| HortusFox      | Faible      | Faible   | Gestionnaire de plantes avec base de données MariaDB                                  |
 | Immich         | Élevé       | Élevé    | Traitement ML pour détection faciale et recherche, stocke toutes les photos et vidéos |
 | Jellyfin       | Élevé       | Élevé    | Transcodage multimédia et grandes bibliothèques                                       |
 | Lidarr         | Faible      | Moyen    | Base de données de musique et surveillance                                            |

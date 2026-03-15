@@ -108,7 +108,6 @@ mithrandir log <app> [service] # Voir les logs
 | Application | Port | Description |
 | --- | --- | --- |
 | [CookCLI](./cookcli) | 9080 | Gestionnaire de recettes utilisant le langage de balisage Cooklang |
-| [HortusFox](./hortusfox) | 8089 | Systeme de gestion de plantes auto-heberge |
 
 ### Utilitaires
 
