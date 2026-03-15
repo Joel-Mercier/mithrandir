@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "fs";
-import { APP_REGISTRY, getComposePath } from "@/lib/apps.js";
+import { APP_REGISTRY, getApp, getComposePath } from "@/lib/apps.js";
 import { getDuckDnsDomain } from "@/lib/caddy.js";
-import { PIHOLE_HTTPS_PORT } from "@/lib/compose.js";
+import { generateCompose, generateGatusExtraHosts, PIHOLE_HTTPS_PORT } from "@/lib/compose.js";
 import { isContainerRunning, composeDown, composeUp } from "@/lib/docker.js";
 import { shell } from "@/lib/shell.js";
 import { getLocalIp } from "@/lib/distro.js";
@@ -235,6 +235,27 @@ export async function regenerateGatusConfig(
     "-c",
     `cat > "${gatusConfigPath}" << 'GATUS_EOF'\n${config}GATUS_EOF`,
   ], { sudo: true });
+
+  // Regenerate docker-compose.yml with extra_hosts so Gatus can resolve
+  // app subdomain URLs for HTTPS certificate checks
+  if (envConfig.ENABLE_HTTPS === "true") {
+    const extraHosts = generateGatusExtraHosts(installedApps, localIp, envConfig);
+    if (extraHosts.length > 0) {
+      const gatusApp = getApp("gatus")!;
+      let compose = generateCompose(gatusApp, envConfig);
+      // Inject extra_hosts before the restart line
+      const extraHostsBlock = "    extra_hosts:\n" +
+        extraHosts.map((h) => `      - ${h}`).join("\n") + "\n";
+      compose = compose.replace(
+        /    restart:/,
+        extraHostsBlock + "    restart:",
+      );
+      await shell("bash", [
+        "-c",
+        `cat > "${gatusComposePath}" << 'COMPOSE_EOF'\n${compose}COMPOSE_EOF`,
+      ], { sudo: true });
+    }
+  }
 
   // Restart Gatus to pick up the new config
   const running = await isContainerRunning("gatus");

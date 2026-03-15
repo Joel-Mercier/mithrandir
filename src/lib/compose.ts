@@ -227,6 +227,37 @@ export function generateCompose(
   return lines.join("\n") + "\n";
 }
 
+/**
+ * Build extra_hosts entries for the Gatus container so it can resolve
+ * app subdomain URLs (e.g. sonarr.mylab.duckdns.org) to the local IP.
+ * Needed because Gatus runs inside Docker and can't resolve wildcard DNS
+ * configured on the LAN router.
+ */
+export function generateGatusExtraHosts(
+  installedApps: AppDefinition[],
+  localIp: string,
+  envConfig: EnvConfig,
+): string[] {
+  const domain = getDuckDnsDomain(envConfig);
+  if (!domain) return [];
+
+  const hosts: string[] = [];
+
+  for (const app of installedApps) {
+    if (!app.port || app.name === "gatus") continue;
+
+    hosts.push(`${app.name}.${domain}:${localIp}`);
+
+    if (app.caddyExtraSubdomains) {
+      for (const extra of app.caddyExtraSubdomains) {
+        hosts.push(`${extra.subdomain}.${domain}:${localIp}`);
+      }
+    }
+  }
+
+  return hosts;
+}
+
 /** Map container config mount path based on app type */
 function getContainerConfigPath(app: AppDefinition): string {
   switch (app.name) {

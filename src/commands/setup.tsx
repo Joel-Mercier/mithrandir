@@ -26,7 +26,7 @@ import {
   composeDown,
 } from "@/lib/docker.js";
 import { isRcloneInstalled, installRclone } from "@/lib/rclone.js";
-import { generateCompose } from "@/lib/compose.js";
+import { generateCompose, generateGatusExtraHosts } from "@/lib/compose.js";
 import {
   getDuckDnsDomain,
   generateCaddyfile,
@@ -1993,8 +1993,27 @@ function AutoSetupAppsStep({ selectedApps, envConfig, localIp, autoYes, onComple
             `cat > "${gatusConfigDir}/config.yaml" << 'GATUS_EOF'\n${configYaml}GATUS_EOF`,
           ], { sudo: true });
 
-          // Restart gatus to pick up the new config
+          // Regenerate docker-compose.yml with extra_hosts for HTTPS cert checks
           const gatusApp = getApp("gatus");
+          if (gatusApp && envConfig.ENABLE_HTTPS === "true") {
+            const extraHosts = generateGatusExtraHosts(selectedApps, localIp, envConfig);
+            if (extraHosts.length > 0) {
+              const composePath = getComposePath(gatusApp, envConfig.BASE_DIR);
+              let compose = generateCompose(gatusApp, envConfig);
+              const extraHostsBlock = "    extra_hosts:\n" +
+                extraHosts.map((h) => `      - ${h}`).join("\n") + "\n";
+              compose = compose.replace(
+                /    restart:/,
+                extraHostsBlock + "    restart:",
+              );
+              await shell("bash", [
+                "-c",
+                `cat > "${composePath}" << 'COMPOSE_EOF'\n${compose}COMPOSE_EOF`,
+              ], { sudo: true });
+            }
+          }
+
+          // Restart gatus to pick up the new config
           if (gatusApp) {
             const composePath = getComposePath(gatusApp, envConfig.BASE_DIR);
             await composeDown(composePath).catch(() => {});
