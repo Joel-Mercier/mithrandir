@@ -16,3 +16,7 @@ dist/
 # Nix
 result
 integration-tests/result
+
+# Vitepress
+/docs/.vitepress/cache/
+/docs/.vitepress/dist/
