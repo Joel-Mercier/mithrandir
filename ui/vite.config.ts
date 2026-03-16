@@ -15,6 +15,15 @@ const config = defineConfig({
     tanstackStart(),
     viteReact(),
   ],
+  environments: {
+    client: {
+      build: {
+        rollupOptions: {
+          external: [/^node:/],
+        },
+      },
+    },
+  },
 })
 
 export default config
