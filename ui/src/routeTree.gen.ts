@@ -22,6 +22,7 @@ import { Route as AppAppsIndexRouteImport } from './routes/_app/apps/index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as AppAppsGraphRouteImport } from './routes/_app/apps/graph'
 import { Route as AppAppsAppNameRouteImport } from './routes/_app/apps/$appName'
+import { Route as ApiHomelabLogsAppNameRouteImport } from './routes/api/homelab/logs.$appName'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/_auth',
@@ -86,6 +87,11 @@ const AppAppsAppNameRoute = AppAppsAppNameRouteImport.update({
   path: '/apps/$appName',
   getParentRoute: () => AppRoute,
 } as any)
+const ApiHomelabLogsAppNameRoute = ApiHomelabLogsAppNameRouteImport.update({
+  id: '/api/homelab/logs/$appName',
+  path: '/api/homelab/logs/$appName',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
@@ -99,6 +105,7 @@ export interface FileRoutesByFullPath {
   '/apps/graph': typeof AppAppsGraphRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/apps/': typeof AppAppsIndexRoute
+  '/api/homelab/logs/$appName': typeof ApiHomelabLogsAppNameRoute
 }
 export interface FileRoutesByTo {
   '/': typeof AppIndexRoute
@@ -112,6 +119,7 @@ export interface FileRoutesByTo {
   '/apps/graph': typeof AppAppsGraphRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/apps': typeof AppAppsIndexRoute
+  '/api/homelab/logs/$appName': typeof ApiHomelabLogsAppNameRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -128,6 +136,7 @@ export interface FileRoutesById {
   '/_app/apps/graph': typeof AppAppsGraphRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/_app/apps/': typeof AppAppsIndexRoute
+  '/api/homelab/logs/$appName': typeof ApiHomelabLogsAppNameRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -143,6 +152,7 @@ export interface FileRouteTypes {
     | '/apps/graph'
     | '/api/auth/$'
     | '/apps/'
+    | '/api/homelab/logs/$appName'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -156,6 +166,7 @@ export interface FileRouteTypes {
     | '/apps/graph'
     | '/api/auth/$'
     | '/apps'
+    | '/api/homelab/logs/$appName'
   id:
     | '__root__'
     | '/_app'
@@ -171,12 +182,14 @@ export interface FileRouteTypes {
     | '/_app/apps/graph'
     | '/api/auth/$'
     | '/_app/apps/'
+    | '/api/homelab/logs/$appName'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRouteWithChildren
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiHomelabLogsAppNameRoute: typeof ApiHomelabLogsAppNameRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -272,6 +285,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAppsAppNameRouteImport
       parentRoute: typeof AppRoute
     }
+    '/api/homelab/logs/$appName': {
+      id: '/api/homelab/logs/$appName'
+      path: '/api/homelab/logs/$appName'
+      fullPath: '/api/homelab/logs/$appName'
+      preLoaderRoute: typeof ApiHomelabLogsAppNameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -315,6 +335,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRouteWithChildren,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiHomelabLogsAppNameRoute: ApiHomelabLogsAppNameRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

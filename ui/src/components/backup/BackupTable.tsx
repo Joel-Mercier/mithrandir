@@ -9,7 +9,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "#/components/ui/table";
-import type { BackupEntry } from "#/lib/mock-data";
+import type { BackupEntry } from "#/lib/types";
 
 export function formatDate(iso: string) {
 	return new Date(iso).toLocaleDateString("en-US", {
@@ -21,6 +21,16 @@ export function formatDate(iso: string) {
 }
 
 export function BackupTable({ backups }: { backups: BackupEntry[] }) {
+	if (backups.length === 0) {
+		return (
+			<Card>
+				<CardContent className="py-8 text-center text-sm text-muted-foreground">
+					No backups found.
+				</CardContent>
+			</Card>
+		);
+	}
+
 	return (
 		<Card>
 			<CardContent className="px-2 py-0">

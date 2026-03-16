@@ -5,7 +5,7 @@ import {
 	CardTitle,
 } from "#/components/ui/card";
 import { Badge } from "#/components/ui/badge";
-import type { BackupStatus } from "#/lib/mock-data";
+import type { BackupStatus } from "#/lib/types";
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
 	return (

@@ -5,7 +5,7 @@ import {
 	CardTitle,
 } from "#/components/ui/card";
 import { Badge } from "#/components/ui/badge";
-import type { HealthStatus } from "#/lib/mock-data";
+import type { HealthStatus } from "#/lib/types";
 
 const verdictColor: Record<string, string> = {
 	Comfortable: "bg-status-healthy/15 text-status-healthy border-status-healthy/30",

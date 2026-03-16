@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
+	AlertCircle,
 	ArrowDownToLine,
 	ExternalLink,
 	Play,
@@ -33,8 +34,15 @@ import { Progress } from "#/components/ui/progress";
 import { Switch } from "#/components/ui/switch";
 import { ScrollArea } from "#/components/ui/scroll-area";
 import { Separator } from "#/components/ui/separator";
-import type { AppStatus } from "#/lib/mock-data";
-import { mockAppDetails, mockApps } from "#/lib/mock-data";
+import { Skeleton } from "#/components/ui/skeleton";
+import type { AppStatus } from "#/lib/types";
+import {
+	useAppDetail,
+	useApps,
+	useStartApp,
+	useStopApp,
+	useRestartApp,
+} from "#/hooks/homelab";
 
 export const Route = createFileRoute("/_app/apps/$appName")({
 	component: AppDetailPage,
@@ -54,21 +62,77 @@ function progressColor(pct: number) {
 	return "[&>[data-slot=indicator]]:bg-status-healthy";
 }
 
+function DetailSkeleton() {
+	return (
+		<div className="mx-auto max-w-7xl px-4 py-8">
+			<Breadcrumbs />
+			<div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+				<div className="flex items-center gap-3">
+					<Skeleton className="h-8 w-40" />
+					<Skeleton className="h-5 w-16 rounded-full" />
+					<Skeleton className="h-5 w-14 rounded-full" />
+				</div>
+				<div className="flex flex-wrap items-center gap-2">
+					<Skeleton className="h-8 w-16" />
+					<Skeleton className="h-8 w-20" />
+					<Skeleton className="h-8 w-16" />
+				</div>
+			</div>
+			<Skeleton className="mb-4 h-4 w-64" />
+			<div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+				{Array.from({ length: 3 }).map((_, i) => (
+					<Card key={i}>
+						<CardHeader className="pb-2">
+							<Skeleton className="h-4 w-20" />
+						</CardHeader>
+						<CardContent className="space-y-3">
+							<Skeleton className="h-3 w-full" />
+							<Skeleton className="h-3 w-3/4" />
+							<Skeleton className="h-3 w-1/2" />
+						</CardContent>
+					</Card>
+				))}
+			</div>
+		</div>
+	);
+}
+
 function AppDetailPage() {
 	const { appName } = Route.useParams();
-	const detail = mockAppDetails[appName];
-	const summary = mockApps.find((a) => a.name === appName);
-	const app = detail ?? summary;
+	const detailQuery = useAppDetail(appName);
+	const appsQuery = useApps();
+	const startAppMutation = useStartApp();
+	const stopAppMutation = useStopApp();
+	const restartAppMutation = useRestartApp();
+
 	const [uninstallOpen, setUninstallOpen] = useState(false);
 	const [eraseData, setEraseData] = useState(false);
+
+	if (detailQuery.isPending || appsQuery.isPending) {
+		return <DetailSkeleton />;
+	}
+
+	const detail = detailQuery.data ?? null;
+	const allApps = appsQuery.data ?? [];
+	const summary = allApps.find((a) => a.name === appName);
+	const app = detail ?? summary;
 
 	if (!app) {
 		return (
 			<div className="mx-auto max-w-7xl px-4 py-8">
 				<Breadcrumbs />
-				<div className="py-12 text-center text-sm text-muted-foreground">
-					App &ldquo;{appName}&rdquo; not found.
-				</div>
+				{detailQuery.isError ? (
+					<Alert variant="destructive" className="mt-4">
+						<AlertCircle className="h-4 w-4" />
+						<AlertDescription>
+							Failed to load app details. Make sure the CLI is reachable.
+						</AlertDescription>
+					</Alert>
+				) : (
+					<div className="py-12 text-center text-sm text-muted-foreground">
+						App &ldquo;{appName}&rdquo; not found.
+					</div>
+				)}
 			</div>
 		);
 	}
@@ -76,6 +140,11 @@ function AppDetailPage() {
 	if (app.status === "available") {
 		return <AvailableDetailPage app={app} />;
 	}
+
+	const isMutating =
+		startAppMutation.isPending ||
+		stopAppMutation.isPending ||
+		restartAppMutation.isPending;
 
 	return (
 		<div className="mx-auto max-w-7xl px-4 py-8">
@@ -101,7 +170,15 @@ function AppDetailPage() {
 								variant="outline"
 								size="sm"
 								className="gap-1.5"
-								onClick={() => toast.success(`${app.displayName} stopped.`)}
+								disabled={isMutating}
+								onClick={() => {
+									stopAppMutation.mutate(appName, {
+										onSuccess: () =>
+											toast.success(`${app.displayName} stopped.`),
+										onError: (err) =>
+											toast.error(`Failed to stop: ${err.message}`),
+									});
+								}}
 							>
 								<Square className="h-3.5 w-3.5" />
 								Stop
@@ -110,7 +187,15 @@ function AppDetailPage() {
 								variant="outline"
 								size="sm"
 								className="gap-1.5"
-								onClick={() => toast.success(`${app.displayName} restarted.`)}
+								disabled={isMutating}
+								onClick={() => {
+									restartAppMutation.mutate(appName, {
+										onSuccess: () =>
+											toast.success(`${app.displayName} restarted.`),
+										onError: (err) =>
+											toast.error(`Failed to restart: ${err.message}`),
+									});
+								}}
 							>
 								<RotateCcw className="h-3.5 w-3.5" />
 								Restart
@@ -120,13 +205,20 @@ function AppDetailPage() {
 								size="sm"
 								className="gap-1.5"
 								onClick={() =>
-									toast.info(`Checking for updates to ${app.displayName}...`)
+									toast.info(
+										`Checking for updates to ${app.displayName}...`,
+									)
 								}
 							>
 								<ArrowDownToLine className="h-3.5 w-3.5" />
 								Update
 							</Button>
-							<Button variant="outline" size="sm" className="gap-1.5" asChild>
+							<Button
+								variant="outline"
+								size="sm"
+								className="gap-1.5"
+								asChild
+							>
 								<a
 									href={`http://localhost:${app.port}`}
 									target="_blank"
@@ -143,7 +235,15 @@ function AppDetailPage() {
 								variant="outline"
 								size="sm"
 								className="gap-1.5"
-								onClick={() => toast.success(`${app.displayName} started.`)}
+								disabled={isMutating}
+								onClick={() => {
+									startAppMutation.mutate(appName, {
+										onSuccess: () =>
+											toast.success(`${app.displayName} started.`),
+										onError: (err) =>
+											toast.error(`Failed to start: ${err.message}`),
+									});
+								}}
 							>
 								<Play className="h-3.5 w-3.5" />
 								Start
@@ -153,7 +253,9 @@ function AppDetailPage() {
 								size="sm"
 								className="gap-1.5"
 								onClick={() =>
-									toast.info(`Checking for updates to ${app.displayName}...`)
+									toast.info(
+										`Checking for updates to ${app.displayName}...`,
+									)
 								}
 							>
 								<ArrowDownToLine className="h-3.5 w-3.5" />
@@ -342,6 +444,13 @@ function AppDetailPage() {
 							</ScrollArea>
 						</CardContent>
 					</Card>
+				)}
+
+				{/* No detail data state */}
+				{!detail && !detailQuery.isPending && (
+					<div className="col-span-full py-8 text-center text-sm text-muted-foreground">
+						Detailed container information is not available.
+					</div>
 				)}
 			</div>
 

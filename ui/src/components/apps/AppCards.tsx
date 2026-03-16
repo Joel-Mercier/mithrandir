@@ -3,9 +3,7 @@ import { ArrowUpRight, Download } from "lucide-react";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
-import { Progress } from "#/components/ui/progress";
-import type { AppStatus, DashboardApp } from "#/lib/mock-data";
-import { mockAppDetails } from "#/lib/mock-data";
+import type { AppStatus, DashboardApp } from "#/lib/types";
 
 export const statusDot: Record<AppStatus, string> = {
 	running: "bg-status-healthy",
@@ -15,8 +13,6 @@ export const statusDot: Record<AppStatus, string> = {
 };
 
 export function AppListCard({ app }: { app: DashboardApp }) {
-	const detail = mockAppDetails[app.name];
-
 	return (
 		<Link to="/apps/$appName" params={{ appName: app.name }}>
 			<Card className="group">
@@ -42,19 +38,6 @@ export function AppListCard({ app }: { app: DashboardApp }) {
 							{app.category}
 						</Badge>
 					</div>
-
-					{app.status === "running" && detail && (
-						<div className="space-y-1.5">
-							<div className="flex justify-between text-xs text-muted-foreground">
-								<span>CPU {detail.cpuUsage}%</span>
-								<span>{detail.ramUsageMB} MB</span>
-							</div>
-							<Progress
-								value={detail.cpuUsage}
-								className="h-1 [&>[data-slot=indicator]]:bg-foreground/30"
-							/>
-						</div>
-					)}
 
 					<div className="flex items-baseline justify-between text-xs text-muted-foreground">
 						<span>Uptime</span>

@@ -6,7 +6,7 @@ import { ExternalLinks } from "#/components/apps/ExternalLinks";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
-import type { AppStatus } from "#/lib/mock-data";
+import type { AppStatus } from "#/lib/types";
 
 export function AvailableDetailPage({
 	app,

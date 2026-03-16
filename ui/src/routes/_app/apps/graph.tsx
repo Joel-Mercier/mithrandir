@@ -1,21 +1,21 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import Breadcrumbs from "#/components/Breadcrumbs";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
-import { mockApps } from "#/lib/mock-data";
-import { ArrowRight } from "lucide-react";
+import { Skeleton } from "#/components/ui/skeleton";
+import { useApps } from "#/hooks/homelab";
 
 export const Route = createFileRoute("/_app/apps/graph")({
 	component: DependencyGraphPage,
 });
 
-const installedNames = new Set(
-	mockApps.filter((a) => a.status !== "available").map((a) => a.name),
-);
-
-function AppNode({ name, label }: { name: string; label: string }) {
+function AppNode({
+	name,
+	label,
+	installedNames,
+}: { name: string; label: string; installedNames: Set<string> }) {
 	const installed = installedNames.has(name);
 	return (
 		<Link
@@ -49,6 +49,39 @@ function PathNode({ path }: { path: string }) {
 }
 
 function DependencyGraphPage() {
+	const appsQuery = useApps();
+	const installedNames = new Set(
+		(appsQuery.data ?? [])
+			.filter((a) => a.status !== "available")
+			.map((a) => a.name),
+	);
+
+	if (appsQuery.isPending) {
+		return (
+			<div className="mx-auto max-w-7xl px-4 py-8">
+				<Breadcrumbs />
+				<div className="mb-6">
+					<Skeleton className="h-8 w-48" />
+					<Skeleton className="mt-2 h-4 w-64" />
+				</div>
+				<div className="grid gap-4">
+					{Array.from({ length: 3 }).map((_, i) => (
+						<Card key={i}>
+							<CardHeader className="pb-2">
+								<Skeleton className="h-4 w-32" />
+							</CardHeader>
+							<CardContent className="space-y-3">
+								<Skeleton className="h-6 w-full" />
+								<Skeleton className="h-6 w-3/4" />
+								<Skeleton className="h-6 w-5/6" />
+							</CardContent>
+						</Card>
+					))}
+				</div>
+			</div>
+		);
+	}
+
 	return (
 		<div className="mx-auto max-w-7xl px-4 py-8">
 			<Breadcrumbs />
@@ -94,37 +127,37 @@ function DependencyGraphPage() {
 								Core flow
 							</p>
 							<div className="flex flex-wrap items-center gap-y-2">
-								<AppNode name="prowlarr" label="Prowlarr" />
+								<AppNode name="prowlarr" label="Prowlarr" installedNames={installedNames} />
 								<Arrow />
-								<AppNode name="radarr" label="Radarr" />
+								<AppNode name="radarr" label="Radarr" installedNames={installedNames} />
 								<Arrow />
-								<AppNode name="qbittorrent" label="qBittorrent" />
+								<AppNode name="qbittorrent" label="qBittorrent" installedNames={installedNames} />
 								<Arrow />
 								<PathNode path="/data/media/movies" />
 								<Arrow />
-								<AppNode name="jellyfin" label="Jellyfin" />
+								<AppNode name="jellyfin" label="Jellyfin" installedNames={installedNames} />
 							</div>
 							<div className="flex flex-wrap items-center gap-y-2 pl-4 border-l-2 border-border ml-2">
-								<AppNode name="prowlarr" label="Prowlarr" />
+								<AppNode name="prowlarr" label="Prowlarr" installedNames={installedNames} />
 								<Arrow />
-								<AppNode name="sonarr" label="Sonarr" />
+								<AppNode name="sonarr" label="Sonarr" installedNames={installedNames} />
 								<Arrow />
-								<AppNode name="qbittorrent" label="qBittorrent" />
+								<AppNode name="qbittorrent" label="qBittorrent" installedNames={installedNames} />
 								<Arrow />
 								<PathNode path="/data/media/tv" />
 								<Arrow />
-								<AppNode name="jellyfin" label="Jellyfin" />
+								<AppNode name="jellyfin" label="Jellyfin" installedNames={installedNames} />
 							</div>
 							<div className="flex flex-wrap items-center gap-y-2 pl-4 border-l-2 border-border ml-2">
-								<AppNode name="prowlarr" label="Prowlarr" />
+								<AppNode name="prowlarr" label="Prowlarr" installedNames={installedNames} />
 								<Arrow />
-								<AppNode name="lidarr" label="Lidarr" />
+								<AppNode name="lidarr" label="Lidarr" installedNames={installedNames} />
 								<Arrow />
-								<AppNode name="qbittorrent" label="qBittorrent" />
+								<AppNode name="qbittorrent" label="qBittorrent" installedNames={installedNames} />
 								<Arrow />
 								<PathNode path="/data/media/music" />
 								<Arrow />
-								<AppNode name="navidrome" label="Navidrome" />
+								<AppNode name="navidrome" label="Navidrome" installedNames={installedNames} />
 							</div>
 						</div>
 
@@ -134,71 +167,42 @@ function DependencyGraphPage() {
 							</p>
 							<div className="space-y-1.5">
 								<div className="flex flex-wrap items-center gap-y-2">
-									<AppNode
-										name="flaresolverr"
-										label="FlareSolverr"
-									/>
+									<AppNode name="flaresolverr" label="FlareSolverr" installedNames={installedNames} />
 									<Arrow />
-									<AppNode name="prowlarr" label="Prowlarr" />
-									<Badge
-										variant="outline"
-										className="ml-2 text-[10px]"
-									>
+									<AppNode name="prowlarr" label="Prowlarr" installedNames={installedNames} />
+									<Badge variant="outline" className="ml-2 text-[10px]">
 										CAPTCHA solving
 									</Badge>
 								</div>
 								<div className="flex flex-wrap items-center gap-y-2">
-									<AppNode name="bazarr" label="Bazarr" />
+									<AppNode name="bazarr" label="Bazarr" installedNames={installedNames} />
 									<Arrow />
-									<AppNode name="radarr" label="Radarr" />
-									<span className="mx-1 text-muted-foreground">
-										,
-									</span>
-									<AppNode name="sonarr" label="Sonarr" />
-									<Badge
-										variant="outline"
-										className="ml-2 text-[10px]"
-									>
+									<AppNode name="radarr" label="Radarr" installedNames={installedNames} />
+									<span className="mx-1 text-muted-foreground">,</span>
+									<AppNode name="sonarr" label="Sonarr" installedNames={installedNames} />
+									<Badge variant="outline" className="ml-2 text-[10px]">
 										subtitles
 									</Badge>
 								</div>
 								<div className="flex flex-wrap items-center gap-y-2">
-									<AppNode
-										name="jellyseerr"
-										label="Seerr"
-									/>
+									<AppNode name="jellyseerr" label="Seerr" installedNames={installedNames} />
 									<Arrow />
-									<AppNode name="radarr" label="Radarr" />
-									<span className="mx-1 text-muted-foreground">
-										,
-									</span>
-									<AppNode name="sonarr" label="Sonarr" />
-									<span className="mx-1 text-muted-foreground">
-										,
-									</span>
-									<AppNode name="jellyfin" label="Jellyfin" />
-									<Badge
-										variant="outline"
-										className="ml-2 text-[10px]"
-									>
+									<AppNode name="radarr" label="Radarr" installedNames={installedNames} />
+									<span className="mx-1 text-muted-foreground">,</span>
+									<AppNode name="sonarr" label="Sonarr" installedNames={installedNames} />
+									<span className="mx-1 text-muted-foreground">,</span>
+									<AppNode name="jellyfin" label="Jellyfin" installedNames={installedNames} />
+									<Badge variant="outline" className="ml-2 text-[10px]">
 										requests & discovery
 									</Badge>
 								</div>
 								<div className="flex flex-wrap items-center gap-y-2">
-									<AppNode
-										name="profilarr"
-										label="Profilarr"
-									/>
+									<AppNode name="profilarr" label="Profilarr" installedNames={installedNames} />
 									<Arrow />
-									<AppNode name="radarr" label="Radarr" />
-									<span className="mx-1 text-muted-foreground">
-										,
-									</span>
-									<AppNode name="sonarr" label="Sonarr" />
-									<Badge
-										variant="outline"
-										className="ml-2 text-[10px]"
-									>
+									<AppNode name="radarr" label="Radarr" installedNames={installedNames} />
+									<span className="mx-1 text-muted-foreground">,</span>
+									<AppNode name="sonarr" label="Sonarr" installedNames={installedNames} />
+									<Badge variant="outline" className="ml-2 text-[10px]">
 										quality profiles
 									</Badge>
 								</div>
@@ -314,9 +318,9 @@ function DependencyGraphPage() {
 					</CardHeader>
 					<CardContent className="space-y-1.5">
 						<div className="flex flex-wrap items-center gap-y-2">
-							<AppNode name="duckdns" label="DuckDNS" />
+							<AppNode name="duckdns" label="DuckDNS" installedNames={installedNames} />
 							<Arrow />
-							<AppNode name="caddy" label="Caddy" />
+							<AppNode name="caddy" label="Caddy" installedNames={installedNames} />
 							<Arrow />
 							<span className="text-sm">all apps with ports</span>
 							<Badge variant="outline" className="ml-2 text-[10px]">
@@ -324,15 +328,15 @@ function DependencyGraphPage() {
 							</Badge>
 						</div>
 						<div className="flex flex-wrap items-center gap-y-2">
-							<AppNode name="caddy" label="Caddy" />
+							<AppNode name="caddy" label="Caddy" installedNames={installedNames} />
 							<Arrow />
-							<AppNode name="vaultwarden" label="Vaultwarden" />
+							<AppNode name="vaultwarden" label="Vaultwarden" installedNames={installedNames} />
 							<Badge variant="outline" className="ml-2 text-[10px]">
 								HTTPS required
 							</Badge>
 						</div>
 						<div className="flex flex-wrap items-center gap-y-2">
-							<AppNode name="pihole" label="Pi-hole" />
+							<AppNode name="pihole" label="Pi-hole" installedNames={installedNames} />
 							<Badge variant="outline" className="ml-2 text-[10px]">
 								standalone DNS, optional wildcard DNS for Caddy
 							</Badge>
@@ -352,25 +356,19 @@ function DependencyGraphPage() {
 							No dependencies — can be installed independently
 						</p>
 						<div className="flex flex-wrap gap-1.5">
-							<AppNode
-								name="homeassistant"
-								label="Home Assistant"
-							/>
-							<AppNode name="immich" label="Immich" />
-							<AppNode name="gatus" label="Gatus" />
-							<AppNode name="homarr" label="Homarr" />
-							<AppNode name="wireguard" label="WireGuard" />
-							<AppNode name="excalidraw" label="Excalidraw" />
-							<AppNode name="omnitools" label="OmniTools" />
-							<AppNode name="openwebui" label="Open WebUI" />
-							<AppNode
-								name="actualbudget"
-								label="Actual Budget"
-							/>
-							<AppNode name="sure" label="Sure" />
-							<AppNode name="affine" label="AFFiNE" />
-							<AppNode name="n8n" label="n8n" />
-							<AppNode name="penpot" label="Penpot" />
+							<AppNode name="homeassistant" label="Home Assistant" installedNames={installedNames} />
+							<AppNode name="immich" label="Immich" installedNames={installedNames} />
+							<AppNode name="gatus" label="Gatus" installedNames={installedNames} />
+							<AppNode name="homarr" label="Homarr" installedNames={installedNames} />
+							<AppNode name="wireguard" label="WireGuard" installedNames={installedNames} />
+							<AppNode name="excalidraw" label="Excalidraw" installedNames={installedNames} />
+							<AppNode name="omnitools" label="OmniTools" installedNames={installedNames} />
+							<AppNode name="openwebui" label="Open WebUI" installedNames={installedNames} />
+							<AppNode name="actualbudget" label="Actual Budget" installedNames={installedNames} />
+							<AppNode name="sure" label="Sure" installedNames={installedNames} />
+							<AppNode name="affine" label="AFFiNE" installedNames={installedNames} />
+							<AppNode name="n8n" label="n8n" installedNames={installedNames} />
+							<AppNode name="penpot" label="Penpot" installedNames={installedNames} />
 						</div>
 					</CardContent>
 				</Card>

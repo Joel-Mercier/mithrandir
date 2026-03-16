@@ -4,7 +4,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "#/components/ui/card";
-import type { VersionInfo } from "#/lib/mock-data";
+import type { VersionInfo } from "#/lib/types";
 
 export default function VersionCard({ data }: { data: VersionInfo }) {
 	return (

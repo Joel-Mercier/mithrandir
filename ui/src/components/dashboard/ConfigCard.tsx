@@ -5,7 +5,7 @@ import {
 	CardTitle,
 } from "#/components/ui/card";
 import { Badge } from "#/components/ui/badge";
-import type { SystemConfig } from "#/lib/mock-data";
+import type { SystemConfig } from "#/lib/types";
 
 function StatusBadge({ enabled }: { enabled: boolean }) {
 	return (

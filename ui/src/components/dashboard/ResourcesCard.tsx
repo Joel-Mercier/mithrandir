@@ -5,7 +5,7 @@ import {
 	CardTitle,
 } from "#/components/ui/card";
 import { Progress } from "#/components/ui/progress";
-import type { SystemResources } from "#/lib/mock-data";
+import type { SystemResources } from "#/lib/types";
 
 function progressColor(pct: number) {
 	if (pct >= 80) return "[&>[data-slot=indicator]]:bg-status-critical";

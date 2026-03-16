@@ -38,6 +38,7 @@
       "dependencies": {
         "@better-auth/i18n": "^1.5.5",
         "@libsql/client": "^0.17.0",
+        "@mithrandir/cli": "workspace:*",
         "@tailwindcss/vite": "^4.1.18",
         "@tanstack/react-devtools": "^0.10.0",
         "@tanstack/react-form": "^1.28.5",

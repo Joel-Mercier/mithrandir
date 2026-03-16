@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { ArrowUpRight } from "lucide-react";
 import { Badge } from "#/components/ui/badge";
 import { Card, CardContent } from "#/components/ui/card";
-import type { DashboardApp } from "#/lib/mock-data";
+import type { DashboardApp } from "#/lib/types";
 
 const statusDot: Record<string, string> = {
 	running: "bg-status-healthy",

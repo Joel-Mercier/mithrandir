@@ -10,7 +10,8 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "#/components/ui/dropdown-menu";
-import { mockVersion } from "#/lib/mock-data";
+import { Skeleton } from "#/components/ui/skeleton";
+import { useVersion } from "#/hooks/homelab";
 import { useSignOut } from "#/hooks/auth";
 import { authClient } from "#/lib/auth-client";
 import LanguageSwitch from "./LanguageSwitch";
@@ -27,6 +28,7 @@ const navLinks = [
 export default function Header() {
 	const { data: session } = authClient.useSession();
 	const signOut = useSignOut();
+	const versionQuery = useVersion();
 	const user = session?.user;
 	const initials = user?.name
 		? user.name
@@ -45,12 +47,16 @@ export default function Header() {
 					<span className="font-display text-lg font-bold tracking-tight">
 						Mithrandir
 					</span>
-					<Badge
-						variant="outline"
-						className="hidden font-mono-data text-[10px] sm:inline-flex"
-					>
-						v{mockVersion.version}
-					</Badge>
+					{versionQuery.isPending ? (
+						<Skeleton className="hidden h-4 w-12 sm:inline-flex" />
+					) : versionQuery.data ? (
+						<Badge
+							variant="outline"
+							className="hidden font-mono-data text-[10px] sm:inline-flex"
+						>
+							v{versionQuery.data.version}
+						</Badge>
+					) : null}
 				</Link>
 
 				{/* Desktop nav */}

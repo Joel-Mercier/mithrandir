@@ -1,4 +1,4 @@
-import type { DashboardApp } from "#/lib/mock-data";
+import type { DashboardApp } from "#/lib/types";
 import AppCard from "./AppCard";
 
 export default function AppsGrid({ apps }: { apps: DashboardApp[] }) {
