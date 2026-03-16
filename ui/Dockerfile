@@ -3,7 +3,7 @@ FROM oven/bun:1 AS builder
 WORKDIR /app
 
 # Copy workspace root + both workspace package.jsons for resolution
-COPY package.json bun.lock ./
+COPY package.json bun.lock tsconfig.base.json ./
 COPY cli/package.json cli/
 COPY docs/package.json docs/
 COPY ui/package.json ui/
