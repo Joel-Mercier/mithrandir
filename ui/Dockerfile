@@ -2,12 +2,13 @@
 FROM oven/bun:1 AS builder
 WORKDIR /app
 
-# Copy workspace root files needed for resolution
+# Copy workspace root + both workspace package.jsons for resolution
 COPY package.json bun.lock ./
 COPY cli/package.json cli/
 COPY ui/package.json ui/
 
-RUN cd ui && bun install --frozen-lockfile
+# Install from root so bun resolves the workspace graph correctly
+RUN bun install --frozen-lockfile --ignore-scripts
 
 # Copy CLI lib sources (used by UI server-side imports)
 COPY cli/src/lib/ cli/src/lib/
