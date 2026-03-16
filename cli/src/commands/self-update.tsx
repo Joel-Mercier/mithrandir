@@ -97,12 +97,10 @@ function SelfUpdateCommand() {
       const after = afterHash.stdout.trim().slice(0, 8);
 
       if (before === after) {
-        addStep({ name: "Git pull", status: "done", message: `Already up to date on ${branch} (${before})` });
-        setPhase("done");
-        return;
+        addStep({ name: "Git pull", status: "skipped", message: `Already up to date on ${branch} (${before})` });
+      } else {
+        addStep({ name: "Git pull", status: "done", message: `${branch}: ${before} → ${after}` });
       }
-
-      addStep({ name: "Git pull", status: "done", message: `${branch}: ${before} → ${after}` });
 
       // Step 3: Install dependencies
       // Ensure the project directory is writable by the original user
