@@ -1,5 +1,5 @@
-import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { z } from "zod";
 import {
 	Card,
 	CardContent,
@@ -8,25 +8,35 @@ import {
 	CardTitle,
 } from "#/components/ui/card";
 import { Button } from "#/components/ui/button";
-import { Input } from "#/components/ui/input";
-import { Label } from "#/components/ui/label";
 import { LogIn } from "lucide-react";
 import { Spinner } from "#/components/ui/spinner";
 import { useSignIn } from "#/hooks/auth";
+import { useAppForm } from "#/hooks/form";
 
 export const Route = createFileRoute("/_auth/sign-in")({
 	component: SignInPage,
 });
 
+const signInSchema = z.object({
+	email: z.email("Please enter a valid email address"),
+	password: z.string().min(1, "Password is required"),
+});
+
 function SignInPage() {
-	const [email, setEmail] = useState("");
-	const [password, setPassword] = useState("");
 	const signIn = useSignIn();
 
-	function handleSubmit(e: React.FormEvent) {
-		e.preventDefault();
-		signIn.mutate({ email, password });
-	}
+	const form = useAppForm({
+		defaultValues: {
+			email: "",
+			password: "",
+		},
+		validators: {
+			onBlur: signInSchema,
+		},
+		onSubmit: ({ value }) => {
+			signIn.mutate(value);
+		},
+	});
 
 	return (
 		<div className="w-full px-4 py-12">
@@ -41,31 +51,35 @@ function SignInPage() {
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
-					<form onSubmit={handleSubmit} className="space-y-4">
-						<div className="space-y-2">
-							<Label htmlFor="email">Email</Label>
-							<Input
-								id="email"
-								type="email"
-								placeholder="admin@example.com"
-								value={email}
-								onChange={(e) => setEmail(e.target.value)}
-								required
-								autoComplete="email"
-							/>
-						</div>
-						<div className="space-y-2">
-							<Label htmlFor="password">Password</Label>
-							<Input
-								id="password"
-								type="password"
-								placeholder="••••••••"
-								value={password}
-								onChange={(e) => setPassword(e.target.value)}
-								required
-								autoComplete="current-password"
-							/>
-						</div>
+					<form
+						onSubmit={(e) => {
+							e.preventDefault();
+							e.stopPropagation();
+							form.handleSubmit();
+						}}
+						className="space-y-4"
+					>
+						<form.AppField name="email">
+							{(field) => (
+								<field.TextField
+									label="Email"
+									placeholder="admin@example.com"
+									type="email"
+									autoComplete="email"
+								/>
+							)}
+						</form.AppField>
+
+						<form.AppField name="password">
+							{(field) => (
+								<field.TextField
+									label="Password"
+									placeholder="••••••••"
+									type="password"
+									autoComplete="current-password"
+								/>
+							)}
+						</form.AppField>
 
 						{signIn.error && (
 							<p className="text-sm text-status-critical">

@@ -12,14 +12,15 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
+import { Route as AuthTwoFactorRouteImport } from './routes/_auth/two-factor'
 import { Route as AuthSignUpRouteImport } from './routes/_auth/sign-up'
 import { Route as AuthSignInRouteImport } from './routes/_auth/sign-in'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppProfileRouteImport } from './routes/_app/profile'
 import { Route as AppBackupRestoreRouteImport } from './routes/_app/backup-restore'
 import { Route as AppAppsIndexRouteImport } from './routes/_app/apps/index'
-import { Route as DemoFormSimpleRouteImport } from './routes/demo/form.simple'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as AppAppsGraphRouteImport } from './routes/_app/apps/graph'
 import { Route as AppAppsAppNameRouteImport } from './routes/_app/apps/$appName'
 
 const AuthRoute = AuthRouteImport.update({
@@ -34,6 +35,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AppRoute,
+} as any)
+const AuthTwoFactorRoute = AuthTwoFactorRouteImport.update({
+  id: '/two-factor',
+  path: '/two-factor',
+  getParentRoute: () => AuthRoute,
 } as any)
 const AuthSignUpRoute = AuthSignUpRouteImport.update({
   id: '/sign-up',
@@ -65,15 +71,15 @@ const AppAppsIndexRoute = AppAppsIndexRouteImport.update({
   path: '/apps/',
   getParentRoute: () => AppRoute,
 } as any)
-const DemoFormSimpleRoute = DemoFormSimpleRouteImport.update({
-  id: '/demo/form/simple',
-  path: '/demo/form/simple',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppAppsGraphRoute = AppAppsGraphRouteImport.update({
+  id: '/apps/graph',
+  path: '/apps/graph',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppAppsAppNameRoute = AppAppsAppNameRouteImport.update({
   id: '/apps/$appName',
@@ -88,9 +94,10 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AppSettingsRoute
   '/sign-in': typeof AuthSignInRoute
   '/sign-up': typeof AuthSignUpRoute
+  '/two-factor': typeof AuthTwoFactorRoute
   '/apps/$appName': typeof AppAppsAppNameRoute
+  '/apps/graph': typeof AppAppsGraphRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/demo/form/simple': typeof DemoFormSimpleRoute
   '/apps/': typeof AppAppsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -100,9 +107,10 @@ export interface FileRoutesByTo {
   '/settings': typeof AppSettingsRoute
   '/sign-in': typeof AuthSignInRoute
   '/sign-up': typeof AuthSignUpRoute
+  '/two-factor': typeof AuthTwoFactorRoute
   '/apps/$appName': typeof AppAppsAppNameRoute
+  '/apps/graph': typeof AppAppsGraphRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/demo/form/simple': typeof DemoFormSimpleRoute
   '/apps': typeof AppAppsIndexRoute
 }
 export interface FileRoutesById {
@@ -114,10 +122,11 @@ export interface FileRoutesById {
   '/_app/settings': typeof AppSettingsRoute
   '/_auth/sign-in': typeof AuthSignInRoute
   '/_auth/sign-up': typeof AuthSignUpRoute
+  '/_auth/two-factor': typeof AuthTwoFactorRoute
   '/_app/': typeof AppIndexRoute
   '/_app/apps/$appName': typeof AppAppsAppNameRoute
+  '/_app/apps/graph': typeof AppAppsGraphRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/demo/form/simple': typeof DemoFormSimpleRoute
   '/_app/apps/': typeof AppAppsIndexRoute
 }
 export interface FileRouteTypes {
@@ -129,9 +138,10 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sign-in'
     | '/sign-up'
+    | '/two-factor'
     | '/apps/$appName'
+    | '/apps/graph'
     | '/api/auth/$'
-    | '/demo/form/simple'
     | '/apps/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -141,9 +151,10 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sign-in'
     | '/sign-up'
+    | '/two-factor'
     | '/apps/$appName'
+    | '/apps/graph'
     | '/api/auth/$'
-    | '/demo/form/simple'
     | '/apps'
   id:
     | '__root__'
@@ -154,10 +165,11 @@ export interface FileRouteTypes {
     | '/_app/settings'
     | '/_auth/sign-in'
     | '/_auth/sign-up'
+    | '/_auth/two-factor'
     | '/_app/'
     | '/_app/apps/$appName'
+    | '/_app/apps/graph'
     | '/api/auth/$'
-    | '/demo/form/simple'
     | '/_app/apps/'
   fileRoutesById: FileRoutesById
 }
@@ -165,7 +177,6 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRouteWithChildren
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
-  DemoFormSimpleRoute: typeof DemoFormSimpleRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -190,6 +201,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/_auth/two-factor': {
+      id: '/_auth/two-factor'
+      path: '/two-factor'
+      fullPath: '/two-factor'
+      preLoaderRoute: typeof AuthTwoFactorRouteImport
+      parentRoute: typeof AuthRoute
     }
     '/_auth/sign-up': {
       id: '/_auth/sign-up'
@@ -233,19 +251,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAppsIndexRouteImport
       parentRoute: typeof AppRoute
     }
-    '/demo/form/simple': {
-      id: '/demo/form/simple'
-      path: '/demo/form/simple'
-      fullPath: '/demo/form/simple'
-      preLoaderRoute: typeof DemoFormSimpleRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
       fullPath: '/api/auth/$'
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_app/apps/graph': {
+      id: '/_app/apps/graph'
+      path: '/apps/graph'
+      fullPath: '/apps/graph'
+      preLoaderRoute: typeof AppAppsGraphRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/apps/$appName': {
       id: '/_app/apps/$appName'
@@ -263,6 +281,7 @@ interface AppRouteChildren {
   AppSettingsRoute: typeof AppSettingsRoute
   AppIndexRoute: typeof AppIndexRoute
   AppAppsAppNameRoute: typeof AppAppsAppNameRoute
+  AppAppsGraphRoute: typeof AppAppsGraphRoute
   AppAppsIndexRoute: typeof AppAppsIndexRoute
 }
 
@@ -272,6 +291,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSettingsRoute: AppSettingsRoute,
   AppIndexRoute: AppIndexRoute,
   AppAppsAppNameRoute: AppAppsAppNameRoute,
+  AppAppsGraphRoute: AppAppsGraphRoute,
   AppAppsIndexRoute: AppAppsIndexRoute,
 }
 
@@ -280,11 +300,13 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 interface AuthRouteChildren {
   AuthSignInRoute: typeof AuthSignInRoute
   AuthSignUpRoute: typeof AuthSignUpRoute
+  AuthTwoFactorRoute: typeof AuthTwoFactorRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
   AuthSignInRoute: AuthSignInRoute,
   AuthSignUpRoute: AuthSignUpRoute,
+  AuthTwoFactorRoute: AuthTwoFactorRoute,
 }
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
@@ -293,7 +315,6 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRouteWithChildren,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
-  DemoFormSimpleRoute: DemoFormSimpleRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

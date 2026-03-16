@@ -1,4 +1,4 @@
-import { Link, useRouteContext } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { LogOut, Settings, User } from "lucide-react";
 import { Avatar, AvatarFallback } from "#/components/ui/avatar";
 import { Badge } from "#/components/ui/badge";
@@ -12,6 +12,7 @@ import {
 } from "#/components/ui/dropdown-menu";
 import { mockVersion } from "#/lib/mock-data";
 import { useSignOut } from "#/hooks/auth";
+import { authClient } from "#/lib/auth-client";
 import LanguageSwitch from "./LanguageSwitch";
 import MobileNav from "./MobileNav";
 import ThemeToggle from "./ThemeToggle";
@@ -24,16 +25,17 @@ const navLinks = [
 ] as const;
 
 export default function Header() {
-	const { user } = useRouteContext({ from: "/_app" });
+	const { data: session } = authClient.useSession();
 	const signOut = useSignOut();
-	const initials = user.name
+	const user = session?.user;
+	const initials = user?.name
 		? user.name
 				.split(" ")
 				.map((n) => n[0])
 				.join("")
 				.toUpperCase()
 				.slice(0, 2)
-		: user.email.slice(0, 2).toUpperCase();
+		: (user?.email.slice(0, 2).toUpperCase() ?? "");
 
 	return (
 		<header className="sticky top-0 z-50 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -57,11 +59,13 @@ export default function Header() {
 						<Link
 							key={link.label}
 							to={link.to}
-							className="rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+							className="rounded-md px-3 py-1.5 text-sm font-medium transition-colors"
 							activeOptions={{ exact: link.to === "/" }}
 							activeProps={{
-								className:
-									"rounded-md px-3 py-1.5 text-sm font-medium text-foreground",
+								className: "text-foreground",
+							}}
+							inactiveProps={{
+								className: "text-muted-foreground hover:text-foreground",
 							}}
 						>
 							{link.label}
@@ -91,9 +95,9 @@ export default function Header() {
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align="end" className="w-44">
 							<div className="px-2 py-1.5">
-								<p className="text-sm font-medium">{user.name}</p>
+								<p className="text-sm font-medium">{user?.name}</p>
 								<p className="text-xs text-muted-foreground">
-									{user.email}
+									{user?.email}
 								</p>
 							</div>
 							<DropdownMenuSeparator />

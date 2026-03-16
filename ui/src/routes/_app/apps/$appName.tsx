@@ -1,9 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
 	ArrowDownToLine,
-	Download,
 	ExternalLink,
-	Globe,
 	Play,
 	RotateCcw,
 	Square,
@@ -12,6 +10,9 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import Breadcrumbs from "#/components/Breadcrumbs";
+import { Row } from "#/components/Row";
+import { AvailableDetailPage } from "#/components/apps/AvailableDetailPage";
+import { ExternalLinks } from "#/components/apps/ExternalLinks";
 import { Alert, AlertDescription } from "#/components/ui/alert";
 import {
 	AlertDialog,
@@ -51,66 +52,6 @@ function progressColor(pct: number) {
 	if (pct >= 80) return "[&>[data-slot=indicator]]:bg-status-critical";
 	if (pct >= 60) return "[&>[data-slot=indicator]]:bg-status-warning";
 	return "[&>[data-slot=indicator]]:bg-status-healthy";
-}
-
-function Row({
-	label,
-	children,
-	mono = false,
-}: {
-	label: string;
-	children: React.ReactNode;
-	mono?: boolean;
-}) {
-	return (
-		<div className="flex items-baseline justify-between text-sm">
-			<span className="text-muted-foreground">{label}</span>
-			<span className={mono ? "font-mono-data text-xs" : "text-xs"}>
-				{children}
-			</span>
-		</div>
-	);
-}
-
-function GithubIcon({ className }: { className?: string }) {
-	return (
-		<svg
-			viewBox="0 0 24 24"
-			fill="currentColor"
-			className={className}
-			aria-hidden="true"
-		>
-			<path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z" />
-		</svg>
-	);
-}
-
-function ExternalLinks({
-	website,
-	github,
-}: { website?: string; github?: string }) {
-	if (!website && !github) return null;
-
-	return (
-		<div className="flex flex-wrap items-center gap-2">
-			{website && (
-				<Button variant="outline" size="sm" className="gap-1.5" asChild>
-					<a href={website} target="_blank" rel="noopener noreferrer">
-						<Globe className="h-3.5 w-3.5" />
-						Website
-					</a>
-				</Button>
-			)}
-			{github && (
-				<Button variant="outline" size="sm" className="gap-1.5" asChild>
-					<a href={github} target="_blank" rel="noopener noreferrer">
-						<GithubIcon className="h-3.5 w-3.5" />
-						GitHub
-					</a>
-				</Button>
-			)}
-		</div>
-	);
 }
 
 function AppDetailPage() {
@@ -267,25 +208,17 @@ function AppDetailPage() {
 							<CardTitle className="text-sm font-medium">Container</CardTitle>
 						</CardHeader>
 						<CardContent className="space-y-2">
-							<Row label="Image" mono>
-								{detail.image}
-							</Row>
-							<Row label="Port" mono>
-								:{detail.port}
-							</Row>
-							<Row label="Restarts" mono>
-								{detail.restarts}
-							</Row>
-							<Row label="Created" mono>
+							<Row label="Image">{detail.image}</Row>
+							<Row label="Port">:{detail.port}</Row>
+							<Row label="Restarts">{detail.restarts}</Row>
+							<Row label="Created">
 								{new Date(detail.createdAt).toLocaleDateString("en-US", {
 									month: "short",
 									day: "numeric",
 									year: "numeric",
 								})}
 							</Row>
-							<Row label="Uptime" mono>
-								{detail.uptime}
-							</Row>
+							<Row label="Uptime">{detail.uptime}</Row>
 						</CardContent>
 					</Card>
 				)}
@@ -327,12 +260,8 @@ function AppDetailPage() {
 								/>
 							</div>
 							<Separator />
-							<Row label="Network Rx" mono>
-								{detail.networkRx}
-							</Row>
-							<Row label="Network Tx" mono>
-								{detail.networkTx}
-							</Row>
+							<Row label="Network Rx">{detail.networkRx}</Row>
+							<Row label="Network Tx">{detail.networkTx}</Row>
 						</CardContent>
 					</Card>
 				)}
@@ -346,9 +275,7 @@ function AppDetailPage() {
 							</CardTitle>
 						</CardHeader>
 						<CardContent className="space-y-2">
-							<Row label="Config path" mono>
-								{detail.configPath}
-							</Row>
+							<Row label="Config path">{detail.configPath}</Row>
 							<Separator className="my-2" />
 							{detail.volumes.map((vol) => (
 								<div key={vol} className="font-mono-data text-xs break-all">
@@ -460,59 +387,6 @@ function AppDetailPage() {
 					</AlertDialogContent>
 				</AlertDialog>
 			)}
-		</div>
-	);
-}
-
-function AvailableDetailPage({
-	app,
-}: { app: { name: string; displayName: string; description: string; port: number; status: AppStatus; category: string; website?: string; github?: string } }) {
-	return (
-		<div className="mx-auto max-w-7xl px-4 py-8">
-			<Breadcrumbs />
-
-			{/* Header */}
-			<div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-				<div className="flex items-center gap-3">
-					<h1 className="font-display text-2xl font-bold tracking-tight">
-						{app.displayName}
-					</h1>
-					<Badge variant="outline" className={statusColor.available}>
-						available
-					</Badge>
-					<Badge variant="outline" className="capitalize">
-						{app.category}
-					</Badge>
-				</div>
-				<Button
-					size="sm"
-					className="gap-1.5"
-					onClick={() =>
-						toast.info(`Installing ${app.displayName}...`)
-					}
-				>
-					<Download className="h-3.5 w-3.5" />
-					Install
-				</Button>
-			</div>
-
-			<p className="mb-4 text-sm text-muted-foreground">{app.description}</p>
-
-			<div className="mb-6">
-				<ExternalLinks website={app.website} github={app.github} />
-			</div>
-
-			<Card className="max-w-md">
-				<CardHeader className="pb-2">
-					<CardTitle className="text-sm font-medium">Details</CardTitle>
-				</CardHeader>
-				<CardContent className="space-y-2">
-					<Row label="Default port" mono>
-						:{app.port}
-					</Row>
-					<Row label="Category">{app.category}</Row>
-				</CardContent>
-			</Card>
 		</div>
 	);
 }

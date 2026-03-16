@@ -1,6 +1,7 @@
+import type React from 'react'
 import { useStore } from '@tanstack/react-form'
 
-import { useFieldContext, useFormContext } from '#/hooks/demo.form-context'
+import { useFieldContext, useFormContext } from '#/hooks/form-context'
 
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
@@ -33,7 +34,7 @@ function ErrorMessages({
       {errors.map((error) => (
         <div
           key={typeof error === 'string' ? error : error.message}
-          className="text-red-500 mt-1 font-bold"
+          className="mt-1 text-sm text-status-critical"
         >
           {typeof error === 'string' ? error : error.message}
         </div>
@@ -45,21 +46,28 @@ function ErrorMessages({
 export function TextField({
   label,
   placeholder,
+  type = "text",
+  autoComplete,
 }: {
   label: string
   placeholder?: string
+  type?: React.HTMLInputTypeAttribute
+  autoComplete?: string
 }) {
   const field = useFieldContext<string>()
   const errors = useStore(field.store, (state) => state.meta.errors)
 
   return (
-    <div>
-      <Label htmlFor={label} className="mb-2 text-xl font-bold">
+    <div className="space-y-2">
+      <Label htmlFor={field.name}>
         {label}
       </Label>
       <Input
+        id={field.name}
         value={field.state.value}
         placeholder={placeholder}
+        type={type}
+        autoComplete={autoComplete}
         onBlur={field.handleBlur}
         onChange={(e) => field.handleChange(e.target.value)}
       />

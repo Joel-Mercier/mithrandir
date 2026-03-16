@@ -12,6 +12,7 @@ import {
 const routeLabels: Record<string, string> = {
 	"/": "Dashboard",
 	"/apps": "Apps",
+	"/apps/graph": "Dependency Graph",
 	"/backup-restore": "Backup & Restore",
 	"/settings": "Settings",
 	"/profile": "Profile",
@@ -32,6 +33,10 @@ export default function Breadcrumbs() {
 		// Skip layout routes and root
 		if (path === "/" || routeLabels[path]) {
 			if (path !== "/") {
+				// For nested known routes like /apps/graph, ensure parent crumb exists
+				if (path === "/apps/graph" && !crumbs.some((c) => c.path === "/apps")) {
+					crumbs.push({ label: "Apps", path: "/apps" });
+				}
 				crumbs.push({ label: routeLabels[path], path });
 			}
 		} else if (path.startsWith("/apps/")) {

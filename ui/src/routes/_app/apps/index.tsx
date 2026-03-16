@@ -1,23 +1,14 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowUpRight, Download, Search } from "lucide-react";
+import { Link, createFileRoute } from "@tanstack/react-router";
+import { GitFork, Search } from "lucide-react";
 import { useState } from "react";
 import Breadcrumbs from "#/components/Breadcrumbs";
-import { Badge } from "#/components/ui/badge";
+import { AppListCard, AvailableAppCard } from "#/components/apps/AppCards";
 import { Button } from "#/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
 import { Input } from "#/components/ui/input";
-import { Progress } from "#/components/ui/progress";
-import type { AppCategory, AppStatus, DashboardApp } from "#/lib/mock-data";
-import { mockAppDetails, mockApps } from "#/lib/mock-data";
+import type { AppCategory, DashboardApp } from "#/lib/mock-data";
+import { mockApps } from "#/lib/mock-data";
 
 export const Route = createFileRoute("/_app/apps/")({ component: AppsPage });
-
-const statusDot: Record<AppStatus, string> = {
-	running: "bg-status-healthy",
-	stopped: "bg-muted-foreground",
-	error: "bg-status-critical",
-	available: "bg-transparent",
-};
 
 const categories: Array<AppCategory | "all"> = [
 	"all",
@@ -90,6 +81,16 @@ function AppsPage() {
 				</div>
 			</div>
 
+			{/* Actions */}
+			<div className="mb-6">
+				<Button variant="outline" size="sm" className="gap-1.5" asChild>
+					<Link to="/apps/graph">
+						<GitFork className="h-3.5 w-3.5" />
+						Dependency Graph
+					</Link>
+				</Button>
+			</div>
+
 			{/* Filters */}
 			<div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
 				<div className="relative flex-1 sm:max-w-xs">
@@ -150,100 +151,5 @@ function AppsPage() {
 				</div>
 			)}
 		</div>
-	);
-}
-
-function AppListCard({ app }: { app: DashboardApp }) {
-	const detail = mockAppDetails[app.name];
-
-	return (
-		<Link to="/apps/$appName" params={{ appName: app.name }}>
-			<Card className="group">
-				<CardHeader className="flex flex-row items-center justify-between pb-2">
-					<div className="flex items-center gap-2">
-						<span
-							className={`inline-block h-2 w-2 rounded-full ${statusDot[app.status]}`}
-						/>
-						<CardTitle className="text-sm font-medium">
-							{app.displayName}
-						</CardTitle>
-					</div>
-					<ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
-				</CardHeader>
-				<CardContent className="space-y-3">
-					<p className="text-xs text-muted-foreground">{app.description}</p>
-
-					<div className="flex items-center justify-between">
-						<span className="font-mono-data text-xs text-muted-foreground">
-							:{app.port}
-						</span>
-						<Badge variant="outline" className="text-xs capitalize">
-							{app.category}
-						</Badge>
-					</div>
-
-					{app.status === "running" && detail && (
-						<div className="space-y-1.5">
-							<div className="flex justify-between text-xs text-muted-foreground">
-								<span>CPU {detail.cpuUsage}%</span>
-								<span>{detail.ramUsageMB} MB</span>
-							</div>
-							<Progress
-								value={detail.cpuUsage}
-								className="h-1 [&>[data-slot=indicator]]:bg-foreground/30"
-							/>
-						</div>
-					)}
-
-					<div className="flex items-baseline justify-between text-xs text-muted-foreground">
-						<span>Uptime</span>
-						<span className="font-mono-data">{app.uptime}</span>
-					</div>
-				</CardContent>
-			</Card>
-		</Link>
-	);
-}
-
-function AvailableAppCard({ app }: { app: DashboardApp }) {
-	return (
-		<Link to="/apps/$appName" params={{ appName: app.name }}>
-			<Card className="group border-dashed">
-				<CardHeader className="flex flex-row items-center justify-between pb-2">
-					<div className="flex items-center gap-2">
-						<span className="inline-block h-2 w-2 rounded-full border border-dashed border-muted-foreground" />
-						<CardTitle className="text-sm font-medium text-muted-foreground">
-							{app.displayName}
-						</CardTitle>
-					</div>
-					<ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
-				</CardHeader>
-				<CardContent className="space-y-3">
-					<p className="text-xs text-muted-foreground">{app.description}</p>
-
-					<div className="flex items-center justify-between">
-						<span className="font-mono-data text-xs text-muted-foreground">
-							:{app.port}
-						</span>
-						<Badge variant="outline" className="text-xs capitalize">
-							{app.category}
-						</Badge>
-					</div>
-
-					<Button
-						variant="outline"
-						size="sm"
-						className="w-full gap-1.5"
-						onClick={(e) => {
-							e.preventDefault();
-							e.stopPropagation();
-						}}
-					>
-						<Download className="h-3.5 w-3.5" />
-						Install
-					</Button>
-				</CardContent>
-			</Card>
-		</Link>
 	);
 }

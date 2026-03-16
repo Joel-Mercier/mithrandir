@@ -1,5 +1,5 @@
-import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { z } from "zod";
 import {
 	Card,
 	CardContent,
@@ -8,42 +8,48 @@ import {
 	CardTitle,
 } from "#/components/ui/card";
 import { Button } from "#/components/ui/button";
-import { Input } from "#/components/ui/input";
-import { Label } from "#/components/ui/label";
 import { UserPlus } from "lucide-react";
 import { Spinner } from "#/components/ui/spinner";
 import { useSignUp } from "#/hooks/auth";
+import { useAppForm } from "#/hooks/form";
 
 export const Route = createFileRoute("/_auth/sign-up")({
 	component: SignUpPage,
 });
 
+const signUpSchema = z
+	.object({
+		name: z.string().min(1, "Name is required"),
+		email: z.email("Please enter a valid email address"),
+		password: z.string().min(8, "Password must be at least 8 characters"),
+		confirmPassword: z.string().min(1, "Please confirm your password"),
+	})
+	.refine((data) => data.password === data.confirmPassword, {
+		message: "Passwords do not match",
+		path: ["confirmPassword"],
+	});
+
 function SignUpPage() {
-	const [name, setName] = useState("");
-	const [email, setEmail] = useState("");
-	const [password, setPassword] = useState("");
-	const [confirmPassword, setConfirmPassword] = useState("");
-	const [validationError, setValidationError] = useState("");
 	const signUp = useSignUp();
 
-	function handleSubmit(e: React.FormEvent) {
-		e.preventDefault();
-		setValidationError("");
-
-		if (password !== confirmPassword) {
-			setValidationError("Passwords do not match.");
-			return;
-		}
-
-		if (password.length < 8) {
-			setValidationError("Password must be at least 8 characters.");
-			return;
-		}
-
-		signUp.mutate({ name, email, password });
-	}
-
-	const error = validationError || (signUp.error?.message ?? "");
+	const form = useAppForm({
+		defaultValues: {
+			name: "",
+			email: "",
+			password: "",
+			confirmPassword: "",
+		},
+		validators: {
+			onBlur: signUpSchema,
+		},
+		onSubmit: ({ value }) => {
+			signUp.mutate({
+				name: value.name,
+				email: value.email,
+				password: value.password,
+			});
+		},
+	});
 
 	return (
 		<div className="w-full px-4 py-12">
@@ -58,58 +64,61 @@ function SignUpPage() {
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
-					<form onSubmit={handleSubmit} className="space-y-4">
-						<div className="space-y-2">
-							<Label htmlFor="name">Name</Label>
-							<Input
-								id="name"
-								type="text"
-								placeholder="Admin"
-								value={name}
-								onChange={(e) => setName(e.target.value)}
-								required
-								autoComplete="name"
-							/>
-						</div>
-						<div className="space-y-2">
-							<Label htmlFor="email">Email</Label>
-							<Input
-								id="email"
-								type="email"
-								placeholder="admin@example.com"
-								value={email}
-								onChange={(e) => setEmail(e.target.value)}
-								required
-								autoComplete="email"
-							/>
-						</div>
-						<div className="space-y-2">
-							<Label htmlFor="password">Password</Label>
-							<Input
-								id="password"
-								type="password"
-								placeholder="••••••••"
-								value={password}
-								onChange={(e) => setPassword(e.target.value)}
-								required
-								autoComplete="new-password"
-							/>
-						</div>
-						<div className="space-y-2">
-							<Label htmlFor="confirmPassword">Confirm password</Label>
-							<Input
-								id="confirmPassword"
-								type="password"
-								placeholder="••••••••"
-								value={confirmPassword}
-								onChange={(e) => setConfirmPassword(e.target.value)}
-								required
-								autoComplete="new-password"
-							/>
-						</div>
+					<form
+						onSubmit={(e) => {
+							e.preventDefault();
+							e.stopPropagation();
+							form.handleSubmit();
+						}}
+						className="space-y-4"
+					>
+						<form.AppField name="name">
+							{(field) => (
+								<field.TextField
+									label="Name"
+									placeholder="Admin"
+									autoComplete="name"
+								/>
+							)}
+						</form.AppField>
 
-						{error && (
-							<p className="text-sm text-status-critical">{error}</p>
+						<form.AppField name="email">
+							{(field) => (
+								<field.TextField
+									label="Email"
+									placeholder="admin@example.com"
+									type="email"
+									autoComplete="email"
+								/>
+							)}
+						</form.AppField>
+
+						<form.AppField name="password">
+							{(field) => (
+								<field.TextField
+									label="Password"
+									placeholder="••••••••"
+									type="password"
+									autoComplete="new-password"
+								/>
+							)}
+						</form.AppField>
+
+						<form.AppField name="confirmPassword">
+							{(field) => (
+								<field.TextField
+									label="Confirm password"
+									placeholder="••••••••"
+									type="password"
+									autoComplete="new-password"
+								/>
+							)}
+						</form.AppField>
+
+						{signUp.error && (
+							<p className="text-sm text-status-critical">
+								{signUp.error.message ?? "Sign up failed."}
+							</p>
 						)}
 
 						<Button

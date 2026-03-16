@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Clock, KeyRound, Shield, User } from "lucide-react";
-import { useState } from "react";
+import { KeyRound, Shield, ShieldCheck, User } from "lucide-react";
+import { z } from "zod";
 import { toast } from "sonner";
 import Breadcrumbs from "#/components/Breadcrumbs";
+import { TwoFactorCard } from "#/components/profile/TwoFactorCard";
+import { SessionsCard } from "#/components/profile/SessionsCard";
 import { Avatar, AvatarFallback } from "#/components/ui/avatar";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
@@ -13,17 +15,107 @@ import {
 	CardHeader,
 	CardTitle,
 } from "#/components/ui/card";
-import { Input } from "#/components/ui/input";
-import { Label } from "#/components/ui/label";
 import { Separator } from "#/components/ui/separator";
+import { Spinner } from "#/components/ui/spinner";
+import {
+	useUpdateProfile,
+	useChangeEmail,
+	useChangePassword,
+} from "#/hooks/auth";
+import { useAppForm } from "#/hooks/form";
+import { authClient } from "#/lib/auth-client";
 
 export const Route = createFileRoute("/_app/profile")({
 	component: ProfilePage,
 });
 
+const profileSchema = z.object({
+	name: z.string().min(1, "Name is required"),
+	email: z.email("Please enter a valid email address"),
+});
+
+const passwordSchema = z
+	.object({
+		currentPassword: z.string().min(1, "Current password is required"),
+		newPassword: z.string().min(8, "Password must be at least 8 characters"),
+		confirmPassword: z.string().min(1, "Please confirm your password"),
+	})
+	.refine((data) => data.newPassword === data.confirmPassword, {
+		message: "Passwords do not match",
+		path: ["confirmPassword"],
+	});
+
 function ProfilePage() {
-	const [name, setName] = useState("Admin");
-	const [email, setEmail] = useState("admin@example.com");
+	const { data: session } = authClient.useSession();
+	const user = session!.user;
+	const updateProfile = useUpdateProfile();
+	const changeEmail = useChangeEmail();
+	const changePassword = useChangePassword();
+
+	const profileForm = useAppForm({
+		defaultValues: {
+			name: user.name,
+			email: user.email,
+		},
+		validators: {
+			onBlur: profileSchema,
+		},
+		onSubmit: async ({ value }) => {
+			const promises: Promise<unknown>[] = [];
+
+			if (value.name !== user.name) {
+				promises.push(
+					new Promise((resolve, reject) =>
+						updateProfile.mutate(
+							{ name: value.name },
+							{ onSuccess: resolve, onError: reject },
+						),
+					),
+				);
+			}
+
+			if (value.email !== user.email) {
+				promises.push(
+					new Promise((resolve, reject) =>
+						changeEmail.mutate(
+							{ newEmail: value.email },
+							{ onSuccess: resolve, onError: reject },
+						),
+					),
+				);
+			}
+
+			if (promises.length === 0) return;
+
+			await Promise.all(promises);
+			toast.success("Profile updated.");
+		},
+	});
+
+	const passwordForm = useAppForm({
+		defaultValues: {
+			currentPassword: "",
+			newPassword: "",
+			confirmPassword: "",
+		},
+		validators: {
+			onBlur: passwordSchema,
+		},
+		onSubmit: ({ value }) => {
+			changePassword.mutate(
+				{
+					currentPassword: value.currentPassword,
+					newPassword: value.newPassword,
+				},
+				{
+					onSuccess: () => {
+						toast.success("Password updated.");
+						passwordForm.reset();
+					},
+				},
+			);
+		},
+	});
 
 	return (
 		<div className="mx-auto max-w-7xl px-4 py-8">
@@ -42,11 +134,18 @@ function ProfilePage() {
 				<Card>
 					<CardContent className="flex flex-col items-center gap-4 pt-6">
 						<Avatar size="lg">
-							<AvatarFallback className="text-lg">AD</AvatarFallback>
+							<AvatarFallback className="text-lg">
+								{user.name
+									?.split(" ")
+									.map((n: string) => n[0])
+									.join("")
+									.toUpperCase()
+									.slice(0, 2) ?? "U"}
+							</AvatarFallback>
 						</Avatar>
 						<div className="text-center">
-							<p className="font-medium">{name}</p>
-							<p className="text-sm text-muted-foreground">{email}</p>
+							<p className="font-medium">{user.name}</p>
+							<p className="text-sm text-muted-foreground">{user.email}</p>
 						</div>
 						<Badge variant="secondary" className="gap-1">
 							<Shield className="h-3 w-3" />
@@ -56,11 +155,31 @@ function ProfilePage() {
 						<div className="w-full space-y-2 text-sm">
 							<div className="flex items-center justify-between">
 								<span className="text-muted-foreground">Member since</span>
-								<span className="font-mono-data text-xs">Jan 2025</span>
+								<span className="font-mono-data text-xs">
+									{new Date(user.createdAt).toLocaleDateString("en-US", {
+										month: "short",
+										year: "numeric",
+									})}
+								</span>
 							</div>
 							<div className="flex items-center justify-between">
-								<span className="text-muted-foreground">Last sign in</span>
-								<span className="font-mono-data text-xs">2 hours ago</span>
+								<span className="text-muted-foreground">2FA</span>
+								{user.twoFactorEnabled ? (
+									<Badge
+										variant="outline"
+										className="gap-1 text-xs text-status-healthy"
+									>
+										<ShieldCheck className="h-3 w-3" />
+										Enabled
+									</Badge>
+								) : (
+									<Badge
+										variant="outline"
+										className="gap-1 text-xs text-muted-foreground"
+									>
+										Off
+									</Badge>
+								)}
 							</div>
 						</div>
 					</CardContent>
@@ -78,35 +197,59 @@ function ProfilePage() {
 								Update your name and email address
 							</CardDescription>
 						</CardHeader>
-						<CardContent className="space-y-4">
-							<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-								<div className="space-y-2">
-									<Label htmlFor="profile-name">Name</Label>
-									<Input
-										id="profile-name"
-										value={name}
-										onChange={(e) => setName(e.target.value)}
-									/>
+						<CardContent>
+							<form
+								onSubmit={(e) => {
+									e.preventDefault();
+									e.stopPropagation();
+									profileForm.handleSubmit();
+								}}
+								className="space-y-4"
+							>
+								<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+									<profileForm.AppField name="name">
+										{(field) => (
+											<field.TextField label="Name" autoComplete="name" />
+										)}
+									</profileForm.AppField>
+									<profileForm.AppField name="email">
+										{(field) => (
+											<field.TextField
+												label="Email"
+												type="email"
+												autoComplete="email"
+											/>
+										)}
+									</profileForm.AppField>
 								</div>
-								<div className="space-y-2">
-									<Label htmlFor="profile-email">Email</Label>
-									<Input
-										id="profile-email"
-										type="email"
-										value={email}
-										onChange={(e) => setEmail(e.target.value)}
-									/>
+
+								{(updateProfile.error || changeEmail.error) && (
+									<p className="text-sm text-status-critical">
+										{updateProfile.error?.message ??
+											changeEmail.error?.message ??
+											"Failed to update profile."}
+									</p>
+								)}
+
+								<div className="flex justify-end">
+									<Button
+										type="submit"
+										size="sm"
+										className="gap-1.5"
+										disabled={
+											updateProfile.isPending || changeEmail.isPending
+										}
+									>
+										{(updateProfile.isPending || changeEmail.isPending) && (
+											<Spinner
+												size="sm"
+												className="text-primary-foreground"
+											/>
+										)}
+										Save Changes
+									</Button>
 								</div>
-							</div>
-							<div className="flex justify-end">
-								<Button
-									size="sm"
-									className="gap-1.5"
-									onClick={() => toast.success("Profile updated.")}
-								>
-									Save Changes
-								</Button>
-							</div>
+							</form>
 						</CardContent>
 					</Card>
 
@@ -118,93 +261,80 @@ function ProfilePage() {
 							</CardTitle>
 							<CardDescription>Change your password</CardDescription>
 						</CardHeader>
-						<CardContent className="space-y-4">
-							<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-								<div className="space-y-2">
-									<Label htmlFor="current-password">Current password</Label>
-									<Input
-										id="current-password"
-										type="password"
-										placeholder="••••••••"
-										autoComplete="current-password"
-									/>
+						<CardContent>
+							<form
+								onSubmit={(e) => {
+									e.preventDefault();
+									e.stopPropagation();
+									passwordForm.handleSubmit();
+								}}
+								className="space-y-4"
+							>
+								<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+									<passwordForm.AppField name="currentPassword">
+										{(field) => (
+											<field.TextField
+												label="Current password"
+												placeholder="••••••••"
+												type="password"
+												autoComplete="current-password"
+											/>
+										)}
+									</passwordForm.AppField>
+									<div />
+									<passwordForm.AppField name="newPassword">
+										{(field) => (
+											<field.TextField
+												label="New password"
+												placeholder="••••••••"
+												type="password"
+												autoComplete="new-password"
+											/>
+										)}
+									</passwordForm.AppField>
+									<passwordForm.AppField name="confirmPassword">
+										{(field) => (
+											<field.TextField
+												label="Confirm new password"
+												placeholder="••••••••"
+												type="password"
+												autoComplete="new-password"
+											/>
+										)}
+									</passwordForm.AppField>
 								</div>
-								<div />
-								<div className="space-y-2">
-									<Label htmlFor="new-password">New password</Label>
-									<Input
-										id="new-password"
-										type="password"
-										placeholder="••••••••"
-										autoComplete="new-password"
-									/>
+
+								{changePassword.error && (
+									<p className="text-sm text-status-critical">
+										{changePassword.error.message ??
+											"Failed to update password."}
+									</p>
+								)}
+
+								<div className="flex justify-end">
+									<Button
+										type="submit"
+										size="sm"
+										variant="outline"
+										className="gap-1.5"
+										disabled={changePassword.isPending}
+									>
+										{changePassword.isPending && (
+											<Spinner
+												size="sm"
+												className="text-primary-foreground"
+											/>
+										)}
+										Update Password
+									</Button>
 								</div>
-								<div className="space-y-2">
-									<Label htmlFor="confirm-password">Confirm new password</Label>
-									<Input
-										id="confirm-password"
-										type="password"
-										placeholder="••••••••"
-										autoComplete="new-password"
-									/>
-								</div>
-							</div>
-							<div className="flex justify-end">
-								<Button
-									size="sm"
-									variant="outline"
-									className="gap-1.5"
-									onClick={() => toast.success("Password updated.")}
-								>
-									Update Password
-								</Button>
-							</div>
+							</form>
 						</CardContent>
 					</Card>
 
-					<Card>
-						<CardHeader>
-							<CardTitle className="flex items-center gap-2 text-sm font-medium">
-								<Clock className="h-4 w-4 text-muted-foreground" />
-								Sessions
-							</CardTitle>
-							<CardDescription>Active sessions on your account</CardDescription>
-						</CardHeader>
-						<CardContent>
-							<div className="space-y-3">
-								<div className="flex items-center justify-between rounded-lg border border-border/50 p-3">
-									<div className="space-y-0.5">
-										<p className="text-sm font-medium">Current session</p>
-										<p className="text-xs text-muted-foreground">
-											macOS · Chrome · 192.168.1.100
-										</p>
-									</div>
-									<Badge
-										variant="outline"
-										className="text-xs text-status-healthy"
-									>
-										Active
-									</Badge>
-								</div>
-								<div className="flex items-center justify-between rounded-lg border border-border/50 p-3">
-									<div className="space-y-0.5">
-										<p className="text-sm font-medium">Mobile</p>
-										<p className="text-xs text-muted-foreground">
-											iOS · Safari · 192.168.1.105
-										</p>
-									</div>
-									<Button
-										variant="ghost"
-										size="sm"
-										className="text-xs text-muted-foreground"
-										onClick={() => toast.success("Session revoked.")}
-									>
-										Revoke
-									</Button>
-								</div>
-							</div>
-						</CardContent>
-					</Card>
+					<TwoFactorCard />
+
+					<SessionsCard />
 				</div>
 			</div>
 		</div>
