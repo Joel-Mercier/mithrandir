@@ -134,7 +134,10 @@ function SelfUpdateCommand() {
       }
 
       setCurrentLabel("Installing dependencies...");
-      const install = await shell(bunPath, ["install"], { cwd: root, ignoreError: true, ...userOpts });
+      // Use --ignore-scripts to skip native addon compilation (e.g. better-sqlite3
+      // in the UI workspace) which can hang on low-power servers. The CLI has no
+      // native deps so this is safe.
+      const install = await shell(bunPath, ["install", "--ignore-scripts"], { cwd: root, ignoreError: true, ...userOpts });
       if (install.exitCode !== 0) {
         setError(`bun install failed:\n${install.stderr}`);
         setPhase("error");
@@ -148,7 +151,7 @@ function SelfUpdateCommand() {
       const distDir = join(root, "cli", "dist");
       const distFile = join(distDir, "mithrandir.js");
 
-      const build = await shell(bunPath, ["run", "build"], { cwd: root, ignoreError: true, ...userOpts });
+      const build = await shell(bunPath, ["run", "cli:build"], { cwd: root, ignoreError: true, ...userOpts });
       if (build.exitCode !== 0) {
         setError(`Build failed:\n${build.stderr}`);
         setPhase("error");
