@@ -24,7 +24,7 @@ export function getDuckDnsDomain(envConfig: EnvConfig): string | null {
 export function generateCaddyfile(
   installedApps: AppDefinition[],
   envConfig: EnvConfig,
-  options?: { includeDocs?: boolean },
+  options?: { includeDocs?: boolean; includeUi?: boolean },
 ): string {
   const domain = getDuckDnsDomain(envConfig);
   if (!domain) throw new Error("DUCKDNS_SUBDOMAINS is not set — cannot generate Caddyfile");
@@ -81,6 +81,15 @@ export function generateCaddyfile(
     lines.push("    }");
   }
 
+  // UI dashboard (not in app registry, managed separately)
+  if (options?.includeUi) {
+    lines.push("");
+    lines.push(`    @mithrandir host mithrandir.${domain}`);
+    lines.push("    handle @mithrandir {");
+    lines.push("        reverse_proxy localhost:4180");
+    lines.push("    }");
+  }
+
   // Fallback — serve custom 404 page
   lines.push("");
   lines.push("    handle {");
@@ -100,7 +109,7 @@ export function generateCaddyfile(
 export function generate404Page(
   installedApps: AppDefinition[],
   envConfig: EnvConfig,
-  options?: { includeDocs?: boolean },
+  options?: { includeDocs?: boolean; includeUi?: boolean },
 ): string {
   const domain = getDuckDnsDomain(envConfig);
   if (!domain) throw new Error("DUCKDNS_SUBDOMAINS is not set");
@@ -116,6 +125,9 @@ export function generate404Page(
     })
     .join("\n");
 
+  const uiLink = options?.includeUi
+    ? `\n      <a href="https://mithrandir.${domain}">Dashboard</a>`
+    : "";
   const docsLink = options?.includeDocs
     ? `\n      <a href="https://mithrandir-docs.${domain}">Docs</a>`
     : "";
@@ -170,7 +182,7 @@ export function generate404Page(
     <p class="message">This subdomain doesn't exist.</p>
     <h2>Available Services</h2>
     <div class="apps">
-${appLinks}${docsLink}
+${appLinks}${uiLink}${docsLink}
     </div>
   </div>
 </body>
@@ -215,7 +227,8 @@ export async function regenerateCaddyfile(
   const baseDir = envConfig.BASE_DIR;
   const installedApps = detectInstalledApps(baseDir);
   const includeDocs = await isContainerRunning("mithrandir-docs");
-  const caddyfile = generateCaddyfile(installedApps, envConfig, { includeDocs });
+  const includeUi = await isContainerRunning("mithrandir-ui");
+  const caddyfile = generateCaddyfile(installedApps, envConfig, { includeDocs, includeUi });
 
   const caddyDir = `${baseDir}/caddy`;
   const caddyfilePath = `${caddyDir}/Caddyfile`;
@@ -224,7 +237,7 @@ export async function regenerateCaddyfile(
   });
 
   // Write the 404 page
-  const notFoundHtml = generate404Page(installedApps, envConfig, { includeDocs });
+  const notFoundHtml = generate404Page(installedApps, envConfig, { includeDocs, includeUi });
   const srvDir = `${caddyDir}/srv`;
   await shell("mkdir", ["-p", srvDir], { sudo: true });
   await shell("bash", ["-c", `cat > "${srvDir}/404.html" << 'HTML_EOF'\n${notFoundHtml}HTML_EOF`], {

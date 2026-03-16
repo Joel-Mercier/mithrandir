@@ -30,6 +30,8 @@ export interface SystemInfo {
   timerNext: string | null;
   docsRunning: boolean;
   docsUrl: string | null;
+  uiRunning: boolean;
+  uiUrl: string | null;
   apps: AppInfo[];
 }
 
@@ -158,6 +160,15 @@ export async function gatherSystemInfo(projectRoot?: string): Promise<SystemInfo
       : `http://${localIp}:4173`;
   }
 
+  // Check UI container
+  const uiRunning = dockerRunning ? await isContainerRunning("mithrandir-ui") : false;
+  let uiUrl: string | null = null;
+  if (uiRunning) {
+    uiUrl = httpsEnabled && primaryDomain
+      ? `https://mithrandir.${primaryDomain}`
+      : `http://${localIp}:4180`;
+  }
+
   // Gather per-app info in parallel
   const apps = await Promise.all(
     installedApps.map(async (app): Promise<AppInfo> => {
@@ -178,5 +189,5 @@ export async function gatherSystemInfo(projectRoot?: string): Promise<SystemInfo
     }),
   );
 
-  return { dockerRunning, timerActive, timerNext, docsRunning, docsUrl, apps };
+  return { dockerRunning, timerActive, timerNext, docsRunning, docsUrl, uiRunning, uiUrl, apps };
 }

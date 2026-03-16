@@ -115,6 +115,14 @@ function StatusCommand() {
           </Text>
         )}
         <Text>
+          {"  UI Dashboard    "}
+          {info.uiRunning ? (
+            <Text color="green">● Running</Text>
+          ) : (
+            <Text dimColor>● Not running</Text>
+          )}
+        </Text>
+        <Text>
           {"  Docs Site       "}
           {info.docsRunning ? (
             <Text color="green">● Running</Text>
@@ -145,6 +153,18 @@ function StatusCommand() {
                   </Link>
                 </Text>
               ))}
+            {info.uiRunning && info.uiUrl ? (
+              <Text>
+                {"    "}{"Dashboard".padEnd(18)}
+                <Link url={info.uiUrl}>
+                  <Text color="cyan">{info.uiUrl}</Text>
+                </Link>
+              </Text>
+            ) : (
+              <Text dimColor>
+                {"    "}Run 'mithrandir ui' to start the dashboard
+              </Text>
+            )}
             {info.docsRunning && info.docsUrl ? (
               <Text>
                 {"    "}{"Docs".padEnd(18)}
@@ -191,6 +211,12 @@ async function runHeadlessStatus(): Promise<void> {
       ? `Active${info.timerNext ? ` — Next: ${info.timerNext}` : ""}`
       : "Inactive";
     console.log(`Backup Timer: ${timerStr}`);
+  }
+  console.log(`UI Dashboard: ${info.uiRunning ? "Running" : "Not running"}`);
+  if (info.uiRunning && info.uiUrl) {
+    console.log(`UI URL: ${info.uiUrl}`);
+  } else {
+    console.log(`UI: Run 'mithrandir ui' to start the dashboard`);
   }
   console.log(`Docs Site: ${info.docsRunning ? "Running" : "Not running"}`);
   if (info.docsRunning && info.docsUrl) {

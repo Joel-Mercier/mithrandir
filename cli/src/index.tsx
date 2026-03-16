@@ -24,6 +24,7 @@ import { runGraph } from "@/commands/graph.js";
 import { runCapacity } from "@/commands/capacity.js";
 import { runRecover } from "@/commands/recover.js";
 import { runDocs, runDocsStop } from "@/commands/docs.js";
+import { runUi, runUiStop } from "@/commands/ui.js";
 import { ErrorBoundary } from "@/components/ErrorBoundary.js";
 import { checkForUpdate } from "@/lib/update-check.js";
 
@@ -55,6 +56,8 @@ const cli = meow(
     install firewall                   Install UFW firewall with ufw-docker
     reinstall <app>                    Reinstall an app (stop, remove, recreate)
     uninstall [app]                    Uninstall an app, or full system uninstall
+    ui                                 Build and serve the UI dashboard
+    ui stop                            Stop the UI dashboard
     docs                               Build and serve docs website
     docs stop                          Stop docs website
     status                             Show installed apps and system status
@@ -275,6 +278,14 @@ switch (command) {
 
   case "completions":
     runCompletions(cli.input.slice(1));
+    break;
+
+  case "ui":
+    if (cli.input[1] === "stop") {
+      runUiStop();
+    } else {
+      runUi();
+    }
     break;
 
   case "docs":

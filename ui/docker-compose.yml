@@ -1,0 +1,11 @@
+services:
+  mithrandir-ui:
+    build:
+      context: ..
+      dockerfile: ui/Dockerfile
+    container_name: mithrandir-ui
+    ports:
+      - "4180:4180"
+    env_file:
+      - .env
+    restart: unless-stopped

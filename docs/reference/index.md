@@ -55,5 +55,6 @@ Mithrandir is invoked as `mithrandir <command> [options]`.
 | --- | --- |
 | [`self-update`](./self-update) | Update the CLI from git |
 | [`version`](./version) | Show version and git commit hash |
+| [`ui`](./ui) | Build and serve the UI dashboard |
 | [`docs`](./docs) | Build and serve the documentation site |
 | [`completions`](./completions) | Generate shell completion scripts |
