@@ -5,6 +5,7 @@ WORKDIR /app
 # Copy workspace root + both workspace package.jsons for resolution
 COPY package.json bun.lock ./
 COPY cli/package.json cli/
+COPY docs/package.json docs/
 COPY ui/package.json ui/
 
 # Install from root so bun resolves the workspace graph correctly
