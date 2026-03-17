@@ -3,7 +3,7 @@ import { Box, render, Text, useApp } from "ink";
 import Spinner from "ink-spinner";
 import { StatusMessage } from "@inkjs/ui";
 import { join } from "path";
-import { existsSync } from "fs";
+import { existsSync, writeFileSync } from "fs";
 import { getProjectRoot, loadEnvConfig } from "@/lib/config.js";
 import { isContainerRunning, composeUp, composeDown } from "@/lib/docker.js";
 import { getDuckDnsDomain, regenerateCaddyfile } from "@/lib/caddy.js";
@@ -11,6 +11,20 @@ import { getLocalIp } from "@/lib/distro.js";
 import { shell } from "@/lib/shell.js";
 import { Header } from "@/components/Header.js";
 import { AppStatus } from "@/components/AppStatus.js";
+import type { EnvConfig } from "@/types.js";
+
+/** Write a .env.ui file with resolved values for docker-compose interpolation */
+function writeComposeEnvFile(envConfig: EnvConfig): string {
+  const repoRoot = getProjectRoot();
+  const envFilePath = join(repoRoot, "ui", ".env.ui");
+  const lines = [
+    `HOMELAB_ROOT=${repoRoot}`,
+    `BASE_DIR=${envConfig.BASE_DIR}`,
+    `BACKUP_DIR=${envConfig.BACKUP_DIR ?? "/backups"}`,
+  ];
+  writeFileSync(envFilePath, lines.join("\n") + "\n");
+  return envFilePath;
+}
 
 function getUiComposePath(): string {
   return join(getProjectRoot(), "ui", "docker-compose.yml");
@@ -62,11 +76,10 @@ function UiStart() {
     }
 
     const uiCwd = join(getProjectRoot(), "ui");
-    const repoRoot = getProjectRoot();
-    // Docker Compose reads .env from CWD for YAML interpolation.
-    // The root .env has BASE_DIR/BACKUP_DIR but CWD is ui/, so we
-    // point docker compose to the root .env with --env-file.
-    const envFile = join(repoRoot, ".env");
+    // Write resolved env vars for docker-compose YAML interpolation.
+    // sudo strips env vars, and docker compose reads .env from CWD (ui/),
+    // so we write a .env.ui file with the values it needs.
+    const envFile = writeComposeEnvFile(envConfig);
 
     setPhase("building");
     const build = await shell("docker", ["compose", "--env-file", envFile, "build"], {
@@ -85,7 +98,6 @@ function UiStart() {
       await shell("docker", ["compose", "--env-file", envFile, "up", "-d"], {
         sudo: true,
         cwd: uiCwd,
-        env: { HOMELAB_ROOT: repoRoot },
       });
     } catch (err: any) {
       setError(`Failed to start container: ${err.stderr?.trim() || err.message || "unknown error"}`);
@@ -165,15 +177,14 @@ function UiStopDisplay() {
       return;
     }
 
-    const repoRoot = getProjectRoot();
-    const envFile = join(repoRoot, ".env");
+    const envConfig = await loadEnvConfig();
+    const envFile = writeComposeEnvFile(envConfig);
 
     setPhase("stopping");
     try {
       await shell("docker", ["compose", "--env-file", envFile, "down"], {
         sudo: true,
-        cwd: join(repoRoot, "ui"),
-        env: { HOMELAB_ROOT: repoRoot },
+        cwd: join(getProjectRoot(), "ui"),
       });
     } catch (err: any) {
       setError(`Failed to stop container: ${err.stderr?.trim() || err.message || "unknown error"}`);
@@ -181,7 +192,6 @@ function UiStopDisplay() {
     }
 
     try {
-      const envConfig = await loadEnvConfig();
       await regenerateCaddyfile(envConfig);
     } catch {
       // Caddyfile regeneration is non-critical
