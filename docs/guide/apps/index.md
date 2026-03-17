@@ -30,12 +30,13 @@ mithrandir log <app> [service] # View logs
 | [qBittorrent](./qbittorrent) | 8080 | BitTorrent client with web UI |
 | [Profilarr](./profilarr) | 6868 | Quality profile manager for Radarr and Sonarr |
 
-### Media: Music
+### Media: Audio
 
 | App | Port | Description |
 | --- | --- | --- |
 | [Navidrome](./navidrome) | 4533 | Modern music server and streamer |
 | [Lidarr](./lidarr) | 8686 | Music collection manager |
+| [Audiobookshelf](./audiobookshelf) | 13378 | Self-hosted audiobook and podcast server |
 
 ### Media: Pictures
 

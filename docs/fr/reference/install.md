@@ -31,9 +31,9 @@ Installer un groupe prédéfini d'applications en une seule commande. Les applic
 
 | Stack | Applications |
 | --- | --- |
-| `media` | qBittorrent, Prowlarr, Radarr, Sonarr, Bazarr, Seerr, Jellyfin, Navidrome, Lidarr, Immich |
+| `media` | qBittorrent, Prowlarr, Radarr, Sonarr, Bazarr, Seerr, Jellyfin, Navidrome, Lidarr, Audiobookshelf, Immich |
 | `media-movies-tv` | qBittorrent, Prowlarr, Radarr, Sonarr, Bazarr, Seerr, Jellyfin |
-| `media-music` | Navidrome, Lidarr, qBittorrent |
+| `media-audio` | Navidrome, Lidarr, Audiobookshelf, qBittorrent |
 | `media-pictures` | Immich |
 | `security` | Caddy (reverse proxy HTTPS), Pi-hole (DNS) |
 

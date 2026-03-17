@@ -57,6 +57,8 @@ export interface AppDefinition {
   restartPolicy?: string;
   /** Music dir mount for navidrome */
   mountMusicDir?: boolean;
+  /** Mount specific subdirectories of the shared data dir (BASE_DIR/data) into the container */
+  dataDirMounts?: Array<{ subpath: string; container: string; options?: string }>;
   /** Names of apps that conflict with this one (e.g. same port) */
   conflictsWith?: string[];
   /** Requires HTTPS/Caddy to be set up before installation */

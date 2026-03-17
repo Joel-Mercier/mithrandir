@@ -31,9 +31,9 @@ Install a predefined group of apps in one command. Already-installed apps are sk
 
 | Stack | Apps |
 | --- | --- |
-| `media` | qBittorrent, Prowlarr, Radarr, Sonarr, Bazarr, Seerr, Jellyfin, Navidrome, Lidarr, Immich |
+| `media` | qBittorrent, Prowlarr, Radarr, Sonarr, Bazarr, Seerr, Jellyfin, Navidrome, Lidarr, Audiobookshelf, Immich |
 | `media-movies-tv` | qBittorrent, Prowlarr, Radarr, Sonarr, Bazarr, Seerr, Jellyfin |
-| `media-music` | Navidrome, Lidarr, qBittorrent |
+| `media-audio` | Navidrome, Lidarr, Audiobookshelf, qBittorrent |
 | `media-pictures` | Immich |
 | `security` | Caddy (HTTPS reverse proxy), Pi-hole (DNS) |
 

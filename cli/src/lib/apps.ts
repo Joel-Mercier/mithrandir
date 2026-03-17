@@ -158,6 +158,24 @@ export const APP_REGISTRY: AppDefinition[] = [
     ],
   },
   {
+    name: "audiobookshelf",
+    displayName: "Audiobookshelf",
+    description: "Self-hosted audiobook and podcast server",
+    image: "ghcr.io/advplyr/audiobookshelf:latest",
+    port: 13378,
+    containerPort: 80,
+    configSubdir: "config",
+    needsDataDir: false,
+    dataDirMounts: [
+      { subpath: "media/audiobooks", container: "/audiobooks" },
+      { subpath: "media/podcasts", container: "/podcasts" },
+    ],
+    extraVolumes: [
+      { host: "metadata", container: "/metadata" },
+    ],
+    capacity: { performance: "low", storage: "medium", note: "Audiobook and podcast streaming, stores metadata" },
+  },
+  {
     name: "duckdns",
     displayName: "DuckDNS",
     description: "Free dynamic DNS service",
@@ -1258,8 +1276,8 @@ export const APP_STACKS: AppStack[] = [
   {
     label: "Media",
     value: "media",
-    description: "qBittorrent, Prowlarr, Radarr, Sonarr, Bazarr, Seerr, Jellyfin, Navidrome, Lidarr, Immich, Profilarr",
-    apps: ["qbittorrent", "prowlarr", "radarr", "sonarr", "bazarr", "seerr", "jellyfin", "navidrome", "lidarr", "immich", "profilarr"],
+    description: "qBittorrent, Prowlarr, Radarr, Sonarr, Bazarr, Seerr, Jellyfin, Navidrome, Lidarr, Audiobookshelf, Immich, Profilarr",
+    apps: ["qbittorrent", "prowlarr", "radarr", "sonarr", "bazarr", "seerr", "jellyfin", "navidrome", "lidarr", "audiobookshelf", "immich", "profilarr"],
   },
   {
     label: "Media: Movies & TV",
@@ -1268,10 +1286,10 @@ export const APP_STACKS: AppStack[] = [
     apps: ["qbittorrent", "prowlarr", "radarr", "sonarr", "bazarr", "seerr", "jellyfin", "profilarr"],
   },
   {
-    label: "Media: Music",
-    value: "media-music",
-    description: "Navidrome, Lidarr, qBittorrent",
-    apps: ["navidrome", "lidarr", "qbittorrent"],
+    label: "Media: Audio",
+    value: "media-audio",
+    description: "Navidrome, Lidarr, Audiobookshelf, qBittorrent",
+    apps: ["navidrome", "lidarr", "audiobookshelf", "qbittorrent"],
   },
   {
     label: "Media: Pictures",
@@ -1307,8 +1325,8 @@ export const APP_CATEGORIES: AppCategory[] = [
   {
     label: "Media",
     value: "media",
-    description: "qBittorrent, Prowlarr, Radarr, Sonarr, Bazarr, Seerr, Jellyfin, Navidrome, Lidarr, Immich, Profilarr",
-    apps: ["qbittorrent", "prowlarr", "radarr", "sonarr", "bazarr", "seerr", "jellyfin", "navidrome", "lidarr", "immich", "profilarr"],
+    description: "qBittorrent, Prowlarr, Radarr, Sonarr, Bazarr, Seerr, Jellyfin, Navidrome, Lidarr, Audiobookshelf, Immich, Profilarr",
+    apps: ["qbittorrent", "prowlarr", "radarr", "sonarr", "bazarr", "seerr", "jellyfin", "navidrome", "lidarr", "audiobookshelf", "immich", "profilarr"],
   },
   {
     label: "Automation",

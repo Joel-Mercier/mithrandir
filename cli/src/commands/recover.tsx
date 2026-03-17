@@ -161,6 +161,8 @@ async function runHeadlessRecover(autoYes: boolean): Promise<void> {
     `${dataDir}/media/movies`,
     `${dataDir}/media/tv`,
     `${dataDir}/media/music`,
+    `${dataDir}/media/audiobooks`,
+    `${dataDir}/media/podcasts`,
   ];
   for (const d of dirs) {
     await shell("mkdir", ["-p", d], { sudo: true });
@@ -639,6 +641,8 @@ function RecoverCommand({ autoYes }: { autoYes: boolean }) {
         `${dataDir}/media/movies`,
         `${dataDir}/media/tv`,
         `${dataDir}/media/music`,
+        `${dataDir}/media/audiobooks`,
+        `${dataDir}/media/podcasts`,
       ];
       for (const d of dataDirs) {
         await shell("mkdir", ["-p", d], { sudo: true });

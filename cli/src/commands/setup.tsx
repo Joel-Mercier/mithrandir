@@ -2149,6 +2149,14 @@ export async function writeComposeAndStart(
     }
   }
 
+  // Create data directory sub-mount directories
+  if (app.dataDirMounts) {
+    const dataDir = `${envConfig.BASE_DIR}/data`;
+    for (const mount of app.dataDirMounts) {
+      await shell("mkdir", ["-p", `${dataDir}/${mount.subpath}`], { sudo: true });
+    }
+  }
+
   // Create seed files (empty config files needed before first start)
   if (app.seedFiles) {
     for (const sf of app.seedFiles) {

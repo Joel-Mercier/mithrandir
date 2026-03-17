@@ -138,6 +138,9 @@ function GraphDisplay() {
         <Text>
           <AppName name="actualbudget" installedApps={i} />    <AppName name="sure" installedApps={i} />   <AppName name="affine" installedApps={i} />   <AppName name="n8n" installedApps={i} />   <AppName name="penpot" installedApps={i} />
         </Text>
+        <Text>
+          <AppName name="audiobookshelf" installedApps={i} />
+        </Text>
       </Box>
       <Text>{""}</Text>
     </Box>

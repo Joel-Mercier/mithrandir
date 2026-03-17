@@ -30,12 +30,13 @@ mithrandir log <app> [service] # Voir les logs
 | [qBittorrent](./qbittorrent) | 8080 | Client BitTorrent avec interface web |
 | [Profilarr](./profilarr) | 6868 | Gestionnaire de profils de qualité pour Radarr et Sonarr |
 
-### Média : Musique
+### Média : Audio
 
 | Application | Port | Description |
 | --- | --- | --- |
 | [Navidrome](./navidrome) | 4533 | Serveur et lecteur de musique moderne |
 | [Lidarr](./lidarr) | 8686 | Gestionnaire de collection musicale |
+| [Audiobookshelf](./audiobookshelf) | 13378 | Serveur de livres audio et podcasts auto-hébergé |
 
 ### Média : Photos
 

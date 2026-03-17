@@ -33,11 +33,12 @@ function guideSidebar(prefix = ""): DefaultTheme.SidebarItem[] {
               ],
             },
             {
-              text: prefix ? "Multimédia : Musique" : "Media: Music",
+              text: prefix ? "Multimédia : Audio" : "Media: Audio",
               collapsed: true,
               items: [
                 { text: "Navidrome", link: `${prefix}/guide/apps/navidrome` },
                 { text: "Lidarr", link: `${prefix}/guide/apps/lidarr` },
+                { text: "Audiobookshelf", link: `${prefix}/guide/apps/audiobookshelf` },
               ],
             },
             {

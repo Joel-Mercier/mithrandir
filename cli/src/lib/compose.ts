@@ -181,6 +181,14 @@ export function generateCompose(
     volumes.push(`${dataDir}/media/music:/music:ro`);
   }
 
+  // Data directory sub-mounts (specific subdirs of BASE_DIR/data)
+  if (app.dataDirMounts) {
+    for (const mount of app.dataDirMounts) {
+      const opts = mount.options ? `:${mount.options}` : "";
+      volumes.push(`${dataDir}/${mount.subpath}:${mount.container}${opts}`);
+    }
+  }
+
   // Extra volumes
   if (app.extraVolumes) {
     for (const vol of app.extraVolumes) {

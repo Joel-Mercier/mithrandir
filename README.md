@@ -282,7 +282,7 @@ mithrandir install <stack>
 ```
 Installs a predefined group of apps in one command. Already-installed apps are skipped. Companion apps are included automatically.
 
-Available stacks: `media`, `media-movies-tv`, `media-music`, `media-pictures`, `security`
+Available stacks: `media`, `media-movies-tv`, `media-audio`, `media-pictures`, `security`
 
 Examples:
 ```bash
@@ -409,8 +409,9 @@ Checks configuration correctness across three categories: System (.env file, Doc
 
 | App            | Port      | Description                                                                             |
 | -------------- | --------- | --------------------------------------------------------------------------------------- |
-| Actual Budget  | 5006      | Privacy-focused personal finance and budgeting app                                      |
-| AdventureLog   | 8015      | Travel planning and adventure journal                                                   |
+| Actual Budget    | 5006      | Privacy-focused personal finance and budgeting app                                      |
+| Audiobookshelf   | 13378     | Self-hosted audiobook and podcast server                                                |
+| AdventureLog     | 8015      | Travel planning and adventure journal                                                   |
 | AFFiNE         | 3010      | Privacy-focused knowledge base and workspace                                            |
 | Bazarr         | 6767      | Subtitle manager for Sonarr and Radarr                                                  |
 | Caddy          | —         | HTTPS reverse proxy with automatic certificates (hidden, installed via `install https`) |
