@@ -24,6 +24,9 @@ FROM oven/bun:1-alpine
 WORKDIR /app
 ENV NODE_ENV=production
 
+# Docker CLI for querying the host Docker daemon via mounted socket
+RUN apk add --no-cache docker-cli
+
 # Nitro bundles everything into .output except native/dynamic deps:
 # - execa: CLI shell.ts needs it for spawning Docker/system commands
 # - @libsql/client: native bindings loaded via dynamic require
