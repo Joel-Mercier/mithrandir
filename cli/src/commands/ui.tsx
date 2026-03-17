@@ -61,19 +61,17 @@ function UiStart() {
       return;
     }
 
-    // Env vars for docker-compose volume interpolation
-    const composeEnv = {
-      HOMELAB_ROOT: getProjectRoot(),
-      BASE_DIR: envConfig.BASE_DIR,
-      BACKUP_DIR: envConfig.BACKUP_DIR ?? "/backups",
-    };
     const uiCwd = join(getProjectRoot(), "ui");
+    const repoRoot = getProjectRoot();
+    // Docker Compose reads .env from CWD for YAML interpolation.
+    // The root .env has BASE_DIR/BACKUP_DIR but CWD is ui/, so we
+    // point docker compose to the root .env with --env-file.
+    const envFile = join(repoRoot, ".env");
 
     setPhase("building");
-    const build = await shell("docker", ["compose", "build"], {
+    const build = await shell("docker", ["compose", "--env-file", envFile, "build"], {
       sudo: true,
       cwd: uiCwd,
-      env: composeEnv,
       ignoreError: true,
     });
     if ((build.exitCode ?? 0) !== 0) {
@@ -84,10 +82,10 @@ function UiStart() {
 
     setPhase("starting");
     try {
-      await shell("docker", ["compose", "up", "-d"], {
+      await shell("docker", ["compose", "--env-file", envFile, "up", "-d"], {
         sudo: true,
         cwd: uiCwd,
-        env: composeEnv,
+        env: { HOMELAB_ROOT: repoRoot },
       });
     } catch (err: any) {
       setError(`Failed to start container: ${err.stderr?.trim() || err.message || "unknown error"}`);
@@ -167,19 +165,15 @@ function UiStopDisplay() {
       return;
     }
 
-    const envConfig = await loadEnvConfig();
-    const composeEnv = {
-      HOMELAB_ROOT: getProjectRoot(),
-      BASE_DIR: envConfig.BASE_DIR,
-      BACKUP_DIR: envConfig.BACKUP_DIR ?? "/backups",
-    };
+    const repoRoot = getProjectRoot();
+    const envFile = join(repoRoot, ".env");
 
     setPhase("stopping");
     try {
-      await shell("docker", ["compose", "down"], {
+      await shell("docker", ["compose", "--env-file", envFile, "down"], {
         sudo: true,
-        cwd: join(getProjectRoot(), "ui"),
-        env: composeEnv,
+        cwd: join(repoRoot, "ui"),
+        env: { HOMELAB_ROOT: repoRoot },
       });
     } catch (err: any) {
       setError(`Failed to stop container: ${err.stderr?.trim() || err.message || "unknown error"}`);
@@ -187,6 +181,7 @@ function UiStopDisplay() {
     }
 
     try {
+      const envConfig = await loadEnvConfig();
       await regenerateCaddyfile(envConfig);
     } catch {
       // Caddyfile regeneration is non-critical

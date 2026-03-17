@@ -18,7 +18,7 @@ services:
     volumes:
       - mithrandir-ui-data:/app/data
       - /var/run/docker.sock:/var/run/docker.sock
-      - ${HOMELAB_ROOT:-.}:/repo:ro
+      - ${HOMELAB_ROOT}:/repo:ro
       - ${BASE_DIR}:${BASE_DIR}:ro
       - ${BACKUP_DIR:-/backups}:${BACKUP_DIR:-/backups}:ro
     restart: unless-stopped
