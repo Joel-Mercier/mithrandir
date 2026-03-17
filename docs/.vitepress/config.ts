@@ -190,6 +190,7 @@ function referenceSidebar(prefix = ""): DefaultTheme.SidebarItem[] {
           items: [
             { text: "self-update", link: `${prefix}/reference/self-update` },
             { text: "version", link: `${prefix}/reference/version` },
+            { text: "ui", link: `${prefix}/reference/ui` },
             { text: "docs", link: `${prefix}/reference/docs` },
             { text: "completions", link: `${prefix}/reference/completions` },
           ],
