@@ -49,6 +49,7 @@ export function useAppDetail(appName: string) {
 	return useQuery({
 		queryKey: keys.appDetail(appName),
 		queryFn: () => fetchAppDetail({ data: { appName } }),
+		refetchInterval: 10_000,
 	});
 }
 

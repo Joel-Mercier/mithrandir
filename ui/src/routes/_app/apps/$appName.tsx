@@ -39,6 +39,7 @@ import type { AppStatus } from "#/lib/types";
 import {
 	useAppDetail,
 	useApps,
+	useConfig,
 	useStartApp,
 	useStopApp,
 	useRestartApp,
@@ -101,6 +102,7 @@ function AppDetailPage() {
 	const { appName } = Route.useParams();
 	const detailQuery = useAppDetail(appName);
 	const appsQuery = useApps();
+	const configQuery = useConfig();
 	const startAppMutation = useStartApp();
 	const stopAppMutation = useStopApp();
 	const restartAppMutation = useRestartApp();
@@ -151,6 +153,12 @@ function AppDetailPage() {
 		stopAppMutation.isPending ||
 		restartAppMutation.isPending;
 
+	const config = configQuery.data;
+	const appUrl =
+		config?.httpsEnabled && config.duckdnsDomain
+			? `https://${app.name}.${config.duckdnsDomain}`
+			: `http://${typeof window !== "undefined" ? window.location.hostname : "localhost"}:${app.port}`;
+
 	return (
 		<div className="mx-auto max-w-7xl px-4 py-8">
 			<Breadcrumbs />
@@ -174,7 +182,7 @@ function AppDetailPage() {
 							<Button
 								variant="outline"
 								size="sm"
-								className="gap-1.5"
+								className="cursor-pointer gap-1.5"
 								disabled={isMutating}
 								onClick={() => {
 									stopAppMutation.mutate(appName, {
@@ -191,7 +199,7 @@ function AppDetailPage() {
 							<Button
 								variant="outline"
 								size="sm"
-								className="gap-1.5"
+								className="cursor-pointer gap-1.5"
 								disabled={isMutating}
 								onClick={() => {
 									restartAppMutation.mutate(appName, {
@@ -208,7 +216,7 @@ function AppDetailPage() {
 							<Button
 								variant="outline"
 								size="sm"
-								className="gap-1.5"
+								className="cursor-pointer gap-1.5"
 								onClick={() =>
 									toast.info(
 										`Checking for updates to ${app.displayName}...`,
@@ -221,11 +229,11 @@ function AppDetailPage() {
 							<Button
 								variant="outline"
 								size="sm"
-								className="gap-1.5"
+								className="cursor-pointer gap-1.5"
 								asChild
 							>
 								<a
-									href={`http://localhost:${app.port}`}
+									href={appUrl}
 									target="_blank"
 									rel="noopener noreferrer"
 								>
@@ -239,7 +247,7 @@ function AppDetailPage() {
 							<Button
 								variant="outline"
 								size="sm"
-								className="gap-1.5"
+								className="cursor-pointer gap-1.5"
 								disabled={isMutating}
 								onClick={() => {
 									startAppMutation.mutate(appName, {
@@ -256,7 +264,7 @@ function AppDetailPage() {
 							<Button
 								variant="outline"
 								size="sm"
-								className="gap-1.5"
+								className="cursor-pointer gap-1.5"
 								onClick={() =>
 									toast.info(
 										`Checking for updates to ${app.displayName}...`,
@@ -271,7 +279,7 @@ function AppDetailPage() {
 					<Button
 						variant="outline"
 						size="sm"
-						className="gap-1.5 text-status-critical hover:bg-status-critical/10 hover:border-status-critical/30"
+						className="cursor-pointer gap-1.5 text-status-critical hover:bg-status-critical/10 hover:border-status-critical/30"
 						onClick={() => {
 							setEraseData(false);
 							setUninstallOpen(true);
@@ -367,8 +375,8 @@ function AppDetailPage() {
 								/>
 							</div>
 							<Separator />
-							<Row label="Network Rx">{detail.networkRx}</Row>
-							<Row label="Network Tx">{detail.networkTx}</Row>
+							<Row label="Net In">{detail.networkRx}</Row>
+							<Row label="Net Out">{detail.networkTx}</Row>
 						</CardContent>
 					</Card>
 				)}

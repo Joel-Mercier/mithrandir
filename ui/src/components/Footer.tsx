@@ -21,12 +21,12 @@ export default function Footer() {
 					</span>
 				)}
 				<div className="flex items-center gap-4">
-					<span className="cursor-not-allowed text-xs text-muted-foreground/50">
+					<a className="text-xs transition text-muted-foreground/50 hover:text-foreground" href="https://joel-mercier.github.io/mithrandir" target="_blank" rel="noreferrer">
 						Docs
-					</span>
-					<span className="cursor-not-allowed text-xs text-muted-foreground/50">
+					</a>
+					<a className="text-xs transition text-muted-foreground/50 hover:text-foreground" href="https://github.com/joel-mercier/mithrandir" target="_blank" rel="noreferrer">
 						GitHub
-					</span>
+					</a>
 				</div>
 			</div>
 		</footer>

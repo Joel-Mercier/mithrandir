@@ -5,6 +5,7 @@ import { getProjectRoot } from "./utils";
 import { loadEnvConfig, getBackupConfig } from "@mithrandir/cli/lib/config";
 import { shell } from "@mithrandir/cli/lib/shell";
 import { isBackupArchive, ENCRYPTED_EXT } from "@mithrandir/cli/lib/backup-utils";
+import { listDirs, listFiles } from "@mithrandir/cli/lib/rclone";
 import type { BackupStatus, BackupEntry } from "#/lib/types";
 
 export const fetchBackupStatus = createServerFn({ method: "GET" }).handler(
@@ -96,43 +97,12 @@ export const fetchBackupHistory = createServerFn({ method: "GET" }).handler(
     const remotes = backupConfig.RCLONE_REMOTES;
     for (const remote of remotes) {
       try {
-        // List date directories on remote
-        const lsdResult = await shell(
-          "rclone",
-          ["lsd", `${remote}:homelab-backups`],
-          { ignoreError: true, timeout: 30000 },
-        );
-        if (lsdResult.exitCode !== 0 || !lsdResult.stdout.trim()) continue;
-
-        // Parse rclone lsd output: "          -1 2025-01-01 00:00:00        -1 dirname"
-        const dirs = lsdResult.stdout
-          .trim()
-          .split("\n")
-          .map((line: string) => {
-            const parts = line.trim().split(/\s+/);
-            return parts[parts.length - 1];
-          })
-          .filter((name: string) => /^\d{4}-\d{2}-\d{2}$/.test(name))
-          .sort()
-          .reverse();
+        const dirs = (await listDirs(remote, "/backups/archive")).reverse();
 
         for (const date of dirs) {
           try {
-            // List files in date directory
-            const lsResult = await shell(
-              "rclone",
-              ["ls", `${remote}:homelab-backups/${date}`],
-              { ignoreError: true, timeout: 30000 },
-            );
-            if (lsResult.exitCode !== 0 || !lsResult.stdout.trim()) continue;
-
-            // Parse rclone ls output: "    <size> <filename>"
-            const files = lsResult.stdout
-              .trim()
-              .split("\n")
-              .map((line: string) => line.trim().split(/\s+/).slice(1).join(" "))
-              .filter((f: string) => f && isBackupArchive(f));
-
+            const allFiles = await listFiles(remote, `/backups/archive/${date}`);
+            const files = allFiles.filter(isBackupArchive);
             if (files.length === 0) continue;
 
             const encrypted = files.some((f: string) => f.endsWith(ENCRYPTED_EXT));
