@@ -8,4 +8,13 @@ services:
       - "4180:4180"
     env_file:
       - .env
+      - ../.env
+    environment:
+      - DB_FILE_NAME=file:/app/data/local.db
+      - BETTER_AUTH_URL=http://localhost:4180
+    volumes:
+      - mithrandir-ui-data:/app/data
     restart: unless-stopped
+
+volumes:
+  mithrandir-ui-data:

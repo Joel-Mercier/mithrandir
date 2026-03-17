@@ -6,13 +6,14 @@ import { nitro } from 'nitro/vite'
 import viteReact from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
-// CLI server-side deps that should never be bundled
-const serverExternal = [/^@mithrandir\/cli/, /^execa/]
+const isProduction = process.env.NODE_ENV === 'production'
 
 const config = defineConfig({
   plugins: [
     devtools(),
-    tsconfigPaths({ projects: ['./tsconfig.json'] }),
+    // Resolve path aliases from both UI and CLI tsconfigs so that
+    // @mithrandir/cli source files can be bundled directly
+    tsconfigPaths({ projects: ['./tsconfig.json', '../cli/tsconfig.json'] }),
     tailwindcss(),
     tanstackStart(),
     nitro({ preset: "bun" }),
@@ -22,18 +23,28 @@ const config = defineConfig({
     port: 3000,
   },
   ssr: {
-    external: ["execa", "@mithrandir/cli"],
+    // Bundle all deps into the server output for Docker (no node_modules needed)
+    // but only during production builds — dev needs normal CJS resolution
+    ...(isProduction ? { noExternal: true } : {}),
+    external: ["execa", "@libsql/client"],
   },
   build: {
     rollupOptions: {
-      external: [/^node:/, ...serverExternal],
+      external: [/^node:/],
     },
   },
   environments: {
-    client: {
+    ssr: {
       build: {
         rollupOptions: {
-          external: [/^node:/, ...serverExternal],
+          external: [/^node:/, "execa", /^@libsql\//],
+        },
+      },
+    },
+    nitro: {
+      build: {
+        rollupOptions: {
+          external: [/^node:/, "execa", /^@libsql\//],
         },
       },
     },

@@ -9,8 +9,21 @@ import { twoFactor } from "better-auth/plugins";
 import { haveIBeenPwned } from "better-auth/plugins"
 import { i18n } from "@better-auth/i18n"
 
+// Build trusted origins from BETTER_AUTH_URL + any configured HTTPS domain
+const trustedOrigins: string[] = []
+if (process.env.BETTER_AUTH_URL) {
+  trustedOrigins.push(process.env.BETTER_AUTH_URL)
+}
+if (process.env.DUCKDNS_SUBDOMAINS) {
+  const domain = process.env.DUCKDNS_SUBDOMAINS.split(",")[0]?.trim()
+  if (domain) trustedOrigins.push(`https://mithrandir.${domain}.duckdns.org`)
+}
+
 export const auth = betterAuth({
   appName: "Mithrandir",
+  trustedOrigins,
+  // Trust reverse proxies (Caddy, Docker network) for IP forwarding
+  trustedProxies: ["127.0.0.1", "::1", "172.16.0.0/12", "10.0.0.0/8", "192.168.0.0/16"],
   database: drizzleAdapter(db, {
     provider: "sqlite",
     schema,
