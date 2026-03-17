@@ -25,7 +25,9 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 # Docker CLI for querying the host Docker daemon via mounted socket
-RUN apk add --no-cache docker-cli
+# Create docker group matching host GID so dockerNeedsSudo() detects access
+RUN apk add --no-cache docker-cli \
+    && addgroup -g 992 docker
 
 # Nitro bundles everything into .output except native/dynamic deps:
 # - execa: CLI shell.ts needs it for spawning Docker/system commands
