@@ -188,10 +188,11 @@ export const fetchVersion = createServerFn({ method: "GET" }).handler(
     // Get git commit
     let gitCommit = "unknown";
     const gitResult = await shell("git", ["rev-parse", "--short", "HEAD"], {
+      cwd: projectRoot,
       ignoreError: true,
       timeout: 5000,
     });
-    if (gitResult.exitCode === 0) {
+    if (gitResult.exitCode === 0 && gitResult.stdout.trim()) {
       gitCommit = gitResult.stdout.trim();
     }
 
@@ -200,7 +201,7 @@ export const fetchVersion = createServerFn({ method: "GET" }).handler(
     const dateResult = await shell(
       "git",
       ["log", "-1", "--format=%ci"],
-      { ignoreError: true, timeout: 5000 },
+      { cwd: projectRoot, ignoreError: true, timeout: 5000 },
     );
     if (dateResult.exitCode === 0 && dateResult.stdout.trim()) {
       buildDate = dateResult.stdout.trim().split(" ")[0];

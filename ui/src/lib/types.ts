@@ -22,6 +22,7 @@ export interface DashboardApp {
 	status: AppStatus;
 	category: AppCategory;
 	uptime: string;
+	hidden?: boolean;
 	website?: string;
 	github?: string;
 }

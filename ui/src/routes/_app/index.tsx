@@ -112,9 +112,9 @@ function Dashboard() {
 
 				{appsQuery.isPending ? (
 					<AppsGridSkeleton />
-				) : appsQuery.data && appsQuery.data.filter((a) => a.status !== "available").length > 0 ? (
+				) : appsQuery.data && appsQuery.data.filter((a) => a.status !== "available" && !a.hidden).length > 0 ? (
 					<AppsGrid
-						apps={appsQuery.data.filter((a) => a.status !== "available")}
+						apps={appsQuery.data.filter((a) => a.status !== "available" && !a.hidden)}
 					/>
 				) : !appsQuery.isError ? (
 					<div className="col-span-full py-8 text-center text-sm text-muted-foreground">

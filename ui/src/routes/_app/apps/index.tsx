@@ -65,7 +65,7 @@ function AppsPage() {
 		return matchesSearch && matchesCategory;
 	};
 
-	const allApps = appsQuery.data ?? [];
+	const allApps = (appsQuery.data ?? []).filter((a) => !a.hidden);
 	const installedApps = allApps.filter(
 		(app) => app.status !== "available" && applyFilters(app),
 	);
@@ -160,7 +160,7 @@ function AppsPage() {
 							key={cat}
 							variant={category === cat ? "default" : "outline"}
 							size="sm"
-							onClick={() => setCategory(cat)}
+							onClick={() => setCategory(category === cat ? "all" : cat)}
 							className="capitalize"
 						>
 							{cat}

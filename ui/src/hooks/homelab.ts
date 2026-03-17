@@ -18,6 +18,8 @@ import {
 	fetchBackupStatus,
 	fetchBackupHistory,
 	triggerBackup,
+	verifyBackup,
+	deleteBackup,
 } from "#/lib/server/backup";
 import type { SystemConfig } from "#/lib/types";
 
@@ -39,6 +41,7 @@ export function useApps() {
 	return useQuery({
 		queryKey: keys.apps,
 		queryFn: () => fetchApps(),
+		refetchInterval: 30_000,
 	});
 }
 
@@ -53,6 +56,7 @@ export function useSystemStatus() {
 	return useQuery({
 		queryKey: keys.systemStatus,
 		queryFn: () => fetchSystemStatus(),
+		refetchInterval: 30_000,
 	});
 }
 
@@ -74,6 +78,7 @@ export function useResources() {
 	return useQuery({
 		queryKey: keys.resources,
 		queryFn: () => fetchResources(),
+		refetchInterval: 10_000,
 	});
 }
 
@@ -81,6 +86,7 @@ export function useBackupStatus() {
 	return useQuery({
 		queryKey: keys.backupStatus,
 		queryFn: () => fetchBackupStatus(),
+		refetchInterval: 60_000,
 	});
 }
 
@@ -140,6 +146,29 @@ export function useTriggerBackup() {
 	const queryClient = useQueryClient();
 	return useMutation({
 		mutationFn: () => triggerBackup(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: keys.backupStatus });
+			queryClient.invalidateQueries({ queryKey: keys.backupHistory });
+		},
+	});
+}
+
+export function useVerifyBackup() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (params: { date: string; remote?: string }) =>
+			verifyBackup({ data: params }),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: keys.backupHistory });
+		},
+	});
+}
+
+export function useDeleteBackup() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (params: { date: string; location: "local" | "remote" }) =>
+			deleteBackup({ data: params }),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: keys.backupStatus });
 			queryClient.invalidateQueries({ queryKey: keys.backupHistory });

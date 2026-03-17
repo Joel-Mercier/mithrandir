@@ -8,7 +8,7 @@ import {
 	Square,
 	Trash2,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import Breadcrumbs from "#/components/Breadcrumbs";
 import { Row } from "#/components/Row";
@@ -107,6 +107,11 @@ function AppDetailPage() {
 
 	const [uninstallOpen, setUninstallOpen] = useState(false);
 	const [eraseData, setEraseData] = useState(false);
+	const logEndRef = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		logEndRef.current?.scrollIntoView();
+	}, [detailQuery.data?.logs]);
 
 	if (detailQuery.isPending || appsQuery.isPending) {
 		return <DetailSkeleton />;
@@ -441,6 +446,7 @@ function AppDetailPage() {
 								<pre className="font-mono-data text-xs leading-relaxed">
 									{detail.logs.join("\n")}
 								</pre>
+								<div ref={logEndRef} />
 							</ScrollArea>
 						</CardContent>
 					</Card>

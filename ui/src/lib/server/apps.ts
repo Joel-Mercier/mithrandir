@@ -40,7 +40,6 @@ export const fetchApps = createServerFn({ method: "GET" }).handler(
     const apps: DashboardApp[] = [];
 
     for (const app of APP_REGISTRY) {
-      if (app.hidden) continue;
 
       const composePath = getComposePath(app, baseDir);
       const installed = existsSync(composePath);
@@ -78,6 +77,7 @@ export const fetchApps = createServerFn({ method: "GET" }).handler(
         status,
         category: mapCategory(app),
         uptime,
+        hidden: app.hidden ?? false,
       });
     }
 

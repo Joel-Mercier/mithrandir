@@ -185,7 +185,7 @@ function DependencyGraphPage() {
 									</Badge>
 								</div>
 								<div className="flex flex-wrap items-center gap-y-2">
-									<AppNode name="jellyseerr" label="Seerr" installedNames={installedNames} />
+									<AppNode name="seerr" label="Seerr" installedNames={installedNames} />
 									<Arrow />
 									<AppNode name="radarr" label="Radarr" installedNames={installedNames} />
 									<span className="mx-1 text-muted-foreground">,</span>

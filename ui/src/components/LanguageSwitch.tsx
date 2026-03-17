@@ -11,9 +11,6 @@ import {
 const languages = [
 	{ code: "en", label: "English" },
 	{ code: "fr", label: "Français" },
-	{ code: "es", label: "Español" },
-	{ code: "de", label: "Deutsch" },
-	{ code: "ja", label: "日本語" },
 ] as const;
 
 type LangCode = (typeof languages)[number]["code"];
