@@ -12,8 +12,11 @@ services:
     environment:
       - DB_FILE_NAME=file:/app/data/local.db
       - BETTER_AUTH_URL=http://localhost:4180
+    group_add:
+      - "992"
     volumes:
       - mithrandir-ui-data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock
     restart: unless-stopped
 
 volumes:

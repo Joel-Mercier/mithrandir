@@ -74,8 +74,17 @@ function UiStart() {
     addStep("Build UI image", "done");
 
     setPhase("starting");
-    await composeUp(composePath);
-    await regenerateCaddyfile(envConfig);
+    try {
+      await composeUp(composePath);
+    } catch (err: any) {
+      setError(`Failed to start container: ${err.stderr?.trim() || err.message || "unknown error"}`);
+      return;
+    }
+    try {
+      await regenerateCaddyfile(envConfig);
+    } catch {
+      // Caddyfile regeneration is non-critical
+    }
     addStep("Start container", "done");
 
     setPhase("done");
@@ -146,10 +155,19 @@ function UiStopDisplay() {
     }
 
     setPhase("stopping");
-    await composeDown(composePath);
+    try {
+      await composeDown(composePath);
+    } catch (err: any) {
+      setError(`Failed to stop container: ${err.stderr?.trim() || err.message || "unknown error"}`);
+      return;
+    }
 
     const envConfig = await loadEnvConfig();
-    await regenerateCaddyfile(envConfig);
+    try {
+      await regenerateCaddyfile(envConfig);
+    } catch {
+      // Caddyfile regeneration is non-critical
+    }
 
     setPhase("done");
     const t = setTimeout(() => exit(), 500);
