@@ -61,10 +61,19 @@ function UiStart() {
       return;
     }
 
+    // Env vars for docker-compose volume interpolation
+    const composeEnv = {
+      HOMELAB_ROOT: getProjectRoot(),
+      BASE_DIR: envConfig.BASE_DIR,
+      BACKUP_DIR: envConfig.BACKUP_DIR ?? "/backups",
+    };
+    const uiCwd = join(getProjectRoot(), "ui");
+
     setPhase("building");
     const build = await shell("docker", ["compose", "build"], {
       sudo: true,
-      cwd: join(getProjectRoot(), "ui"),
+      cwd: uiCwd,
+      env: composeEnv,
       ignoreError: true,
     });
     if ((build.exitCode ?? 0) !== 0) {
@@ -75,7 +84,11 @@ function UiStart() {
 
     setPhase("starting");
     try {
-      await composeUp(composePath);
+      await shell("docker", ["compose", "up", "-d"], {
+        sudo: true,
+        cwd: uiCwd,
+        env: composeEnv,
+      });
     } catch (err: any) {
       setError(`Failed to start container: ${err.stderr?.trim() || err.message || "unknown error"}`);
       return;

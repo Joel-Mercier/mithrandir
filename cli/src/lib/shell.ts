@@ -72,7 +72,7 @@ export async function shell(
 
   const execaOpts: Record<string, unknown> = { reject: !ignoreError };
   if (cwd) execaOpts.cwd = cwd;
-  if (env) execaOpts.env = env;
+  if (env) execaOpts.env = { ...process.env, ...env };
   if (timeout) execaOpts.timeout = timeout;
 
   try {
