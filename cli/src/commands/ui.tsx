@@ -167,15 +167,25 @@ function UiStopDisplay() {
       return;
     }
 
+    const envConfig = await loadEnvConfig();
+    const composeEnv = {
+      HOMELAB_ROOT: getProjectRoot(),
+      BASE_DIR: envConfig.BASE_DIR,
+      BACKUP_DIR: envConfig.BACKUP_DIR ?? "/backups",
+    };
+
     setPhase("stopping");
     try {
-      await composeDown(composePath);
+      await shell("docker", ["compose", "down"], {
+        sudo: true,
+        cwd: join(getProjectRoot(), "ui"),
+        env: composeEnv,
+      });
     } catch (err: any) {
       setError(`Failed to stop container: ${err.stderr?.trim() || err.message || "unknown error"}`);
       return;
     }
 
-    const envConfig = await loadEnvConfig();
     try {
       await regenerateCaddyfile(envConfig);
     } catch {
