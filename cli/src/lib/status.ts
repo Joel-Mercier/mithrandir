@@ -8,6 +8,7 @@ import {
 import { isDockerInstalled, isContainerRunning } from "@/lib/docker.js";
 import { shell } from "@/lib/shell.js";
 import { isTimerActive, hasSystemd } from "@/lib/systemd.js";
+import { isUiServiceActive } from "@/lib/systemd-ui.js";
 import { getLocalIp } from "@/lib/distro.js";
 import { getDuckDnsDomain } from "@/lib/caddy.js";
 import { findArchiveFile } from "@/lib/backup-utils.js";
@@ -160,8 +161,8 @@ export async function gatherSystemInfo(projectRoot?: string): Promise<SystemInfo
       : `http://${localIp}:4173`;
   }
 
-  // Check UI container
-  const uiRunning = dockerRunning ? await isContainerRunning("mithrandir-ui") : false;
+  // Check UI service (runs natively via systemd, not Docker)
+  const uiRunning = systemdAvailable ? await isUiServiceActive() : false;
   let uiUrl: string | null = null;
   if (uiRunning) {
     uiUrl = httpsEnabled && primaryDomain

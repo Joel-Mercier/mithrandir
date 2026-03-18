@@ -6,6 +6,7 @@ import { existsSync } from "fs";
 import { join } from "path";
 import { shell } from "@/lib/shell.js";
 import { getProjectRoot } from "@/lib/config.js";
+import { isUiServiceActive, restartUiService } from "@/lib/systemd-ui.js";
 import { Header } from "@/components/Header.js";
 import { AppStatus } from "@/components/AppStatus.js";
 
@@ -132,10 +133,7 @@ function SelfUpdateCommand() {
       }
 
       setCurrentLabel("Installing dependencies...");
-      // Use --ignore-scripts to skip native addon compilation (e.g. better-sqlite3
-      // in the UI workspace) which can hang on low-power servers. The CLI has no
-      // native deps so this is safe.
-      const install = await shell(bunPath, ["install", "--ignore-scripts"], { cwd: root, ignoreError: true, ...userOpts });
+      const install = await shell(bunPath, ["install"], { cwd: root, ignoreError: true, ...userOpts });
       if (install.exitCode !== 0) {
         setError(`bun install failed:\n${install.stderr}`);
         setPhase("error");
@@ -155,9 +153,30 @@ function SelfUpdateCommand() {
         setPhase("error");
         return;
       }
-      addStep({ name: "Build", status: "done", message: "cli/dist/mithrandir.js rebuilt" });
+      addStep({ name: "Build CLI", status: "done", message: "cli/dist/mithrandir.js rebuilt" });
 
-      // Step 5: Always re-create symlink to ensure it points to the correct path
+      // Step 5: Rebuild UI
+      setCurrentLabel("Building UI...");
+      const uiBuild = await shell(bunPath, ["run", "ui:build"], { cwd: root, ignoreError: true, ...userOpts });
+      if (uiBuild.exitCode !== 0) {
+        addStep({ name: "Build UI", status: "skipped", message: "UI build failed (non-critical)" });
+      } else {
+        addStep({ name: "Build UI", status: "done", message: "UI rebuilt" });
+
+        // Restart UI service if it was running
+        const uiWasActive = await isUiServiceActive();
+        if (uiWasActive) {
+          setCurrentLabel("Restarting UI service...");
+          try {
+            await restartUiService();
+            addStep({ name: "UI service", status: "done", message: "Restarted" });
+          } catch {
+            addStep({ name: "UI service", status: "skipped", message: "Restart failed (non-critical)" });
+          }
+        }
+      }
+
+      // Step 6: Always re-create symlink to ensure it points to the correct path
       // (handles architecture changes like dist/ → cli/dist/)
       setCurrentLabel("Installing mithrandir command...");
       await shell("ln", ["-sf", distFile, "/usr/local/bin/mithrandir"], { sudo: true });

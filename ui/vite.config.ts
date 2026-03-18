@@ -6,8 +6,6 @@ import { nitro } from 'nitro/vite'
 import viteReact from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
-const isProduction = process.env.NODE_ENV === 'production'
-
 const config = defineConfig({
   plugins: [
     devtools(),
@@ -23,9 +21,6 @@ const config = defineConfig({
     port: 3000,
   },
   ssr: {
-    // Bundle all deps into the server output for Docker (no node_modules needed)
-    // but only during production builds — dev needs normal CJS resolution
-    ...(isProduction ? { noExternal: true } : {}),
     external: ["execa", "@libsql/client"],
   },
   build: {

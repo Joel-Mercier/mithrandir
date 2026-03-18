@@ -104,6 +104,29 @@ sudo -u "$REAL_USER" "$BUN_INSTALL/bin/bun" run cli:build
 log "Installing mithrandir command..."
 sudo ln -sf "$SCRIPT_DIR/cli/dist/mithrandir.js" /usr/local/bin/mithrandir
 
+# Build the UI
+log "Building UI..."
+sudo -u "$REAL_USER" "$BUN_INSTALL/bin/bun" run ui:build
+
+# Create UI data directory
+mkdir -p "$SCRIPT_DIR/ui/data"
+chown "$REAL_USER:" "$SCRIPT_DIR/ui/data"
+
+# Write default ui/.env.local if not exists
+if [[ ! -f "$SCRIPT_DIR/ui/.env.local" ]]; then
+  SECRET=$(openssl rand -hex 32)
+  cat > "$SCRIPT_DIR/ui/.env.local" <<UIENV
+BETTER_AUTH_SECRET=$SECRET
+BETTER_AUTH_URL=http://localhost:4180
+DB_FILE_NAME=file:$SCRIPT_DIR/ui/data/local.db
+UIENV
+  chown "$REAL_USER:" "$SCRIPT_DIR/ui/.env.local"
+fi
+
+# Start the UI dashboard
+log "Starting UI dashboard..."
+/usr/local/bin/mithrandir ui
+
 log ""
 log "Setup complete! Run the CLI with:"
 log "  mithrandir setup"

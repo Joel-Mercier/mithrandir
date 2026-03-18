@@ -2,6 +2,7 @@ import { existsSync } from "fs";
 import { APP_REGISTRY, getComposePath } from "@/lib/apps.js";
 import { PIHOLE_HTTPS_PORT } from "@/lib/compose.js";
 import { isContainerRunning } from "@/lib/docker.js";
+import { isUiServiceActive } from "@/lib/systemd-ui.js";
 import { shell } from "@/lib/shell.js";
 import type { AppDefinition, EnvConfig } from "@/types.js";
 
@@ -227,7 +228,7 @@ export async function regenerateCaddyfile(
   const baseDir = envConfig.BASE_DIR;
   const installedApps = detectInstalledApps(baseDir);
   const includeDocs = await isContainerRunning("mithrandir-docs");
-  const includeUi = await isContainerRunning("mithrandir-ui");
+  const includeUi = await isUiServiceActive();
   const caddyfile = generateCaddyfile(installedApps, envConfig, { includeDocs, includeUi });
 
   const caddyDir = `${baseDir}/caddy`;

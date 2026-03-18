@@ -18,6 +18,10 @@ cli/dist/
 result
 cli/integration-tests/result
 
+# UI
+ui/data/
+ui/.output/
+
 # Vitepress
 /docs/.vitepress/cache/
 /docs/.vitepress/dist/

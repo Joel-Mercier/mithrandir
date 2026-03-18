@@ -2,32 +2,39 @@ import { useState, useEffect } from "react";
 import { Box, render, Text, useApp } from "ink";
 import Spinner from "ink-spinner";
 import { StatusMessage } from "@inkjs/ui";
+import { existsSync, mkdirSync, writeFileSync, readFileSync } from "fs";
 import { join } from "path";
-import { existsSync, writeFileSync } from "fs";
+import { randomBytes } from "crypto";
 import { getProjectRoot, loadEnvConfig } from "@/lib/config.js";
-import { isContainerRunning, composeUp, composeDown } from "@/lib/docker.js";
 import { getDuckDnsDomain, regenerateCaddyfile } from "@/lib/caddy.js";
 import { getLocalIp } from "@/lib/distro.js";
 import { shell } from "@/lib/shell.js";
+import { isUiServiceActive, installUiService, restartUiService } from "@/lib/systemd-ui.js";
 import { Header } from "@/components/Header.js";
 import { AppStatus } from "@/components/AppStatus.js";
 import type { EnvConfig } from "@/types.js";
 
-/** Write a .env.ui file with resolved values for docker-compose interpolation */
-function writeComposeEnvFile(envConfig: EnvConfig): string {
-  const repoRoot = getProjectRoot();
-  const envFilePath = join(repoRoot, "ui", ".env.ui");
+/** Ensure ui/.env.local exists with required secrets */
+function ensureEnvLocal(repoRoot: string): void {
+  const envLocalPath = join(repoRoot, "ui", ".env.local");
+  if (existsSync(envLocalPath)) return;
+
+  const secret = randomBytes(32).toString("hex");
+  const dbPath = join(repoRoot, "ui", "data", "local.db");
   const lines = [
-    `HOMELAB_ROOT=${repoRoot}`,
-    `BASE_DIR=${envConfig.BASE_DIR}`,
-    `BACKUP_DIR=${envConfig.BACKUP_DIR ?? "/backups"}`,
+    `BETTER_AUTH_SECRET=${secret}`,
+    `BETTER_AUTH_URL=http://localhost:4180`,
+    `DB_FILE_NAME=file:${dbPath}`,
   ];
-  writeFileSync(envFilePath, lines.join("\n") + "\n");
-  return envFilePath;
+  writeFileSync(envLocalPath, lines.join("\n") + "\n");
 }
 
-function getUiComposePath(): string {
-  return join(getProjectRoot(), "ui", "docker-compose.yml");
+/** Ensure ui/data/ directory exists */
+function ensureDataDir(repoRoot: string): void {
+  const dataDir = join(repoRoot, "ui", "data");
+  if (!existsSync(dataDir)) {
+    mkdirSync(dataDir, { recursive: true });
+  }
 }
 
 function getUiUrl(envConfig: { ENABLE_HTTPS?: string; DUCKDNS_SUBDOMAINS?: string }, localIp: string): string {
@@ -54,20 +61,14 @@ function UiStart() {
   }, []);
 
   async function run() {
-    const composePath = getUiComposePath();
-    if (!existsSync(composePath)) {
-      setError("ui/docker-compose.yml not found. Is the repo intact?");
-      return;
-    }
-
+    const repoRoot = getProjectRoot();
     const envConfig = await loadEnvConfig();
     const localIp = await getLocalIp();
     const uiUrl = getUiUrl(envConfig, localIp);
     setUrl(uiUrl);
 
-    const running = await isContainerRunning("mithrandir-ui");
+    const running = await isUiServiceActive();
     if (running) {
-      setUrl(uiUrl);
       setPhase("done");
       addStep("Already running", "done");
       const t = setTimeout(() => exit(), 100);
@@ -75,40 +76,42 @@ function UiStart() {
       return;
     }
 
-    const uiCwd = join(getProjectRoot(), "ui");
-    // Write resolved env vars for docker-compose YAML interpolation.
-    // sudo strips env vars, and docker compose reads .env from CWD (ui/),
-    // so we write a .env.ui file with the values it needs.
-    const envFile = writeComposeEnvFile(envConfig);
+    // Ensure data dir and env file exist
+    ensureDataDir(repoRoot);
+    ensureEnvLocal(repoRoot);
 
-    setPhase("building");
-    const build = await shell("docker", ["compose", "--env-file", envFile, "build"], {
-      sudo: true,
-      cwd: uiCwd,
-      ignoreError: true,
-    });
-    if ((build.exitCode ?? 0) !== 0) {
-      setError(`Build failed: ${build.stderr?.trim() || "unknown error"}`);
-      return;
+    // Build the UI if .output doesn't exist
+    const outputDir = join(repoRoot, "ui", ".output");
+    if (!existsSync(outputDir)) {
+      setPhase("building");
+      const sudoUser = process.env.SUDO_USER;
+      const userOpts = sudoUser ? { user: sudoUser } : {};
+      const build = await shell("bun", ["run", "ui:build"], {
+        cwd: repoRoot,
+        ignoreError: true,
+        ...userOpts,
+      });
+      if ((build.exitCode ?? 0) !== 0) {
+        setError(`Build failed: ${build.stderr?.trim() || "unknown error"}`);
+        return;
+      }
+      addStep("Build UI", "done");
     }
-    addStep("Build UI image", "done");
 
     setPhase("starting");
     try {
-      await shell("docker", ["compose", "--env-file", envFile, "up", "-d"], {
-        sudo: true,
-        cwd: uiCwd,
-      });
+      await installUiService(repoRoot);
     } catch (err: any) {
-      setError(`Failed to start container: ${err.stderr?.trim() || err.message || "unknown error"}`);
+      setError(`Failed to start service: ${err.stderr?.trim() || err.message || "unknown error"}`);
       return;
     }
+    addStep("Start UI service", "done");
+
     try {
       await regenerateCaddyfile(envConfig);
     } catch {
       // Caddyfile regeneration is non-critical
     }
-    addStep("Start container", "done");
 
     setPhase("done");
     const t = setTimeout(() => exit(), 500);
@@ -137,7 +140,7 @@ function UiStart() {
           <Text color="green">
             <Spinner type="dots" />
           </Text>
-          {" "}{phase === "building" ? "Building UI..." : phase === "starting" ? "Starting container..." : "Initializing..."}
+          {" "}{phase === "building" ? "Building UI..." : phase === "starting" ? "Starting service..." : "Initializing..."}
         </Text>
       )}
 
@@ -163,13 +166,7 @@ function UiStopDisplay() {
   }, []);
 
   async function run() {
-    const composePath = getUiComposePath();
-    if (!existsSync(composePath)) {
-      setError("ui/docker-compose.yml not found.");
-      return;
-    }
-
-    const running = await isContainerRunning("mithrandir-ui");
+    const running = await isUiServiceActive();
     if (!running) {
       setInfo("UI is not running.");
       const t = setTimeout(() => exit(), 100);
@@ -178,16 +175,12 @@ function UiStopDisplay() {
     }
 
     const envConfig = await loadEnvConfig();
-    const envFile = writeComposeEnvFile(envConfig);
 
     setPhase("stopping");
     try {
-      await shell("docker", ["compose", "--env-file", envFile, "down"], {
-        sudo: true,
-        cwd: join(getProjectRoot(), "ui"),
-      });
+      await shell("systemctl", ["stop", "mithrandir-ui"], { sudo: true });
     } catch (err: any) {
-      setError(`Failed to stop container: ${err.stderr?.trim() || err.message || "unknown error"}`);
+      setError(`Failed to stop service: ${err.stderr?.trim() || err.message || "unknown error"}`);
       return;
     }
 
@@ -225,7 +218,7 @@ function UiStopDisplay() {
       <Header title="UI" />
 
       {phase === "done" && (
-        <AppStatus name="Stop UI container" status="done" />
+        <AppStatus name="Stop UI service" status="done" />
       )}
 
       {(phase === "init" || phase === "stopping") && (
