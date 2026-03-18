@@ -23,7 +23,6 @@ ExecStartPre=/usr/local/bin/bun run scripts/migrate.ts
 ExecStart=/usr/local/bin/bun run .output/server/index.mjs
 Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin"
 Environment="NODE_ENV=production"
-Environment="NODE_PATH=${repoRoot}/node_modules"
 Environment="PORT=4180"
 EnvironmentFile=${repoRoot}/.env
 EnvironmentFile=${repoRoot}/ui/.env.local
