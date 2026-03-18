@@ -21,7 +21,7 @@ const config = defineConfig({
     port: 3000,
   },
   ssr: {
-    external: ["execa", "@libsql/client"],
+    external: ["@libsql/client"],
   },
   build: {
     rollupOptions: {
@@ -32,14 +32,14 @@ const config = defineConfig({
     ssr: {
       build: {
         rollupOptions: {
-          external: [/^node:/, "execa", /^@libsql\//],
+          external: [/^node:/, /^@libsql\//],
         },
       },
     },
     nitro: {
       build: {
         rollupOptions: {
-          external: [/^node:/, "execa", /^@libsql\//],
+          external: [/^node:/, /^@libsql\//],
         },
       },
     },
