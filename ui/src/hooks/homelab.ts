@@ -5,6 +5,8 @@ import {
 	startApp,
 	stopApp,
 	restartApp,
+	installApp,
+	uninstallApp,
 } from "#/lib/server/apps";
 import {
 	fetchSystemStatus,
@@ -138,6 +140,33 @@ export function useRestartApp() {
 		onSuccess: (_data, appName) => {
 			queryClient.invalidateQueries({ queryKey: keys.apps });
 			queryClient.invalidateQueries({ queryKey: keys.appDetail(appName) });
+			queryClient.invalidateQueries({ queryKey: keys.systemStatus });
+		},
+	});
+}
+
+export function useInstallApp() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (appName: string) => installApp({ data: { appName } }),
+		onSuccess: (_data, appName) => {
+			queryClient.invalidateQueries({ queryKey: keys.apps });
+			queryClient.invalidateQueries({ queryKey: keys.appDetail(appName) });
+			queryClient.invalidateQueries({ queryKey: keys.systemStatus });
+		},
+	});
+}
+
+export function useUninstallApp() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (params: { appName: string; eraseData?: boolean }) =>
+			uninstallApp({ data: params }),
+		onSuccess: (_data, params) => {
+			queryClient.invalidateQueries({ queryKey: keys.apps });
+			queryClient.invalidateQueries({
+				queryKey: keys.appDetail(params.appName),
+			});
 			queryClient.invalidateQueries({ queryKey: keys.systemStatus });
 		},
 	});

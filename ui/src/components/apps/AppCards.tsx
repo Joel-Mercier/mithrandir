@@ -1,8 +1,11 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowUpRight, Download } from "lucide-react";
+import { toast } from "sonner";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
+import { Spinner } from "#/components/ui/spinner";
+import { useInstallApp } from "#/hooks/homelab";
 import type { AppStatus, DashboardApp } from "#/lib/types";
 
 export const statusDot: Record<AppStatus, string> = {
@@ -50,6 +53,8 @@ export function AppListCard({ app }: { app: DashboardApp }) {
 }
 
 export function AvailableAppCard({ app }: { app: DashboardApp }) {
+	const installMutation = useInstallApp();
+
 	return (
 		<Link to="/apps/$appName" params={{ appName: app.name }}>
 			<Card className="group border-dashed">
@@ -78,13 +83,35 @@ export function AvailableAppCard({ app }: { app: DashboardApp }) {
 						variant="outline"
 						size="sm"
 						className="w-full gap-1.5"
+						disabled={installMutation.isPending}
 						onClick={(e) => {
 							e.preventDefault();
 							e.stopPropagation();
+							installMutation.mutate(app.name, {
+								onSuccess: (result) => {
+									if (result.success) {
+										toast.success(
+											`${app.displayName} installed successfully.`,
+										);
+									} else {
+										toast.error(
+											`Install finished with errors: ${result.output.slice(0, 200)}`,
+										);
+									}
+								},
+								onError: (err) =>
+									toast.error(
+										`Failed to install ${app.displayName}: ${err.message}`,
+									),
+							});
 						}}
 					>
-						<Download className="h-3.5 w-3.5" />
-						Install
+						{installMutation.isPending ? (
+							<Spinner size="sm" />
+						) : (
+							<Download className="h-3.5 w-3.5" />
+						)}
+						{installMutation.isPending ? "Installing..." : "Install"}
 					</Button>
 				</CardContent>
 			</Card>

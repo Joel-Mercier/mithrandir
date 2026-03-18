@@ -6,6 +6,8 @@ import { ExternalLinks } from "#/components/apps/ExternalLinks";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
+import { Spinner } from "#/components/ui/spinner";
+import { useInstallApp } from "#/hooks/homelab";
 import type { AppStatus } from "#/lib/types";
 
 export function AvailableDetailPage({
@@ -22,6 +24,8 @@ export function AvailableDetailPage({
 		github?: string;
 	};
 }) {
+	const installMutation = useInstallApp();
+
 	return (
 		<div className="mx-auto max-w-7xl px-4 py-8">
 			<Breadcrumbs />
@@ -45,10 +49,31 @@ export function AvailableDetailPage({
 				<Button
 					size="sm"
 					className="gap-1.5"
-					onClick={() => toast.info(`Installing ${app.displayName}...`)}
+					disabled={installMutation.isPending}
+					onClick={() => {
+						installMutation.mutate(app.name, {
+							onSuccess: (result) => {
+								if (result.success) {
+									toast.success(`${app.displayName} installed successfully.`);
+								} else {
+									toast.error(
+										`Install finished with errors: ${result.output.slice(0, 200)}`,
+									);
+								}
+							},
+							onError: (err) =>
+								toast.error(
+									`Failed to install ${app.displayName}: ${err.message}`,
+								),
+						});
+					}}
 				>
-					<Download className="h-3.5 w-3.5" />
-					Install
+					{installMutation.isPending ? (
+						<Spinner size="sm" className="text-primary-foreground" />
+					) : (
+						<Download className="h-3.5 w-3.5" />
+					)}
+					{installMutation.isPending ? "Installing..." : "Install"}
 				</Button>
 			</div>
 

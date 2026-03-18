@@ -43,6 +43,7 @@ import {
 	useStartApp,
 	useStopApp,
 	useRestartApp,
+	useUninstallApp,
 } from "#/hooks/homelab";
 
 export const Route = createFileRoute("/_app/apps/$appName")({
@@ -106,6 +107,7 @@ function AppDetailPage() {
 	const startAppMutation = useStartApp();
 	const stopAppMutation = useStopApp();
 	const restartAppMutation = useRestartApp();
+	const uninstallMutation = useUninstallApp();
 
 	const [uninstallOpen, setUninstallOpen] = useState(false);
 	const [eraseData, setEraseData] = useState(false);
@@ -151,7 +153,8 @@ function AppDetailPage() {
 	const isMutating =
 		startAppMutation.isPending ||
 		stopAppMutation.isPending ||
-		restartAppMutation.isPending;
+		restartAppMutation.isPending ||
+		uninstallMutation.isPending;
 
 	const config = configQuery.data;
 	const appUrl =
@@ -497,10 +500,20 @@ function AppDetailPage() {
 							<AlertDialogAction
 								className="bg-status-critical text-white hover:bg-status-critical/90"
 								onClick={() => {
-									toast.error(
-										eraseData
-											? `${app.displayName} uninstalled. Data at ${detail.configPath} erased.`
-											: `${app.displayName} uninstalled. Data preserved.`,
+									uninstallMutation.mutate(
+										{ appName, eraseData },
+										{
+											onSuccess: () =>
+												toast.success(
+													eraseData
+														? `${app.displayName} uninstalled. Data erased.`
+														: `${app.displayName} uninstalled. Data preserved.`,
+												),
+											onError: (err) =>
+												toast.error(
+													`Failed to uninstall: ${err.message}`,
+												),
+										},
 									);
 								}}
 							>

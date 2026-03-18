@@ -174,6 +174,7 @@ function SetupTwoFactorDialog({
 			setError(verifyError.message ?? "Invalid code.");
 			return;
 		}
+		toast.success("Two-factor authentication enabled.");
 		setStep("backup-codes");
 	}
 

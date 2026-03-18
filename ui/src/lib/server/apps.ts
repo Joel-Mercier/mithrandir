@@ -254,6 +254,72 @@ export const restartApp = createServerFn({ method: "POST" })
     await composeUp(composePath);
   });
 
+export const installApp = createServerFn({ method: "POST" })
+  .inputValidator((d: { appName: string }) => d)
+  .handler(async ({ data }): Promise<{ success: boolean; output: string }> => {
+    await ensureSession();
+    const { appName } = data;
+    const projectRoot = getProjectRoot();
+
+    const app = APP_REGISTRY.find((a) => a.name === appName);
+    if (!app) throw new Error(`App not found: ${appName}`);
+
+    const envConfig = await loadEnvConfig(projectRoot);
+    const composePath = getComposePath(app, envConfig.BASE_DIR);
+    if (existsSync(composePath)) {
+      throw new Error(`App '${appName}' is already installed`);
+    }
+
+    const result = await shell(
+      "/usr/local/bin/mithrandir",
+      ["install", appName, "--yes"],
+      { cwd: projectRoot, ignoreError: true, timeout: 300000 },
+    );
+
+    return {
+      success: (result.exitCode ?? 0) === 0,
+      output: (result.stdout + result.stderr).trim(),
+    };
+  });
+
+export const uninstallApp = createServerFn({ method: "POST" })
+  .inputValidator((d: { appName: string; eraseData?: boolean }) => d)
+  .handler(async ({ data }): Promise<{ success: boolean; output: string }> => {
+    await ensureSession();
+    const { appName, eraseData } = data;
+    const projectRoot = getProjectRoot();
+
+    const app = APP_REGISTRY.find((a) => a.name === appName);
+    if (!app) throw new Error(`App not found: ${appName}`);
+
+    const envConfig = await loadEnvConfig(projectRoot);
+    const baseDir = envConfig.BASE_DIR;
+    const appDir = getAppDir(app, baseDir);
+
+    // Stop and remove container + companions
+    const composePath = getComposePath(app, baseDir);
+    if (existsSync(composePath)) {
+      await shell("docker", ["compose", "down", "--volumes"], {
+        sudo: true,
+        cwd: appDir,
+        ignoreError: true,
+      });
+      await shell("docker", ["network", "prune", "-f"], {
+        sudo: true,
+        ignoreError: true,
+      });
+    }
+
+    // Erase data if requested, otherwise just remove the compose file
+    if (eraseData) {
+      await shell("rm", ["-rf", appDir], { sudo: true });
+    } else if (existsSync(composePath)) {
+      await shell("rm", ["-f", composePath], { sudo: true });
+    }
+
+    return { success: true, output: `${app.displayName} uninstalled` };
+  });
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function formatUptime(startedAt: string): string {
