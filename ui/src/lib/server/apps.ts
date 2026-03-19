@@ -18,6 +18,8 @@ import {
 } from "@mithrandir/cli/lib/docker";
 import { shell } from "@mithrandir/cli/lib/shell";
 import { getContainerStatus } from "@mithrandir/cli/lib/status";
+import { regenerateGatusConfig } from "@mithrandir/cli/lib/gatus";
+import { regenerateCaddyfile } from "@mithrandir/cli/lib/caddy";
 import type { DashboardApp, AppDetail, AppCategory } from "#/lib/types";
 
 /** Map CLI category value to UI AppCategory */
@@ -315,6 +317,14 @@ export const uninstallApp = createServerFn({ method: "POST" })
       await shell("rm", ["-rf", appDir], { sudo: true });
     } else if (existsSync(composePath)) {
       await shell("rm", ["-f", composePath], { sudo: true });
+    }
+
+    // Regenerate Gatus health checks and Caddyfile to remove the uninstalled app
+    if (appName !== "gatus") {
+      try { await regenerateGatusConfig(envConfig); } catch {}
+    }
+    if (envConfig.ENABLE_HTTPS === "true") {
+      try { await regenerateCaddyfile(envConfig); } catch {}
     }
 
     return { success: true, output: `${app.displayName} uninstalled` };

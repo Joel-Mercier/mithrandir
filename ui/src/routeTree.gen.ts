@@ -15,6 +15,7 @@ import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AuthTwoFactorRouteImport } from './routes/_auth/two-factor'
 import { Route as AuthSignUpRouteImport } from './routes/_auth/sign-up'
 import { Route as AuthSignInRouteImport } from './routes/_auth/sign-in'
+import { Route as AppSetupRouteImport } from './routes/_app/setup'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppProfileRouteImport } from './routes/_app/profile'
 import { Route as AppBackupRestoreRouteImport } from './routes/_app/backup-restore'
@@ -51,6 +52,11 @@ const AuthSignInRoute = AuthSignInRouteImport.update({
   id: '/sign-in',
   path: '/sign-in',
   getParentRoute: () => AuthRoute,
+} as any)
+const AppSetupRoute = AppSetupRouteImport.update({
+  id: '/setup',
+  path: '/setup',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppSettingsRoute = AppSettingsRouteImport.update({
   id: '/settings',
@@ -98,6 +104,7 @@ export interface FileRoutesByFullPath {
   '/backup-restore': typeof AppBackupRestoreRoute
   '/profile': typeof AppProfileRoute
   '/settings': typeof AppSettingsRoute
+  '/setup': typeof AppSetupRoute
   '/sign-in': typeof AuthSignInRoute
   '/sign-up': typeof AuthSignUpRoute
   '/two-factor': typeof AuthTwoFactorRoute
@@ -112,6 +119,7 @@ export interface FileRoutesByTo {
   '/backup-restore': typeof AppBackupRestoreRoute
   '/profile': typeof AppProfileRoute
   '/settings': typeof AppSettingsRoute
+  '/setup': typeof AppSetupRoute
   '/sign-in': typeof AuthSignInRoute
   '/sign-up': typeof AuthSignUpRoute
   '/two-factor': typeof AuthTwoFactorRoute
@@ -128,6 +136,7 @@ export interface FileRoutesById {
   '/_app/backup-restore': typeof AppBackupRestoreRoute
   '/_app/profile': typeof AppProfileRoute
   '/_app/settings': typeof AppSettingsRoute
+  '/_app/setup': typeof AppSetupRoute
   '/_auth/sign-in': typeof AuthSignInRoute
   '/_auth/sign-up': typeof AuthSignUpRoute
   '/_auth/two-factor': typeof AuthTwoFactorRoute
@@ -145,6 +154,7 @@ export interface FileRouteTypes {
     | '/backup-restore'
     | '/profile'
     | '/settings'
+    | '/setup'
     | '/sign-in'
     | '/sign-up'
     | '/two-factor'
@@ -159,6 +169,7 @@ export interface FileRouteTypes {
     | '/backup-restore'
     | '/profile'
     | '/settings'
+    | '/setup'
     | '/sign-in'
     | '/sign-up'
     | '/two-factor'
@@ -174,6 +185,7 @@ export interface FileRouteTypes {
     | '/_app/backup-restore'
     | '/_app/profile'
     | '/_app/settings'
+    | '/_app/setup'
     | '/_auth/sign-in'
     | '/_auth/sign-up'
     | '/_auth/two-factor'
@@ -235,6 +247,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/sign-in'
       preLoaderRoute: typeof AuthSignInRouteImport
       parentRoute: typeof AuthRoute
+    }
+    '/_app/setup': {
+      id: '/_app/setup'
+      path: '/setup'
+      fullPath: '/setup'
+      preLoaderRoute: typeof AppSetupRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/settings': {
       id: '/_app/settings'
@@ -299,6 +318,7 @@ interface AppRouteChildren {
   AppBackupRestoreRoute: typeof AppBackupRestoreRoute
   AppProfileRoute: typeof AppProfileRoute
   AppSettingsRoute: typeof AppSettingsRoute
+  AppSetupRoute: typeof AppSetupRoute
   AppIndexRoute: typeof AppIndexRoute
   AppAppsAppNameRoute: typeof AppAppsAppNameRoute
   AppAppsGraphRoute: typeof AppAppsGraphRoute
@@ -309,6 +329,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppBackupRestoreRoute: AppBackupRestoreRoute,
   AppProfileRoute: AppProfileRoute,
   AppSettingsRoute: AppSettingsRoute,
+  AppSetupRoute: AppSetupRoute,
   AppIndexRoute: AppIndexRoute,
   AppAppsAppNameRoute: AppAppsAppNameRoute,
   AppAppsGraphRoute: AppAppsGraphRoute,

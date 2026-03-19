@@ -111,10 +111,13 @@ function AppDetailPage() {
 
 	const [uninstallOpen, setUninstallOpen] = useState(false);
 	const [eraseData, setEraseData] = useState(false);
-	const logEndRef = useRef<HTMLDivElement>(null);
+	const logAreaRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
-		logEndRef.current?.scrollIntoView();
+		const vp = logAreaRef.current?.querySelector<HTMLDivElement>(
+			"[data-slot=scroll-area-viewport]",
+		);
+		if (vp) vp.scrollTop = vp.scrollHeight;
 	}, [detailQuery.data?.logs]);
 
 	if (detailQuery.isPending || appsQuery.isPending) {
@@ -453,11 +456,10 @@ function AppDetailPage() {
 							</div>
 						</CardHeader>
 						<CardContent>
-							<ScrollArea className="h-64 rounded-md border border-border/50 bg-muted/30 p-3">
+							<ScrollArea ref={logAreaRef} className="h-64 rounded-md border border-border/50 bg-muted/30 p-3">
 								<pre className="font-mono-data text-xs leading-relaxed">
 									{detail.logs.join("\n")}
 								</pre>
-								<div ref={logEndRef} />
 							</ScrollArea>
 						</CardContent>
 					</Card>
