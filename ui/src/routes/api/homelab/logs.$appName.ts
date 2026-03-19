@@ -1,5 +1,3 @@
-// @ts-nocheck — This API route uses dynamic imports (execa) and a route path
-// that won't be in the generated route tree until first dev server run.
 import { createFileRoute } from "@tanstack/react-router";
 import { APP_REGISTRY, getContainerName } from "@mithrandir/cli/lib/apps";
 import { dockerNeedsSudo } from "@mithrandir/cli/lib/shell";
@@ -17,42 +15,47 @@ export const Route = createFileRoute("/api/homelab/logs/$appName")({
 
         const containerName = getContainerName(app);
         const useSudo = await dockerNeedsSudo();
-        const cmd = useSudo ? "sudo" : "docker";
-        const args = useSudo
-          ? ["docker", "logs", "--follow", "--tail", "100", "--timestamps", containerName]
-          : ["logs", "--follow", "--tail", "100", "--timestamps", containerName];
+        const cmdArray = useSudo
+          ? ["sudo", "docker", "logs", "--follow", "--tail", "100", "--timestamps", containerName]
+          : ["docker", "logs", "--follow", "--tail", "100", "--timestamps", containerName];
 
         const stream = new ReadableStream({
           async start(controller) {
             const encoder = new TextEncoder();
+            const decoder = new TextDecoder();
             try {
-              const { execa } = await import("execa");
-              const proc = execa(cmd, args, {
+              const proc = Bun.spawn(cmdArray, {
                 stdout: "pipe",
                 stderr: "pipe",
-                reject: false,
               });
 
               const sendLine = (line: string) => {
                 controller.enqueue(encoder.encode(`data: ${line}\n\n`));
               };
 
-              for (const outputStream of [proc.stdout, proc.stderr]) {
-                if (!outputStream) continue;
+              const processStream = async (readable: ReadableStream<Uint8Array>) => {
+                const reader = readable.getReader();
                 let buffer = "";
-                outputStream.on("data", (chunk: Buffer) => {
-                  buffer += chunk.toString();
+                while (true) {
+                  const { done, value } = await reader.read();
+                  if (done) break;
+                  buffer += decoder.decode(value, { stream: true });
                   const lines = buffer.split("\n");
                   buffer = lines.pop() ?? "";
                   for (const line of lines) {
                     if (line.trim()) sendLine(line);
                   }
-                });
-              }
+                }
+                // Flush remaining buffer
+                if (buffer.trim()) sendLine(buffer);
+              };
 
-              proc.on("exit", () => {
-                controller.close();
-              });
+              await Promise.all([
+                processStream(proc.stdout as ReadableStream<Uint8Array>),
+                processStream(proc.stderr as ReadableStream<Uint8Array>),
+              ]);
+
+              controller.close();
             } catch {
               controller.close();
             }

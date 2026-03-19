@@ -1,4 +1,3 @@
-import { execa } from "execa";
 import { getApp, getContainerName, getAllContainerNames, getAppNames } from "@/lib/apps.js";
 import { isContainerRunning } from "@/lib/docker.js";
 import { dockerNeedsSudo } from "@/lib/shell.js";
@@ -75,21 +74,29 @@ export async function runLog(
   }
 
   const useSudo = await dockerNeedsSudo();
-  const dockerArgs = useSudo ? ["docker", "logs"] : ["logs"];
+  const cmdArray = useSudo
+    ? ["sudo", "docker", "logs"]
+    : ["docker", "logs"];
 
-  if (flags.follow) dockerArgs.push("--follow");
-  if (flags.tail) dockerArgs.push("--tail", flags.tail);
-  if (flags.since) dockerArgs.push("--since", flags.since);
+  if (flags.follow) cmdArray.push("--follow");
+  if (flags.tail) cmdArray.push("--tail", flags.tail);
+  if (flags.since) cmdArray.push("--since", flags.since);
 
-  dockerArgs.push(targetContainer);
+  cmdArray.push(targetContainer);
 
-  try {
-    await execa(useSudo ? "sudo" : "docker", dockerArgs, { stdio: "inherit" });
-  } catch (error: any) {
-    if (error.exitCode === 130 || error.signal === "SIGINT") {
-      process.exit(0);
-    }
-    console.error(`Failed to read logs for ${appName}: ${error.message}`);
+  const proc = Bun.spawn(cmdArray, {
+    stdin: "inherit",
+    stdout: "inherit",
+    stderr: "inherit",
+  });
+
+  const exitCode = await proc.exited;
+  if (exitCode === 130) {
+    // SIGINT — user pressed Ctrl+C
+    process.exit(0);
+  }
+  if (exitCode !== 0) {
+    console.error(`Failed to read logs for ${appName}`);
     process.exit(1);
   }
 }

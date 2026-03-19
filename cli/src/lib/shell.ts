@@ -1,5 +1,3 @@
-import { execa, type ResultPromise } from "execa";
-
 /**
  * Cached check: does Docker require sudo?
  * Returns false if already root or if user is in the `docker` group.
@@ -13,8 +11,10 @@ export async function dockerNeedsSudo(): Promise<boolean> {
     return false;
   }
   try {
-    const result = await execa("id", ["-nG"], { reject: false });
-    const groups = (result.stdout ?? "").trim().split(/\s+/);
+    const proc = Bun.spawn(["id", "-nG"], { stdout: "pipe", stderr: "pipe" });
+    const exitCode = await proc.exited;
+    const stdout = exitCode === 0 ? await new Response(proc.stdout).text() : "";
+    const groups = stdout.trim().split(/\s+/);
     _dockerNeedsSudo = !groups.includes("docker");
   } catch {
     _dockerNeedsSudo = true;
@@ -42,7 +42,7 @@ export interface ShellResult {
 }
 
 /**
- * Run a shell command safely using execa (no shell injection risk).
+ * Run a shell command safely using Bun.spawn (no shell injection risk).
  * Arguments are passed as an array, never through a shell.
  */
 export async function shell(
@@ -70,19 +70,46 @@ export async function shell(
     cmdArgs = args;
   }
 
-  const execaOpts: Record<string, unknown> = { reject: !ignoreError };
-  if (cwd) execaOpts.cwd = cwd;
-  if (env) execaOpts.env = { ...process.env, ...env };
-  if (timeout) execaOpts.timeout = timeout;
+  const spawnOpts: {
+    stdout: "pipe";
+    stderr: "pipe";
+    cwd?: string;
+    env?: Record<string, string>;
+  } = { stdout: "pipe", stderr: "pipe" };
+  if (cwd) spawnOpts.cwd = cwd;
+  if (env) spawnOpts.env = { ...process.env, ...env } as Record<string, string>;
+
+  const proc = Bun.spawn([cmd, ...cmdArgs], spawnOpts);
+
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  if (timeout) {
+    timeoutId = setTimeout(() => {
+      proc.kill();
+    }, timeout);
+  }
 
   try {
-    const result = await execa(cmd, cmdArgs, execaOpts);
-    return {
-      stdout: result.stdout,
-      stderr: result.stderr,
-      exitCode: result.exitCode ?? 0,
-    };
+    const [stdout, stderr, exitCode] = await Promise.all([
+      new Response(proc.stdout).text(),
+      new Response(proc.stderr).text(),
+      proc.exited,
+    ]);
+
+    if (timeoutId) clearTimeout(timeoutId);
+
+    if (!ignoreError && exitCode !== 0) {
+      const error: any = new Error(
+        `Command failed with exit code ${exitCode}: ${cmd} ${cmdArgs.join(" ")}`,
+      );
+      error.stdout = stdout;
+      error.stderr = stderr;
+      error.exitCode = exitCode;
+      throw error;
+    }
+
+    return { stdout, stderr, exitCode };
   } catch (error: any) {
+    if (timeoutId) clearTimeout(timeoutId);
     if (ignoreError) {
       return {
         stdout: error.stdout ?? "",
@@ -92,31 +119,6 @@ export async function shell(
     }
     throw error;
   }
-}
-
-/**
- * Run a command and stream output in real-time (for long-running ops).
- */
-export async function shellStream(
-  command: string,
-  args: string[] = [],
-  options: ShellOptions = {},
-): Promise<ResultPromise> {
-  let { sudo = false, cwd, env } = options;
-
-  // Docker commands don't need sudo if the user is in the docker group
-  if (sudo && command === "docker") {
-    if (!(await dockerNeedsSudo())) sudo = false;
-  }
-
-  const cmd = sudo ? "sudo" : command;
-  const cmdArgs = sudo ? [command, ...args] : args;
-
-  const execaOpts: Record<string, unknown> = { stdout: "pipe", stderr: "pipe" };
-  if (cwd) execaOpts.cwd = cwd;
-  if (env) execaOpts.env = env;
-
-  return execa(cmd, cmdArgs, execaOpts);
 }
 
 /** Check if a command exists on the system */

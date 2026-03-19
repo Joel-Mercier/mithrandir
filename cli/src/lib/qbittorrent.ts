@@ -1,7 +1,6 @@
 import { readFile } from "fs/promises";
 import { join } from "path";
 import { existsSync } from "fs";
-import { execa } from "execa";
 
 // ---------------------------------------------------------------------------
 // Types (subset of qBittorrent 5.0 WebUI API)
@@ -263,10 +262,16 @@ export async function getQBittorrentCredentials(
   // this line when no password is configured, so its absence means the user has
   // already set their own (which we cannot recover from the encrypted conf).
   try {
-    const result = await execa("docker", ["logs", containerName], {
-      reject: false,
+    const proc = Bun.spawn(["docker", "logs", containerName], {
+      stdout: "pipe",
+      stderr: "pipe",
     });
-    const logs = `${result.stdout}\n${result.stderr}`;
+    const [stdout, stderr] = await Promise.all([
+      new Response(proc.stdout).text(),
+      new Response(proc.stderr).text(),
+    ]);
+    await proc.exited;
+    const logs = `${stdout}\n${stderr}`;
     const match = logs.match(
       /A temporary password is provided for this session: (\S+)/,
     );

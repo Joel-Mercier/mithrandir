@@ -183,25 +183,32 @@ export async function pullImageWithProgress(
   image: string,
   onProgress: (percent: number) => void,
 ): Promise<string> {
-  const { execa } = await import("execa");
-
   const useSudo = await dockerNeedsSudo();
-  const cmd = useSudo ? "sudo" : "docker";
-  const cmdArgs = useSudo ? ["docker", "pull", image] : ["pull", image];
+  const cmdArray = useSudo
+    ? ["sudo", "docker", "pull", image]
+    : ["docker", "pull", image];
 
-  const proc = execa(cmd, cmdArgs, {
+  const proc = Bun.spawn(cmdArray, {
     stdout: "pipe",
     stderr: "pipe",
-    reject: false,
   });
 
   // Track per-layer progress
   const layers = new Map<string, { current: number; total: number }>();
-  let buffer = "";
+
+  // Consume stdout concurrently to prevent backpressure
+  const stdoutPromise = new Response(proc.stdout).text();
 
   // Docker pull writes progress to stderr using \r for in-place line updates
-  proc.stderr?.on("data", (chunk: Buffer) => {
-    buffer += chunk.toString();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  const reader = (proc.stderr as ReadableStream<Uint8Array>).getReader();
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
     // Split on both \r and \n since Docker uses \r for progress updates
     const lines = buffer.split(/\r?\n|\r/);
     buffer = lines.pop() ?? "";
@@ -248,12 +255,12 @@ export async function pullImageWithProgress(
         }
       }
     }
-  });
+  }
 
-  const result = await proc;
-  if ((result.exitCode ?? 0) !== 0) {
+  const [exitCode] = await Promise.all([proc.exited, stdoutPromise]);
+  if (exitCode !== 0) {
     throw new Error(
-      `docker pull failed: ${result.stderr?.trim() || result.stdout?.trim() || "unknown error"}`,
+      `docker pull failed: ${buffer.trim() || "unknown error"}`,
     );
   }
 
