@@ -247,7 +247,7 @@ export function SetupWizard() {
 
 	return (
 		<div className="mx-auto max-w-[1400px] px-4 py-8">
-			<div className="flex items-start gap-8">
+			<div className="flex flex-col lg:flex-row items-start gap-8">
 				<SetupStepper
 					steps={STEPS}
 					currentStep={state.currentStep}
@@ -255,7 +255,7 @@ export function SetupWizard() {
 					onStepClick={goToStep}
 				/>
 
-				<div className="min-w-0 flex-1">
+				<div className="w-full min-w-0 flex-1">
 					<div
 						key={state.currentStep}
 						className="animate-in fade-in-0 duration-300"

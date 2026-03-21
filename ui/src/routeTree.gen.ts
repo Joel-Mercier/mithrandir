@@ -22,6 +22,7 @@ import { Route as AppBackupRestoreRouteImport } from './routes/_app/backup-resto
 import { Route as AppAppsIndexRouteImport } from './routes/_app/apps/index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as AppAppsGraphRouteImport } from './routes/_app/apps/graph'
+import { Route as AppAppsCapacityRouteImport } from './routes/_app/apps/capacity'
 import { Route as AppAppsAppNameRouteImport } from './routes/_app/apps/$appName'
 import { Route as ApiHomelabLogsAppNameRouteImport } from './routes/api/homelab/logs.$appName'
 
@@ -88,6 +89,11 @@ const AppAppsGraphRoute = AppAppsGraphRouteImport.update({
   path: '/apps/graph',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAppsCapacityRoute = AppAppsCapacityRouteImport.update({
+  id: '/apps/capacity',
+  path: '/apps/capacity',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAppsAppNameRoute = AppAppsAppNameRouteImport.update({
   id: '/apps/$appName',
   path: '/apps/$appName',
@@ -109,6 +115,7 @@ export interface FileRoutesByFullPath {
   '/sign-up': typeof AuthSignUpRoute
   '/two-factor': typeof AuthTwoFactorRoute
   '/apps/$appName': typeof AppAppsAppNameRoute
+  '/apps/capacity': typeof AppAppsCapacityRoute
   '/apps/graph': typeof AppAppsGraphRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/apps/': typeof AppAppsIndexRoute
@@ -124,6 +131,7 @@ export interface FileRoutesByTo {
   '/sign-up': typeof AuthSignUpRoute
   '/two-factor': typeof AuthTwoFactorRoute
   '/apps/$appName': typeof AppAppsAppNameRoute
+  '/apps/capacity': typeof AppAppsCapacityRoute
   '/apps/graph': typeof AppAppsGraphRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/apps': typeof AppAppsIndexRoute
@@ -142,6 +150,7 @@ export interface FileRoutesById {
   '/_auth/two-factor': typeof AuthTwoFactorRoute
   '/_app/': typeof AppIndexRoute
   '/_app/apps/$appName': typeof AppAppsAppNameRoute
+  '/_app/apps/capacity': typeof AppAppsCapacityRoute
   '/_app/apps/graph': typeof AppAppsGraphRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/_app/apps/': typeof AppAppsIndexRoute
@@ -159,6 +168,7 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/two-factor'
     | '/apps/$appName'
+    | '/apps/capacity'
     | '/apps/graph'
     | '/api/auth/$'
     | '/apps/'
@@ -174,6 +184,7 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/two-factor'
     | '/apps/$appName'
+    | '/apps/capacity'
     | '/apps/graph'
     | '/api/auth/$'
     | '/apps'
@@ -191,6 +202,7 @@ export interface FileRouteTypes {
     | '/_auth/two-factor'
     | '/_app/'
     | '/_app/apps/$appName'
+    | '/_app/apps/capacity'
     | '/_app/apps/graph'
     | '/api/auth/$'
     | '/_app/apps/'
@@ -297,6 +309,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAppsGraphRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/apps/capacity': {
+      id: '/_app/apps/capacity'
+      path: '/apps/capacity'
+      fullPath: '/apps/capacity'
+      preLoaderRoute: typeof AppAppsCapacityRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/apps/$appName': {
       id: '/_app/apps/$appName'
       path: '/apps/$appName'
@@ -321,6 +340,7 @@ interface AppRouteChildren {
   AppSetupRoute: typeof AppSetupRoute
   AppIndexRoute: typeof AppIndexRoute
   AppAppsAppNameRoute: typeof AppAppsAppNameRoute
+  AppAppsCapacityRoute: typeof AppAppsCapacityRoute
   AppAppsGraphRoute: typeof AppAppsGraphRoute
   AppAppsIndexRoute: typeof AppAppsIndexRoute
 }
@@ -332,6 +352,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSetupRoute: AppSetupRoute,
   AppIndexRoute: AppIndexRoute,
   AppAppsAppNameRoute: AppAppsAppNameRoute,
+  AppAppsCapacityRoute: AppAppsCapacityRoute,
   AppAppsGraphRoute: AppAppsGraphRoute,
   AppAppsIndexRoute: AppAppsIndexRoute,
 }

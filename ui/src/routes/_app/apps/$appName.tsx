@@ -25,6 +25,7 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "#/components/ui/alert-dialog";
+import { ScoreBadge } from "#/components/capacity/ScoreBadge";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
@@ -403,6 +404,35 @@ function AppDetailPage() {
 									{vol}
 								</div>
 							))}
+						</CardContent>
+					</Card>
+				)}
+
+				{/* Capacity */}
+				{summary?.performanceScore && (
+					<Card>
+						<CardHeader className="pb-2">
+							<CardTitle className="text-sm font-medium">
+								Capacity Impact
+							</CardTitle>
+						</CardHeader>
+						<CardContent className="space-y-3">
+							<div className="flex items-baseline justify-between text-sm">
+								<span className="text-muted-foreground">Performance</span>
+								<ScoreBadge score={summary.performanceScore} />
+							</div>
+							<div className="flex items-baseline justify-between text-sm">
+								<span className="text-muted-foreground">Storage</span>
+								<ScoreBadge score={summary.storageScore!} />
+							</div>
+							{summary.capacityNote && (
+								<>
+									<Separator />
+									<p className="text-xs text-muted-foreground">
+										{summary.capacityNote}
+									</p>
+								</>
+							)}
 						</CardContent>
 					</Card>
 				)}

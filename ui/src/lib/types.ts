@@ -14,6 +14,8 @@ export type AppCategory =
 	| "household"
 	| "utilities";
 
+export type CapacityScore = "low" | "medium" | "high";
+
 export interface DashboardApp {
 	name: string;
 	displayName: string;
@@ -25,6 +27,9 @@ export interface DashboardApp {
 	hidden?: boolean;
 	website?: string;
 	github?: string;
+	performanceScore?: CapacityScore;
+	storageScore?: CapacityScore;
+	capacityNote?: string;
 }
 
 export interface AppDetail extends DashboardApp {

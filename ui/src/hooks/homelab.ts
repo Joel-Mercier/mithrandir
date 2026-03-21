@@ -23,6 +23,7 @@ import {
 	verifyBackup,
 	deleteBackup,
 } from "#/lib/server/backup";
+import { fetchCapacity } from "#/lib/server/capacity";
 import type { SystemConfig } from "#/lib/types";
 
 const keys = {
@@ -35,6 +36,7 @@ const keys = {
 	backupStatus: ["homelab", "backup", "status"],
 	backupHistory: ["homelab", "backup", "history"],
 	version: ["homelab", "version"],
+	capacity: ["homelab", "capacity"],
 };
 
 // ─── Query hooks ─────────────────────────────────────────────────────────────
@@ -104,6 +106,14 @@ export function useVersion() {
 	return useQuery({
 		queryKey: keys.version,
 		queryFn: () => fetchVersion(),
+	});
+}
+
+export function useCapacity() {
+	return useQuery({
+		queryKey: keys.capacity,
+		queryFn: () => fetchCapacity(),
+		staleTime: 60_000,
 	});
 }
 

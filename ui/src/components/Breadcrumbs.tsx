@@ -13,6 +13,7 @@ const routeLabels: Record<string, string> = {
 	"/": "Dashboard",
 	"/apps": "Apps",
 	"/apps/graph": "Dependency Graph",
+	"/apps/capacity": "Capacity",
 	"/backup-restore": "Backup & Restore",
 	"/settings": "Settings",
 	"/profile": "Profile",
@@ -34,7 +35,7 @@ export default function Breadcrumbs() {
 		if (path === "/" || routeLabels[path]) {
 			if (path !== "/") {
 				// For nested known routes like /apps/graph, ensure parent crumb exists
-				if (path === "/apps/graph" && !crumbs.some((c) => c.path === "/apps")) {
+				if ((path === "/apps/graph" || path === "/apps/capacity") && !crumbs.some((c) => c.path === "/apps")) {
 					crumbs.push({ label: "Apps", path: "/apps" });
 				}
 				crumbs.push({ label: routeLabels[path], path });

@@ -1,5 +1,5 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { AlertCircle, GitFork, Search } from "lucide-react";
+import { AlertCircle, Gauge, GitFork, Search } from "lucide-react";
 import { useState } from "react";
 import Breadcrumbs from "#/components/Breadcrumbs";
 import { AppListCard, AvailableAppCard } from "#/components/apps/AppCards";
@@ -134,11 +134,17 @@ function AppsPage() {
 			)}
 
 			{/* Actions */}
-			<div className="mb-6">
+			<div className="mb-6 flex gap-2">
 				<Button variant="outline" size="sm" className="gap-1.5" asChild>
 					<Link to="/apps/graph">
 						<GitFork className="h-3.5 w-3.5" />
 						Dependency Graph
+					</Link>
+				</Button>
+				<Button variant="outline" size="sm" className="gap-1.5" asChild>
+					<Link to="/apps/capacity">
+						<Gauge className="h-3.5 w-3.5" />
+						Capacity
 					</Link>
 				</Button>
 			</div>

@@ -71,6 +71,7 @@ export const fetchApps = createServerFn({ method: "GET" }).handler(
         }
       }
 
+      const capacity = app.capacity ?? { performance: "low" as const, storage: "low" as const };
       apps.push({
         name: app.name,
         displayName: app.displayName,
@@ -80,6 +81,9 @@ export const fetchApps = createServerFn({ method: "GET" }).handler(
         category: mapCategory(app),
         uptime,
         hidden: app.hidden ?? false,
+        performanceScore: capacity.performance,
+        storageScore: capacity.storage,
+        capacityNote: capacity.note ?? undefined,
       });
     }
 

@@ -5,6 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Overview
 
 Automated Docker-based homelab setup, backup, and restore system for Debian/Ubuntu servers. Bun workspaces monorepo with three subprojects: CLI (Bun/Ink), Docs (VitePress), and UI (Vite/React/TanStack Start).
+To get any information about the Bun runtime, package manager, bundler or test runner, please refer to the [Bun documentation](https://bun.com/docs/llms.txt).
 
 ## Monorepo Structure
 
