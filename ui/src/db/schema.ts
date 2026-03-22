@@ -132,3 +132,19 @@ export const twoFactorRelations = relations(twoFactor, ({ one }) => ({
     references: [user.id],
   }),
 }));
+
+export const activityHistory = sqliteTable(
+  "activity_history",
+  {
+    id: text("id").primaryKey(),
+    action: text("action").notNull(),
+    targetType: text("target_type").notNull(),
+    targetName: text("target_name"),
+    title: text("title").notNull(),
+    route: text("route").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .notNull(),
+  },
+  (table) => [index("activityHistory_createdAt_idx").on(table.createdAt)],
+);

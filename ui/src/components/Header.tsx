@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { LogOut, Settings, User } from "lucide-react";
+import { History, LogOut, Settings, User } from "lucide-react";
 import { Avatar, AvatarFallback } from "#/components/ui/avatar";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
@@ -14,6 +15,7 @@ import { Skeleton } from "#/components/ui/skeleton";
 import { useVersion } from "#/hooks/homelab";
 import { useSignOut } from "#/hooks/auth";
 import { authClient } from "#/lib/auth-client";
+import ActivitySidebar from "./ActivitySidebar";
 import LanguageSwitch from "./LanguageSwitch";
 import MobileNav from "./MobileNav";
 import ThemeToggle from "./ThemeToggle";
@@ -26,6 +28,7 @@ const navLinks = [
 ] as const;
 
 export default function Header() {
+	const [activityOpen, setActivityOpen] = useState(false);
 	const { data: session } = authClient.useSession();
 	const signOut = useSignOut();
 	const versionQuery = useVersion();
@@ -87,6 +90,15 @@ export default function Header() {
 					<div className="hidden md:block">
 						<ThemeToggle />
 					</div>
+					<Button
+						variant="ghost"
+						size="icon"
+						onClick={() => setActivityOpen(true)}
+						className="hidden md:inline-flex"
+					>
+						<History className="size-4" />
+						<span className="sr-only">Activity</span>
+					</Button>
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
 							<Button
@@ -129,8 +141,18 @@ export default function Header() {
 							</DropdownMenuItem>
 						</DropdownMenuContent>
 					</DropdownMenu>
+					<Button
+						variant="ghost"
+						size="icon"
+						onClick={() => setActivityOpen(true)}
+						className="md:hidden"
+					>
+						<History className="size-4" />
+						<span className="sr-only">Activity</span>
+					</Button>
 					<MobileNav />
 				</div>
+				<ActivitySidebar open={activityOpen} onOpenChange={setActivityOpen} />
 			</div>
 		</header>
 	);

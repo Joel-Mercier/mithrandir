@@ -7,6 +7,7 @@ import { shell } from "@mithrandir/cli/lib/shell";
 import { isBackupArchive, ENCRYPTED_EXT } from "@mithrandir/cli/lib/backup-utils";
 import { listDirs, listFiles } from "@mithrandir/cli/lib/rclone";
 import type { BackupStatus, BackupEntry } from "#/lib/types";
+import { logActivity } from "./activity";
 
 export const fetchBackupStatus = createServerFn({ method: "GET" }).handler(
   async (): Promise<BackupStatus> => {
@@ -138,6 +139,7 @@ export const triggerBackup = createServerFn({ method: "POST" }).handler(
       ["-c", `cd ${projectRoot} && /usr/local/bin/mithrandir backup &`],
       { ignoreError: true, timeout: 5000 },
     );
+    await logActivity("backup_triggered", "backup", null, "Triggered backup", "/backup-restore");
     return { started: true };
   },
 );
@@ -180,8 +182,12 @@ export const deleteBackup = createServerFn({ method: "POST" })
       { cwd: projectRoot, ignoreError: true, timeout: 60000 },
     );
 
+    const success = result.exitCode === 0;
+    if (success) {
+      await logActivity("backup_deleted", "backup", dateStr, `Deleted ${location} backup ${dateStr}`, "/backup-restore");
+    }
     return {
-      success: result.exitCode === 0,
+      success,
       output: (result.stdout + result.stderr).trim(),
     };
   });

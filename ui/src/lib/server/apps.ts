@@ -21,6 +21,7 @@ import { getContainerStatus } from "@mithrandir/cli/lib/status";
 import { regenerateGatusConfig } from "@mithrandir/cli/lib/gatus";
 import { regenerateCaddyfile } from "@mithrandir/cli/lib/caddy";
 import type { DashboardApp, AppDetail, AppCategory } from "#/lib/types";
+import { logActivity } from "./activity";
 
 /** Map CLI category value to UI AppCategory */
 function mapCategory(app: AppDefinition): AppCategory {
@@ -217,6 +218,8 @@ export const startApp = createServerFn({ method: "POST" })
     }
 
     await composeUp(composePath);
+    const displayName = app.displayName;
+    await logActivity("started", "app", appName, `Started ${displayName}`, `/apps/${appName}`);
   });
 
 export const stopApp = createServerFn({ method: "POST" })
@@ -237,6 +240,8 @@ export const stopApp = createServerFn({ method: "POST" })
     }
 
     await composeDown(composePath);
+    const displayName = app.displayName;
+    await logActivity("stopped", "app", appName, `Stopped ${displayName}`, `/apps/${appName}`);
   });
 
 export const restartApp = createServerFn({ method: "POST" })
@@ -258,6 +263,8 @@ export const restartApp = createServerFn({ method: "POST" })
 
     await composeDown(composePath);
     await composeUp(composePath);
+    const displayName = app.displayName;
+    await logActivity("restarted", "app", appName, `Restarted ${displayName}`, `/apps/${appName}`);
   });
 
 export const installApp = createServerFn({ method: "POST" })
@@ -282,8 +289,12 @@ export const installApp = createServerFn({ method: "POST" })
       { cwd: projectRoot, ignoreError: true, timeout: 300000 },
     );
 
+    const success = (result.exitCode ?? 0) === 0;
+    if (success) {
+      await logActivity("installed", "app", appName, `Installed ${app.displayName}`, `/apps/${appName}`);
+    }
     return {
-      success: (result.exitCode ?? 0) === 0,
+      success,
       output: (result.stdout + result.stderr).trim(),
     };
   });
@@ -331,6 +342,7 @@ export const uninstallApp = createServerFn({ method: "POST" })
       try { await regenerateCaddyfile(envConfig); } catch {}
     }
 
+    await logActivity("uninstalled", "app", appName, `Uninstalled ${app.displayName}`, "/apps");
     return { success: true, output: `${app.displayName} uninstalled` };
   });
 

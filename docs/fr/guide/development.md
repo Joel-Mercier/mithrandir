@@ -17,7 +17,7 @@ Le projet est un monorepo [Bun workspaces](https://bun.sh/docs/install/workspace
 ## Pour commencer
 
 ```bash
-git clone <repo> && cd mithrandir
+git clone git@github.com:Joel-Mercier/mithrandir.git && cd mithrandir
 bun install
 ```
 

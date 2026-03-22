@@ -14,6 +14,7 @@ import type {
   SystemResources,
   VersionInfo,
 } from "#/lib/types";
+import { logActivity } from "./activity";
 
 export const fetchSystemStatus = createServerFn({ method: "GET" }).handler(
   async (): Promise<HealthStatus> => {
@@ -232,4 +233,7 @@ export const updateConfig = createServerFn({ method: "POST" })
     if (changes.remoteRetention !== undefined) envConfig.REMOTE_RETENTION = String(changes.remoteRetention);
 
     await saveEnvConfig(envConfig, projectRoot);
+
+    const changedKeys = Object.keys(changes).join(", ");
+    await logActivity("config_updated", "system", null, `Updated settings: ${changedKeys}`, "/settings");
   });

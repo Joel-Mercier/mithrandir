@@ -24,6 +24,7 @@ import {
 	deleteBackup,
 } from "#/lib/server/backup";
 import { fetchCapacity } from "#/lib/server/capacity";
+import { fetchActivity } from "#/lib/server/activity";
 import type { SystemConfig } from "#/lib/types";
 
 const keys = {
@@ -37,6 +38,7 @@ const keys = {
 	backupHistory: ["homelab", "backup", "history"],
 	version: ["homelab", "version"],
 	capacity: ["homelab", "capacity"],
+	activity: ["homelab", "activity"],
 };
 
 // ─── Query hooks ─────────────────────────────────────────────────────────────
@@ -117,6 +119,13 @@ export function useCapacity() {
 	});
 }
 
+export function useActivity() {
+	return useQuery({
+		queryKey: keys.activity,
+		queryFn: () => fetchActivity(),
+	});
+}
+
 // ─── Mutation hooks ──────────────────────────────────────────────────────────
 
 export function useStartApp() {
@@ -127,6 +136,7 @@ export function useStartApp() {
 			queryClient.invalidateQueries({ queryKey: keys.apps });
 			queryClient.invalidateQueries({ queryKey: keys.appDetail(appName) });
 			queryClient.invalidateQueries({ queryKey: keys.systemStatus });
+			queryClient.invalidateQueries({ queryKey: keys.activity });
 		},
 	});
 }
@@ -139,6 +149,7 @@ export function useStopApp() {
 			queryClient.invalidateQueries({ queryKey: keys.apps });
 			queryClient.invalidateQueries({ queryKey: keys.appDetail(appName) });
 			queryClient.invalidateQueries({ queryKey: keys.systemStatus });
+			queryClient.invalidateQueries({ queryKey: keys.activity });
 		},
 	});
 }
@@ -151,6 +162,7 @@ export function useRestartApp() {
 			queryClient.invalidateQueries({ queryKey: keys.apps });
 			queryClient.invalidateQueries({ queryKey: keys.appDetail(appName) });
 			queryClient.invalidateQueries({ queryKey: keys.systemStatus });
+			queryClient.invalidateQueries({ queryKey: keys.activity });
 		},
 	});
 }
@@ -163,6 +175,7 @@ export function useInstallApp() {
 			queryClient.invalidateQueries({ queryKey: keys.apps });
 			queryClient.invalidateQueries({ queryKey: keys.appDetail(appName) });
 			queryClient.invalidateQueries({ queryKey: keys.systemStatus });
+			queryClient.invalidateQueries({ queryKey: keys.activity });
 		},
 	});
 }
@@ -178,6 +191,7 @@ export function useUninstallApp() {
 				queryKey: keys.appDetail(params.appName),
 			});
 			queryClient.invalidateQueries({ queryKey: keys.systemStatus });
+			queryClient.invalidateQueries({ queryKey: keys.activity });
 		},
 	});
 }
@@ -189,6 +203,7 @@ export function useTriggerBackup() {
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: keys.backupStatus });
 			queryClient.invalidateQueries({ queryKey: keys.backupHistory });
+			queryClient.invalidateQueries({ queryKey: keys.activity });
 		},
 	});
 }
@@ -212,6 +227,7 @@ export function useDeleteBackup() {
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: keys.backupStatus });
 			queryClient.invalidateQueries({ queryKey: keys.backupHistory });
+			queryClient.invalidateQueries({ queryKey: keys.activity });
 		},
 	});
 }
@@ -223,6 +239,7 @@ export function useUpdateConfig() {
 			updateConfig({ data: { changes } }),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: keys.config });
+			queryClient.invalidateQueries({ queryKey: keys.activity });
 		},
 	});
 }
