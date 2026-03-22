@@ -5,7 +5,7 @@ import { getProjectRoot } from "./utils";
 import { loadEnvConfig, getBackupConfig } from "@mithrandir/cli/lib/config";
 import { shell } from "@mithrandir/cli/lib/shell";
 import { isBackupArchive, ENCRYPTED_EXT } from "@mithrandir/cli/lib/backup-utils";
-import { listDirs, listFiles } from "@mithrandir/cli/lib/rclone";
+import { listDirs, listFiles, isRcloneRemoteConfigured } from "@mithrandir/cli/lib/rclone";
 import type { BackupStatus, BackupEntry } from "#/lib/types";
 import { logActivity } from "./activity";
 
@@ -98,6 +98,9 @@ export const fetchBackupHistory = createServerFn({ method: "GET" }).handler(
     const remotes = backupConfig.RCLONE_REMOTES;
     for (const remote of remotes) {
       try {
+        const check = await isRcloneRemoteConfigured(remote, envConfig);
+        if (!check.configured) continue;
+
         const dirs = (await listDirs(remote, "/backups/archive")).reverse();
 
         for (const date of dirs) {
