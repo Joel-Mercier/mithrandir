@@ -25,6 +25,26 @@ import {
 } from "#/lib/server/backup";
 import { fetchCapacity } from "#/lib/server/capacity";
 import { fetchActivity } from "#/lib/server/activity";
+import {
+  fetchSetupStatus,
+  checkSystemRequirements,
+  installSystemDep,
+  setupBaseDir,
+  fetchAppRegistry,
+  resolveAppDependencies,
+  saveSetupSecrets,
+  generateSecret,
+  installSetupApp,
+  setupHttps,
+  autoSetupApp,
+  setupFirewall,
+  setupBackupTimer,
+  completeSetup,
+  skipSetup,
+  resumeSetup,
+  fetchServiceUrls,
+} from "#/lib/server/setup";
+export type { SetupStatus } from "#/lib/server/setup";
 import type { SystemConfig } from "#/lib/types";
 
 const keys = {
@@ -39,6 +59,9 @@ const keys = {
   version: ["homelab", "version"],
   capacity: ["homelab", "capacity"],
   activity: ["homelab", "activity"],
+  setupStatus: ["homelab", "setup-status"],
+  systemRequirements: ["homelab", "setup", "system-requirements"],
+  appRegistry: ["homelab", "setup", "app-registry"],
 };
 
 // ─── Query hooks ─────────────────────────────────────────────────────────────
@@ -241,5 +264,169 @@ export function useUpdateConfig() {
       queryClient.invalidateQueries({ queryKey: keys.config });
       queryClient.invalidateQueries({ queryKey: keys.activity });
     },
+  });
+}
+
+// ─── Setup hooks ──────────────────────────────────────────────────────────────
+
+export function useSetupStatus() {
+  return useQuery({
+    queryKey: keys.setupStatus,
+    queryFn: () => fetchSetupStatus(),
+  });
+}
+
+export function useSystemRequirements() {
+  return useQuery({
+    queryKey: keys.systemRequirements,
+    queryFn: () => checkSystemRequirements(),
+  });
+}
+
+export function useAppRegistry() {
+  return useQuery({
+    queryKey: keys.appRegistry,
+    queryFn: () => fetchAppRegistry(),
+    staleTime: 300_000,
+  });
+}
+
+export function useInstallSystemDep() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (dep: "docker" | "swap" | "rclone") =>
+      installSystemDep({ data: { dep } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: keys.systemRequirements });
+    },
+  });
+}
+
+export function useSetupBaseDir() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (baseDir: string) => setupBaseDir({ data: { baseDir } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: keys.config });
+    },
+  });
+}
+
+export function useResolveAppDependencies() {
+  return useMutation({
+    mutationFn: (params: { selectedApps: string[]; httpsEnabled: boolean }) =>
+      resolveAppDependencies({ data: params }),
+  });
+}
+
+export function useSaveSecrets() {
+  return useMutation({
+    mutationFn: (secrets: Record<string, string>) =>
+      saveSetupSecrets({ data: { secrets } }),
+  });
+}
+
+export function useGenerateSecret() {
+  return useMutation({
+    mutationFn: (command: string) => generateSecret({ data: { command } }),
+  });
+}
+
+export function useInstallSetupApp() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (appName: string) => installSetupApp({ data: { appName } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: keys.apps });
+      queryClient.invalidateQueries({ queryKey: keys.systemStatus });
+    },
+  });
+}
+
+export function useSetupHttps() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (acmeEmail: string) => setupHttps({ data: { acmeEmail } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: keys.config });
+      queryClient.invalidateQueries({ queryKey: keys.activity });
+    },
+  });
+}
+
+export function useAutoSetupApp() {
+  return useMutation({
+    mutationFn: (params: {
+      appName: string;
+      credentials: { username: string; password: string };
+      selectedApps: string[];
+      settings?: Record<string, string>;
+    }) => autoSetupApp({ data: params }),
+  });
+}
+
+export function useSetupFirewall() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (appNames: string[]) =>
+      setupFirewall({ data: { appNames } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: keys.config });
+      queryClient.invalidateQueries({ queryKey: keys.activity });
+    },
+  });
+}
+
+export function useSetupBackupTimer() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (hour: number) => setupBackupTimer({ data: { hour } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: keys.config });
+      queryClient.invalidateQueries({ queryKey: keys.activity });
+    },
+  });
+}
+
+export function useCompleteSetup() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => completeSetup(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: keys.setupStatus });
+      queryClient.invalidateQueries({ queryKey: keys.activity });
+    },
+  });
+}
+
+export function useSkipSetup() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => skipSetup(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: keys.setupStatus });
+      queryClient.invalidateQueries({ queryKey: keys.activity });
+    },
+  });
+}
+
+export function useResumeSetup() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => resumeSetup(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: keys.setupStatus });
+      queryClient.invalidateQueries({ queryKey: keys.activity });
+    },
+  });
+}
+
+export function useFetchServiceUrls() {
+  return useMutation({
+    mutationFn: (params: {
+      appNames: string[];
+      httpsEnabled: boolean;
+      localIp: string;
+    }) => fetchServiceUrls({ data: params }),
   });
 }

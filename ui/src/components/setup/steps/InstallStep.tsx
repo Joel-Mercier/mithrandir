@@ -3,6 +3,7 @@ import { Check, X } from "lucide-react";
 import { Progress } from "#/components/ui/progress";
 import { Spinner } from "#/components/ui/spinner";
 import { cn } from "#/lib/utils";
+import { useAppRegistry, useInstallSetupApp } from "#/hooks/homelab";
 import { StepNavigation } from "../StepNavigation";
 import type { AppProgress, SetupState } from "../SetupWizard";
 
@@ -12,35 +13,6 @@ interface InstallStepProps {
 	onComplete: () => void;
 	onBack: () => void;
 }
-
-// Placeholder app display names
-const APP_NAMES: Record<string, string> = {
-	jellyfin: "Jellyfin",
-	sonarr: "Sonarr",
-	radarr: "Radarr",
-	lidarr: "Lidarr",
-	prowlarr: "Prowlarr",
-	qbittorrent: "qBittorrent",
-	jellyseerr: "Jellyseerr",
-	homeassistant: "Home Assistant",
-	uptimekuma: "Uptime Kuma",
-	pihole: "Pi-hole",
-	wireguard: "WireGuard",
-	vaultwarden: "Vaultwarden",
-	homarr: "Homarr",
-	duckdns: "DuckDNS",
-	affine: "AFFiNE",
-	paperlessngx: "Paperless-ngx",
-	stirlingpdf: "Stirling PDF",
-	actualbudget: "Actual Budget",
-	adventurelog: "AdventureLog",
-	yourspotify: "Your Spotify",
-	tautulli: "Tautulli",
-	mealie: "Mealie",
-	homebox: "Homebox",
-	nodered: "Node-RED",
-	glances: "Glances",
-};
 
 function phaseLabel(phase: AppProgress["phase"]): string {
 	switch (phase) {
@@ -61,78 +33,145 @@ export function InstallStep({
 	onComplete,
 	onBack,
 }: InstallStepProps) {
+	const { data: registryData } = useAppRegistry();
+	const installMutation = useInstallSetupApp();
+
 	// Refs to hold latest callbacks without triggering effect re-runs
 	const updateStateRef = useRef(updateState);
 	updateStateRef.current = updateState;
 	const onCompleteRef = useRef(onComplete);
 	onCompleteRef.current = onComplete;
 
-	// Capture selected apps once on mount — don't re-run if parent re-renders
-	const appsRef = useRef(state.selectedApps);
+	// Capture values once on mount — don't re-run if parent re-renders
+	const appsRef = useRef(() => {
+		const selected = state.selectedApps;
+		const resolved = state.resolvedApps;
+		const autoAdded = state.autoAddedDeps;
+		return [
+			...selected,
+			...resolved.filter((a) => !selected.includes(a)),
+			...autoAdded.filter(
+				(a) => !selected.includes(a) && !resolved.includes(a),
+			),
+		];
+	});
+	const installRef = useRef(installMutation);
+	installRef.current = installMutation;
 
-	// Simulate installation progress
+	// Build display name lookup from registry data
+	const displayNames = useRef<Record<string, string>>({});
+	if (registryData?.apps) {
+		for (const app of registryData.apps) {
+			displayNames.current[app.name] = app.displayName;
+		}
+	}
+
+	// Install apps sequentially using real server calls
 	useEffect(() => {
-		const apps = appsRef.current;
+		const apps = appsRef.current();
 		if (apps.length === 0) {
 			onCompleteRef.current();
 			return;
 		}
 
+		const getDisplayName = (name: string) =>
+			displayNames.current[name] ?? name;
+
 		// Initialize all apps as pulling
 		const initial: AppProgress[] = apps.map((name) => ({
 			name,
-			displayName: APP_NAMES[name] ?? name,
-			phase: "pulling",
+			displayName: getDisplayName(name),
+			phase: "pulling" as const,
 			pullPercent: 0,
 		}));
 		updateStateRef.current({ installProgress: initial });
 
-		// Simulate sequential installation
-		let idx = 0;
 		let cancelled = false;
-		const interval = setInterval(() => {
-			if (cancelled) return;
 
-			updateStateRef.current({
-				installProgress: apps.map((name, i) => {
-					const displayName = APP_NAMES[name] ?? name;
-					if (i < idx) {
-						return { name, displayName, phase: "done" };
-					}
-					if (i === idx) {
-						return {
-							name,
-							displayName,
-							phase: "starting",
-							pullPercent: 100,
-						};
-					}
-					return { name, displayName, phase: "pulling", pullPercent: 0 };
-				}),
-			});
+		async function installAll() {
+			for (let i = 0; i < apps.length; i++) {
+				if (cancelled) return;
 
-			idx++;
-			if (idx > apps.length) {
-				cancelled = true;
-				clearInterval(interval);
+				const name = apps[i];
+
+				// Set current app to "pulling"
 				updateStateRef.current({
-					installProgress: apps.map((name) => ({
-						name,
-						displayName: APP_NAMES[name] ?? name,
-						phase: "done",
+					installProgress: apps.map((n, j) => ({
+						name: n,
+						displayName: getDisplayName(n),
+						phase: j < i ? "done" : j === i ? "pulling" : ("pulling" as const),
+						pullPercent: j < i ? undefined : 0,
 					})),
 				});
+
+				try {
+					const result = await installRef.current.mutateAsync(name);
+
+					if (!result.success) {
+						updateStateRef.current({
+							installProgress: apps.map((n, j) => ({
+								name: n,
+								displayName: getDisplayName(n),
+								phase:
+									j < i
+										? "done"
+										: j === i
+											? "error"
+											: ("pulling" as const),
+								pullPercent: j > i ? 0 : undefined,
+								error: j === i ? result.error : undefined,
+							})),
+						});
+						continue;
+					}
+
+					// Mark as done
+					updateStateRef.current({
+						installProgress: apps.map((n, j) => ({
+							name: n,
+							displayName: getDisplayName(n),
+							phase:
+								j <= i ? "done" : ("pulling" as const),
+							pullPercent: j > i ? 0 : undefined,
+						})),
+					});
+				} catch (err) {
+					if (cancelled) return;
+					updateStateRef.current({
+						installProgress: apps.map((n, j) => ({
+							name: n,
+							displayName: getDisplayName(n),
+							phase:
+								j < i
+									? "done"
+									: j === i
+										? "error"
+										: ("pulling" as const),
+							pullPercent: j > i ? 0 : undefined,
+							error:
+								j === i
+									? err instanceof Error
+										? err.message
+										: "Installation failed"
+									: undefined,
+						})),
+					});
+				}
 			}
-		}, 600);
+		}
+
+		installAll();
 
 		return () => {
 			cancelled = true;
-			clearInterval(interval);
 		};
 	}, []); // empty deps — runs once, uses refs for latest values
 
 	const doneCount = state.installProgress.filter(
 		(p) => p.phase === "done",
+	).length;
+	const finishedCount = state.installProgress.filter(
+		(p) => p.phase === "done" || p.phase === "error",
 	).length;
 	const total = state.installProgress.length;
 	const overallPercent = total > 0 ? Math.round((doneCount / total) * 100) : 0;
@@ -218,7 +257,7 @@ export function InstallStep({
 			</div>
 
 			{/* Navigation — only shown once all installs finish */}
-			{total > 0 && doneCount === total && (
+			{total > 0 && finishedCount === total && (
 				<StepNavigation
 					onBack={onBack}
 					onNext={onComplete}

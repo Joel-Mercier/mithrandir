@@ -133,6 +133,14 @@ export const twoFactorRelations = relations(twoFactor, ({ one }) => ({
   }),
 }));
 
+export const systemSettings = sqliteTable("system_settings", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+    .notNull(),
+});
+
 export const activityHistory = sqliteTable(
   "activity_history",
   {

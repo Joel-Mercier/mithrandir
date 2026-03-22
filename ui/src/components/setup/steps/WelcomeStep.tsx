@@ -4,6 +4,7 @@ import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardHeader } from "#/components/ui/card";
 import { Spinner } from "#/components/ui/spinner";
+import { useSystemRequirements, useInstallSystemDep } from "#/hooks/homelab";
 import { StepNavigation } from "../StepNavigation";
 import type { SetupState } from "../SetupWizard";
 
@@ -22,13 +23,15 @@ const checks = [
 		icon: Server,
 		description: "Container runtime for all services",
 		action: "Install Docker",
+		optional: false,
 	},
 	{
 		key: "swap" as const,
 		label: "Swap Memory",
 		icon: HardDrive,
-		description: "Virtual memory for stability",
+		description: "Virtual memory for stability (recommended)",
 		action: "Configure Swap",
+		optional: true,
 	},
 	{
 		key: "rclone" as const,
@@ -36,10 +39,11 @@ const checks = [
 		icon: Cloud,
 		description: "Cloud storage for remote backups",
 		action: "Install rclone",
+		optional: false,
 	},
 ];
 
-function StatusBadge({ status }: { status: CheckStatus }) {
+function StatusBadge({ status, optional }: { status: CheckStatus; optional?: boolean }) {
 	if (status === "checking") {
 		return (
 			<Badge variant="outline" className="gap-1">
@@ -53,6 +57,9 @@ function StatusBadge({ status }: { status: CheckStatus }) {
 			<Badge className="bg-status-healthy text-white">Installed</Badge>
 		);
 	}
+	if (optional) {
+		return <Badge variant="secondary">Optional</Badge>;
+	}
 	return <Badge variant="destructive">Missing</Badge>;
 }
 
@@ -61,44 +68,26 @@ export function WelcomeStep({
 	updateState,
 	onComplete,
 }: WelcomeStepProps) {
-	// Simulate system checks on mount
+	const { data } = useSystemRequirements();
+	const installDep = useInstallSystemDep();
+
 	const updateStateRef = useRef(updateState);
 	updateStateRef.current = updateState;
 
 	useEffect(() => {
-		const timers = [
-			setTimeout(
-				() =>
-					updateStateRef.current({
-						systemChecks: { docker: "installed", swap: "checking", rclone: "checking" },
-					}),
-				800,
-			),
-			setTimeout(
-				() =>
-					updateStateRef.current({
-						systemChecks: { docker: "installed", swap: "installed", rclone: "checking" },
-					}),
-				1200,
-			),
-			setTimeout(
-				() =>
-					updateStateRef.current({
-						systemChecks: {
-							docker: "installed",
-							swap: "installed",
-							rclone: "installed",
-						},
-					}),
-				1600,
-			),
-		];
-		return () => timers.forEach(clearTimeout);
-	}, []);
+		if (!data) return;
+		updateStateRef.current({
+			systemChecks: {
+				docker: data.docker === "installed" ? "installed" : "missing",
+				swap: data.swap === "installed" ? "installed" : "missing",
+				rclone: data.rclone === "installed" ? "installed" : "missing",
+			},
+		});
+	}, [data]);
 
-	const allReady = Object.values(state.systemChecks).every(
-		(s) => s === "installed",
-	);
+	const allReady = checks
+		.filter((c) => !c.optional)
+		.every((c) => state.systemChecks[c.key] === "installed");
 
 	return (
 		<div>
@@ -122,15 +111,29 @@ export function WelcomeStep({
 									<Icon className="h-4 w-4 text-muted-foreground" />
 									<span className="text-sm font-medium">{check.label}</span>
 								</div>
-								<StatusBadge status={status} />
+								<StatusBadge status={status} optional={check.optional} />
 							</CardHeader>
 							<CardContent>
 								<p className="mb-3 text-xs text-muted-foreground">
 									{check.description}
 								</p>
 								{status === "missing" && (
-									<Button size="sm" variant="outline" className="w-full">
-										{check.action}
+									<Button
+										size="sm"
+										variant="outline"
+										className="w-full"
+										disabled={installDep.isPending}
+										onClick={() => installDep.mutate(check.key)}
+									>
+										{installDep.isPending &&
+										installDep.variables === check.key ? (
+											<>
+												<Spinner size="sm" className="mr-1 h-3 w-3" />
+												Installing...
+											</>
+										) : (
+											check.action
+										)}
 									</Button>
 								)}
 							</CardContent>

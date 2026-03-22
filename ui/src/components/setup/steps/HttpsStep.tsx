@@ -4,6 +4,7 @@ import { Card, CardContent } from "#/components/ui/card";
 import { Input } from "#/components/ui/input";
 import { Label } from "#/components/ui/label";
 import { Switch } from "#/components/ui/switch";
+import { useSetupHttps } from "#/hooks/homelab";
 import { StepNavigation } from "../StepNavigation";
 import type { SetupState } from "../SetupWizard";
 
@@ -26,6 +27,17 @@ export function HttpsStep({
 	const domain = state.secrets.DUCKDNS_SUBDOMAINS
 		? `${state.secrets.DUCKDNS_SUBDOMAINS}.duckdns.org`
 		: "yourdomain.duckdns.org";
+	const httpsMutation = useSetupHttps();
+
+	const handleNext = () => {
+		if (state.httpsEnabled) {
+			httpsMutation.mutate(state.acmeEmail, {
+				onSuccess: () => onComplete(),
+			});
+		} else {
+			onSkip();
+		}
+	};
 
 	return (
 		<div>
@@ -125,16 +137,28 @@ export function HttpsStep({
 						</Card>
 					</>
 				)}
+
+				{httpsMutation.isError && (
+					<Alert variant="destructive">
+						<AlertDescription>
+							Failed to configure HTTPS:{" "}
+							{httpsMutation.error instanceof Error
+								? httpsMutation.error.message
+								: "Unknown error"}
+						</AlertDescription>
+					</Alert>
+				)}
 			</div>
 
 			<StepNavigation
 				onBack={onBack}
-				onNext={onComplete}
+				onNext={handleNext}
 				onSkip={onSkip}
 				showSkip={!state.httpsEnabled}
 				nextDisabled={
 					state.httpsEnabled && (!hasDuckDns || !state.acmeEmail.trim())
 				}
+				isLoading={httpsMutation.isPending}
 			/>
 		</div>
 	);

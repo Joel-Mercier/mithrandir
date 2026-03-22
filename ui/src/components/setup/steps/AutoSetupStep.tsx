@@ -13,6 +13,7 @@ import { Label } from "#/components/ui/label";
 import { Separator } from "#/components/ui/separator";
 import { Spinner } from "#/components/ui/spinner";
 import { cn } from "#/lib/utils";
+import { useAutoSetupApp } from "#/hooks/homelab";
 import { StepNavigation } from "../StepNavigation";
 import type { AppSetupResult, SetupState } from "../SetupWizard";
 
@@ -38,7 +39,46 @@ interface AutoSetupApp {
 	prompts: AppPrompt[];
 }
 
+// Apps that support auto-setup via server API calls
+const AUTO_SETUP_APP_NAMES = [
+	"qbittorrent",
+	"prowlarr",
+	"radarr",
+	"sonarr",
+	"lidarr",
+	"jellyfin",
+	"jellyseerr",
+	"gatus",
+] as const;
+
+// Per-app UI prompts — defines what fields to show during the per-app phase
 const AUTO_SETUP_APPS: AutoSetupApp[] = [
+	{
+		name: "qbittorrent",
+		displayName: "qBittorrent",
+		prompts: [
+			{
+				key: "qbittorrent_username",
+				label: "Username",
+				description: "WebUI username",
+				type: "text",
+				defaultValue: "admin",
+			},
+			{
+				key: "qbittorrent_password",
+				label: "Password",
+				description: "WebUI password",
+				type: "password",
+			},
+			{
+				key: "qbittorrent_download_path",
+				label: "Download path",
+				description: "Where downloads are saved",
+				type: "text",
+				defaultValue: "/media/downloads",
+			},
+		],
+	},
 	{
 		name: "prowlarr",
 		displayName: "Prowlarr",
@@ -55,32 +95,6 @@ const AUTO_SETUP_APPS: AutoSetupApp[] = [
 				label: "Password",
 				description: "Admin password for Prowlarr",
 				type: "password",
-			},
-		],
-	},
-	{
-		name: "sonarr",
-		displayName: "Sonarr",
-		prompts: [
-			{
-				key: "sonarr_username",
-				label: "Username",
-				description: "Admin account for Sonarr",
-				type: "text",
-				defaultValue: "admin",
-			},
-			{
-				key: "sonarr_password",
-				label: "Password",
-				description: "Admin password for Sonarr",
-				type: "password",
-			},
-			{
-				key: "sonarr_root_folder",
-				label: "Root folder",
-				description: "Path where TV shows are stored",
-				type: "text",
-				defaultValue: "/media/tv",
 			},
 		],
 	},
@@ -111,6 +125,32 @@ const AUTO_SETUP_APPS: AutoSetupApp[] = [
 		],
 	},
 	{
+		name: "sonarr",
+		displayName: "Sonarr",
+		prompts: [
+			{
+				key: "sonarr_username",
+				label: "Username",
+				description: "Admin account for Sonarr",
+				type: "text",
+				defaultValue: "admin",
+			},
+			{
+				key: "sonarr_password",
+				label: "Password",
+				description: "Admin password for Sonarr",
+				type: "password",
+			},
+			{
+				key: "sonarr_root_folder",
+				label: "Root folder",
+				description: "Path where TV shows are stored",
+				type: "text",
+				defaultValue: "/media/tv",
+			},
+		],
+	},
+	{
 		name: "lidarr",
 		displayName: "Lidarr",
 		prompts: [
@@ -137,6 +177,25 @@ const AUTO_SETUP_APPS: AutoSetupApp[] = [
 		],
 	},
 	{
+		name: "jellyfin",
+		displayName: "Jellyfin",
+		prompts: [
+			{
+				key: "jellyfin_username",
+				label: "Username",
+				description: "Admin account for Jellyfin",
+				type: "text",
+				defaultValue: "admin",
+			},
+			{
+				key: "jellyfin_password",
+				label: "Password",
+				description: "Admin password for Jellyfin",
+				type: "password",
+			},
+		],
+	},
+	{
 		name: "jellyseerr",
 		displayName: "Jellyseerr",
 		prompts: [
@@ -155,30 +214,9 @@ const AUTO_SETUP_APPS: AutoSetupApp[] = [
 		],
 	},
 	{
-		name: "qbittorrent",
-		displayName: "qBittorrent",
-		prompts: [
-			{
-				key: "qbittorrent_username",
-				label: "Username",
-				description: "WebUI username",
-				type: "text",
-				defaultValue: "admin",
-			},
-			{
-				key: "qbittorrent_password",
-				label: "Password",
-				description: "WebUI password",
-				type: "password",
-			},
-			{
-				key: "qbittorrent_download_path",
-				label: "Download path",
-				description: "Where downloads are saved",
-				type: "text",
-				defaultValue: "/media/downloads",
-			},
-		],
+		name: "gatus",
+		displayName: "Gatus",
+		prompts: [],
 	},
 ];
 
@@ -193,11 +231,32 @@ export function AutoSetupStep({
 	const [phase, setPhase] = useState<Phase>("credentials");
 	const [currentAppIdx, setCurrentAppIdx] = useState(0);
 	const [appValues, setAppValues] = useState<Record<string, string>>({});
+	const [skippedApps, setSkippedApps] = useState<Set<string>>(new Set());
 	const onCompleteRef = useRef(onComplete);
 	onCompleteRef.current = onComplete;
+	const autoSetupMutation = useAutoSetupApp();
 
+	// Determine which selected apps support auto-setup
+	const allApps = [
+		...new Set([
+			...state.selectedApps,
+			...state.resolvedApps,
+			...state.autoAddedDeps,
+		]),
+	];
 	const setupApps = AUTO_SETUP_APPS.filter((a) =>
-		state.selectedApps.includes(a.name),
+		allApps.some(
+			(selected) =>
+				selected === a.name &&
+				AUTO_SETUP_APP_NAMES.includes(
+					a.name as (typeof AUTO_SETUP_APP_NAMES)[number],
+				),
+		),
+	);
+
+	// Apps that have per-app prompts (skip those with no prompts in per-app phase)
+	const setupAppsWithPrompts = setupApps.filter(
+		(a) => a.prompts.length > 0,
 	);
 
 	// Skip if no apps support auto-setup
@@ -218,7 +277,7 @@ export function AutoSetupStep({
 		setAppValues((prev) => ({ ...prev, [key]: value }));
 
 	// Check if current app's required fields are filled
-	const currentApp = setupApps[currentAppIdx];
+	const currentApp = setupAppsWithPrompts[currentAppIdx];
 	const currentAppFilled =
 		currentApp?.prompts.every(
 			(p) => getPromptValue(p.key, p.defaultValue).trim() !== "",
@@ -233,7 +292,7 @@ export function AutoSetupStep({
 		}
 		// Pre-fill per-app usernames/passwords from shared credentials
 		const prefilled: Record<string, string> = {};
-		for (const app of setupApps) {
+		for (const app of setupAppsWithPrompts) {
 			for (const prompt of app.prompts) {
 				if (
 					prompt.key.endsWith("_username") &&
@@ -253,63 +312,107 @@ export function AutoSetupStep({
 		}
 		setAppValues((prev) => ({ ...prefilled, ...prev }));
 		setCurrentAppIdx(0);
-		setPhase("per-app");
+
+		if (setupAppsWithPrompts.length === 0) {
+			// No per-app prompts needed, go straight to running
+			runAutoSetup([]);
+		} else {
+			setPhase("per-app");
+		}
 	};
 
 	const handleConfirmApp = () => {
-		// Mark current app as done in results
-		const results: AppSetupResult[] = setupApps.map((app, i) => ({
-			name: app.name,
-			displayName: app.displayName,
-			status: i <= currentAppIdx ? "done" : "pending",
-		}));
-		updateState({ autoSetupResults: results });
-
-		if (currentAppIdx < setupApps.length - 1) {
+		if (currentAppIdx < setupAppsWithPrompts.length - 1) {
 			setCurrentAppIdx(currentAppIdx + 1);
 		} else {
-			// All apps configured
-			setPhase("done");
-			updateState({
-				autoSetupResults: setupApps.map((app) => ({
-					name: app.name,
-					displayName: app.displayName,
-					status: "done",
-				})),
-			});
+			// All per-app prompts done, start running auto-setup
+			runAutoSetup(skippedApps);
 		}
 	};
 
 	const handleSkipApp = () => {
-		const results: AppSetupResult[] = setupApps.map((app, i) => ({
-			name: app.name,
-			displayName: app.displayName,
-			status:
-				i < currentAppIdx
-					? "done"
-					: i === currentAppIdx
-						? "skipped"
-						: "pending",
-		}));
-		updateState({ autoSetupResults: results });
+		if (currentApp) {
+			setSkippedApps((prev) => new Set([...prev, currentApp.name]));
+		}
 
-		if (currentAppIdx < setupApps.length - 1) {
+		if (currentAppIdx < setupAppsWithPrompts.length - 1) {
 			setCurrentAppIdx(currentAppIdx + 1);
 		} else {
-			setPhase("done");
-			updateState({
-				autoSetupResults: setupApps.map((app, i) => ({
-					name: app.name,
-					displayName: app.displayName,
-					status:
-						i < currentAppIdx
-							? (state.autoSetupResults[i]?.status ?? "done")
-							: i === currentAppIdx
-								? "skipped"
-								: "pending",
-				})),
-			});
+			// All per-app prompts done (or skipped), start running
+			const newSkipped = new Set([...skippedApps]);
+			if (currentApp) newSkipped.add(currentApp.name);
+			runAutoSetup(newSkipped);
 		}
+	};
+
+	const runAutoSetup = async (skipped: Set<string> | string[]) => {
+		const skippedSet =
+			skipped instanceof Set ? skipped : new Set(skipped);
+		setPhase("running");
+
+		// Initialize results: all non-skipped as pending, skipped as skipped
+		const initialResults: AppSetupResult[] = setupApps.map((app) => ({
+			name: app.name,
+			displayName: app.displayName,
+			status: skippedSet.has(app.name) ? "skipped" : "pending",
+		}));
+		updateState({ autoSetupResults: initialResults });
+
+		const results = [...initialResults];
+		const { username, password } = state.autoSetupCredentials;
+
+		for (let i = 0; i < setupApps.length; i++) {
+			const app = setupApps[i];
+			if (skippedSet.has(app.name)) continue;
+
+			// Mark as configuring
+			results[i] = { ...results[i], status: "configuring" };
+			updateState({ autoSetupResults: [...results] });
+
+			try {
+				// Collect per-app settings from appValues
+				const settings: Record<string, string> = {};
+				for (const prompt of app.prompts) {
+					const value = getPromptValue(prompt.key, prompt.defaultValue);
+					if (value) settings[prompt.key] = value;
+				}
+
+				const result = await autoSetupMutation.mutateAsync({
+					appName: app.name,
+					credentials: { username, password },
+					selectedApps: allApps,
+					settings,
+				});
+
+				if (result.success) {
+					results[i] = {
+						...results[i],
+						status:
+							result.warnings && result.warnings.length > 0
+								? "warning"
+								: "done",
+						warning: result.warnings?.join("; "),
+					};
+				} else {
+					results[i] = {
+						...results[i],
+						status: "warning",
+						warning: result.error ?? "Setup failed",
+					};
+				}
+			} catch (err) {
+				results[i] = {
+					...results[i],
+					status: "warning",
+					warning:
+						err instanceof Error ? err.message : "Setup failed",
+				};
+			}
+
+			updateState({ autoSetupResults: [...results] });
+		}
+
+		setPhase("done");
 	};
 
 	return (
@@ -403,7 +506,7 @@ export function AutoSetupStep({
 				<>
 					{/* Progress bar showing which app we're on */}
 					<div className="mt-8 flex items-center gap-2">
-						{setupApps.map((app, i) => (
+						{setupAppsWithPrompts.map((app, i) => (
 							<div key={app.name} className="flex items-center gap-2">
 								{i > 0 && (
 									<div
@@ -435,7 +538,7 @@ export function AutoSetupStep({
 							</div>
 						))}
 						<span className="ml-2 text-xs text-muted-foreground">
-							{currentAppIdx + 1} of {setupApps.length}
+							{currentAppIdx + 1} of {setupAppsWithPrompts.length}
 						</span>
 					</div>
 
@@ -502,16 +605,76 @@ export function AutoSetupStep({
 							disabled={!currentAppFilled}
 							className="gap-2"
 						>
-							{currentAppIdx < setupApps.length - 1
+							{currentAppIdx < setupAppsWithPrompts.length - 1
 								? "Next App"
-								: "Finish Configuration"}
+								: "Run Auto-Setup"}
 							<ChevronRight className="h-4 w-4" />
 						</Button>
 					</div>
 				</>
 			)}
 
-			{/* Phase 3: Done — show results summary */}
+			{/* Phase 3: Running — live progress */}
+			{phase === "running" && (
+				<div className="mt-8 space-y-3">
+					{state.autoSetupResults.map((app) => (
+						<div
+							key={app.name}
+							className="flex items-center gap-3 rounded-lg border border-border/50 p-3"
+						>
+							<div className="flex h-6 w-6 shrink-0 items-center justify-center">
+								{app.status === "done" && (
+									<Check className="h-4 w-4 text-status-healthy" />
+								)}
+								{app.status === "skipped" && (
+									<SkipForward className="h-4 w-4 text-muted-foreground" />
+								)}
+								{app.status === "warning" && (
+									<AlertTriangle className="h-4 w-4 text-status-warning" />
+								)}
+								{app.status === "configuring" && (
+									<Spinner size="sm" />
+								)}
+								{app.status === "pending" && (
+									<div className="h-2 w-2 rounded-full bg-muted-foreground/30" />
+								)}
+							</div>
+							<div className="min-w-0 flex-1">
+								<p className="text-sm font-medium">
+									{app.displayName}
+								</p>
+								{app.status === "configuring" && (
+									<p className="text-xs text-muted-foreground">
+										Configuring...
+									</p>
+								)}
+								{app.warning && (
+									<p className="text-xs text-status-warning">
+										{app.warning}
+									</p>
+								)}
+							</div>
+							<span
+								className={cn(
+									"text-xs",
+									app.status === "done" && "text-status-healthy",
+									app.status === "skipped" &&
+										"text-muted-foreground",
+									app.status === "configuring" &&
+										"text-muted-foreground",
+								)}
+							>
+								{app.status === "done" && "Configured"}
+								{app.status === "skipped" && "Skipped"}
+								{app.status === "warning" && "Warning"}
+								{app.status === "configuring" && "Setting up..."}
+							</span>
+						</div>
+					))}
+				</div>
+			)}
+
+			{/* Phase 4: Done — show results summary */}
 			{phase === "done" && (
 				<>
 					<div className="mt-8 space-y-3">
@@ -529,10 +692,6 @@ export function AutoSetupStep({
 									)}
 									{app.status === "warning" && (
 										<AlertTriangle className="h-4 w-4 text-status-warning" />
-									)}
-									{(app.status === "pending" ||
-										app.status === "configuring") && (
-										<Spinner size="sm" />
 									)}
 								</div>
 								<div className="min-w-0 flex-1">

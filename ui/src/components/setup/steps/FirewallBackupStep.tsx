@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { Clock, Shield } from "lucide-react";
 import { Card, CardContent, CardHeader } from "#/components/ui/card";
 import { Input } from "#/components/ui/input";
 import { Label } from "#/components/ui/label";
 import { Switch } from "#/components/ui/switch";
 import { StepNavigation } from "../StepNavigation";
+import { useSetupFirewall, useSetupBackupTimer } from "#/hooks/homelab";
 import type { SetupState } from "../SetupWizard";
 
 interface FirewallBackupStepProps {
@@ -19,6 +21,29 @@ export function FirewallBackupStep({
 	onComplete,
 	onBack,
 }: FirewallBackupStepProps) {
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	const firewallMutation = useSetupFirewall();
+	const backupTimerMutation = useSetupBackupTimer();
+
+	async function handleFinish() {
+		setIsSubmitting(true);
+		try {
+			if (state.firewallEnabled) {
+				const allApps = [
+					...state.selectedApps,
+					...state.resolvedApps,
+					...state.autoAddedDeps,
+				];
+				const uniqueApps = [...new Set(allApps)];
+				await firewallMutation.mutateAsync(uniqueApps);
+			}
+			await backupTimerMutation.mutateAsync(state.backupHour);
+			onComplete();
+		} catch {
+			setIsSubmitting(false);
+		}
+	}
+
 	return (
 		<div>
 			<h2 className="font-display text-2xl font-bold tracking-tight">
@@ -97,8 +122,9 @@ export function FirewallBackupStep({
 
 			<StepNavigation
 				onBack={onBack}
-				onNext={onComplete}
+				onNext={handleFinish}
 				nextLabel="Finish"
+				isLoading={isSubmitting}
 			/>
 		</div>
 	);

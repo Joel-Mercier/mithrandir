@@ -72,3 +72,23 @@ export function getComposePath(app: AppDefinition, baseDir: string): string;
 export function getContainerName(app: AppDefinition): string;
 export function getAppDir(app: AppDefinition, baseDir: string): string;
 export function getApp(name: string): AppDefinition | undefined;
+export function getConfigPaths(app: AppDefinition, baseDir: string): string[];
+export function getAllContainerNames(app: AppDefinition): string[];
+export function filterConflicts(apps: AppDefinition[]): AppDefinition[];
+export function getCompanionApps(appName: string): AppDefinition[];
+
+export interface AppDependency {
+	[appName: string]: string[];
+}
+
+export const APP_DEPENDENCIES: AppDependency;
+
+export interface AppStack {
+	name: string;
+	displayName: string;
+	apps: string[];
+}
+
+export const APP_STACKS: AppStack[];
+
+export function dataDirMounts(app: AppDefinition): string[];

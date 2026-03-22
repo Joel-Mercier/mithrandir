@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
 	ChevronDown,
 	Cloud,
@@ -6,6 +6,7 @@ import {
 	Film,
 	Heart,
 	LineChart,
+	Loader2,
 	Lock,
 	MonitorSmartphone,
 	Plane,
@@ -19,6 +20,7 @@ import { Card, CardContent } from "#/components/ui/card";
 import { Checkbox } from "#/components/ui/checkbox";
 import { Input } from "#/components/ui/input";
 import { cn } from "#/lib/utils";
+import { useAppRegistry, useResolveAppDependencies } from "#/hooks/homelab";
 import { StepNavigation } from "../StepNavigation";
 import type { SetupState } from "../SetupWizard";
 
@@ -29,106 +31,17 @@ interface AppSelectStepProps {
 	onBack: () => void;
 }
 
-const CATEGORIES = [
-	{
-		id: "media",
-		label: "Media",
-		icon: Film,
-		description: "Movies, TV, music, photos",
-		apps: ["jellyfin", "sonarr", "radarr", "lidarr", "prowlarr", "qbittorrent", "jellyseerr"],
-	},
-	{
-		id: "automation",
-		label: "Automation",
-		icon: Cog,
-		description: "Home automation & IoT",
-		apps: ["homeassistant", "nodered"],
-	},
-	{
-		id: "monitoring",
-		label: "Monitoring",
-		icon: MonitorSmartphone,
-		description: "Uptime & system monitoring",
-		apps: ["uptimekuma", "glances"],
-	},
-	{
-		id: "productivity",
-		label: "Productivity",
-		icon: Sparkles,
-		description: "Notes, docs, collaboration",
-		apps: ["affine", "paperlessngx", "stirlingpdf"],
-	},
-	{
-		id: "finance",
-		label: "Finance",
-		icon: Wallet,
-		description: "Budget & expense tracking",
-		apps: ["actualbudget"],
-	},
-	{
-		id: "security",
-		label: "Security",
-		icon: Lock,
-		description: "VPN, passwords, DNS",
-		apps: ["wireguard", "vaultwarden", "pihole"],
-	},
-	{
-		id: "travel",
-		label: "Travel",
-		icon: Plane,
-		description: "Trip planning & logs",
-		apps: ["adventurelog"],
-	},
-	{
-		id: "statistics",
-		label: "Statistics",
-		icon: LineChart,
-		description: "Usage stats & analytics",
-		apps: ["yourspotify", "tautulli"],
-	},
-	{
-		id: "household",
-		label: "Household",
-		icon: Heart,
-		description: "Recipes, groceries, chores",
-		apps: ["mealie", "homebox"],
-	},
-	{
-		id: "utilities",
-		label: "Utilities",
-		icon: Wrench,
-		description: "Dashboard, DNS, tools",
-		apps: ["homarr", "duckdns"],
-	},
-];
-
-// Placeholder app data for the customize section
-const ALL_APPS: Record<string, { displayName: string; description: string }> = {
-	jellyfin: { displayName: "Jellyfin", description: "Media server" },
-	sonarr: { displayName: "Sonarr", description: "TV series manager" },
-	radarr: { displayName: "Radarr", description: "Movie manager" },
-	lidarr: { displayName: "Lidarr", description: "Music manager" },
-	prowlarr: { displayName: "Prowlarr", description: "Indexer manager" },
-	qbittorrent: { displayName: "qBittorrent", description: "Torrent client" },
-	jellyseerr: { displayName: "Jellyseerr", description: "Media requests" },
-	homeassistant: { displayName: "Home Assistant", description: "Home automation" },
-	nodered: { displayName: "Node-RED", description: "Flow automation" },
-	uptimekuma: { displayName: "Uptime Kuma", description: "Uptime monitoring" },
-	glances: { displayName: "Glances", description: "System monitor" },
-	affine: { displayName: "AFFiNE", description: "Knowledge base" },
-	paperlessngx: { displayName: "Paperless-ngx", description: "Document management" },
-	stirlingpdf: { displayName: "Stirling PDF", description: "PDF toolkit" },
-	actualbudget: { displayName: "Actual Budget", description: "Budget manager" },
-	wireguard: { displayName: "WireGuard", description: "VPN server" },
-	vaultwarden: { displayName: "Vaultwarden", description: "Password manager" },
-	pihole: { displayName: "Pi-hole", description: "DNS ad blocker" },
-	adventurelog: { displayName: "AdventureLog", description: "Travel journal" },
-	yourspotify: { displayName: "Your Spotify", description: "Spotify stats" },
-	tautulli: { displayName: "Tautulli", description: "Plex monitoring" },
-	mealie: { displayName: "Mealie", description: "Recipe manager" },
-	homebox: { displayName: "Homebox", description: "Home inventory" },
-	homarr: { displayName: "Homarr", description: "Dashboard" },
-	duckdns: { displayName: "DuckDNS", description: "Dynamic DNS" },
+const CATEGORY_ICONS: Record<string, typeof Film> = {
+	media: Film,
+	automation: Cog,
+	monitoring: MonitorSmartphone,
+	productivity: Sparkles,
+	finance: Wallet,
+	security: Lock,
+	travel: Plane,
+	statistics: LineChart,
+	household: Heart,
+	utilities: Wrench,
 };
 
 export function AppSelectStep({
@@ -140,8 +53,54 @@ export function AppSelectStep({
 	const [showCustomize, setShowCustomize] = useState(false);
 	const [search, setSearch] = useState("");
 
+	const { data: registry, isLoading } = useAppRegistry();
+	const resolveDeps = useResolveAppDependencies();
+
+	const categories = useMemo(() => {
+		if (!registry) return [];
+		return registry.categories.map((cat) => ({
+			id: cat.value,
+			label: cat.label,
+			icon: CATEGORY_ICONS[cat.value] ?? Wrench,
+			description: cat.description,
+			apps: cat.apps,
+		}));
+	}, [registry]);
+
+	const allApps = useMemo(() => {
+		if (!registry) return {} as Record<string, { displayName: string; description: string }>;
+		const result: Record<string, { displayName: string; description: string }> = {};
+		for (const app of registry.apps) {
+			if (app.hidden) continue;
+			result[app.name] = {
+				displayName: app.displayName,
+				description: app.description,
+			};
+		}
+		return result;
+	}, [registry]);
+
+	// Resolve dependencies when selection changes
+	useEffect(() => {
+		if (state.selectedApps.length === 0) {
+			updateState({ resolvedApps: [], autoAddedDeps: [] });
+			return;
+		}
+		resolveDeps.mutate(
+			{ selectedApps: state.selectedApps, httpsEnabled: state.httpsEnabled },
+			{
+				onSuccess: (result) => {
+					updateState({
+						resolvedApps: result.resolved,
+						autoAddedDeps: result.autoAdded,
+					});
+				},
+			},
+		);
+	}, [state.selectedApps, state.httpsEnabled, resolveDeps.mutate, updateState]);
+
 	const toggleCategory = (categoryId: string) => {
-		const category = CATEGORIES.find((c) => c.id === categoryId);
+		const category = categories.find((c) => c.id === categoryId);
 		if (!category) return;
 
 		const isSelected = state.selectedCategories.includes(categoryId);
@@ -172,12 +131,26 @@ export function AppSelectStep({
 		updateState({ selectedApps: newApps });
 	};
 
-	const filteredApps = Object.entries(ALL_APPS).filter(
+	const filteredApps = Object.entries(allApps).filter(
 		([, app]) =>
 			!search ||
 			app.displayName.toLowerCase().includes(search.toLowerCase()) ||
 			app.description.toLowerCase().includes(search.toLowerCase()),
 	);
+
+	if (isLoading) {
+		return (
+			<div>
+				<h2 className="font-display text-2xl font-bold tracking-tight">
+					Choose Applications
+				</h2>
+				<div className="mt-8 flex items-center gap-3 text-muted-foreground">
+					<Loader2 className="h-5 w-5 animate-spin" />
+					<span>Loading app registry...</span>
+				</div>
+			</div>
+		);
+	}
 
 	return (
 		<div>
@@ -190,7 +163,7 @@ export function AppSelectStep({
 
 			{/* Category grid */}
 			<div className="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-3">
-				{CATEGORIES.map((category) => {
+				{categories.map((category) => {
 					const Icon = category.icon;
 					const isSelected = state.selectedCategories.includes(category.id);
 

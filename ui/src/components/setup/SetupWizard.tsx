@@ -1,4 +1,8 @@
 import { useState, useCallback } from "react";
+import { useNavigate } from "@tanstack/react-router";
+import { SkipForward } from "lucide-react";
+import { Button } from "#/components/ui/button";
+import { useSkipSetup } from "#/hooks/homelab";
 import {
 	SetupStepper,
 	type StepDefinition,
@@ -107,6 +111,8 @@ function createInitialState(): SetupState {
 
 export function SetupWizard() {
 	const [state, setState] = useState<SetupState>(createInitialState);
+	const skipMutation = useSkipSetup();
+	const navigate = useNavigate();
 
 	const updateState = useCallback(
 		(updates: Partial<SetupState>) =>
@@ -245,6 +251,11 @@ export function SetupWizard() {
 		}
 	})();
 
+	const handleSkip = async () => {
+		await skipMutation.mutateAsync();
+		navigate({ to: "/" });
+	};
+
 	return (
 		<div className="mx-auto max-w-[1400px] px-4 py-8">
 			<div className="flex flex-col lg:flex-row items-start gap-8">
@@ -262,6 +273,21 @@ export function SetupWizard() {
 					>
 						{stepContent}
 					</div>
+
+					{state.currentStep < 9 && (
+						<div className="mt-8 border-t border-border/50 pt-4">
+							<Button
+								variant="ghost"
+								size="sm"
+								className="gap-2 text-muted-foreground"
+								onClick={handleSkip}
+								disabled={skipMutation.isPending}
+							>
+								<SkipForward className="h-4 w-4" />
+								Skip setup for now
+							</Button>
+						</div>
+					)}
 				</div>
 			</div>
 		</div>

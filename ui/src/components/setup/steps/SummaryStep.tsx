@@ -1,84 +1,45 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import {
 	ArrowRight,
 	CheckCircle2,
 	ExternalLink,
 	Info,
+	Loader2,
 	Shield,
 } from "lucide-react";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent } from "#/components/ui/card";
+import { useAppRegistry, useCompleteSetup } from "#/hooks/homelab";
 import type { SetupState } from "../SetupWizard";
 
 interface SummaryStepProps {
 	state: SetupState;
 }
 
-// Placeholder port mapping
-const APP_PORTS: Record<string, number> = {
-	jellyfin: 8096,
-	sonarr: 8989,
-	radarr: 7878,
-	lidarr: 8686,
-	prowlarr: 9696,
-	qbittorrent: 8080,
-	jellyseerr: 5055,
-	homeassistant: 8123,
-	uptimekuma: 3001,
-	pihole: 80,
-	wireguard: 51820,
-	vaultwarden: 3012,
-	homarr: 7575,
-	affine: 3010,
-	paperlessngx: 8000,
-	stirlingpdf: 8080,
-	actualbudget: 5006,
-	adventurelog: 3000,
-	yourspotify: 3000,
-	tautulli: 8181,
-	mealie: 9925,
-	homebox: 7745,
-	nodered: 1880,
-	glances: 61208,
-};
-
-const APP_NAMES: Record<string, string> = {
-	jellyfin: "Jellyfin",
-	sonarr: "Sonarr",
-	radarr: "Radarr",
-	lidarr: "Lidarr",
-	prowlarr: "Prowlarr",
-	qbittorrent: "qBittorrent",
-	jellyseerr: "Jellyseerr",
-	homeassistant: "Home Assistant",
-	uptimekuma: "Uptime Kuma",
-	pihole: "Pi-hole",
-	wireguard: "WireGuard",
-	vaultwarden: "Vaultwarden",
-	homarr: "Homarr",
-	duckdns: "DuckDNS",
-	affine: "AFFiNE",
-	paperlessngx: "Paperless-ngx",
-	stirlingpdf: "Stirling PDF",
-	actualbudget: "Actual Budget",
-	adventurelog: "AdventureLog",
-	yourspotify: "Your Spotify",
-	tautulli: "Tautulli",
-	mealie: "Mealie",
-	homebox: "Homebox",
-	nodered: "Node-RED",
-	glances: "Glances",
-};
-
 export function SummaryStep({ state }: SummaryStepProps) {
+	const navigate = useNavigate();
+	const { data: registry } = useAppRegistry();
+	const completeSetupMutation = useCompleteSetup();
+
+	const appMap = new Map(
+		(registry?.apps ?? []).map((app) => [app.name, app]),
+	);
 	const domain = state.secrets.DUCKDNS_SUBDOMAINS
 		? `${state.secrets.DUCKDNS_SUBDOMAINS}.duckdns.org`
 		: null;
 
-	const serviceApps = state.selectedApps.filter(
-		(a) => a !== "duckdns" && APP_PORTS[a],
-	);
+	const serviceApps = state.selectedApps
+		.map((name) => appMap.get(name))
+		.filter(
+			(app): app is NonNullable<typeof app> =>
+				app != null && !app.hidden && app.port != null,
+		);
+
+	async function handleGoToDashboard() {
+		await completeSetupMutation.mutateAsync();
+		navigate({ to: "/" });
+	}
 
 	return (
 		<div>
@@ -104,24 +65,23 @@ export function SummaryStep({ state }: SummaryStepProps) {
 					</h3>
 					<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
 						{serviceApps.map((app) => {
-							const port = APP_PORTS[app];
 							const url =
 								state.httpsEnabled && domain
-									? `https://${app}.${domain}`
-									: `http://localhost:${port}`;
+									? `https://${app.name}.${domain}`
+									: `http://localhost:${app.port}`;
 
 							return (
-								<Card key={app}>
+								<Card key={app.name}>
 									<CardContent className="flex items-center justify-between p-4">
 										<div className="flex items-center gap-3">
 											<div className="h-2 w-2 rounded-full bg-status-healthy" />
 											<div>
 												<Link
 													to="/apps/$appName"
-													params={{ appName: app }}
+													params={{ appName: app.name }}
 													className="text-sm font-medium hover:underline"
 												>
-													{APP_NAMES[app] ?? app}
+													{app.displayName}
 												</Link>
 												<p className="font-mono-data text-xs text-muted-foreground">
 													{url}
@@ -211,11 +171,18 @@ export function SummaryStep({ state }: SummaryStepProps) {
 
 			{/* Go to dashboard */}
 			<div className="mt-8 text-center">
-				<Button asChild size="lg" className="gap-2">
-					<Link to="/">
-						Go to Dashboard
+				<Button
+					size="lg"
+					className="gap-2"
+					disabled={completeSetupMutation.isPending}
+					onClick={handleGoToDashboard}
+				>
+					{completeSetupMutation.isPending ? (
+						<Loader2 className="h-4 w-4 animate-spin" />
+					) : (
 						<ArrowRight className="h-4 w-4" />
-					</Link>
+					)}
+					Go to Dashboard
 				</Button>
 			</div>
 		</div>

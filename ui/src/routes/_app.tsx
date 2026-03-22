@@ -2,6 +2,7 @@ import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
 import Header from "#/components/Header";
 import Footer from "#/components/Footer";
 import { getSession } from "#/lib/auth";
+import { fetchSetupStatus } from "#/lib/server/setup";
 
 export const Route = createFileRoute("/_app")({
   beforeLoad: async ({ location }) => {
@@ -12,7 +13,15 @@ export const Route = createFileRoute("/_app")({
         search: { redirect: location.href },
       });
     }
-    return { user: session.user };
+    const { status: setupStatus } = await fetchSetupStatus();
+    const isSetupRoute = location.href.includes("/setup");
+    if (setupStatus === "pending" && !isSetupRoute) {
+      throw redirect({ to: "/setup" });
+    }
+    if (setupStatus === "completed" && isSetupRoute) {
+      throw redirect({ to: "/" });
+    }
+    return { user: session.user, setupStatus };
   },
 	component: AppLayout,
 });

@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { AlertCircle } from "lucide-react";
+import { Link, createFileRoute } from "@tanstack/react-router";
+import { AlertCircle, ArrowRight, Wand2 } from "lucide-react";
 import AppsGrid from "#/components/dashboard/AppsGrid";
 import BackupStatusCard from "#/components/dashboard/BackupStatusCard";
 import ConfigCard from "#/components/dashboard/ConfigCard";
@@ -7,6 +7,7 @@ import ResourcesCard from "#/components/dashboard/ResourcesCard";
 import SystemStatusCard from "#/components/dashboard/SystemStatusCard";
 import VersionCard from "#/components/dashboard/VersionCard";
 import { Alert, AlertDescription } from "#/components/ui/alert";
+import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardHeader } from "#/components/ui/card";
 import { Skeleton } from "#/components/ui/skeleton";
 import {
@@ -15,6 +16,7 @@ import {
 	useConfig,
 	useSystemStatus,
 	useResources,
+	useSetupStatus,
 	useVersion,
 } from "#/hooks/homelab";
 
@@ -63,6 +65,7 @@ function Dashboard() {
 	const backupQuery = useBackupStatus();
 	const configQuery = useConfig();
 	const versionQuery = useVersion();
+	const setupStatusQuery = useSetupStatus();
 
 	const hasError =
 		appsQuery.isError ||
@@ -87,6 +90,24 @@ function Dashboard() {
 					<AlertDescription>
 						Failed to load some data from the server. Make sure the CLI is
 						reachable.
+					</AlertDescription>
+				</Alert>
+			)}
+
+			{setupStatusQuery.data?.status === "skipped" && (
+				<Alert className="mb-6">
+					<Wand2 className="h-4 w-4" />
+					<AlertDescription className="flex items-center justify-between">
+						<span>
+							Setup was skipped. Run the setup wizard to configure your
+							homelab.
+						</span>
+						<Button asChild size="sm" variant="outline" className="ml-4 gap-2">
+							<Link to="/setup">
+								Resume Setup
+								<ArrowRight className="h-3.5 w-3.5" />
+							</Link>
+						</Button>
 					</AlertDescription>
 				</Alert>
 			)}

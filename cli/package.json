@@ -13,7 +13,7 @@
   "scripts": {
     "start": "bun run src/index.tsx",
     "build": "bun run build.ts",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "bunx tsc --noEmit -p tsconfig.json",
     "test": "bun test"
   },
   "dependencies": {

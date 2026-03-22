@@ -1,6 +1,6 @@
-import { FolderOpen } from "lucide-react";
-import { Input } from "#/components/ui/input";
-import { Label } from "#/components/ui/label";
+import { z } from "zod";
+import { useAppForm } from "#/hooks/form";
+import { useSetupBaseDir } from "#/hooks/homelab";
 import { StepNavigation } from "../StepNavigation";
 import type { SetupState } from "../SetupWizard";
 
@@ -10,6 +10,13 @@ interface BaseDirStepProps {
 	onComplete: () => void;
 	onBack: () => void;
 }
+
+const baseDirSchema = z.object({
+	baseDir: z
+		.string()
+		.min(1, "Required")
+		.startsWith("/", "Must be an absolute path"),
+});
 
 function TreePreview({ baseDir }: { baseDir: string }) {
 	const dirs = [
@@ -41,6 +48,22 @@ export function BaseDirStep({
 	onComplete,
 	onBack,
 }: BaseDirStepProps) {
+	const setupBaseDir = useSetupBaseDir();
+
+	const form = useAppForm({
+		defaultValues: {
+			baseDir: state.baseDir,
+		},
+		validators: {
+			onBlur: baseDirSchema,
+		},
+		onSubmit: async ({ value }) => {
+			await setupBaseDir.mutateAsync(value.baseDir);
+			updateState({ baseDir: value.baseDir });
+			onComplete();
+		},
+	});
+
 	return (
 		<div>
 			<h2 className="font-display text-2xl font-bold tracking-tight">
@@ -50,32 +73,39 @@ export function BaseDirStep({
 				Choose where app configs, compose files, and backups will be stored.
 			</p>
 
-			<div className="mt-8 space-y-6">
-				<div className="space-y-2">
-					<Label htmlFor="base-dir" className="flex items-center gap-2">
-						<FolderOpen className="h-4 w-4" />
-						Base directory path
-					</Label>
-					<Input
-						id="base-dir"
-						value={state.baseDir}
-						onChange={(e) => updateState({ baseDir: e.target.value })}
-						placeholder="/opt/homelab"
-					/>
-					<p className="text-xs text-muted-foreground">
-						This directory will be created if it doesn't exist. All app data
-						lives here.
-					</p>
-				</div>
+			<form
+				onSubmit={(e) => {
+					e.preventDefault();
+					e.stopPropagation();
+					form.handleSubmit();
+				}}
+				className="mt-8 space-y-6"
+			>
+				<form.AppField name="baseDir">
+					{(field) => (
+						<field.TextField
+							label="Base directory path"
+							placeholder="/opt/homelab"
+						/>
+					)}
+				</form.AppField>
 
-				<TreePreview baseDir={state.baseDir} />
-			</div>
+				<p className="text-xs text-muted-foreground">
+					This directory will be created if it doesn't exist. All app data
+					lives here.
+				</p>
 
-			<StepNavigation
-				onBack={onBack}
-				onNext={onComplete}
-				nextDisabled={!state.baseDir.trim()}
-			/>
+				<form.Subscribe selector={(s) => s.values.baseDir}>
+					{(baseDir) => <TreePreview baseDir={baseDir} />}
+				</form.Subscribe>
+
+				<StepNavigation
+					onBack={onBack}
+					onNext={() => form.handleSubmit()}
+					nextDisabled={setupBaseDir.isPending}
+					isLoading={setupBaseDir.isPending}
+				/>
+			</form>
 		</div>
 	);
 }

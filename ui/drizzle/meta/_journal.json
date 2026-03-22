@@ -15,6 +15,13 @@
       "when": 1774109494382,
       "tag": "0001_tiny_steve_rogers",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1774217186080,
+      "tag": "0002_fearless_firebrand",
+      "breakpoints": true
     }
   ]
 }
