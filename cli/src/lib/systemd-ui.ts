@@ -9,8 +9,20 @@ function getServicePath(): string {
   return `/etc/systemd/system/${SERVICE_NAME}.service`;
 }
 
+/** Resolve the home directory of the user who owns the repo */
+async function resolveRepoOwnerHome(repoRoot: string): Promise<string> {
+  const result = await shell("stat", ["-c", "%U", repoRoot], { ignoreError: true });
+  const owner = result.stdout.trim();
+  if (owner && result.exitCode === 0) {
+    const pwResult = await shell("getent", ["passwd", owner], { ignoreError: true });
+    const home = pwResult.stdout.split(":")[5];
+    if (home) return home;
+  }
+  return "/root";
+}
+
 /** Generate the systemd service unit content for the UI dashboard */
-export function generateUiServiceUnit(repoRoot: string): string {
+export function generateUiServiceUnit(repoRoot: string, ownerHome: string): string {
   return `[Unit]
 Description=Mithrandir UI Dashboard
 After=network.target docker.service
@@ -24,6 +36,7 @@ ExecStart=/usr/local/bin/bun run .output/server/index.mjs
 Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin"
 Environment="NODE_ENV=production"
 Environment="PORT=4180"
+Environment="HOME=${ownerHome}"
 EnvironmentFile=${repoRoot}/.env
 EnvironmentFile=${repoRoot}/ui/.env.local
 Restart=on-failure
@@ -39,7 +52,8 @@ WantedBy=multi-user.target
 /** Install and start the UI systemd service */
 export async function installUiService(repoRoot: string): Promise<void> {
   const servicePath = getServicePath();
-  const content = generateUiServiceUnit(repoRoot);
+  const ownerHome = await resolveRepoOwnerHome(repoRoot);
+  const content = generateUiServiceUnit(repoRoot, ownerHome);
 
   const tmpFile = join(tmpdir(), `${SERVICE_NAME}.service.tmp`);
   writeFileSync(tmpFile, content);

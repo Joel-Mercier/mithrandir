@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { generateUiServiceUnit } from "@/lib/systemd-ui.js";
 
 describe("generateUiServiceUnit", () => {
-  const unit = generateUiServiceUnit("/home/user/homelab");
+  const unit = generateUiServiceUnit("/home/user/homelab", "/home/user");
 
   test("contains correct Description", () => {
     expect(unit).toContain("Description=Mithrandir UI Dashboard");
@@ -33,6 +33,7 @@ describe("generateUiServiceUnit", () => {
   test("sets production environment", () => {
     expect(unit).toContain('Environment="NODE_ENV=production"');
     expect(unit).toContain('Environment="PORT=4180"');
+    expect(unit).toContain('Environment="HOME=/home/user"');
   });
 
   test("loads env files", () => {
