@@ -96,7 +96,7 @@ export default function ActivitySidebar({
 										<button
 											type="button"
 											onClick={() => handleClick(item)}
-											className="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50"
+											className="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors cursor-pointer hover:bg-muted/50"
 										>
 											<Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
 											<div className="min-w-0 flex-1">

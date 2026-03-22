@@ -22,6 +22,7 @@ import { regenerateGatusConfig } from "@mithrandir/cli/lib/gatus";
 import { regenerateCaddyfile } from "@mithrandir/cli/lib/caddy";
 import type { DashboardApp, AppDetail, AppCategory } from "#/lib/types";
 import { logActivity } from "./activity";
+import { formatUptime, parseMemoryMB } from "../utils";
 
 /** Map CLI category value to UI AppCategory */
 function mapCategory(app: AppDefinition): AppCategory {
@@ -336,38 +337,12 @@ export const uninstallApp = createServerFn({ method: "POST" })
 
     // Regenerate Gatus health checks and Caddyfile to remove the uninstalled app
     if (appName !== "gatus") {
-      try { await regenerateGatusConfig(envConfig); } catch {}
+      try { await regenerateGatusConfig(envConfig); } catch { }
     }
     if (envConfig.ENABLE_HTTPS === "true") {
-      try { await regenerateCaddyfile(envConfig); } catch {}
+      try { await regenerateCaddyfile(envConfig); } catch { }
     }
 
     await logActivity("uninstalled", "app", appName, `Uninstalled ${app.displayName}`, "/apps");
     return { success: true, output: `${app.displayName} uninstalled` };
   });
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function formatUptime(startedAt: string): string {
-  const start = new Date(startedAt);
-  const now = new Date();
-  const diffMs = now.getTime() - start.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-
-  if (diffDays > 0) return `${diffDays}d ${diffHours}h`;
-  if (diffHours > 0) return `${diffHours}h`;
-  const diffMin = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-  return `${diffMin}m`;
-}
-
-function parseMemoryMB(mem: string): number {
-  const match = mem.match(/^([0-9.]+)\s*([a-zA-Z]+)/);
-  if (!match) return 0;
-  const num = parseFloat(match[1]);
-  const unit = match[2].toUpperCase();
-  if (unit === "GIB" || unit === "GB") return num * 1024;
-  if (unit === "MIB" || unit === "MB") return num;
-  if (unit === "KIB" || unit === "KB") return num / 1024;
-  return num;
-}
