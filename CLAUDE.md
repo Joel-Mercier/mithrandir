@@ -186,6 +186,8 @@ Auto-generated from git commits via `scripts/generate-changelog.sh`, grouped by 
 
 ## Testing
 
+### CLI Tests
+
 Tests use Bun's built-in test runner. All test files live in `cli/src/__tests__/`.
 
 - **`apps.test.ts`** — App registry unit tests: `getApp()`, `getContainerName()`, `getConfigPaths()`, `filterConflicts()`, stacks, and registry integrity validation
@@ -199,6 +201,13 @@ Tests use Bun's built-in test runner. All test files live in `cli/src/__tests__/
 - **`logger.test.ts`** — `Logger.format()` timestamp pattern, log path constants
 
 Snapshots are stored in `cli/src/__tests__/__snapshots__/` and committed to git. Update with `bun test --update-snapshots` when compose/caddy generation logic changes.
+
+### UI Tests
+
+Tests use Vitest with a dedicated config (`ui/vitest.config.ts`). Test files live in `ui/src/__tests__/`.
+
+- **`utils.test.ts`** — `formatUptime()` uptime string formatting (days/hours/minutes), `parseMemoryMB()` memory string parsing (GiB/MiB/KiB/GB/MB/KB)
+- **`server-utils.test.ts`** — `getProjectRoot()` monorepo root resolution from the UI workspace
 
 ### Integration Tests (`cli/integration-tests/`)
 

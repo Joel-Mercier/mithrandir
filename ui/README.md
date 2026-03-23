@@ -19,11 +19,15 @@ bun --bun run build
 
 ## Testing
 
-This project uses [Vitest](https://vitest.dev/) for testing. You can run the tests with:
+This project uses [Vitest](https://vitest.dev/) for testing. Test files live in `src/__tests__/`.
 
 ```bash
 bun --bun run test
 ```
+
+Test coverage:
+- **`utils.test.ts`** — `formatUptime()` and `parseMemoryMB()` from `src/lib/utils.ts` (pure utility functions used by server code)
+- **`server-utils.test.ts`** — `getProjectRoot()` from `src/lib/server/utils.ts` (monorepo root resolution)
 
 ## Styling
 
