@@ -1,6 +1,8 @@
-import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { ShieldCheck } from "lucide-react";
+import { useState } from "react";
 import { z } from "zod";
+import { Button } from "#/components/ui/button";
 import {
 	Card,
 	CardContent,
@@ -8,28 +10,27 @@ import {
 	CardHeader,
 	CardTitle,
 } from "#/components/ui/card";
-import { Button } from "#/components/ui/button";
 import {
 	InputOTP,
 	InputOTPGroup,
-	InputOTPSlot,
 	InputOTPSeparator,
+	InputOTPSlot,
 } from "#/components/ui/input-otp";
-import { ShieldCheck } from "lucide-react";
 import { Spinner } from "#/components/ui/spinner";
 import { useVerifyTwoFactor } from "#/hooks/auth";
 import { useAppForm } from "#/hooks/form";
+import { m } from "#/paraglide/messages.js";
 
 export const Route = createFileRoute("/_auth/two-factor")({
 	component: TwoFactorPage,
 });
 
 const totpSchema = z.object({
-	code: z.string().length(6, "Enter the 6-digit code"),
+	code: z.string().length(6, m.twoFactor_codeValidation()),
 });
 
 const backupSchema = z.object({
-	code: z.string().min(1, "Enter a backup code"),
+	code: z.string().min(1, m.twoFactor_backupCodeValidation()),
 });
 
 function TwoFactorPage() {
@@ -62,12 +63,12 @@ function TwoFactorPage() {
 						<ShieldCheck className="h-6 w-6 text-primary" />
 					</div>
 					<CardTitle className="text-lg">
-						{useBackup ? "Backup Code" : "Two-Factor Authentication"}
+						{useBackup ? m.twoFactor_backupTitle() : m.twoFactor_title()}
 					</CardTitle>
 					<CardDescription>
 						{useBackup
-							? "Enter one of your backup codes"
-							: "Enter the 6-digit code from your authenticator app"}
+							? m.twoFactor_backupDescription()
+							: m.twoFactor_description()}
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
@@ -83,8 +84,8 @@ function TwoFactorPage() {
 							<form.AppField name="code">
 								{(field) => (
 									<field.TextField
-										label="Backup code"
-										placeholder="Enter backup code"
+										label={m.twoFactor_backupLabel()}
+										placeholder={m.twoFactor_backupPlaceholder()}
 									/>
 								)}
 							</form.AppField>
@@ -116,7 +117,7 @@ function TwoFactorPage() {
 
 						{verify.error && (
 							<p className="text-sm text-status-critical">
-								{verify.error.message ?? "Verification failed."}
+								{verify.error.message ?? m.twoFactor_failed()}
 							</p>
 						)}
 
@@ -130,7 +131,7 @@ function TwoFactorPage() {
 							) : (
 								<ShieldCheck className="h-4 w-4" />
 							)}
-							{verify.isPending ? "Verifying..." : "Verify"}
+							{verify.isPending ? m.twoFactor_verifying() : m.common_verify()}
 						</Button>
 
 						<button
@@ -139,8 +140,8 @@ function TwoFactorPage() {
 							onClick={handleToggleMode}
 						>
 							{useBackup
-								? "Use authenticator app instead"
-								: "Use a backup code instead"}
+								? m.twoFactor_useAuthenticator()
+								: m.twoFactor_useBackup()}
 						</button>
 					</form>
 				</CardContent>

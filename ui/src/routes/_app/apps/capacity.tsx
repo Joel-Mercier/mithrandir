@@ -1,24 +1,24 @@
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import {
 	ArrowLeft,
 	Cpu,
+	Database,
+	Gauge,
 	HardDrive,
 	MemoryStick,
-	Gauge,
-	Database,
 } from "lucide-react";
 import Breadcrumbs from "#/components/Breadcrumbs";
+import { ScoreBadge } from "#/components/capacity/ScoreBadge";
 import { CapacityScoreRing } from "#/components/capacity/ScoreRing";
 import { StorageMeter } from "#/components/capacity/StorageMeter";
-import { ScoreBadge } from "#/components/capacity/ScoreBadge";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import {
 	Card,
 	CardContent,
+	CardDescription,
 	CardHeader,
 	CardTitle,
-	CardDescription,
 } from "#/components/ui/card";
 import { Progress } from "#/components/ui/progress";
 import { Separator } from "#/components/ui/separator";
@@ -38,6 +38,7 @@ import {
 	TooltipTrigger,
 } from "#/components/ui/tooltip";
 import { useCapacity } from "#/hooks/homelab";
+import { m } from "#/paraglide/messages.js";
 
 export const Route = createFileRoute("/_app/apps/capacity")({
 	component: CapacityPage,
@@ -116,7 +117,7 @@ function CapacityPage() {
 			<div className="mx-auto max-w-7xl px-4 py-8">
 				<Breadcrumbs />
 				<div className="py-12 text-center text-sm text-muted-foreground">
-					Failed to load capacity data. Make sure the CLI is reachable.
+					{m.capacity_errorLoading()}
 				</div>
 			</div>
 		);
@@ -143,25 +144,23 @@ function CapacityPage() {
 			<div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 				<div>
 					<h1 className="font-display text-2xl font-bold tracking-tight">
-						System Capacity
+						{m.capacity_title()}
 					</h1>
 					<p className="mt-1 text-sm text-muted-foreground">
-						Resource usage and capacity planning
+						{m.capacity_subtitle()}
 					</p>
 				</div>
 				<Button variant="outline" size="sm" className="gap-1.5" asChild>
 					<Link to="/apps">
 						<ArrowLeft className="h-3.5 w-3.5" />
-						Back to Apps
+						{m.capacity_backToApps()}
 					</Link>
 				</Button>
 			</div>
 
 			{/* Verdict cards */}
 			<div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-				<Card
-					className={`border ${verdictBg(data.performanceVerdict.color)}`}
-				>
+				<Card className={`border ${verdictBg(data.performanceVerdict.color)}`}>
 					<CardContent className="flex items-center gap-5 pt-0">
 						<CapacityScoreRing
 							score={data.totalPerformanceScore}
@@ -170,7 +169,7 @@ function CapacityPage() {
 						/>
 						<div className="min-w-0 flex-1">
 							<p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-								Performance
+								{m.capacity_performance()}
 							</p>
 							<p
 								className={`text-lg font-bold ${verdictColor(data.performanceVerdict.color)}`}
@@ -178,9 +177,11 @@ function CapacityPage() {
 								{data.performanceVerdict.label}
 							</p>
 							<p className="mt-0.5 text-xs text-muted-foreground">
-								{data.totalPerformanceScore}/{data.maxPerformanceScore} load
-								score across {installedApps.length} app
-								{installedApps.length !== 1 ? "s" : ""}
+								{data.totalPerformanceScore}/{data.maxPerformanceScore}{" "}
+								{m.capacity_loadScore({
+									count: String(installedApps.length),
+									s: installedApps.length !== 1 ? "s" : "",
+								})}
 							</p>
 						</div>
 					</CardContent>
@@ -195,7 +196,7 @@ function CapacityPage() {
 						/>
 						<div className="min-w-0 flex-1">
 							<p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-								Storage
+								{m.capacity_storage()}
 							</p>
 							<p
 								className={`text-lg font-bold ${verdictColor(data.storageVerdict.color)}`}
@@ -203,9 +204,11 @@ function CapacityPage() {
 								{data.storageVerdict.label}
 							</p>
 							<p className="mt-0.5 text-xs text-muted-foreground">
-								{data.totalStorageScore}/{data.maxStorageScore} storage pressure
-								across {installedApps.length} app
-								{installedApps.length !== 1 ? "s" : ""}
+								{data.totalStorageScore}/{data.maxStorageScore}{" "}
+								{m.capacity_storagePressure({
+									count: String(installedApps.length),
+									s: installedApps.length !== 1 ? "s" : "",
+								})}
 							</p>
 						</div>
 					</CardContent>
@@ -218,7 +221,7 @@ function CapacityPage() {
 					<CardHeader className="pb-2">
 						<CardTitle className="flex items-center gap-2 text-sm font-medium">
 							<Cpu className="h-4 w-4 text-muted-foreground" />
-							Processor
+							{m.capacity_processor()}
 						</CardTitle>
 					</CardHeader>
 					<CardContent className="space-y-2">
@@ -227,7 +230,9 @@ function CapacityPage() {
 						</p>
 						<Separator />
 						<div className="flex items-baseline justify-between text-sm">
-							<span className="text-muted-foreground">Cores</span>
+							<span className="text-muted-foreground">
+								{m.capacity_cores()}
+							</span>
 							<span className="font-mono-data text-xs font-medium">
 								{system.cpuCores}
 							</span>
@@ -239,13 +244,13 @@ function CapacityPage() {
 					<CardHeader className="pb-2">
 						<CardTitle className="flex items-center gap-2 text-sm font-medium">
 							<MemoryStick className="h-4 w-4 text-muted-foreground" />
-							Memory
+							{m.capacity_memory()}
 						</CardTitle>
 					</CardHeader>
 					<CardContent>
 						<p className="text-2xl font-bold tabular-nums">{ramGB} GB</p>
 						<p className="mt-1 text-xs text-muted-foreground">
-							Total system RAM
+							{m.capacity_totalRam()}
 						</p>
 					</CardContent>
 				</Card>
@@ -254,13 +259,13 @@ function CapacityPage() {
 					<CardHeader className="pb-2">
 						<CardTitle className="flex items-center gap-2 text-sm font-medium">
 							<HardDrive className="h-4 w-4 text-muted-foreground" />
-							Storage
+							{m.capacity_storage()}
 						</CardTitle>
 					</CardHeader>
 					<CardContent className="space-y-4">
 						{system.storage.length === 0 ? (
 							<p className="text-xs text-muted-foreground">
-								No storage information available
+								{m.capacity_noStorage()}
 							</p>
 						) : (
 							system.storage.map((s) => (
@@ -283,31 +288,36 @@ function CapacityPage() {
 					<CardHeader className="pb-2">
 						<CardTitle className="flex items-center gap-2 text-sm font-medium">
 							<Gauge className="h-4 w-4 text-muted-foreground" />
-							Performance Load
+							{m.capacity_performanceLoad()}
 						</CardTitle>
 						<CardDescription>
-							Aggregate CPU/RAM demand from installed apps
+							{m.capacity_performanceLoadDesc()}
 						</CardDescription>
 					</CardHeader>
 					<CardContent className="space-y-2">
 						<div className="flex items-baseline justify-between text-sm">
-							<span className="text-muted-foreground">Load score</span>
+							<span className="text-muted-foreground">
+								{m.capacity_loadScoreLabel()}
+							</span>
 							<span className="font-mono-data text-xs">
 								{data.totalPerformanceScore}/{data.maxPerformanceScore}
 							</span>
 						</div>
-						<Progress
-							value={perfPct}
-							className={scoreProgressColor(perfPct)}
-						/>
+						<Progress value={perfPct} className={scoreProgressColor(perfPct)} />
 						<div className="flex justify-between text-xs text-muted-foreground">
 							<span>
-								{installedApps.filter((a) => a.performanceScore === "high").length}{" "}
-								high-demand
+								{
+									installedApps.filter((a) => a.performanceScore === "high")
+										.length
+								}{" "}
+								{m.capacity_highDemand()}
 							</span>
 							<span>
-								{installedApps.filter((a) => a.performanceScore === "low").length}{" "}
-								lightweight
+								{
+									installedApps.filter((a) => a.performanceScore === "low")
+										.length
+								}{" "}
+								{m.capacity_lightweight()}
 							</span>
 						</div>
 					</CardContent>
@@ -317,15 +327,17 @@ function CapacityPage() {
 					<CardHeader className="pb-2">
 						<CardTitle className="flex items-center gap-2 text-sm font-medium">
 							<Database className="h-4 w-4 text-muted-foreground" />
-							Storage Pressure
+							{m.capacity_storagePressureTitle()}
 						</CardTitle>
 						<CardDescription>
-							Aggregate disk usage growth from installed apps
+							{m.capacity_storagePressureDesc()}
 						</CardDescription>
 					</CardHeader>
 					<CardContent className="space-y-2">
 						<div className="flex items-baseline justify-between text-sm">
-							<span className="text-muted-foreground">Pressure score</span>
+							<span className="text-muted-foreground">
+								{m.capacity_pressureScore()}
+							</span>
 							<span className="font-mono-data text-xs">
 								{data.totalStorageScore}/{data.maxStorageScore}
 							</span>
@@ -337,11 +349,11 @@ function CapacityPage() {
 						<div className="flex justify-between text-xs text-muted-foreground">
 							<span>
 								{installedApps.filter((a) => a.storageScore === "high").length}{" "}
-								high-growth
+								{m.capacity_highGrowth()}
 							</span>
 							<span>
 								{installedApps.filter((a) => a.storageScore === "low").length}{" "}
-								low-growth
+								{m.capacity_lowGrowth()}
 							</span>
 						</div>
 					</CardContent>
@@ -353,22 +365,24 @@ function CapacityPage() {
 				<Card>
 					<CardHeader className="pb-2">
 						<CardTitle className="text-sm font-medium">
-							Installed Apps ({installedApps.length})
+							{m.capacity_installedApps({
+								count: String(installedApps.length),
+							})}
 						</CardTitle>
-						<CardDescription>
-							Per-app resource scores and disk usage
-						</CardDescription>
+						<CardDescription>{m.capacity_perAppDesc()}</CardDescription>
 					</CardHeader>
 					<CardContent>
 						<TooltipProvider>
 							<Table>
 								<TableHeader>
 									<TableRow>
-										<TableHead>App</TableHead>
-										<TableHead>Category</TableHead>
-										<TableHead>Performance</TableHead>
-										<TableHead>Storage</TableHead>
-										<TableHead className="text-right">Disk Usage</TableHead>
+										<TableHead>{m.capacity_tableApp()}</TableHead>
+										<TableHead>{m.capacity_tableCategory()}</TableHead>
+										<TableHead>{m.capacity_tablePerformance()}</TableHead>
+										<TableHead>{m.capacity_tableStorage()}</TableHead>
+										<TableHead className="text-right">
+											{m.capacity_tableDiskUsage()}
+										</TableHead>
 									</TableRow>
 								</TableHeader>
 								<TableBody>
@@ -384,7 +398,10 @@ function CapacityPage() {
 												</Link>
 											</TableCell>
 											<TableCell>
-												<Badge variant="outline" className="capitalize text-[10px]">
+												<Badge
+													variant="outline"
+													className="capitalize text-[10px]"
+												>
 													{app.category}
 												</Badge>
 											</TableCell>
@@ -421,7 +438,7 @@ function CapacityPage() {
 				<Card>
 					<CardContent className="py-12 text-center">
 						<p className="text-sm text-muted-foreground">
-							No apps installed. Install apps to see capacity data.
+							{m.capacity_noApps()}
 						</p>
 					</CardContent>
 				</Card>
@@ -430,11 +447,11 @@ function CapacityPage() {
 			{/* Summary footer */}
 			<div className="mt-4 text-xs text-muted-foreground">
 				{installedApps.length} app{installedApps.length !== 1 ? "s" : ""}{" "}
-				installed &mdash;{" "}
+				{m.capacity_summaryInstalled()} &mdash;{" "}
 				{installedApps.filter((a) => a.performanceScore === "high").length}{" "}
-				high-performance,{" "}
+				{m.capacity_summaryHighPerformance()},{" "}
 				{installedApps.filter((a) => a.storageScore === "high").length}{" "}
-				high-storage
+				{m.capacity_summaryHighStorage()}
 			</div>
 		</div>
 	);

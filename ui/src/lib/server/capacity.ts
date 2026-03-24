@@ -1,21 +1,21 @@
-import { createServerFn } from "@tanstack/react-start";
-import { existsSync } from "fs";
-import { ensureSession } from "#/lib/auth";
-import { getProjectRoot } from "./utils";
-import {
-	APP_REGISTRY,
-	getComposePath,
-	getAppDir,
-	APP_CATEGORIES,
-} from "@mithrandir/cli/lib/apps";
 import type { AppDefinition } from "@mithrandir/cli/lib/apps";
-import { loadEnvConfig } from "@mithrandir/cli/lib/config";
-import { shell } from "@mithrandir/cli/lib/shell";
+import {
+	APP_CATEGORIES,
+	APP_REGISTRY,
+	getAppDir,
+	getComposePath,
+} from "@mithrandir/cli/lib/apps";
 import {
 	getPerformanceVerdict,
 	getStorageVerdict,
 	scoreToNumeric,
 } from "@mithrandir/cli/lib/capacity";
+import { loadEnvConfig } from "@mithrandir/cli/lib/config";
+import { shell } from "@mithrandir/cli/lib/shell";
+import { createServerFn } from "@tanstack/react-start";
+import { existsSync } from "fs";
+import { ensureSession } from "#/lib/auth";
+import { getProjectRoot } from "./utils";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -77,9 +77,7 @@ async function getDiskUsage(
 	return result.stdout.trim().split(/\s+/)[0] || "\u2014";
 }
 
-async function getStorageInfo(
-	paths: string[],
-): Promise<CapacityStorageInfo[]> {
+async function getStorageInfo(paths: string[]): Promise<CapacityStorageInfo[]> {
 	const uniquePaths = [...new Set(paths.filter((p) => existsSync(p)))];
 	if (uniquePaths.length === 0) return [];
 

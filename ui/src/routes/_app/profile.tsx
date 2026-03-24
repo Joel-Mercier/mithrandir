@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { KeyRound, Shield, ShieldCheck, User } from "lucide-react";
-import { z } from "zod";
 import { toast } from "sonner";
+import { z } from "zod";
 import Breadcrumbs from "#/components/Breadcrumbs";
-import { TwoFactorCard } from "#/components/profile/TwoFactorCard";
 import { SessionsCard } from "#/components/profile/SessionsCard";
+import { TwoFactorCard } from "#/components/profile/TwoFactorCard";
 import { Avatar, AvatarFallback } from "#/components/ui/avatar";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
@@ -18,30 +18,31 @@ import {
 import { Separator } from "#/components/ui/separator";
 import { Spinner } from "#/components/ui/spinner";
 import {
-	useUpdateProfile,
 	useChangeEmail,
 	useChangePassword,
+	useUpdateProfile,
 } from "#/hooks/auth";
 import { useAppForm } from "#/hooks/form";
 import { authClient } from "#/lib/auth-client";
+import { m } from "#/paraglide/messages.js";
 
 export const Route = createFileRoute("/_app/profile")({
 	component: ProfilePage,
 });
 
 const profileSchema = z.object({
-	name: z.string().min(1, "Name is required"),
-	email: z.email("Please enter a valid email address"),
+	name: z.string().min(1, m.profile_nameValidation()),
+	email: z.email(m.profile_emailValidation()),
 });
 
 const passwordSchema = z
 	.object({
-		currentPassword: z.string().min(1, "Current password is required"),
-		newPassword: z.string().min(8, "Password must be at least 8 characters"),
-		confirmPassword: z.string().min(1, "Please confirm your password"),
+		currentPassword: z.string().min(1, m.profile_currentPasswordValidation()),
+		newPassword: z.string().min(8, m.profile_newPasswordValidation()),
+		confirmPassword: z.string().min(1, m.profile_confirmPasswordValidation()),
 	})
 	.refine((data) => data.newPassword === data.confirmPassword, {
-		message: "Passwords do not match",
+		message: m.profile_passwordMismatch(),
 		path: ["confirmPassword"],
 	});
 
@@ -88,7 +89,7 @@ function ProfilePage() {
 			if (promises.length === 0) return;
 
 			await Promise.all(promises);
-			toast.success("Profile updated.");
+			toast.success(m.profile_profileUpdated());
 		},
 	});
 
@@ -109,7 +110,7 @@ function ProfilePage() {
 				},
 				{
 					onSuccess: () => {
-						toast.success("Password updated.");
+						toast.success(m.profile_passwordUpdated());
 						passwordForm.reset();
 					},
 				},
@@ -122,10 +123,10 @@ function ProfilePage() {
 			<Breadcrumbs />
 			<div className="mb-6">
 				<h1 className="font-display text-2xl font-bold tracking-tight">
-					Profile
+					{m.profile_title()}
 				</h1>
 				<p className="mt-1 text-sm text-muted-foreground">
-					Manage your account settings
+					{m.profile_subtitle()}
 				</p>
 			</div>
 
@@ -149,12 +150,14 @@ function ProfilePage() {
 						</div>
 						<Badge variant="secondary" className="gap-1">
 							<Shield className="h-3 w-3" />
-							Administrator
+							{m.profile_administrator()}
 						</Badge>
 						<Separator />
 						<div className="w-full space-y-2 text-sm">
 							<div className="flex items-center justify-between">
-								<span className="text-muted-foreground">Member since</span>
+								<span className="text-muted-foreground">
+									{m.profile_memberSince()}
+								</span>
 								<span className="font-mono-data text-xs">
 									{new Date(user.createdAt).toLocaleDateString("en-US", {
 										month: "short",
@@ -163,21 +166,21 @@ function ProfilePage() {
 								</span>
 							</div>
 							<div className="flex items-center justify-between">
-								<span className="text-muted-foreground">2FA</span>
+								<span className="text-muted-foreground">{m.profile_2fa()}</span>
 								{user.twoFactorEnabled ? (
 									<Badge
 										variant="outline"
 										className="gap-1 text-xs text-status-healthy"
 									>
 										<ShieldCheck className="h-3 w-3" />
-										Enabled
+										{m.common_enabled()}
 									</Badge>
 								) : (
 									<Badge
 										variant="outline"
 										className="gap-1 text-xs text-muted-foreground"
 									>
-										Off
+										{m.profile_off()}
 									</Badge>
 								)}
 							</div>
@@ -191,10 +194,10 @@ function ProfilePage() {
 						<CardHeader>
 							<CardTitle className="flex items-center gap-2 text-sm font-medium">
 								<User className="h-4 w-4 text-muted-foreground" />
-								Account Details
+								{m.profile_accountDetails()}
 							</CardTitle>
 							<CardDescription>
-								Update your name and email address
+								{m.profile_accountDetailsDescription()}
 							</CardDescription>
 						</CardHeader>
 						<CardContent>
@@ -209,13 +212,16 @@ function ProfilePage() {
 								<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 									<profileForm.AppField name="name">
 										{(field) => (
-											<field.TextField label="Name" autoComplete="name" />
+											<field.TextField
+												label={m.common_name()}
+												autoComplete="name"
+											/>
 										)}
 									</profileForm.AppField>
 									<profileForm.AppField name="email">
 										{(field) => (
 											<field.TextField
-												label="Email"
+												label={m.common_email()}
 												type="email"
 												autoComplete="email"
 											/>
@@ -227,7 +233,7 @@ function ProfilePage() {
 									<p className="text-sm text-status-critical">
 										{updateProfile.error?.message ??
 											changeEmail.error?.message ??
-											"Failed to update profile."}
+											m.profile_updateFailed()}
 									</p>
 								)}
 
@@ -236,17 +242,12 @@ function ProfilePage() {
 										type="submit"
 										size="sm"
 										className="gap-1.5"
-										disabled={
-											updateProfile.isPending || changeEmail.isPending
-										}
+										disabled={updateProfile.isPending || changeEmail.isPending}
 									>
 										{(updateProfile.isPending || changeEmail.isPending) && (
-											<Spinner
-												size="sm"
-												className="text-primary-foreground"
-											/>
+											<Spinner size="sm" className="text-primary-foreground" />
 										)}
-										Save Changes
+										{m.common_save()}
 									</Button>
 								</div>
 							</form>
@@ -257,9 +258,9 @@ function ProfilePage() {
 						<CardHeader>
 							<CardTitle className="flex items-center gap-2 text-sm font-medium">
 								<KeyRound className="h-4 w-4 text-muted-foreground" />
-								Security
+								{m.profile_security()}
 							</CardTitle>
-							<CardDescription>Change your password</CardDescription>
+							<CardDescription>{m.profile_changePassword()}</CardDescription>
 						</CardHeader>
 						<CardContent>
 							<form
@@ -274,7 +275,7 @@ function ProfilePage() {
 									<passwordForm.AppField name="currentPassword">
 										{(field) => (
 											<field.TextField
-												label="Current password"
+												label={m.profile_currentPassword()}
 												placeholder="••••••••"
 												type="password"
 												autoComplete="current-password"
@@ -285,7 +286,7 @@ function ProfilePage() {
 									<passwordForm.AppField name="newPassword">
 										{(field) => (
 											<field.TextField
-												label="New password"
+												label={m.profile_newPassword()}
 												placeholder="••••••••"
 												type="password"
 												autoComplete="new-password"
@@ -295,7 +296,7 @@ function ProfilePage() {
 									<passwordForm.AppField name="confirmPassword">
 										{(field) => (
 											<field.TextField
-												label="Confirm new password"
+												label={m.profile_confirmNewPassword()}
 												placeholder="••••••••"
 												type="password"
 												autoComplete="new-password"
@@ -306,8 +307,7 @@ function ProfilePage() {
 
 								{changePassword.error && (
 									<p className="text-sm text-status-critical">
-										{changePassword.error.message ??
-											"Failed to update password."}
+										{changePassword.error.message ?? m.profile_passwordFailed()}
 									</p>
 								)}
 
@@ -320,12 +320,9 @@ function ProfilePage() {
 										disabled={changePassword.isPending}
 									>
 										{changePassword.isPending && (
-											<Spinner
-												size="sm"
-												className="text-primary-foreground"
-											/>
+											<Spinner size="sm" className="text-primary-foreground" />
 										)}
-										Update Password
+										{m.profile_updatePassword()}
 									</Button>
 								</div>
 							</form>

@@ -1,15 +1,16 @@
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { AlertCircle, Gauge, GitFork, Search } from "lucide-react";
 import { useState } from "react";
-import Breadcrumbs from "#/components/Breadcrumbs";
 import { AppListCard, AvailableAppCard } from "#/components/apps/AppCards";
+import Breadcrumbs from "#/components/Breadcrumbs";
 import { Alert, AlertDescription } from "#/components/ui/alert";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardHeader } from "#/components/ui/card";
 import { Input } from "#/components/ui/input";
 import { Skeleton } from "#/components/ui/skeleton";
-import type { AppCategory, DashboardApp } from "#/lib/types";
 import { useApps } from "#/hooks/homelab";
+import type { AppCategory, DashboardApp } from "#/lib/types";
+import { m } from "#/paraglide/messages.js";
 
 export const Route = createFileRoute("/_app/apps/")({ component: AppsPage });
 
@@ -83,19 +84,17 @@ function AppsPage() {
 			<Breadcrumbs />
 			<div className="mb-6">
 				<h1 className="font-display text-2xl font-bold tracking-tight">
-					Applications
+					{m.apps_title()}
 				</h1>
 				<p className="mt-1 text-sm text-muted-foreground">
-					Manage and install services
+					{m.apps_subtitle()}
 				</p>
 			</div>
 
 			{appsQuery.isError && (
 				<Alert variant="destructive" className="mb-6">
 					<AlertCircle className="h-4 w-4" />
-					<AlertDescription>
-						Failed to load apps. Make sure the CLI is reachable.
-					</AlertDescription>
+					<AlertDescription>{m.apps_errorLoading()}</AlertDescription>
 				</Alert>
 			)}
 
@@ -111,24 +110,26 @@ function AppsPage() {
 					<div className="flex items-center gap-1.5">
 						<span className="inline-block h-2 w-2 rounded-full bg-status-healthy" />
 						<span className="font-mono-data">{running}</span>
-						<span className="text-muted-foreground">running</span>
+						<span className="text-muted-foreground">{m.common_running()}</span>
 					</div>
 					<div className="flex items-center gap-1.5">
 						<span className="inline-block h-2 w-2 rounded-full bg-muted-foreground" />
 						<span className="font-mono-data">{stopped}</span>
-						<span className="text-muted-foreground">stopped</span>
+						<span className="text-muted-foreground">{m.common_stopped()}</span>
 					</div>
 					{errored > 0 && (
 						<div className="flex items-center gap-1.5">
 							<span className="inline-block h-2 w-2 rounded-full bg-status-critical" />
 							<span className="font-mono-data">{errored}</span>
-							<span className="text-muted-foreground">error</span>
+							<span className="text-muted-foreground">{m.common_error()}</span>
 						</div>
 					)}
 					<div className="flex items-center gap-1.5 border-l pl-3">
 						<span className="inline-block h-2 w-2 rounded-full border border-dashed border-muted-foreground" />
 						<span className="font-mono-data">{available}</span>
-						<span className="text-muted-foreground">available</span>
+						<span className="text-muted-foreground">
+							{m.common_available()}
+						</span>
 					</div>
 				</div>
 			)}
@@ -138,13 +139,13 @@ function AppsPage() {
 				<Button variant="outline" size="sm" className="gap-1.5" asChild>
 					<Link to="/apps/graph">
 						<GitFork className="h-3.5 w-3.5" />
-						Dependency Graph
+						{m.apps_dependencyGraph()}
 					</Link>
 				</Button>
 				<Button variant="outline" size="sm" className="gap-1.5" asChild>
 					<Link to="/apps/capacity">
 						<Gauge className="h-3.5 w-3.5" />
-						Capacity
+						{m.apps_capacity()}
 					</Link>
 				</Button>
 			</div>
@@ -154,7 +155,7 @@ function AppsPage() {
 				<div className="relative flex-1 sm:max-w-xs">
 					<Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 					<Input
-						placeholder="Search apps..."
+						placeholder={m.apps_searchPlaceholder()}
 						value={search}
 						onChange={(e) => setSearch(e.target.value)}
 						className="pl-9"
@@ -191,7 +192,7 @@ function AppsPage() {
 			{!appsQuery.isPending && installedApps.length > 0 && (
 				<>
 					<h2 className="mb-3 text-sm font-medium text-muted-foreground">
-						Installed
+						{m.apps_installed()}
 					</h2>
 					<div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
 						{installedApps.map((app) => (
@@ -205,7 +206,7 @@ function AppsPage() {
 			{!appsQuery.isPending && availableApps.length > 0 && (
 				<>
 					<h2 className="mb-3 text-sm font-medium text-muted-foreground">
-						Available to install
+						{m.apps_availableToInstall()}
 					</h2>
 					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
 						{availableApps.map((app) => (
@@ -220,7 +221,7 @@ function AppsPage() {
 				availableApps.length === 0 &&
 				!appsQuery.isError && (
 					<div className="py-12 text-center text-sm text-muted-foreground">
-						No apps match your filters.
+						{m.apps_noMatch()}
 					</div>
 				)}
 		</div>

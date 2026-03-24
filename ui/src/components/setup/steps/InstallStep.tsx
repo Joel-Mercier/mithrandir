@@ -1,11 +1,12 @@
-import { useEffect, useRef } from "react";
 import { Check, X } from "lucide-react";
+import { useEffect, useRef } from "react";
 import { Progress } from "#/components/ui/progress";
 import { Spinner } from "#/components/ui/spinner";
-import { cn } from "#/lib/utils";
 import { useAppRegistry, useInstallSetupApp } from "#/hooks/homelab";
-import { StepNavigation } from "../StepNavigation";
+import { cn } from "#/lib/utils";
+import { m } from "#/paraglide/messages.js";
 import type { AppProgress, SetupState } from "../SetupWizard";
+import { StepNavigation } from "../StepNavigation";
 
 interface InstallStepProps {
 	state: SetupState;
@@ -17,13 +18,13 @@ interface InstallStepProps {
 function phaseLabel(phase: AppProgress["phase"]): string {
 	switch (phase) {
 		case "pulling":
-			return "Pulling image...";
+			return m.installStep_pullingImage();
 		case "starting":
-			return "Starting container...";
+			return m.installStep_startingContainer();
 		case "done":
-			return "Installed";
+			return m.installStep_installed();
 		case "error":
-			return "Failed";
+			return m.installStep_failed();
 	}
 }
 
@@ -74,8 +75,7 @@ export function InstallStep({
 			return;
 		}
 
-		const getDisplayName = (name: string) =>
-			displayNames.current[name] ?? name;
+		const getDisplayName = (name: string) => displayNames.current[name] ?? name;
 
 		// Initialize all apps as pulling
 		const initial: AppProgress[] = apps.map((name) => ({
@@ -113,11 +113,7 @@ export function InstallStep({
 								name: n,
 								displayName: getDisplayName(n),
 								phase:
-									j < i
-										? "done"
-										: j === i
-											? "error"
-											: ("pulling" as const),
+									j < i ? "done" : j === i ? "error" : ("pulling" as const),
 								pullPercent: j > i ? 0 : undefined,
 								error: j === i ? result.error : undefined,
 							})),
@@ -130,8 +126,7 @@ export function InstallStep({
 						installProgress: apps.map((n, j) => ({
 							name: n,
 							displayName: getDisplayName(n),
-							phase:
-								j <= i ? "done" : ("pulling" as const),
+							phase: j <= i ? "done" : ("pulling" as const),
 							pullPercent: j > i ? 0 : undefined,
 						})),
 					});
@@ -141,18 +136,13 @@ export function InstallStep({
 						installProgress: apps.map((n, j) => ({
 							name: n,
 							displayName: getDisplayName(n),
-							phase:
-								j < i
-									? "done"
-									: j === i
-										? "error"
-										: ("pulling" as const),
+							phase: j < i ? "done" : j === i ? "error" : ("pulling" as const),
 							pullPercent: j > i ? 0 : undefined,
 							error:
 								j === i
 									? err instanceof Error
 										? err.message
-										: "Installation failed"
+										: m.installStep_installationFailed()
 									: undefined,
 						})),
 					});
@@ -227,8 +217,7 @@ export function InstallStep({
 										"text-xs",
 										app.phase === "done" && "text-status-healthy",
 										app.phase === "error" && "text-destructive",
-										(app.phase === "pulling" ||
-											app.phase === "starting") &&
+										(app.phase === "pulling" || app.phase === "starting") &&
 											"text-muted-foreground",
 									)}
 								>
@@ -237,19 +226,13 @@ export function InstallStep({
 							</div>
 
 							{/* Pull progress bar */}
-							{app.phase === "pulling" &&
-								app.pullPercent !== undefined && (
-									<Progress
-										value={app.pullPercent}
-										className="mt-1.5 h-1"
-									/>
-								)}
+							{app.phase === "pulling" && app.pullPercent !== undefined && (
+								<Progress value={app.pullPercent} className="mt-1.5 h-1" />
+							)}
 
 							{/* Error message */}
 							{app.phase === "error" && app.error && (
-								<p className="mt-1 text-xs text-destructive">
-									{app.error}
-								</p>
+								<p className="mt-1 text-xs text-destructive">{app.error}</p>
 							)}
 						</div>
 					</div>
@@ -261,7 +244,7 @@ export function InstallStep({
 				<StepNavigation
 					onBack={onBack}
 					onNext={onComplete}
-					nextLabel="Continue"
+					nextLabel={m.common_continue()}
 				/>
 			)}
 		</div>

@@ -1,4 +1,3 @@
-import { useState, useEffect, useMemo } from "react";
 import {
 	ChevronDown,
 	Cloud,
@@ -15,14 +14,16 @@ import {
 	Wallet,
 	Wrench,
 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { Alert, AlertDescription } from "#/components/ui/alert";
 import { Card, CardContent } from "#/components/ui/card";
 import { Checkbox } from "#/components/ui/checkbox";
 import { Input } from "#/components/ui/input";
-import { cn } from "#/lib/utils";
 import { useAppRegistry, useResolveAppDependencies } from "#/hooks/homelab";
-import { StepNavigation } from "../StepNavigation";
+import { cn } from "#/lib/utils";
+import { m } from "#/paraglide/messages.js";
 import type { SetupState } from "../SetupWizard";
+import { StepNavigation } from "../StepNavigation";
 
 interface AppSelectStepProps {
 	state: SetupState;
@@ -68,8 +69,10 @@ export function AppSelectStep({
 	}, [registry]);
 
 	const allApps = useMemo(() => {
-		if (!registry) return {} as Record<string, { displayName: string; description: string }>;
-		const result: Record<string, { displayName: string; description: string }> = {};
+		if (!registry)
+			return {} as Record<string, { displayName: string; description: string }>;
+		const result: Record<string, { displayName: string; description: string }> =
+			{};
 		for (const app of registry.apps) {
 			if (app.hidden) continue;
 			result[app.name] = {
@@ -142,11 +145,11 @@ export function AppSelectStep({
 		return (
 			<div>
 				<h2 className="font-display text-2xl font-bold tracking-tight">
-					Choose Applications
+					{m.appSelect_title()}
 				</h2>
 				<div className="mt-8 flex items-center gap-3 text-muted-foreground">
 					<Loader2 className="h-5 w-5 animate-spin" />
-					<span>Loading app registry...</span>
+					<span>{m.appSelect_loadingRegistry()}</span>
 				</div>
 			</div>
 		);
@@ -155,11 +158,9 @@ export function AppSelectStep({
 	return (
 		<div>
 			<h2 className="font-display text-2xl font-bold tracking-tight">
-				Choose Applications
+				{m.appSelect_title()}
 			</h2>
-			<p className="mt-2 text-muted-foreground">
-				Select categories to get started, then customize individual apps.
-			</p>
+			<p className="mt-2 text-muted-foreground">{m.appSelect_subtitle()}</p>
 
 			{/* Category grid */}
 			<div className="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-3">
@@ -213,7 +214,7 @@ export function AppSelectStep({
 							showCustomize && "rotate-180",
 						)}
 					/>
-					Customize selection ({state.selectedApps.length} apps)
+					{m.appSelect_customize({ count: String(state.selectedApps.length) })}
 				</button>
 
 				{showCustomize && (
@@ -221,7 +222,7 @@ export function AppSelectStep({
 						<div className="relative max-w-xs">
 							<Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 							<Input
-								placeholder="Search apps..."
+								placeholder={m.appSelect_searchPlaceholder()}
 								value={search}
 								onChange={(e) => setSearch(e.target.value)}
 								className="pl-9"
@@ -269,8 +270,7 @@ export function AppSelectStep({
 				<Alert className="mt-6">
 					<Cloud className="h-4 w-4" />
 					<AlertDescription>
-						Automatically added dependencies:{" "}
-						{state.autoAddedDeps.join(", ")}
+						{m.appSelect_autoDeps({ deps: state.autoAddedDeps.join(", ") })}
 					</AlertDescription>
 				</Alert>
 			)}

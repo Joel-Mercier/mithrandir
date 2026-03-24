@@ -5,8 +5,9 @@ import { Input } from "#/components/ui/input";
 import { Label } from "#/components/ui/label";
 import { Switch } from "#/components/ui/switch";
 import { useSetupHttps } from "#/hooks/homelab";
-import { StepNavigation } from "../StepNavigation";
+import { m } from "#/paraglide/messages.js";
 import type { SetupState } from "../SetupWizard";
+import { StepNavigation } from "../StepNavigation";
 
 interface HttpsStepProps {
 	state: SetupState;
@@ -42,12 +43,9 @@ export function HttpsStep({
 	return (
 		<div>
 			<h2 className="font-display text-2xl font-bold tracking-tight">
-				HTTPS Configuration
+				{m.httpsStep_title()}
 			</h2>
-			<p className="mt-2 text-muted-foreground">
-				Enable automatic HTTPS with Caddy reverse proxy and Let's Encrypt
-				certificates.
-			</p>
+			<p className="mt-2 text-muted-foreground">{m.httpsStep_subtitle()}</p>
 
 			<div className="mt-8 space-y-6">
 				{/* Enable toggle */}
@@ -55,11 +53,9 @@ export function HttpsStep({
 					<div className="flex items-center gap-3">
 						<ShieldCheck className="h-5 w-5 text-muted-foreground" />
 						<div>
-							<p className="text-sm font-medium">
-								Enable HTTPS with Caddy
-							</p>
+							<p className="text-sm font-medium">{m.httpsStep_enableCaddy()}</p>
 							<p className="text-xs text-muted-foreground">
-								Automatic TLS certificates via DNS-01 challenge
+								{m.httpsStep_enableCaddyDesc()}
 							</p>
 						</div>
 					</div>
@@ -73,10 +69,7 @@ export function HttpsStep({
 
 				{!hasDuckDns && state.httpsEnabled && (
 					<Alert variant="destructive">
-						<AlertDescription>
-							HTTPS requires DuckDNS for DNS-01 challenge. Go back and add
-							DuckDNS to your selected apps.
-						</AlertDescription>
+						<AlertDescription>{m.httpsStep_requiresDuckDns()}</AlertDescription>
 					</Alert>
 				)}
 
@@ -84,25 +77,19 @@ export function HttpsStep({
 					<>
 						{/* ACME email */}
 						<div className="space-y-1.5">
-							<Label
-								htmlFor="acme-email"
-								className="flex items-center gap-2"
-							>
+							<Label htmlFor="acme-email" className="flex items-center gap-2">
 								<Mail className="h-4 w-4" />
-								ACME Email
+								{m.httpsStep_acmeEmail()}
 							</Label>
 							<Input
 								id="acme-email"
 								type="email"
 								value={state.acmeEmail}
-								onChange={(e) =>
-									updateState({ acmeEmail: e.target.value })
-								}
+								onChange={(e) => updateState({ acmeEmail: e.target.value })}
 								placeholder="you@example.com"
 							/>
 							<p className="text-xs text-muted-foreground">
-								Let's Encrypt will notify you about certificate
-								expiration.
+								{m.httpsStep_acmeDesc()}
 							</p>
 						</div>
 
@@ -112,7 +99,7 @@ export function HttpsStep({
 								<div className="flex items-center gap-2 text-sm">
 									<Globe className="h-4 w-4 text-muted-foreground" />
 									<span className="text-muted-foreground">
-										Your apps will be available at:
+										{m.httpsStep_availableAt()}
 									</span>
 								</div>
 								<div className="mt-3 space-y-1.5">
@@ -129,7 +116,9 @@ export function HttpsStep({
 										))}
 									{state.selectedApps.length > 6 && (
 										<p className="text-xs text-muted-foreground">
-											...and {state.selectedApps.length - 6} more
+											{m.httpsStep_andMore({
+												count: String(state.selectedApps.length - 6),
+											})}
 										</p>
 									)}
 								</div>
@@ -141,10 +130,12 @@ export function HttpsStep({
 				{httpsMutation.isError && (
 					<Alert variant="destructive">
 						<AlertDescription>
-							Failed to configure HTTPS:{" "}
-							{httpsMutation.error instanceof Error
-								? httpsMutation.error.message
-								: "Unknown error"}
+							{m.httpsStep_failedConfig({
+								error:
+									httpsMutation.error instanceof Error
+										? httpsMutation.error.message
+										: m.httpsStep_unknownError(),
+							})}
 						</AlertDescription>
 					</Alert>
 				)}

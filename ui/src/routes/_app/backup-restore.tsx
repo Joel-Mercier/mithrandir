@@ -12,32 +12,33 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import Breadcrumbs from "#/components/Breadcrumbs";
-import { Row } from "#/components/Row";
 import { BackupTable, formatDate } from "#/components/backup/BackupTable";
 import { RestorePanel } from "#/components/backup/RestorePanel";
+import { Row } from "#/components/Row";
 import { Alert, AlertDescription } from "#/components/ui/alert";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
 import { Skeleton } from "#/components/ui/skeleton";
 import {
-	useBackupStatus,
 	useBackupHistory,
+	useBackupStatus,
 	useConfig,
 	useTriggerBackup,
 } from "#/hooks/homelab";
+import { m } from "#/paraglide/messages.js";
 
 export const Route = createFileRoute("/_app/backup-restore")({
 	component: BackupRestorePage,
 });
 
 const tabs = [
-	{ id: "local", label: "Local", icon: HardDrive },
-	{ id: "remote", label: "Remote", icon: Cloud },
-	{ id: "restore", label: "Restore", icon: Download },
-] as const;
+	{ id: "local", label: m.backup_tabLocal(), icon: HardDrive },
+	{ id: "remote", label: m.backup_tabRemote(), icon: Cloud },
+	{ id: "restore", label: m.backup_tabRestore(), icon: Download },
+];
 
-type TabId = (typeof tabs)[number]["id"];
+type TabId = "local" | "remote" | "restore";
 
 function StatusCardSkeleton() {
 	return (
@@ -83,19 +84,17 @@ function BackupRestorePage() {
 			<Breadcrumbs />
 			<div className="mb-6">
 				<h1 className="font-display text-2xl font-bold tracking-tight">
-					Backup & Restore
+					{m.backup_title()}
 				</h1>
 				<p className="mt-1 text-sm text-muted-foreground">
-					Manage backups and restore from snapshots
+					{m.backup_subtitle()}
 				</p>
 			</div>
 
 			{hasError && (
 				<Alert variant="destructive" className="mb-6">
 					<AlertCircle className="h-4 w-4" />
-					<AlertDescription>
-						Failed to load backup data. Make sure the CLI is reachable.
-					</AlertDescription>
+					<AlertDescription>{m.backup_errorLoading()}</AlertDescription>
 				</Alert>
 			)}
 
@@ -112,34 +111,40 @@ function BackupRestorePage() {
 						{/* Overview card */}
 						<Card>
 							<CardHeader className="flex flex-row items-center justify-between pb-2">
-								<CardTitle className="text-sm font-medium">Status</CardTitle>
+								<CardTitle className="text-sm font-medium">
+									{m.backup_status()}
+								</CardTitle>
 								{backup?.encrypted && (
 									<Badge
 										variant="outline"
 										className="border-status-healthy/30 bg-status-healthy/15 text-status-healthy"
 									>
 										<Shield className="mr-1 h-3 w-3" />
-										Encrypted
+										{m.common_encrypted()}
 									</Badge>
 								)}
 							</CardHeader>
 							<CardContent className="space-y-2">
 								{backup ? (
 									<>
-										<Row label="Last backup">
+										<Row label={m.backup_lastBackup()}>
 											{backup.lastBackupDate
 												? formatDate(backup.lastBackupDate)
-												: "Never"}
+												: m.common_never()}
 										</Row>
-										<Row label="Next scheduled">
+										<Row label={m.backup_nextScheduled()}>
 											{String(backup.nextScheduledHour).padStart(2, "0")}:00
 										</Row>
-										<Row label="Local backups">{localBackups.length}</Row>
-										<Row label="Remote backups">{remoteBackups.length}</Row>
+										<Row label={m.backup_localBackups()}>
+											{localBackups.length}
+										</Row>
+										<Row label={m.backup_remoteBackups()}>
+											{remoteBackups.length}
+										</Row>
 									</>
 								) : (
 									<p className="text-sm text-muted-foreground">
-										No backup status available.
+										{m.backup_noStatus()}
 									</p>
 								)}
 							</CardContent>
@@ -149,24 +154,28 @@ function BackupRestorePage() {
 						<Card>
 							<CardHeader className="pb-2">
 								<CardTitle className="text-sm font-medium">
-									Retention
+									{m.backup_retention()}
 								</CardTitle>
 							</CardHeader>
 							<CardContent className="space-y-2">
 								{config ? (
 									<>
-										<Row label="Local retention">
-											{config.localRetention} backups
+										<Row label={m.backup_localRetention()}>
+											{config.localRetention} {m.backup_backups()}
 										</Row>
-										<Row label="Remote retention">
-											{config.remoteRetention} backups
+										<Row label={m.backup_remoteRetention()}>
+											{config.remoteRetention} {m.backup_backups()}
 										</Row>
-										<Row label="Remotes">{config.remotes.join(", ")}</Row>
-										<Row label="Backup directory">{config.backupDir}</Row>
+										<Row label={m.backup_remotes()}>
+											{config.remotes.join(", ")}
+										</Row>
+										<Row label={m.backup_backupDirectory()}>
+											{config.backupDir}
+										</Row>
 									</>
 								) : (
 									<p className="text-sm text-muted-foreground">
-										Configuration not available.
+										{m.backup_configNotAvailable()}
 									</p>
 								)}
 							</CardContent>
@@ -175,7 +184,9 @@ function BackupRestorePage() {
 						{/* Actions card */}
 						<Card>
 							<CardHeader className="pb-2">
-								<CardTitle className="text-sm font-medium">Actions</CardTitle>
+								<CardTitle className="text-sm font-medium">
+									{m.backup_actions()}
+								</CardTitle>
 							</CardHeader>
 							<CardContent className="flex flex-col gap-2">
 								<Button
@@ -184,32 +195,30 @@ function BackupRestorePage() {
 									disabled={triggerBackupMutation.isPending}
 									onClick={() => {
 										triggerBackupMutation.mutate(undefined, {
-											onSuccess: () => toast.info("Backup started."),
+											onSuccess: () => toast.info(m.backup_started()),
 											onError: (err) =>
-												toast.error(
-													`Failed to start backup: ${err.message}`,
-												),
+												toast.error(`Failed to start backup: ${err.message}`),
 										});
 									}}
 								>
 									<Archive className="h-4 w-4" />
-									Run Backup Now
+									{m.backup_runNow()}
 								</Button>
 								<Button
 									className="w-full justify-start gap-2"
 									variant="outline"
-									onClick={() => toast.success("Latest backup verified.")}
+									onClick={() => toast.success(m.backup_latestVerified())}
 								>
 									<CheckCircle2 className="h-4 w-4" />
-									Verify Latest
+									{m.backup_verifyLatest()}
 								</Button>
 								<Button
 									className="w-full justify-start gap-2"
 									variant="outline"
-									onClick={() => toast.info("Syncing to remote...")}
+									onClick={() => toast.info(m.backup_syncingRemote())}
 								>
 									<Upload className="h-4 w-4" />
-									Sync to Remote
+									{m.backup_syncRemote()}
 								</Button>
 							</CardContent>
 						</Card>
@@ -228,7 +237,7 @@ function BackupRestorePage() {
 							<button
 								key={tab.id}
 								type="button"
-								onClick={() => setActiveTab(tab.id)}
+								onClick={() => setActiveTab(tab.id as TabId)}
 								className={`group flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
 									isActive
 										? "bg-accent text-accent-foreground shadow-sm"
@@ -258,9 +267,7 @@ function BackupRestorePage() {
 						</div>
 					) : (
 						<>
-							{activeTab === "local" && (
-								<BackupTable backups={localBackups} />
-							)}
+							{activeTab === "local" && <BackupTable backups={localBackups} />}
 							{activeTab === "remote" && (
 								<BackupTable backups={remoteBackups} />
 							)}

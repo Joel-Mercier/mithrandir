@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { LogIn } from "lucide-react";
 import { z } from "zod";
+import { Button } from "#/components/ui/button";
 import {
 	Card,
 	CardContent,
@@ -7,19 +9,18 @@ import {
 	CardHeader,
 	CardTitle,
 } from "#/components/ui/card";
-import { Button } from "#/components/ui/button";
-import { LogIn } from "lucide-react";
 import { Spinner } from "#/components/ui/spinner";
 import { useSignIn } from "#/hooks/auth";
 import { useAppForm } from "#/hooks/form";
+import { m } from "#/paraglide/messages.js";
 
 export const Route = createFileRoute("/_auth/sign-in")({
 	component: SignInPage,
 });
 
 const signInSchema = z.object({
-	email: z.email("Please enter a valid email address"),
-	password: z.string().min(1, "Password is required"),
+	email: z.email(m.signIn_emailValidation()),
+	password: z.string().min(1, m.signIn_passwordValidation()),
 });
 
 function SignInPage() {
@@ -43,12 +44,10 @@ function SignInPage() {
 			<Card className="mx-auto w-full max-w-sm shadow-lg">
 				<CardHeader className="text-center">
 					<div className="mx-auto mb-2 font-display text-2xl font-bold tracking-tight">
-						Mithrandir
+						{m.common_mithrandir()}
 					</div>
-					<CardTitle className="text-lg">Sign in</CardTitle>
-					<CardDescription>
-						Enter your credentials to access the dashboard
-					</CardDescription>
+					<CardTitle className="text-lg">{m.signIn_title()}</CardTitle>
+					<CardDescription>{m.signIn_description()}</CardDescription>
 				</CardHeader>
 				<CardContent>
 					<form
@@ -62,7 +61,7 @@ function SignInPage() {
 						<form.AppField name="email">
 							{(field) => (
 								<field.TextField
-									label="Email"
+									label={m.signIn_emailLabel()}
 									placeholder="admin@example.com"
 									type="email"
 									autoComplete="email"
@@ -73,7 +72,7 @@ function SignInPage() {
 						<form.AppField name="password">
 							{(field) => (
 								<field.TextField
-									label="Password"
+									label={m.signIn_passwordLabel()}
 									placeholder="••••••••"
 									type="password"
 									autoComplete="current-password"
@@ -83,7 +82,7 @@ function SignInPage() {
 
 						{signIn.error && (
 							<p className="text-sm text-status-critical">
-								{signIn.error.message ?? "Sign in failed."}
+								{signIn.error.message ?? m.signIn_failed()}
 							</p>
 						)}
 
@@ -97,17 +96,17 @@ function SignInPage() {
 							) : (
 								<LogIn className="h-4 w-4" />
 							)}
-							{signIn.isPending ? "Signing in..." : "Sign in"}
+							{signIn.isPending ? m.signIn_submitting() : m.signIn_submit()}
 						</Button>
 					</form>
 
 					<div className="mt-4 text-center text-sm text-muted-foreground">
-						Don&apos;t have an account?{" "}
+						{m.signIn_noAccount()}{" "}
 						<Link
 							to="/sign-up"
 							className="font-medium text-foreground underline-offset-4 hover:underline"
 						>
-							Sign up
+							{m.signIn_signUpLink()}
 						</Link>
 					</div>
 				</CardContent>

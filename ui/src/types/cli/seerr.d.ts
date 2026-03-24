@@ -88,7 +88,10 @@ export function createSeerrClient(options: SeerrClientOptions): {
 	jellyfinSettings: {
 		get(): Promise<JellyfinSettings>;
 		update(settings: JellyfinSettings): Promise<JellyfinSettings>;
-		getLibraries(params?: { sync?: boolean; enable?: string }): Promise<JellyfinLibrary[]>;
+		getLibraries(params?: {
+			sync?: boolean;
+			enable?: string;
+		}): Promise<JellyfinLibrary[]>;
 		getJellyfinUsers(): Promise<JellyfinUserRecord[]>;
 	};
 	radarr: {

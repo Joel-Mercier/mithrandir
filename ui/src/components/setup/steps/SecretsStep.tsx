@@ -1,16 +1,17 @@
-import { useMemo, useState } from "react";
 import { Loader2, Wand2 } from "lucide-react";
+import { useMemo, useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import { Label } from "#/components/ui/label";
 import { Separator } from "#/components/ui/separator";
 import {
 	useAppRegistry,
-	useSaveSecrets,
 	useGenerateSecret,
+	useSaveSecrets,
 } from "#/hooks/homelab";
-import { StepNavigation } from "../StepNavigation";
+import { m } from "#/paraglide/messages.js";
 import type { SetupState } from "../SetupWizard";
+import { StepNavigation } from "../StepNavigation";
 
 interface SecretsStepProps {
 	state: SetupState;
@@ -42,10 +43,7 @@ export function SecretsStep({
 	const [generatingKey, setGeneratingKey] = useState<string | null>(null);
 
 	const allSelectedApps = useMemo(() => {
-		const combined = new Set([
-			...state.selectedApps,
-			...state.resolvedApps,
-		]);
+		const combined = new Set([...state.selectedApps, ...state.resolvedApps]);
 		return combined;
 	}, [state.selectedApps, state.resolvedApps]);
 
@@ -110,11 +108,11 @@ export function SecretsStep({
 		return (
 			<div>
 				<h2 className="font-display text-2xl font-bold tracking-tight">
-					Secrets & API Keys
+					{m.secrets_title()}
 				</h2>
 				<div className="mt-8 flex items-center gap-3 text-muted-foreground">
 					<Loader2 className="h-5 w-5 animate-spin" />
-					<span>Loading secret definitions...</span>
+					<span>{m.secrets_loadingDefs()}</span>
 				</div>
 			</div>
 		);
@@ -124,11 +122,9 @@ export function SecretsStep({
 		return (
 			<div>
 				<h2 className="font-display text-2xl font-bold tracking-tight">
-					Secrets & API Keys
+					{m.secrets_title()}
 				</h2>
-				<p className="mt-2 text-muted-foreground">
-					None of your selected apps require secrets. You're all set!
-				</p>
+				<p className="mt-2 text-muted-foreground">{m.secrets_noneRequired()}</p>
 				<StepNavigation onBack={onBack} onNext={onComplete} />
 			</div>
 		);
@@ -151,11 +147,9 @@ export function SecretsStep({
 	return (
 		<div>
 			<h2 className="font-display text-2xl font-bold tracking-tight">
-				Secrets & API Keys
+				{m.secrets_title()}
 			</h2>
-			<p className="mt-2 text-muted-foreground">
-				Enter the required credentials for your selected apps.
-			</p>
+			<p className="mt-2 text-muted-foreground">{m.secrets_subtitle()}</p>
 
 			<div className="mt-8 space-y-8">
 				{Object.entries(grouped).map(([appName, fields], groupIdx) => (
@@ -181,9 +175,7 @@ export function SecretsStep({
 											id={field.key}
 											type={field.sensitive ? "password" : "text"}
 											value={state.secrets[field.key] ?? ""}
-											onChange={(e) =>
-												updateSecret(field.key, e.target.value)
-											}
+											onChange={(e) => updateSecret(field.key, e.target.value)}
 											placeholder={field.description}
 										/>
 										{field.generate && (
@@ -199,7 +191,7 @@ export function SecretsStep({
 												) : (
 													<Wand2 className="h-4 w-4" />
 												)}
-												<span className="ml-1">Generate</span>
+												<span className="ml-1">{m.common_generate()}</span>
 											</Button>
 										)}
 									</div>

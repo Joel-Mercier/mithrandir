@@ -1,6 +1,7 @@
+import { Monitor, Moon, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Sun, Moon, Monitor } from "lucide-react";
 import { Button } from "#/components/ui/button";
+import { m } from "#/paraglide/messages.js";
 
 type ThemeMode = "light" | "dark" | "auto";
 
@@ -18,9 +19,7 @@ function getInitialMode(): ThemeMode {
 }
 
 function applyThemeMode(mode: ThemeMode) {
-	const prefersDark = window.matchMedia(
-		"(prefers-color-scheme: dark)",
-	).matches;
+	const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
 	const resolved = mode === "auto" ? (prefersDark ? "dark" : "light") : mode;
 
 	document.documentElement.classList.remove("light", "dark");
@@ -75,10 +74,10 @@ export default function ThemeToggle() {
 	const Icon = icons[mode];
 	const label =
 		mode === "auto"
-			? "Theme: auto. Click for light."
+			? m.theme_autoToLight()
 			: mode === "light"
-				? "Theme: light. Click for dark."
-				: "Theme: dark. Click for auto.";
+				? m.theme_lightToDark()
+				: m.theme_darkToAuto();
 
 	return (
 		<Button

@@ -1,6 +1,7 @@
 import { Check, X } from "lucide-react";
 import { Progress } from "#/components/ui/progress";
 import { cn } from "#/lib/utils";
+import { m } from "#/paraglide/messages.js";
 
 export type StepStatus =
 	| "pending"
@@ -93,7 +94,10 @@ export function SetupStepper({
 						{/* Progress footer */}
 						<div className="relative mt-6 border-t border-border/30 pt-4">
 							<p className="mb-2 text-xs text-muted-foreground">
-								Step {currentStep} of {steps.length}
+								{m.setup_stepOf({
+									current: String(currentStep),
+									total: String(steps.length),
+								})}
 							</p>
 							<Progress value={progressPercent} className="h-1" />
 						</div>
@@ -201,9 +205,7 @@ function StepCircle({
 
 	if (status === "error") {
 		return (
-			<div
-				className={cn(base, "bg-destructive text-destructive-foreground")}
-			>
+			<div className={cn(base, "bg-destructive text-destructive-foreground")}>
 				<X className="h-3.5 w-3.5" />
 			</div>
 		);

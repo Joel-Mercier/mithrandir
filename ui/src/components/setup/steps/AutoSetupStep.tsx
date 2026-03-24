@@ -1,21 +1,22 @@
-import { useEffect, useRef, useState } from "react";
 import {
+	AlertTriangle,
 	Check,
+	ChevronRight,
 	Info,
 	SkipForward,
-	AlertTriangle,
-	ChevronRight,
 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardHeader } from "#/components/ui/card";
 import { Input } from "#/components/ui/input";
 import { Label } from "#/components/ui/label";
 import { Separator } from "#/components/ui/separator";
 import { Spinner } from "#/components/ui/spinner";
-import { cn } from "#/lib/utils";
 import { useAutoSetupApp } from "#/hooks/homelab";
-import { StepNavigation } from "../StepNavigation";
+import { cn } from "#/lib/utils";
+import { m } from "#/paraglide/messages.js";
 import type { AppSetupResult, SetupState } from "../SetupWizard";
+import { StepNavigation } from "../StepNavigation";
 
 interface AutoSetupStepProps {
 	state: SetupState;
@@ -255,9 +256,7 @@ export function AutoSetupStep({
 	);
 
 	// Apps that have per-app prompts (skip those with no prompts in per-app phase)
-	const setupAppsWithPrompts = setupApps.filter(
-		(a) => a.prompts.length > 0,
-	);
+	const setupAppsWithPrompts = setupApps.filter((a) => a.prompts.length > 0);
 
 	// Skip if no apps support auto-setup
 	const setupAppsCount = setupApps.length;
@@ -294,19 +293,12 @@ export function AutoSetupStep({
 		const prefilled: Record<string, string> = {};
 		for (const app of setupAppsWithPrompts) {
 			for (const prompt of app.prompts) {
-				if (
-					prompt.key.endsWith("_username") &&
-					!prefilled[prompt.key]
-				) {
+				if (prompt.key.endsWith("_username") && !prefilled[prompt.key]) {
 					prefilled[prompt.key] =
 						prompt.defaultValue ?? state.autoSetupCredentials.username;
 				}
-				if (
-					prompt.key.endsWith("_password") &&
-					!prefilled[prompt.key]
-				) {
-					prefilled[prompt.key] =
-						state.autoSetupCredentials.password;
+				if (prompt.key.endsWith("_password") && !prefilled[prompt.key]) {
+					prefilled[prompt.key] = state.autoSetupCredentials.password;
 				}
 			}
 		}
@@ -346,8 +338,7 @@ export function AutoSetupStep({
 	};
 
 	const runAutoSetup = async (skipped: Set<string> | string[]) => {
-		const skippedSet =
-			skipped instanceof Set ? skipped : new Set(skipped);
+		const skippedSet = skipped instanceof Set ? skipped : new Set(skipped);
 		setPhase("running");
 
 		// Initialize results: all non-skipped as pending, skipped as skipped
@@ -404,8 +395,7 @@ export function AutoSetupStep({
 				results[i] = {
 					...results[i],
 					status: "warning",
-					warning:
-						err instanceof Error ? err.message : "Setup failed",
+					warning: err instanceof Error ? err.message : "Setup failed",
 				};
 			}
 
@@ -418,12 +408,9 @@ export function AutoSetupStep({
 	return (
 		<div>
 			<h2 className="font-display text-2xl font-bold tracking-tight">
-				Auto-Configure Apps
+				{m.autoSetup_title()}
 			</h2>
-			<p className="mt-2 text-muted-foreground">
-				Configure each app with credentials and settings. Shared defaults
-				are pre-filled from your username and password.
-			</p>
+			<p className="mt-2 text-muted-foreground">{m.autoSetup_subtitle()}</p>
 
 			{/* Phase 1: Shared credentials */}
 			{phase === "credentials" && (
@@ -432,18 +419,16 @@ export function AutoSetupStep({
 						<CardContent className="flex items-start gap-3 p-4">
 							<Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
 							<div className="text-sm text-muted-foreground">
-								<p>
-									Enter shared credentials below. These will be used as
-									defaults for each app — you can customize per-app
-									settings in the next screens.
-								</p>
+								<p>{m.autoSetup_credentialsInfo()}</p>
 							</div>
 						</CardContent>
 					</Card>
 
 					<div className="mt-6 space-y-4">
 						<div className="space-y-1.5">
-							<Label htmlFor="setup-username">Shared username</Label>
+							<Label htmlFor="setup-username">
+								{m.autoSetup_sharedUsername()}
+							</Label>
 							<Input
 								id="setup-username"
 								value={state.autoSetupCredentials.username}
@@ -459,7 +444,9 @@ export function AutoSetupStep({
 							/>
 						</div>
 						<div className="space-y-1.5">
-							<Label htmlFor="setup-password">Shared password</Label>
+							<Label htmlFor="setup-password">
+								{m.autoSetup_sharedPassword()}
+							</Label>
 							<Input
 								id="setup-password"
 								type="password"
@@ -472,7 +459,7 @@ export function AutoSetupStep({
 										},
 									})
 								}
-								placeholder="Choose a strong password"
+								placeholder={m.autoSetup_passwordPlaceholder()}
 							/>
 						</div>
 					</div>
@@ -486,16 +473,12 @@ export function AutoSetupStep({
 							}
 							className="gap-2"
 						>
-							Configure Apps
+							{m.autoSetup_configureApps()}
 							<ChevronRight className="h-4 w-4" />
 						</Button>
-						<Button
-							variant="ghost"
-							onClick={onComplete}
-							className="gap-2"
-						>
+						<Button variant="ghost" onClick={onComplete} className="gap-2">
 							<SkipForward className="h-4 w-4" />
-							Skip all
+							{m.autoSetup_skipAll()}
 						</Button>
 					</div>
 				</>
@@ -512,33 +495,29 @@ export function AutoSetupStep({
 									<div
 										className={cn(
 											"h-0.5 w-4",
-											i <= currentAppIdx
-												? "bg-primary"
-												: "bg-border",
+											i <= currentAppIdx ? "bg-primary" : "bg-border",
 										)}
 									/>
 								)}
 								<div
 									className={cn(
 										"flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium",
-										i < currentAppIdx &&
-											"bg-primary text-primary-foreground",
+										i < currentAppIdx && "bg-primary text-primary-foreground",
 										i === currentAppIdx &&
 											"bg-primary text-primary-foreground ring-2 ring-primary/20",
 										i > currentAppIdx &&
 											"border border-muted-foreground/30 text-muted-foreground/40",
 									)}
 								>
-									{i < currentAppIdx ? (
-										<Check className="h-3 w-3" />
-									) : (
-										i + 1
-									)}
+									{i < currentAppIdx ? <Check className="h-3 w-3" /> : i + 1}
 								</div>
 							</div>
 						))}
 						<span className="ml-2 text-xs text-muted-foreground">
-							{currentAppIdx + 1} of {setupAppsWithPrompts.length}
+							{m.autoSetup_ofTotal({
+								current: String(currentAppIdx + 1),
+								total: String(setupAppsWithPrompts.length),
+							})}
 						</span>
 					</div>
 
@@ -552,33 +531,23 @@ export function AutoSetupStep({
 								{currentApp.displayName}
 							</h3>
 							<p className="text-xs text-muted-foreground">
-								Configure credentials and settings for{" "}
-								{currentApp.displayName}
+								{m.autoSetup_configureFor({ appName: currentApp.displayName })}
 							</p>
 						</CardHeader>
 						<CardContent className="space-y-4">
 							{currentApp.prompts.map((prompt, promptIdx) => (
 								<div key={prompt.key}>
-									{promptIdx > 0 &&
-										prompt.key.endsWith("_root_folder") && (
-											<Separator className="mb-4" />
-										)}
+									{promptIdx > 0 && prompt.key.endsWith("_root_folder") && (
+										<Separator className="mb-4" />
+									)}
 									<div className="space-y-1.5">
-										<Label htmlFor={prompt.key}>
-											{prompt.label}
-										</Label>
+										<Label htmlFor={prompt.key}>{prompt.label}</Label>
 										<Input
 											id={prompt.key}
 											type={prompt.type}
-											value={getPromptValue(
-												prompt.key,
-												prompt.defaultValue,
-											)}
+											value={getPromptValue(prompt.key, prompt.defaultValue)}
 											onChange={(e) =>
-												setPromptValue(
-													prompt.key,
-													e.target.value,
-												)
+												setPromptValue(prompt.key, e.target.value)
 											}
 											placeholder={prompt.description}
 										/>
@@ -598,7 +567,7 @@ export function AutoSetupStep({
 							className="gap-2 text-muted-foreground"
 						>
 							<SkipForward className="h-4 w-4" />
-							Skip {currentApp.displayName}
+							{m.autoSetup_skipApp({ appName: currentApp.displayName })}
 						</Button>
 						<Button
 							onClick={handleConfirmApp}
@@ -606,8 +575,8 @@ export function AutoSetupStep({
 							className="gap-2"
 						>
 							{currentAppIdx < setupAppsWithPrompts.length - 1
-								? "Next App"
-								: "Run Auto-Setup"}
+								? m.autoSetup_nextApp()
+								: m.autoSetup_runAutoSetup()}
 							<ChevronRight className="h-4 w-4" />
 						</Button>
 					</div>
@@ -632,42 +601,34 @@ export function AutoSetupStep({
 								{app.status === "warning" && (
 									<AlertTriangle className="h-4 w-4 text-status-warning" />
 								)}
-								{app.status === "configuring" && (
-									<Spinner size="sm" />
-								)}
+								{app.status === "configuring" && <Spinner size="sm" />}
 								{app.status === "pending" && (
 									<div className="h-2 w-2 rounded-full bg-muted-foreground/30" />
 								)}
 							</div>
 							<div className="min-w-0 flex-1">
-								<p className="text-sm font-medium">
-									{app.displayName}
-								</p>
+								<p className="text-sm font-medium">{app.displayName}</p>
 								{app.status === "configuring" && (
 									<p className="text-xs text-muted-foreground">
-										Configuring...
+										{m.autoSetup_configuring()}
 									</p>
 								)}
 								{app.warning && (
-									<p className="text-xs text-status-warning">
-										{app.warning}
-									</p>
+									<p className="text-xs text-status-warning">{app.warning}</p>
 								)}
 							</div>
 							<span
 								className={cn(
 									"text-xs",
 									app.status === "done" && "text-status-healthy",
-									app.status === "skipped" &&
-										"text-muted-foreground",
-									app.status === "configuring" &&
-										"text-muted-foreground",
+									app.status === "skipped" && "text-muted-foreground",
+									app.status === "configuring" && "text-muted-foreground",
 								)}
 							>
-								{app.status === "done" && "Configured"}
-								{app.status === "skipped" && "Skipped"}
-								{app.status === "warning" && "Warning"}
-								{app.status === "configuring" && "Setting up..."}
+								{app.status === "done" && m.autoSetup_configured()}
+								{app.status === "skipped" && m.autoSetup_skipped()}
+								{app.status === "warning" && m.autoSetup_warning()}
+								{app.status === "configuring" && m.autoSetup_settingUp()}
 							</span>
 						</div>
 					))}
@@ -695,26 +656,21 @@ export function AutoSetupStep({
 									)}
 								</div>
 								<div className="min-w-0 flex-1">
-									<p className="text-sm font-medium">
-										{app.displayName}
-									</p>
+									<p className="text-sm font-medium">{app.displayName}</p>
 									{app.warning && (
-										<p className="text-xs text-status-warning">
-											{app.warning}
-										</p>
+										<p className="text-xs text-status-warning">{app.warning}</p>
 									)}
 								</div>
 								<span
 									className={cn(
 										"text-xs",
 										app.status === "done" && "text-status-healthy",
-										app.status === "skipped" &&
-											"text-muted-foreground",
+										app.status === "skipped" && "text-muted-foreground",
 									)}
 								>
-									{app.status === "done" && "Configured"}
-									{app.status === "skipped" && "Skipped"}
-									{app.status === "warning" && "Warning"}
+									{app.status === "done" && m.autoSetup_configured()}
+									{app.status === "skipped" && m.autoSetup_skipped()}
+									{app.status === "warning" && m.autoSetup_warning()}
 								</span>
 							</div>
 						))}
@@ -723,7 +679,7 @@ export function AutoSetupStep({
 					<StepNavigation
 						onBack={onBack}
 						onNext={onComplete}
-						nextLabel="Continue"
+						nextLabel={m.common_continue()}
 					/>
 				</>
 			)}

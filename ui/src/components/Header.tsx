@@ -1,6 +1,6 @@
-import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { History, LogOut, Settings, User } from "lucide-react";
+import { useState } from "react";
 import { Avatar, AvatarFallback } from "#/components/ui/avatar";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
@@ -12,26 +12,30 @@ import {
 	DropdownMenuTrigger,
 } from "#/components/ui/dropdown-menu";
 import { Skeleton } from "#/components/ui/skeleton";
-import { useVersion } from "#/hooks/homelab";
 import { useSignOut } from "#/hooks/auth";
+import { useVersion } from "#/hooks/homelab";
 import { authClient } from "#/lib/auth-client";
+import { m } from "#/paraglide/messages.js";
 import ActivitySidebar from "./ActivitySidebar";
 import LanguageSwitch from "./LanguageSwitch";
 import MobileNav from "./MobileNav";
 import ThemeToggle from "./ThemeToggle";
 
-const navLinks = [
-	{ to: "/", label: "Dashboard" },
-	{ to: "/apps", label: "Apps" },
-	{ to: "/backup-restore", label: "Backup & Restore" },
-	{ to: "/settings", label: "Settings" },
-] as const;
+function getNavLinks() {
+	return [
+		{ to: "/", label: m.common_dashboard() },
+		{ to: "/apps", label: m.common_apps() },
+		{ to: "/backup-restore", label: m.common_backupRestore() },
+		{ to: "/settings", label: m.common_settings() },
+	];
+}
 
 export default function Header() {
 	const [activityOpen, setActivityOpen] = useState(false);
 	const { data: session } = authClient.useSession();
 	const signOut = useSignOut();
 	const versionQuery = useVersion();
+	const navLinks = getNavLinks();
 	const user = session?.user;
 	const initials = user?.name
 		? user.name
@@ -97,7 +101,7 @@ export default function Header() {
 						className="hidden md:inline-flex"
 					>
 						<History className="size-4" />
-						<span className="sr-only">Activity</span>
+						<span className="sr-only">{m.common_activity()}</span>
 					</Button>
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
@@ -107,28 +111,28 @@ export default function Header() {
 								className="hidden rounded-full md:inline-flex"
 							>
 								<Avatar size="sm">
-									<AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
+									<AvatarFallback className="text-[10px]">
+										{initials}
+									</AvatarFallback>
 								</Avatar>
 							</Button>
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align="end" className="w-44">
 							<div className="px-2 py-1.5">
 								<p className="text-sm font-medium">{user?.name}</p>
-								<p className="text-xs text-muted-foreground">
-									{user?.email}
-								</p>
+								<p className="text-xs text-muted-foreground">{user?.email}</p>
 							</div>
 							<DropdownMenuSeparator />
 							<DropdownMenuItem asChild>
 								<Link to="/profile" className="gap-2">
 									<User className="h-3.5 w-3.5" />
-									Profile
+									{m.common_profile()}
 								</Link>
 							</DropdownMenuItem>
 							<DropdownMenuItem asChild>
 								<Link to="/settings" className="gap-2">
 									<Settings className="h-3.5 w-3.5" />
-									Settings
+									{m.common_settings()}
 								</Link>
 							</DropdownMenuItem>
 							<DropdownMenuSeparator />
@@ -137,7 +141,7 @@ export default function Header() {
 								onClick={() => signOut.mutate()}
 							>
 								<LogOut className="h-3.5 w-3.5" />
-								Sign out
+								{m.common_signOut()}
 							</DropdownMenuItem>
 						</DropdownMenuContent>
 					</DropdownMenu>
@@ -148,7 +152,7 @@ export default function Header() {
 						className="md:hidden"
 					>
 						<History className="size-4" />
-						<span className="sr-only">Activity</span>
+						<span className="sr-only">{m.common_activity()}</span>
 					</Button>
 					<MobileNav />
 				</div>

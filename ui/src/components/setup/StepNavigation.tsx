@@ -1,5 +1,6 @@
 import { ArrowLeft, ArrowRight, SkipForward } from "lucide-react";
 import { Button } from "#/components/ui/button";
+import { m } from "#/paraglide/messages.js";
 
 interface StepNavigationProps {
 	onBack?: () => void;
@@ -18,14 +19,17 @@ export function StepNavigation({
 	onBack,
 	onNext,
 	onSkip,
-	backLabel = "Back",
-	nextLabel = "Next",
-	skipLabel = "Skip",
+	backLabel,
+	nextLabel,
+	skipLabel,
 	nextDisabled = false,
 	showBack = true,
 	showSkip = false,
 	isLoading = false,
 }: StepNavigationProps) {
+	const back = backLabel ?? m.stepNav_back();
+	const next = nextLabel ?? m.stepNav_next();
+	const skip = skipLabel ?? m.stepNav_skip();
 	return (
 		<div className="mt-8 flex items-center justify-between border-t border-border/50 pt-6">
 			<div>
@@ -37,7 +41,7 @@ export function StepNavigation({
 						className="gap-2"
 					>
 						<ArrowLeft className="h-4 w-4" />
-						{backLabel}
+						{back}
 					</Button>
 				)}
 			</div>
@@ -49,7 +53,7 @@ export function StepNavigation({
 						disabled={isLoading}
 						className="gap-2 text-muted-foreground"
 					>
-						{skipLabel}
+						{skip}
 						<SkipForward className="h-4 w-4" />
 					</Button>
 				)}
@@ -59,7 +63,7 @@ export function StepNavigation({
 						disabled={nextDisabled || isLoading}
 						className="gap-2"
 					>
-						{nextLabel}
+						{next}
 						<ArrowRight className="h-4 w-4" />
 					</Button>
 				)}

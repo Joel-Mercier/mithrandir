@@ -45,7 +45,10 @@ export function getRadarrApiKey(baseDir: string): Promise<string | null>;
 export function createRadarrClient(options: RadarrClientOptions): {
 	hostConfig: {
 		get(): Promise<HostConfigResource>;
-		update(id: number, resource: HostConfigResource): Promise<HostConfigResource>;
+		update(
+			id: number,
+			resource: HostConfigResource,
+		): Promise<HostConfigResource>;
 	};
 	downloadClient: {
 		create(resource: DownloadClientResource): Promise<DownloadClientResource>;

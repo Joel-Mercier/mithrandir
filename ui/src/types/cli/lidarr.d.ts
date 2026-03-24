@@ -48,7 +48,10 @@ export function getLidarrApiKey(baseDir: string): Promise<string | null>;
 export function createLidarrClient(options: LidarrClientOptions): {
 	hostConfig: {
 		get(): Promise<HostConfigResource>;
-		update(id: number, resource: HostConfigResource): Promise<HostConfigResource>;
+		update(
+			id: number,
+			resource: HostConfigResource,
+		): Promise<HostConfigResource>;
 	};
 	downloadClient: {
 		create(resource: DownloadClientResource): Promise<DownloadClientResource>;

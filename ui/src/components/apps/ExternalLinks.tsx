@@ -1,5 +1,6 @@
 import { Globe } from "lucide-react";
 import { Button } from "#/components/ui/button";
+import { m } from "#/paraglide/messages.js";
 
 function GithubIcon({ className }: { className?: string }) {
 	return (
@@ -17,7 +18,10 @@ function GithubIcon({ className }: { className?: string }) {
 export function ExternalLinks({
 	website,
 	github,
-}: { website?: string; github?: string }) {
+}: {
+	website?: string;
+	github?: string;
+}) {
 	if (!website && !github) return null;
 
 	return (
@@ -26,7 +30,7 @@ export function ExternalLinks({
 				<Button variant="outline" size="sm" className="gap-1.5" asChild>
 					<a href={website} target="_blank" rel="noopener noreferrer">
 						<Globe className="h-3.5 w-3.5" />
-						Website
+						{m.common_website()}
 					</a>
 				</Button>
 			)}

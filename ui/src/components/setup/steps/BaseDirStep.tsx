@@ -1,8 +1,9 @@
 import { z } from "zod";
 import { useAppForm } from "#/hooks/form";
 import { useSetupBaseDir } from "#/hooks/homelab";
-import { StepNavigation } from "../StepNavigation";
+import { m } from "#/paraglide/messages.js";
 import type { SetupState } from "../SetupWizard";
+import { StepNavigation } from "../StepNavigation";
 
 interface BaseDirStepProps {
 	state: SetupState;
@@ -11,12 +12,14 @@ interface BaseDirStepProps {
 	onBack: () => void;
 }
 
-const baseDirSchema = z.object({
-	baseDir: z
-		.string()
-		.min(1, "Required")
-		.startsWith("/", "Must be an absolute path"),
-});
+function getBaseDirSchema() {
+	return z.object({
+		baseDir: z
+			.string()
+			.min(1, m.baseDir_required())
+			.startsWith("/", m.baseDir_absolutePath()),
+	});
+}
 
 function TreePreview({ baseDir }: { baseDir: string }) {
 	const dirs = [
@@ -33,7 +36,7 @@ function TreePreview({ baseDir }: { baseDir: string }) {
 	return (
 		<div className="rounded-lg bg-muted/50 p-4">
 			<p className="mb-2 text-xs font-medium text-muted-foreground">
-				Directory structure preview
+				{m.baseDir_previewTitle()}
 			</p>
 			<pre className="font-mono-data text-xs leading-relaxed text-muted-foreground">
 				{dirs.join("\n")}
@@ -55,7 +58,7 @@ export function BaseDirStep({
 			baseDir: state.baseDir,
 		},
 		validators: {
-			onBlur: baseDirSchema,
+			onBlur: getBaseDirSchema(),
 		},
 		onSubmit: async ({ value }) => {
 			await setupBaseDir.mutateAsync(value.baseDir);
@@ -67,11 +70,9 @@ export function BaseDirStep({
 	return (
 		<div>
 			<h2 className="font-display text-2xl font-bold tracking-tight">
-				Base Directory
+				{m.baseDir_title()}
 			</h2>
-			<p className="mt-2 text-muted-foreground">
-				Choose where app configs, compose files, and backups will be stored.
-			</p>
+			<p className="mt-2 text-muted-foreground">{m.baseDir_subtitle()}</p>
 
 			<form
 				onSubmit={(e) => {
@@ -84,16 +85,13 @@ export function BaseDirStep({
 				<form.AppField name="baseDir">
 					{(field) => (
 						<field.TextField
-							label="Base directory path"
+							label={m.baseDir_label()}
 							placeholder="/opt/homelab"
 						/>
 					)}
 				</form.AppField>
 
-				<p className="text-xs text-muted-foreground">
-					This directory will be created if it doesn't exist. All app data
-					lives here.
-				</p>
+				<p className="text-xs text-muted-foreground">{m.baseDir_hint()}</p>
 
 				<form.Subscribe selector={(s) => s.values.baseDir}>
 					{(baseDir) => <TreePreview baseDir={baseDir} />}

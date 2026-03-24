@@ -1,13 +1,13 @@
 import { useNavigate } from "@tanstack/react-router";
 import {
-	Play,
-	Square,
-	RefreshCw,
-	Download,
-	Trash2,
 	Archive,
+	Download,
 	History,
+	Play,
+	RefreshCw,
 	Settings,
+	Square,
+	Trash2,
 } from "lucide-react";
 import {
 	Sheet,
@@ -18,6 +18,8 @@ import {
 import { Skeleton } from "#/components/ui/skeleton";
 import { useActivity } from "#/hooks/homelab";
 import type { ActivityItem } from "#/lib/server/activity";
+import { m } from "#/paraglide/messages.js";
+import { formatRelativeTime } from "#/lib/utils";
 
 const actionIcons: Record<string, typeof Play> = {
 	started: Play,
@@ -29,20 +31,6 @@ const actionIcons: Record<string, typeof Play> = {
 	backup_deleted: Trash2,
 	config_updated: Settings,
 };
-
-function formatRelativeTime(date: Date): string {
-	const now = Date.now();
-	const diffMs = now - new Date(date).getTime();
-	const diffSec = Math.floor(diffMs / 1000);
-	if (diffSec < 60) return "just now";
-	const diffMin = Math.floor(diffSec / 60);
-	if (diffMin < 60) return `${diffMin}m ago`;
-	const diffHrs = Math.floor(diffMin / 60);
-	if (diffHrs < 24) return `${diffHrs}h ago`;
-	const diffDays = Math.floor(diffHrs / 24);
-	if (diffDays < 30) return `${diffDays}d ago`;
-	return new Date(date).toLocaleDateString();
-}
 
 export default function ActivitySidebar({
 	open,
@@ -65,7 +53,7 @@ export default function ActivitySidebar({
 				<SheetHeader className="border-b border-border/50 px-4 py-3">
 					<SheetTitle className="flex items-center gap-2 text-base">
 						<History className="size-4" />
-						Activity
+						{m.activity_title()}
 					</SheetTitle>
 				</SheetHeader>
 
@@ -85,7 +73,7 @@ export default function ActivitySidebar({
 					) : !items?.length ? (
 						<div className="flex flex-col items-center justify-center gap-2 px-4 py-12 text-muted-foreground">
 							<History className="size-8 opacity-40" />
-							<p className="text-sm">No activity yet</p>
+							<p className="text-sm">{m.activity_noActivity()}</p>
 						</div>
 					) : (
 						<ul className="flex flex-col">

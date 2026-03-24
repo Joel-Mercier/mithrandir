@@ -1,22 +1,23 @@
-import { useState, useCallback } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { SkipForward } from "lucide-react";
+import { useCallback, useState } from "react";
 import { Button } from "#/components/ui/button";
 import { useSkipSetup } from "#/hooks/homelab";
+import { m } from "#/paraglide/messages.js";
 import {
 	SetupStepper,
 	type StepDefinition,
 	type StepStatus,
 } from "./SetupStepper";
-import { WelcomeStep } from "./steps/WelcomeStep";
-import { BaseDirStep } from "./steps/BaseDirStep";
 import { AppSelectStep } from "./steps/AppSelectStep";
-import { SecretsStep } from "./steps/SecretsStep";
-import { InstallStep } from "./steps/InstallStep";
-import { HttpsStep } from "./steps/HttpsStep";
 import { AutoSetupStep } from "./steps/AutoSetupStep";
+import { BaseDirStep } from "./steps/BaseDirStep";
 import { FirewallBackupStep } from "./steps/FirewallBackupStep";
+import { HttpsStep } from "./steps/HttpsStep";
+import { InstallStep } from "./steps/InstallStep";
+import { SecretsStep } from "./steps/SecretsStep";
 import { SummaryStep } from "./steps/SummaryStep";
+import { WelcomeStep } from "./steps/WelcomeStep";
 
 // ─── Types ────────────────────────────────────────────────────────
 
@@ -72,15 +73,15 @@ export interface SetupState {
 // ─── Steps config ─────────────────────────────────────────────────
 
 const STEPS: StepDefinition[] = [
-	{ label: "Welcome", description: "System requirements" },
-	{ label: "Base Directory", description: "Data storage location" },
-	{ label: "Applications", description: "Choose your apps" },
-	{ label: "Secrets", description: "API keys & passwords" },
-	{ label: "Installation", description: "Pull & start containers" },
-	{ label: "HTTPS", description: "Caddy reverse proxy" },
-	{ label: "Auto-Setup", description: "Configure apps" },
-	{ label: "Firewall & Backup", description: "Security & scheduling" },
-	{ label: "Summary", description: "All done" },
+	{ label: m.welcome_stepTitle(), description: m.welcome_stepDesc() },
+	{ label: m.baseDir_stepTitle(), description: m.baseDir_stepDesc() },
+	{ label: m.appSelect_stepTitle(), description: m.appSelect_stepDesc() },
+	{ label: m.secrets_stepTitle(), description: m.secrets_stepDesc() },
+	{ label: m.installStep_stepTitle(), description: m.installStep_stepDesc() },
+	{ label: m.httpsStep_stepTitle(), description: m.httpsStep_stepDesc() },
+	{ label: m.autoSetup_stepTitle(), description: m.autoSetup_stepDesc() },
+	{ label: m.firewallBackup_stepTitle(), description: m.firewallBackup_stepDesc() },
+	{ label: m.summary_stepTitle(), description: m.summary_stepDesc() },
 ];
 
 // ─── Initial state ────────────────────────────────────────────────
@@ -120,55 +121,46 @@ export function SetupWizard() {
 		[],
 	);
 
-	const goToStep = useCallback(
-		(step: number) => {
-			setState((prev) => ({
+	const goToStep = useCallback((step: number) => {
+		setState((prev) => ({
+			...prev,
+			currentStep: step,
+			stepStatuses: {
+				...prev.stepStatuses,
+				[step]: "active",
+			},
+		}));
+	}, []);
+
+	const completeStep = useCallback((step: number) => {
+		setState((prev) => {
+			const next = step + 1;
+			return {
 				...prev,
-				currentStep: step,
+				currentStep: next,
 				stepStatuses: {
 					...prev.stepStatuses,
-					[step]: "active",
+					[step]: "completed",
+					...(next <= STEPS.length ? { [next]: "active" } : {}),
 				},
-			}));
-		},
-		[],
-	);
+			};
+		});
+	}, []);
 
-	const completeStep = useCallback(
-		(step: number) => {
-			setState((prev) => {
-				const next = step + 1;
-				return {
-					...prev,
-					currentStep: next,
-					stepStatuses: {
-						...prev.stepStatuses,
-						[step]: "completed",
-						...(next <= STEPS.length ? { [next]: "active" } : {}),
-					},
-				};
-			});
-		},
-		[],
-	);
-
-	const skipStep = useCallback(
-		(step: number) => {
-			setState((prev) => {
-				const next = step + 1;
-				return {
-					...prev,
-					currentStep: next,
-					stepStatuses: {
-						...prev.stepStatuses,
-						[step]: "skipped",
-						...(next <= STEPS.length ? { [next]: "active" } : {}),
-					},
-				};
-			});
-		},
-		[],
-	);
+	const skipStep = useCallback((step: number) => {
+		setState((prev) => {
+			const next = step + 1;
+			return {
+				...prev,
+				currentStep: next,
+				stepStatuses: {
+					...prev.stepStatuses,
+					[step]: "skipped",
+					...(next <= STEPS.length ? { [next]: "active" } : {}),
+				},
+			};
+		});
+	}, []);
 
 	const stepContent = (() => {
 		switch (state.currentStep) {
@@ -284,7 +276,7 @@ export function SetupWizard() {
 								disabled={skipMutation.isPending}
 							>
 								<SkipForward className="h-4 w-4" />
-								Skip setup for now
+								{m.setup_skipSetup()}
 							</Button>
 						</div>
 					)}

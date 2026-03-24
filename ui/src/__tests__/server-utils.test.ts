@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import { resolve } from "path";
+import { describe, expect, it } from "vitest";
 import { getProjectRoot } from "../lib/server/utils";
 
 describe("getProjectRoot", () => {

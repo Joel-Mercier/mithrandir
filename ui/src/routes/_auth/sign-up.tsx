@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { UserPlus } from "lucide-react";
 import { z } from "zod";
+import { Button } from "#/components/ui/button";
 import {
 	Card,
 	CardContent,
@@ -7,11 +9,10 @@ import {
 	CardHeader,
 	CardTitle,
 } from "#/components/ui/card";
-import { Button } from "#/components/ui/button";
-import { UserPlus } from "lucide-react";
 import { Spinner } from "#/components/ui/spinner";
 import { useSignUp } from "#/hooks/auth";
 import { useAppForm } from "#/hooks/form";
+import { m } from "#/paraglide/messages.js";
 
 export const Route = createFileRoute("/_auth/sign-up")({
 	component: SignUpPage,
@@ -19,13 +20,13 @@ export const Route = createFileRoute("/_auth/sign-up")({
 
 const signUpSchema = z
 	.object({
-		name: z.string().min(1, "Name is required"),
-		email: z.email("Please enter a valid email address"),
-		password: z.string().min(8, "Password must be at least 8 characters"),
-		confirmPassword: z.string().min(1, "Please confirm your password"),
+		name: z.string().min(1, m.signUp_nameValidation()),
+		email: z.email(m.signUp_emailValidation()),
+		password: z.string().min(8, m.signUp_passwordValidation()),
+		confirmPassword: z.string().min(1, m.signUp_confirmValidation()),
 	})
 	.refine((data) => data.password === data.confirmPassword, {
-		message: "Passwords do not match",
+		message: m.signUp_passwordMismatch(),
 		path: ["confirmPassword"],
 	});
 
@@ -56,12 +57,10 @@ function SignUpPage() {
 			<Card className="mx-auto w-full max-w-sm shadow-lg">
 				<CardHeader className="text-center">
 					<div className="mx-auto mb-2 font-display text-2xl font-bold tracking-tight">
-						Mithrandir
+						{m.common_mithrandir()}
 					</div>
-					<CardTitle className="text-lg">Create account</CardTitle>
-					<CardDescription>
-						Set up your admin account for the dashboard
-					</CardDescription>
+					<CardTitle className="text-lg">{m.signUp_title()}</CardTitle>
+					<CardDescription>{m.signUp_description()}</CardDescription>
 				</CardHeader>
 				<CardContent>
 					<form
@@ -75,7 +74,7 @@ function SignUpPage() {
 						<form.AppField name="name">
 							{(field) => (
 								<field.TextField
-									label="Name"
+									label={m.signUp_nameLabel()}
 									placeholder="Admin"
 									autoComplete="name"
 								/>
@@ -85,7 +84,7 @@ function SignUpPage() {
 						<form.AppField name="email">
 							{(field) => (
 								<field.TextField
-									label="Email"
+									label={m.signUp_emailLabel()}
 									placeholder="admin@example.com"
 									type="email"
 									autoComplete="email"
@@ -96,7 +95,7 @@ function SignUpPage() {
 						<form.AppField name="password">
 							{(field) => (
 								<field.TextField
-									label="Password"
+									label={m.signUp_passwordLabel()}
 									placeholder="••••••••"
 									type="password"
 									autoComplete="new-password"
@@ -107,7 +106,7 @@ function SignUpPage() {
 						<form.AppField name="confirmPassword">
 							{(field) => (
 								<field.TextField
-									label="Confirm password"
+									label={m.signUp_confirmPasswordLabel()}
 									placeholder="••••••••"
 									type="password"
 									autoComplete="new-password"
@@ -117,7 +116,7 @@ function SignUpPage() {
 
 						{signUp.error && (
 							<p className="text-sm text-status-critical">
-								{signUp.error.message ?? "Sign up failed."}
+								{signUp.error.message ?? m.signUp_failed()}
 							</p>
 						)}
 
@@ -131,17 +130,17 @@ function SignUpPage() {
 							) : (
 								<UserPlus className="h-4 w-4" />
 							)}
-							{signUp.isPending ? "Creating account..." : "Create account"}
+							{signUp.isPending ? m.signUp_submitting() : m.signUp_submit()}
 						</Button>
 					</form>
 
 					<div className="mt-4 text-center text-sm text-muted-foreground">
-						Already have an account?{" "}
+						{m.signUp_hasAccount()}{" "}
 						<Link
 							to="/sign-in"
 							className="font-medium text-foreground underline-offset-4 hover:underline"
 						>
-							Sign in
+							{m.signUp_signInLink()}
 						</Link>
 					</div>
 				</CardContent>

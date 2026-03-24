@@ -1,28 +1,28 @@
-import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
-import Header from "#/components/Header";
+import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import Footer from "#/components/Footer";
+import Header from "#/components/Header";
 import { getSession } from "#/lib/auth";
 import { fetchSetupStatus } from "#/lib/server/setup";
 
 export const Route = createFileRoute("/_app")({
-  beforeLoad: async ({ location }) => {
-    const session = await getSession();
-    if (!session) {
-      throw redirect({
-        to: "/sign-in",
-        search: { redirect: location.href },
-      });
-    }
-    const { status: setupStatus } = await fetchSetupStatus();
-    const isSetupRoute = location.href.includes("/setup");
-    if (setupStatus === "pending" && !isSetupRoute) {
-      throw redirect({ to: "/setup" });
-    }
-    if (setupStatus === "completed" && isSetupRoute) {
-      throw redirect({ to: "/" });
-    }
-    return { user: session.user, setupStatus };
-  },
+	beforeLoad: async ({ location }) => {
+		const session = await getSession();
+		if (!session) {
+			throw redirect({
+				to: "/sign-in",
+				search: { redirect: location.href },
+			});
+		}
+		const { status: setupStatus } = await fetchSetupStatus();
+		const isSetupRoute = location.href.includes("/setup");
+		if (setupStatus === "pending" && !isSetupRoute) {
+			throw redirect({ to: "/setup" });
+		}
+		if (setupStatus === "completed" && isSetupRoute) {
+			throw redirect({ to: "/" });
+		}
+		return { user: session.user, setupStatus };
+	},
 	component: AppLayout,
 });
 

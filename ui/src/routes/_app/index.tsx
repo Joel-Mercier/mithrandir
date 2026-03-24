@@ -1,4 +1,4 @@
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { AlertCircle, ArrowRight, Wand2 } from "lucide-react";
 import AppsGrid from "#/components/dashboard/AppsGrid";
 import BackupStatusCard from "#/components/dashboard/BackupStatusCard";
@@ -14,11 +14,12 @@ import {
 	useApps,
 	useBackupStatus,
 	useConfig,
-	useSystemStatus,
 	useResources,
 	useSetupStatus,
+	useSystemStatus,
 	useVersion,
 } from "#/hooks/homelab";
+import { m } from "#/paraglide/messages.js";
 
 export const Route = createFileRoute("/_app/")({ component: Dashboard });
 
@@ -79,18 +80,17 @@ function Dashboard() {
 		<div className="mx-auto max-w-7xl px-4 py-8">
 			<div className="mb-6">
 				<h1 className="font-display text-2xl font-bold tracking-tight">
-					Dashboard
+					{m.dashboard_title()}
 				</h1>
-				<p className="mt-1 text-sm text-muted-foreground">System overview</p>
+				<p className="mt-1 text-sm text-muted-foreground">
+					{m.dashboard_subtitle()}
+				</p>
 			</div>
 
 			{hasError && (
 				<Alert variant="destructive" className="mb-6">
 					<AlertCircle className="h-4 w-4" />
-					<AlertDescription>
-						Failed to load some data from the server. Make sure the CLI is
-						reachable.
-					</AlertDescription>
+					<AlertDescription>{m.dashboard_errorLoading()}</AlertDescription>
 				</Alert>
 			)}
 
@@ -98,13 +98,10 @@ function Dashboard() {
 				<Alert className="mb-6">
 					<Wand2 className="h-4 w-4" />
 					<AlertDescription className="flex items-center justify-between">
-						<span>
-							Setup was skipped. Run the setup wizard to configure your
-							homelab.
-						</span>
+						<span>{m.dashboard_setupSkipped()}</span>
 						<Button asChild size="sm" variant="outline" className="ml-4 gap-2">
 							<Link to="/setup">
-								Resume Setup
+								{m.dashboard_resumeSetup()}
 								<ArrowRight className="h-3.5 w-3.5" />
 							</Link>
 						</Button>
@@ -133,13 +130,17 @@ function Dashboard() {
 
 				{appsQuery.isPending ? (
 					<AppsGridSkeleton />
-				) : appsQuery.data && appsQuery.data.filter((a) => a.status !== "available" && !a.hidden).length > 0 ? (
+				) : appsQuery.data &&
+					appsQuery.data.filter((a) => a.status !== "available" && !a.hidden)
+						.length > 0 ? (
 					<AppsGrid
-						apps={appsQuery.data.filter((a) => a.status !== "available" && !a.hidden)}
+						apps={appsQuery.data.filter(
+							(a) => a.status !== "available" && !a.hidden,
+						)}
 					/>
 				) : !appsQuery.isError ? (
 					<div className="col-span-full py-8 text-center text-sm text-muted-foreground">
-						No installed apps yet. Head to Apps to get started.
+						{m.dashboard_noApps()}
 					</div>
 				) : null}
 

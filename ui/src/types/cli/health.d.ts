@@ -6,6 +6,4 @@ export interface CheckResult {
 	message: string;
 }
 
-export function runHealthChecks(
-	projectRoot?: string,
-): Promise<CheckResult[]>;
+export function runHealthChecks(projectRoot?: string): Promise<CheckResult[]>;

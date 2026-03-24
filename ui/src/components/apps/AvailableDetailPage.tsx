@@ -1,14 +1,15 @@
 import { Download } from "lucide-react";
 import { toast } from "sonner";
+import { ExternalLinks } from "#/components/apps/ExternalLinks";
 import Breadcrumbs from "#/components/Breadcrumbs";
 import { Row } from "#/components/Row";
-import { ExternalLinks } from "#/components/apps/ExternalLinks";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
 import { Spinner } from "#/components/ui/spinner";
 import { useInstallApp } from "#/hooks/homelab";
 import type { AppStatus } from "#/lib/types";
+import { m } from "#/paraglide/messages.js";
 
 export function AvailableDetailPage({
 	app,
@@ -40,7 +41,7 @@ export function AvailableDetailPage({
 						variant="outline"
 						className="bg-muted/50 text-muted-foreground border-dashed border-muted-foreground/30"
 					>
-						available
+						{m.common_available()}
 					</Badge>
 					<Badge variant="outline" className="capitalize">
 						{app.category}
@@ -54,16 +55,21 @@ export function AvailableDetailPage({
 						installMutation.mutate(app.name, {
 							onSuccess: (result) => {
 								if (result.success) {
-									toast.success(`${app.displayName} installed successfully.`);
+									toast.success(
+										m.apps_installedSuccess({ appName: app.displayName }),
+									);
 								} else {
 									toast.error(
-										`Install finished with errors: ${result.output.slice(0, 200)}`,
+										m.apps_installError({ error: result.output.slice(0, 200) }),
 									);
 								}
 							},
 							onError: (err) =>
 								toast.error(
-									`Failed to install ${app.displayName}: ${err.message}`,
+									m.apps_installFailed({
+										appName: app.displayName,
+										error: err.message,
+									}),
 								),
 						});
 					}}
@@ -73,7 +79,9 @@ export function AvailableDetailPage({
 					) : (
 						<Download className="h-3.5 w-3.5" />
 					)}
-					{installMutation.isPending ? "Installing..." : "Install"}
+					{installMutation.isPending
+						? m.common_installing()
+						: m.common_install()}
 				</Button>
 			</div>
 
@@ -85,11 +93,13 @@ export function AvailableDetailPage({
 
 			<Card className="max-w-md">
 				<CardHeader className="pb-2">
-					<CardTitle className="text-sm font-medium">Details</CardTitle>
+					<CardTitle className="text-sm font-medium">
+						{m.appDetail_details()}
+					</CardTitle>
 				</CardHeader>
 				<CardContent className="space-y-2">
-					<Row label="Default port">:{app.port}</Row>
-					<Row label="Category" mono={false}>
+					<Row label={m.appDetail_defaultPort()}>:{app.port}</Row>
+					<Row label={m.appDetail_category()} mono={false}>
 						{app.category}
 					</Row>
 				</CardContent>

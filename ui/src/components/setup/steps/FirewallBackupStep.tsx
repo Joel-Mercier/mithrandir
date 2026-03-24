@@ -1,12 +1,13 @@
-import { useState } from "react";
 import { Clock, Shield } from "lucide-react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader } from "#/components/ui/card";
 import { Input } from "#/components/ui/input";
 import { Label } from "#/components/ui/label";
 import { Switch } from "#/components/ui/switch";
-import { StepNavigation } from "../StepNavigation";
-import { useSetupFirewall, useSetupBackupTimer } from "#/hooks/homelab";
+import { useSetupBackupTimer, useSetupFirewall } from "#/hooks/homelab";
+import { m } from "#/paraglide/messages.js";
 import type { SetupState } from "../SetupWizard";
+import { StepNavigation } from "../StepNavigation";
 
 interface FirewallBackupStepProps {
 	state: SetupState;
@@ -47,10 +48,10 @@ export function FirewallBackupStep({
 	return (
 		<div>
 			<h2 className="font-display text-2xl font-bold tracking-tight">
-				Firewall & Backup
+				{m.firewallBackup_title()}
 			</h2>
 			<p className="mt-2 text-muted-foreground">
-				Configure network security and automated backup scheduling.
+				{m.firewallBackup_subtitle()}
 			</p>
 
 			<div className="mt-8 space-y-6">
@@ -59,16 +60,17 @@ export function FirewallBackupStep({
 					<CardHeader className="pb-3">
 						<div className="flex items-center gap-2">
 							<Shield className="h-4 w-4 text-muted-foreground" />
-							<span className="text-sm font-medium">Firewall (UFW)</span>
+							<span className="text-sm font-medium">
+								{m.firewallBackup_firewallUfw()}
+							</span>
 						</div>
 					</CardHeader>
 					<CardContent className="space-y-4">
 						<div className="flex items-center justify-between">
 							<div>
-								<p className="text-sm">Enable UFW firewall</p>
+								<p className="text-sm">{m.firewallBackup_enableUfw()}</p>
 								<p className="text-xs text-muted-foreground">
-									Uses ufw-docker to properly manage Docker iptables
-									rules. SSH (port 22) is always allowed.
+									{m.firewallBackup_ufwDesc()}
 								</p>
 							</div>
 							<Switch
@@ -87,14 +89,14 @@ export function FirewallBackupStep({
 						<div className="flex items-center gap-2">
 							<Clock className="h-4 w-4 text-muted-foreground" />
 							<span className="text-sm font-medium">
-								Automated Backups
+								{m.firewallBackup_automatedBackups()}
 							</span>
 						</div>
 					</CardHeader>
 					<CardContent className="space-y-4">
 						<div className="space-y-1.5">
 							<Label htmlFor="backup-hour">
-								Daily backup hour (0-23)
+								{m.firewallBackup_backupHour()}
 							</Label>
 							<Input
 								id="backup-hour"
@@ -111,9 +113,7 @@ export function FirewallBackupStep({
 								className="w-24"
 							/>
 							<p className="text-xs text-muted-foreground">
-								Backups run daily via systemd timer. Default: 2:00 AM.
-								Configs are backed up locally and synced to configured
-								rclone remotes.
+								{m.firewallBackup_backupDesc()}
 							</p>
 						</div>
 					</CardContent>
@@ -123,7 +123,7 @@ export function FirewallBackupStep({
 			<StepNavigation
 				onBack={onBack}
 				onNext={handleFinish}
-				nextLabel="Finish"
+				nextLabel={m.firewallBackup_finish()}
 				isLoading={isSubmitting}
 			/>
 		</div>

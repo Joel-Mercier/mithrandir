@@ -11,6 +11,7 @@ import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent } from "#/components/ui/card";
 import { useAppRegistry, useCompleteSetup } from "#/hooks/homelab";
+import { m } from "#/paraglide/messages.js";
 import type { SetupState } from "../SetupWizard";
 
 interface SummaryStepProps {
@@ -22,9 +23,7 @@ export function SummaryStep({ state }: SummaryStepProps) {
 	const { data: registry } = useAppRegistry();
 	const completeSetupMutation = useCompleteSetup();
 
-	const appMap = new Map(
-		(registry?.apps ?? []).map((app) => [app.name, app]),
-	);
+	const appMap = new Map((registry?.apps ?? []).map((app) => [app.name, app]));
 	const domain = state.secrets.DUCKDNS_SUBDOMAINS
 		? `${state.secrets.DUCKDNS_SUBDOMAINS}.duckdns.org`
 		: null;
@@ -49,11 +48,10 @@ export function SummaryStep({ state }: SummaryStepProps) {
 					<CheckCircle2 className="h-8 w-8 text-status-healthy" />
 				</div>
 				<h1 className="font-display text-3xl font-bold tracking-tight text-status-healthy">
-					Setup Complete
+					{m.summary_title()}
 				</h1>
 				<p className="mt-2 text-muted-foreground">
-					Your homelab is up and running with {state.selectedApps.length}{" "}
-					apps installed.
+					{m.summary_subtitle({ count: String(state.selectedApps.length) })}
 				</p>
 			</div>
 
@@ -61,7 +59,7 @@ export function SummaryStep({ state }: SummaryStepProps) {
 			{serviceApps.length > 0 && (
 				<div className="mt-8">
 					<h3 className="mb-3 text-sm font-medium text-muted-foreground">
-						Your Services
+						{m.summary_yourServices()}
 					</h3>
 					<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
 						{serviceApps.map((app) => {
@@ -107,7 +105,7 @@ export function SummaryStep({ state }: SummaryStepProps) {
 			{/* Config summary */}
 			<div className="mt-8 space-y-3">
 				<h3 className="text-sm font-medium text-muted-foreground">
-					Configuration
+					{m.summary_configuration()}
 				</h3>
 				<div className="flex flex-wrap gap-2">
 					<Badge variant="outline" className="gap-1">
@@ -116,17 +114,17 @@ export function SummaryStep({ state }: SummaryStepProps) {
 					{state.httpsEnabled && (
 						<Badge variant="outline" className="gap-1">
 							<Shield className="h-3 w-3" />
-							HTTPS enabled
+							{m.summary_httpsEnabled()}
 						</Badge>
 					)}
 					{state.firewallEnabled && (
 						<Badge variant="outline" className="gap-1">
 							<Shield className="h-3 w-3" />
-							Firewall enabled
+							{m.summary_firewallEnabled()}
 						</Badge>
 					)}
 					<Badge variant="outline">
-						Backup at {state.backupHour}:00
+						{m.summary_backupAt({ hour: String(state.backupHour) })}
 					</Badge>
 				</div>
 			</div>
@@ -136,35 +134,21 @@ export function SummaryStep({ state }: SummaryStepProps) {
 				<CardContent className="space-y-2 p-4">
 					<div className="flex items-center gap-2 text-sm font-medium">
 						<Info className="h-4 w-4 text-muted-foreground" />
-						Tips
+						{m.summary_tips()}
 					</div>
 					<ul className="space-y-1 text-xs text-muted-foreground">
 						{state.selectedApps.includes("wireguard") && (
 							<li>
-								WireGuard peer configs are in{" "}
-								<code className="font-mono-data">
-									{state.baseDir}/configs/wireguard
-								</code>
+								{m.summary_wireguardTip({
+									path: `${state.baseDir}/configs/wireguard`,
+								})}
 							</li>
 						)}
 						{state.selectedApps.includes("jellyfin") && (
-							<li>
-								Add media libraries in Jellyfin's dashboard after first
-								login.
-							</li>
+							<li>{m.summary_jellyfinTip()}</li>
 						)}
-						<li>
-							Run{" "}
-							<code className="font-mono-data">mithrandir status</code> to
-							check all services.
-						</li>
-						<li>
-							Backups run automatically — check with{" "}
-							<code className="font-mono-data">
-								mithrandir backup list
-							</code>
-							.
-						</li>
+						<li>{m.summary_statusTip()}</li>
+						<li>{m.summary_backupTip()}</li>
 					</ul>
 				</CardContent>
 			</Card>
@@ -182,7 +166,7 @@ export function SummaryStep({ state }: SummaryStepProps) {
 					) : (
 						<ArrowRight className="h-4 w-4" />
 					)}
-					Go to Dashboard
+					{m.summary_goToDashboard()}
 				</Button>
 			</div>
 		</div>

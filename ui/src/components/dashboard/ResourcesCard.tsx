@@ -1,11 +1,7 @@
-import {
-	Card,
-	CardContent,
-	CardHeader,
-	CardTitle,
-} from "#/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
 import { Progress } from "#/components/ui/progress";
 import type { SystemResources } from "#/lib/types";
+import { m } from "#/paraglide/messages.js";
 
 function progressColor(pct: number) {
 	if (pct >= 80) return "[&>[data-slot=indicator]]:bg-status-critical";
@@ -19,13 +15,15 @@ export default function ResourcesCard({ data }: { data: SystemResources }) {
 	return (
 		<Card>
 			<CardHeader className="pb-2">
-				<CardTitle className="text-sm font-medium">Resources</CardTitle>
+				<CardTitle className="text-sm font-medium">
+					{m.resources_title()}
+				</CardTitle>
 			</CardHeader>
 			<CardContent className="space-y-4">
 				{/* CPU */}
 				<div className="space-y-1.5">
 					<div className="flex items-baseline justify-between text-sm">
-						<span className="text-muted-foreground">CPU</span>
+						<span className="text-muted-foreground">{m.resources_cpu()}</span>
 						<span className="font-mono-data text-xs">{data.cpuUsage}%</span>
 					</div>
 					<Progress
@@ -40,7 +38,9 @@ export default function ResourcesCard({ data }: { data: SystemResources }) {
 				{/* RAM */}
 				<div className="space-y-1.5">
 					<div className="flex items-baseline justify-between text-sm">
-						<span className="text-muted-foreground">Memory</span>
+						<span className="text-muted-foreground">
+							{m.resources_memory()}
+						</span>
 						<span className="font-mono-data text-xs">
 							{data.ramUsedGB} / {data.ramTotalGB} GB
 						</span>

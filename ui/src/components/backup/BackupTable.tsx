@@ -1,5 +1,5 @@
-import { CheckCircle2, Clock, Shield } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
+import { CheckCircle2, Clock, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent } from "#/components/ui/card";
@@ -11,8 +11,9 @@ import {
 	TableHeader,
 	TableRow,
 } from "#/components/ui/table";
+import { useDeleteBackup, useVerifyBackup } from "#/hooks/homelab";
 import type { BackupEntry } from "#/lib/types";
-import { useVerifyBackup, useDeleteBackup } from "#/hooks/homelab";
+import { m } from "#/paraglide/messages.js";
 
 export function formatDate(iso: string) {
 	return new Date(iso).toLocaleDateString("en-US", {
@@ -32,7 +33,7 @@ export function BackupTable({ backups }: { backups: BackupEntry[] }) {
 		return (
 			<Card>
 				<CardContent className="py-8 text-center text-sm text-muted-foreground">
-					No backups found.
+					{m.backupTable_noBackups()}
 				</CardContent>
 			</Card>
 		);
@@ -44,15 +45,23 @@ export function BackupTable({ backups }: { backups: BackupEntry[] }) {
 				<Table>
 					<TableHeader>
 						<TableRow>
-							<TableHead>Date</TableHead>
-							<TableHead>Size</TableHead>
-							<TableHead className="text-center">Apps</TableHead>
-							<TableHead className="text-center">Encrypted</TableHead>
-							<TableHead className="text-center">Verified</TableHead>
+							<TableHead>{m.backupTable_date()}</TableHead>
+							<TableHead>{m.backupTable_size()}</TableHead>
+							<TableHead className="text-center">
+								{m.backupTable_apps()}
+							</TableHead>
+							<TableHead className="text-center">
+								{m.backupTable_encrypted()}
+							</TableHead>
+							<TableHead className="text-center">
+								{m.backupTable_verified()}
+							</TableHead>
 							{backups[0]?.location === "remote" && (
-								<TableHead>Remote</TableHead>
+								<TableHead>{m.backupTable_remote()}</TableHead>
 							)}
-							<TableHead className="text-right">Actions</TableHead>
+							<TableHead className="text-right">
+								{m.backupTable_actions()}
+							</TableHead>
 						</TableRow>
 					</TableHeader>
 					<TableBody>
@@ -99,25 +108,32 @@ export function BackupTable({ backups }: { backups: BackupEntry[] }) {
 													verifyMutation.mutate(
 														{
 															date: backup.date,
-															remote: backup.location === "remote" ? backup.remote : undefined,
+															remote:
+																backup.location === "remote"
+																	? backup.remote
+																	: undefined,
 														},
 														{
 															onSuccess: (result) => {
 																if (result.success) {
-																	toast.success("Backup verified successfully.");
+																	toast.success(m.backupTable_verifySuccess());
 																} else {
-																	toast.error("Backup verification failed.", {
+																	toast.error(m.backupTable_verifyFailed(), {
 																		description: result.output.slice(0, 200),
 																	});
 																}
 															},
 															onError: (err) =>
-																toast.error(`Verify failed: ${err.message}`),
+																toast.error(
+																	m.backupTable_verifyError({
+																		error: err.message,
+																	}),
+																),
 														},
 													);
 												}}
 											>
-												Verify
+												{m.common_verify()}
 											</Button>
 											<Button
 												variant="ghost"
@@ -130,7 +146,7 @@ export function BackupTable({ backups }: { backups: BackupEntry[] }) {
 													})
 												}
 											>
-												Restore
+												{m.common_restore()}
 											</Button>
 											<Button
 												variant="ghost"
@@ -146,20 +162,24 @@ export function BackupTable({ backups }: { backups: BackupEntry[] }) {
 														{
 															onSuccess: (result) => {
 																if (result.success) {
-																	toast.success("Backup deleted.");
+																	toast.success(m.backupTable_deleted());
 																} else {
-																	toast.error("Failed to delete backup.", {
+																	toast.error(m.backupTable_deleteFailed(), {
 																		description: result.output.slice(0, 200),
 																	});
 																}
 															},
 															onError: (err) =>
-																toast.error(`Delete failed: ${err.message}`),
+																toast.error(
+																	m.backupTable_deleteError({
+																		error: err.message,
+																	}),
+																),
 														},
 													);
 												}}
 											>
-												Delete
+												{m.common_delete()}
 											</Button>
 										</div>
 									</TableCell>

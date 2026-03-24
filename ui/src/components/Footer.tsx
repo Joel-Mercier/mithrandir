@@ -1,6 +1,7 @@
 import { Separator } from "#/components/ui/separator";
 import { Skeleton } from "#/components/ui/skeleton";
 import { useVersion } from "#/hooks/homelab";
+import { m } from "#/paraglide/messages.js";
 
 export default function Footer() {
 	const versionQuery = useVersion();
@@ -21,11 +22,21 @@ export default function Footer() {
 					</span>
 				)}
 				<div className="flex items-center gap-4">
-					<a className="text-xs transition text-muted-foreground/50 hover:text-foreground" href="https://joel-mercier.github.io/mithrandir" target="_blank" rel="noreferrer">
-						Docs
+					<a
+						className="text-xs transition text-muted-foreground/50 hover:text-foreground"
+						href="https://joel-mercier.github.io/mithrandir"
+						target="_blank"
+						rel="noreferrer"
+					>
+						{m.footer_docs()}
 					</a>
-					<a className="text-xs transition text-muted-foreground/50 hover:text-foreground" href="https://github.com/joel-mercier/mithrandir" target="_blank" rel="noreferrer">
-						GitHub
+					<a
+						className="text-xs transition text-muted-foreground/50 hover:text-foreground"
+						href="https://github.com/joel-mercier/mithrandir"
+						target="_blank"
+						rel="noreferrer"
+					>
+						{m.footer_github()}
 					</a>
 				</div>
 			</div>

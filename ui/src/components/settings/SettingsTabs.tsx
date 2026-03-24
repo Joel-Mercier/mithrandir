@@ -15,7 +15,8 @@ import { Label } from "#/components/ui/label";
 import { Separator } from "#/components/ui/separator";
 import { Skeleton } from "#/components/ui/skeleton";
 import { Switch } from "#/components/ui/switch";
-import { useConfig, useVersion, useUpdateConfig } from "#/hooks/homelab";
+import { useConfig, useUpdateConfig, useVersion } from "#/hooks/homelab";
+import { m } from "#/paraglide/messages.js";
 
 function SettingsCardSkeleton() {
 	return (
@@ -50,7 +51,7 @@ export function GeneralTab() {
 	if (!config) {
 		return (
 			<div className="py-8 text-center text-sm text-muted-foreground">
-				Failed to load configuration.
+				{m.settings_failedToLoad()}
 			</div>
 		);
 	}
@@ -60,15 +61,13 @@ export function GeneralTab() {
 			<Card>
 				<CardHeader>
 					<CardTitle className="text-sm font-medium">
-						System Configuration
+						{m.settings_systemConfig()}
 					</CardTitle>
-					<CardDescription>
-						Core settings for your homelab instance
-					</CardDescription>
+					<CardDescription>{m.settings_systemConfigDesc()}</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-4">
 					<div className="space-y-2">
-						<Label htmlFor="baseDir">Base directory</Label>
+						<Label htmlFor="baseDir">{m.settings_baseDir()}</Label>
 						<Input
 							id="baseDir"
 							defaultValue={config.baseDir}
@@ -76,11 +75,11 @@ export function GeneralTab() {
 							readOnly
 						/>
 						<p className="text-xs text-muted-foreground">
-							Root directory for all app configurations
+							{m.settings_baseDirDesc()}
 						</p>
 					</div>
 					<div className="space-y-2">
-						<Label htmlFor="timezone">Timezone</Label>
+						<Label htmlFor="timezone">{m.settings_timezone()}</Label>
 						<Input
 							id="timezone"
 							defaultValue={config.timezone}
@@ -90,7 +89,7 @@ export function GeneralTab() {
 					<Separator />
 					<div className="grid grid-cols-2 gap-4">
 						<div className="space-y-2">
-							<Label htmlFor="puid">PUID</Label>
+							<Label htmlFor="puid">{m.settings_puid()}</Label>
 							<Input
 								id="puid"
 								defaultValue={String(config.puid)}
@@ -98,7 +97,7 @@ export function GeneralTab() {
 							/>
 						</div>
 						<div className="space-y-2">
-							<Label htmlFor="pgid">PGID</Label>
+							<Label htmlFor="pgid">{m.settings_pgid()}</Label>
 							<Input
 								id="pgid"
 								defaultValue={String(config.pgid)}
@@ -126,7 +125,7 @@ export function GeneralTab() {
 							updateConfigMutation.mutate(
 								{ timezone: tz, puid, pgid },
 								{
-									onSuccess: () => toast.success("Settings saved."),
+									onSuccess: () => toast.success(m.settings_saved()),
 									onError: (err) =>
 										toast.error(`Failed to save: ${err.message}`),
 								},
@@ -134,28 +133,32 @@ export function GeneralTab() {
 						}}
 					>
 						<Save className="h-4 w-4" />
-						Save Changes
+						{m.common_save()}
 					</Button>
 				</CardContent>
 			</Card>
 
 			<Card>
 				<CardHeader>
-					<CardTitle className="text-sm font-medium">Docker Engine</CardTitle>
-					<CardDescription>Docker daemon status and management</CardDescription>
+					<CardTitle className="text-sm font-medium">
+						{m.settings_dockerEngine()}
+					</CardTitle>
+					<CardDescription>{m.settings_dockerDesc()}</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-3">
 					<div className="flex items-center justify-between">
-						<span className="text-sm text-muted-foreground">Status</span>
+						<span className="text-sm text-muted-foreground">
+							{m.settings_dockerStatus()}
+						</span>
 						<div className="flex items-center gap-2">
 							<span className="inline-block h-2 w-2 rounded-full bg-status-healthy" />
 							<span className="font-mono-data text-xs">running</span>
 						</div>
 					</div>
-					<Row label="Version">27.5.1</Row>
-					<Row label="Storage driver">overlay2</Row>
-					<Row label="Containers">8 (7 running)</Row>
-					<Row label="Images">12</Row>
+					<Row label={m.settings_dockerVersion()}>27.5.1</Row>
+					<Row label={m.settings_dockerStorageDriver()}>overlay2</Row>
+					<Row label={m.settings_dockerContainers()}>8 (7 running)</Row>
+					<Row label={m.settings_dockerImages()}>12</Row>
 				</CardContent>
 			</Card>
 		</div>
@@ -179,7 +182,7 @@ export function NetworkTab() {
 	if (!config) {
 		return (
 			<div className="py-8 text-center text-sm text-muted-foreground">
-				Failed to load configuration.
+				{m.settings_failedToLoad()}
 			</div>
 		);
 	}
@@ -188,24 +191,24 @@ export function NetworkTab() {
 		<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 			<Card>
 				<CardHeader>
-					<CardTitle className="text-sm font-medium">HTTPS</CardTitle>
-					<CardDescription>
-						Caddy reverse proxy with automatic TLS
-					</CardDescription>
+					<CardTitle className="text-sm font-medium">
+						{m.settings_https()}
+					</CardTitle>
+					<CardDescription>{m.settings_httpsDesc()}</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-4">
 					<div className="flex items-center justify-between rounded-lg border border-border/50 p-3 transition-colors hover:bg-muted/50">
 						<div className="space-y-0.5">
-							<Label>Enable HTTPS</Label>
+							<Label>{m.settings_enableHttps()}</Label>
 							<p className="text-xs text-muted-foreground">
-								Wildcard TLS via DuckDNS DNS-01 challenge
+								{m.settings_httpsNote()}
 							</p>
 						</div>
 						<Switch defaultChecked={config.httpsEnabled} />
 					</div>
 					<Separator />
 					<div className="space-y-2">
-						<Label htmlFor="acmeEmail">ACME Email</Label>
+						<Label htmlFor="acmeEmail">{m.settings_acmeEmail()}</Label>
 						<Input
 							id="acmeEmail"
 							defaultValue={config.acmeEmail}
@@ -213,7 +216,7 @@ export function NetworkTab() {
 						/>
 					</div>
 					<div className="space-y-2">
-						<Label htmlFor="domain">DuckDNS Domain</Label>
+						<Label htmlFor="domain">{m.settings_duckdnsDomain()}</Label>
 						<Input
 							id="domain"
 							defaultValue={config.duckdnsDomain}
@@ -221,7 +224,7 @@ export function NetworkTab() {
 							readOnly
 						/>
 						<p className="text-xs text-muted-foreground">
-							Derived from DuckDNS subdomains configuration
+							{m.settings_duckdnsDomainDesc()}
 						</p>
 					</div>
 					<Button
@@ -234,7 +237,7 @@ export function NetworkTab() {
 							updateConfigMutation.mutate(
 								{ acmeEmail },
 								{
-									onSuccess: () => toast.success("Settings saved."),
+									onSuccess: () => toast.success(m.settings_saved()),
 									onError: (err) =>
 										toast.error(`Failed to save: ${err.message}`),
 								},
@@ -242,29 +245,31 @@ export function NetworkTab() {
 						}}
 					>
 						<Save className="h-4 w-4" />
-						Save Changes
+						{m.common_save()}
 					</Button>
 				</CardContent>
 			</Card>
 
 			<Card>
 				<CardHeader>
-					<CardTitle className="text-sm font-medium">Firewall</CardTitle>
-					<CardDescription>UFW + ufw-docker integration</CardDescription>
+					<CardTitle className="text-sm font-medium">
+						{m.settings_firewall()}
+					</CardTitle>
+					<CardDescription>{m.settings_firewallDesc()}</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-4">
 					<div className="flex items-center justify-between rounded-lg border border-border/50 p-3 transition-colors hover:bg-muted/50">
 						<div className="space-y-0.5">
-							<Label>Enable Firewall</Label>
+							<Label>{m.settings_enableFirewall()}</Label>
 							<p className="text-xs text-muted-foreground">
-								Automatically manage UFW rules for Docker containers
+								{m.settings_firewallNote()}
 							</p>
 						</div>
 						<Switch defaultChecked={config.firewallEnabled} />
 					</div>
 					<Separator />
 					<div className="space-y-2 text-sm">
-						<p className="font-medium">Active rules</p>
+						<p className="font-medium">{m.settings_activeRules()}</p>
 						<div className="space-y-0 overflow-hidden rounded-lg border border-border/50">
 							{[
 								"22/tcp — SSH (allow)",
@@ -306,7 +311,7 @@ export function BackupTab() {
 	if (!config) {
 		return (
 			<div className="py-8 text-center text-sm text-muted-foreground">
-				Failed to load configuration.
+				{m.settings_failedToLoad()}
 			</div>
 		);
 	}
@@ -316,13 +321,13 @@ export function BackupTab() {
 			<Card>
 				<CardHeader>
 					<CardTitle className="text-sm font-medium">
-						Backup Configuration
+						{m.settings_backupConfig()}
 					</CardTitle>
-					<CardDescription>Schedule and retention settings</CardDescription>
+					<CardDescription>{m.settings_backupConfigDesc()}</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-4">
 					<div className="space-y-2">
-						<Label htmlFor="backupDir">Backup directory</Label>
+						<Label htmlFor="backupDir">{m.settings_backupDir()}</Label>
 						<Input
 							id="backupDir"
 							defaultValue={config.backupDir}
@@ -330,7 +335,7 @@ export function BackupTab() {
 						/>
 					</div>
 					<div className="space-y-2">
-						<Label htmlFor="backupHour">Backup hour (0-23)</Label>
+						<Label htmlFor="backupHour">{m.settings_backupHour()}</Label>
 						<Input
 							id="backupHour"
 							type="number"
@@ -340,13 +345,15 @@ export function BackupTab() {
 							className="font-mono-data"
 						/>
 						<p className="text-xs text-muted-foreground">
-							Hour when the daily systemd timer runs
+							{m.settings_backupHourDesc()}
 						</p>
 					</div>
 					<Separator />
 					<div className="grid grid-cols-2 gap-4">
 						<div className="space-y-2">
-							<Label htmlFor="localRetention">Local retention</Label>
+							<Label htmlFor="localRetention">
+								{m.settings_localRetention()}
+							</Label>
 							<Input
 								id="localRetention"
 								type="number"
@@ -355,7 +362,9 @@ export function BackupTab() {
 							/>
 						</div>
 						<div className="space-y-2">
-							<Label htmlFor="remoteRetention">Remote retention</Label>
+							<Label htmlFor="remoteRetention">
+								{m.settings_remoteRetention()}
+							</Label>
 							<Input
 								id="remoteRetention"
 								type="number"
@@ -377,25 +386,19 @@ export function BackupTab() {
 								10,
 							);
 							const localRetention = parseInt(
-								(
-									document.getElementById(
-										"localRetention",
-									) as HTMLInputElement
-								)?.value ?? "5",
+								(document.getElementById("localRetention") as HTMLInputElement)
+									?.value ?? "5",
 								10,
 							);
 							const remoteRetention = parseInt(
-								(
-									document.getElementById(
-										"remoteRetention",
-									) as HTMLInputElement
-								)?.value ?? "10",
+								(document.getElementById("remoteRetention") as HTMLInputElement)
+									?.value ?? "10",
 								10,
 							);
 							updateConfigMutation.mutate(
 								{ backupDir, backupHour, localRetention, remoteRetention },
 								{
-									onSuccess: () => toast.success("Settings saved."),
+									onSuccess: () => toast.success(m.settings_saved()),
 									onError: (err) =>
 										toast.error(`Failed to save: ${err.message}`),
 								},
@@ -403,7 +406,7 @@ export function BackupTab() {
 						}}
 					>
 						<Save className="h-4 w-4" />
-						Save Changes
+						{m.common_save()}
 					</Button>
 				</CardContent>
 			</Card>
@@ -411,16 +414,18 @@ export function BackupTab() {
 			<Card>
 				<CardHeader>
 					<CardTitle className="text-sm font-medium">
-						Encryption & Remotes
+						{m.settings_encryptionRemotes()}
 					</CardTitle>
-					<CardDescription>Backup security and remote storage</CardDescription>
+					<CardDescription>
+						{m.settings_encryptionRemotesDesc()}
+					</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-4">
 					<div className="flex items-center justify-between rounded-lg border border-border/50 p-3 transition-colors hover:bg-muted/50">
 						<div className="space-y-0.5">
-							<Label>Encryption</Label>
+							<Label>{m.settings_encryption()}</Label>
 							<p className="text-xs text-muted-foreground">
-								AES-256-CBC via OpenSSL
+								{m.settings_encryptionDesc()}
 							</p>
 						</div>
 						<Badge
@@ -432,12 +437,14 @@ export function BackupTab() {
 							}
 						>
 							<Shield className="mr-1 h-3 w-3" />
-							{config.backupPassword ? "Enabled" : "Disabled"}
+							{config.backupPassword ? m.common_enabled() : m.common_disabled()}
 						</Badge>
 					</div>
 					<Separator />
 					<div className="space-y-3">
-						<p className="text-sm font-medium">Configured remotes</p>
+						<p className="text-sm font-medium">
+							{m.settings_configuredRemotes()}
+						</p>
 						{config.remotes.length > 0 ? (
 							<div className="space-y-2">
 								{config.remotes.map((remote) => (
@@ -463,12 +470,12 @@ export function BackupTab() {
 							</div>
 						) : (
 							<p className="text-sm text-muted-foreground">
-								No remotes configured.
+								{m.settings_noRemotes()}
 							</p>
 						)}
 						<Button variant="outline" size="sm" className="w-full gap-1.5">
 							<Plus className="h-3.5 w-3.5" />
-							Add Remote
+							{m.settings_addRemote()}
 						</Button>
 					</div>
 				</CardContent>
@@ -503,12 +510,12 @@ export function AboutTab() {
 			<Card className="max-w-lg">
 				<CardHeader>
 					<CardTitle className="text-sm font-medium">
-						About Mithrandir
+						{m.settings_aboutMithrandir()}
 					</CardTitle>
 				</CardHeader>
 				<CardContent>
 					<p className="text-sm text-muted-foreground">
-						Version information not available.
+						{m.settings_versionNotAvailable()}
 					</p>
 				</CardContent>
 			</Card>
@@ -518,22 +525,22 @@ export function AboutTab() {
 	return (
 		<Card className="max-w-lg">
 			<CardHeader>
-				<CardTitle className="text-sm font-medium">About Mithrandir</CardTitle>
-				<CardDescription>
-					Automated Docker-based homelab management
-				</CardDescription>
+				<CardTitle className="text-sm font-medium">
+					{m.settings_aboutMithrandir()}
+				</CardTitle>
+				<CardDescription>{m.settings_aboutDesc()}</CardDescription>
 			</CardHeader>
 			<CardContent className="space-y-3">
-				<Row label="Version">v{version.version}</Row>
-				<Row label="Commit">{version.gitCommit.slice(0, 7)}</Row>
-				<Row label="Build date">{version.buildDate}</Row>
+				<Row label={m.settings_version()}>v{version.version}</Row>
+				<Row label={m.settings_commit()}>{version.gitCommit.slice(0, 7)}</Row>
+				<Row label={m.settings_buildDate()}>{version.buildDate}</Row>
 				<Separator />
 				<div className="flex gap-2">
 					<Button variant="outline" size="sm" className="gap-1.5">
-						Check for Updates
+						{m.settings_checkUpdates()}
 					</Button>
 					<Button variant="outline" size="sm" className="gap-1.5">
-						View Changelog
+						{m.settings_viewChangelog()}
 					</Button>
 				</div>
 			</CardContent>

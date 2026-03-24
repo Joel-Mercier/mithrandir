@@ -1,12 +1,13 @@
 import { Download } from "lucide-react";
-import { Row } from "#/components/Row";
 import { formatDate } from "#/components/backup/BackupTable";
+import { Row } from "#/components/Row";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
 import { Separator } from "#/components/ui/separator";
 import { Skeleton } from "#/components/ui/skeleton";
 import { useApps, useBackupHistory, useConfig } from "#/hooks/homelab";
+import { m } from "#/paraglide/messages.js";
 
 export function RestorePanel() {
 	const appsQuery = useApps();
@@ -57,29 +58,28 @@ export function RestorePanel() {
 			<Card>
 				<CardHeader className="pb-2">
 					<CardTitle className="text-sm font-medium">
-						Restore from Backup
+						{m.restorePanel_restoreFromBackup()}
 					</CardTitle>
 				</CardHeader>
 				<CardContent className="space-y-4">
 					<p className="text-xs text-muted-foreground">
-						Restore a single app or all apps from a specific backup snapshot.
-						Running apps will be stopped during restore.
+						{m.restorePanel_restoreDescription()}
 					</p>
 					<Separator />
 					{latestBackup ? (
 						<div className="space-y-3">
 							<div className="space-y-1">
-								<p className="text-sm font-medium">Backup</p>
+								<p className="text-sm font-medium">{m.restorePanel_backup()}</p>
 								<p className="font-mono-data text-xs text-muted-foreground">
-									{formatDate(latestBackup.date)} &middot;{" "}
-									{latestBackup.size} &middot; {latestBackup.apps} apps
+									{formatDate(latestBackup.date)} &middot; {latestBackup.size}{" "}
+									&middot; {latestBackup.apps} apps
 								</p>
 							</div>
 							<div className="space-y-1">
-								<p className="text-sm font-medium">Target</p>
+								<p className="text-sm font-medium">{m.restorePanel_target()}</p>
 								<div className="flex flex-wrap gap-1.5">
 									<Badge variant="outline" className="cursor-pointer">
-										Full restore
+										{m.restorePanel_fullRestore()}
 									</Badge>
 									{runningApps.slice(0, 5).map((app) => (
 										<Badge
@@ -95,12 +95,12 @@ export function RestorePanel() {
 						</div>
 					) : (
 						<p className="text-sm text-muted-foreground">
-							No backups available to restore from.
+							{m.restorePanel_noBackups()}
 						</p>
 					)}
 					<Button className="w-full gap-2" disabled={!latestBackup}>
 						<Download className="h-4 w-4" />
-						Start Restore
+						{m.restorePanel_startRestore()}
 					</Button>
 				</CardContent>
 			</Card>
@@ -109,26 +109,31 @@ export function RestorePanel() {
 			<Card>
 				<CardHeader className="pb-2">
 					<CardTitle className="text-sm font-medium">
-						Disaster Recovery
+						{m.restorePanel_disasterRecovery()}
 					</CardTitle>
 				</CardHeader>
 				<CardContent className="space-y-4">
 					<p className="text-xs text-muted-foreground">
-						Full system recovery from a remote backup. Use this when setting up
-						a new server or recovering from a catastrophic failure.
+						{m.restorePanel_disasterDescription()}
 					</p>
 					<Separator />
 					{config && latestRemote ? (
 						<div className="space-y-2">
-							<Row label="Source remote">{config.remotes[0]}</Row>
-							<Row label="Available backups">{remoteBackups.length}</Row>
-							<Row label="Latest">{formatDate(latestRemote.date)}</Row>
+							<Row label={m.restorePanel_sourceRemote()}>
+								{config.remotes[0]}
+							</Row>
+							<Row label={m.restorePanel_availableBackups()}>
+								{remoteBackups.length}
+							</Row>
+							<Row label={m.restorePanel_latest()}>
+								{formatDate(latestRemote.date)}
+							</Row>
 						</div>
 					) : (
 						<p className="text-sm text-muted-foreground">
 							{!config
-								? "Configuration not available."
-								: "No remote backups found."}
+								? m.backup_configNotAvailable()
+								: m.restorePanel_noRemoteBackups()}
 						</p>
 					)}
 					<Button
@@ -137,7 +142,7 @@ export function RestorePanel() {
 						disabled={!latestRemote}
 					>
 						<Download className="h-4 w-4" />
-						Start Recovery
+						{m.restorePanel_startRecovery()}
 					</Button>
 				</CardContent>
 			</Card>

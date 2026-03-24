@@ -44,11 +44,17 @@ export function getProwlarrApiKey(baseDir: string): Promise<string | null>;
 export function createProwlarrClient(options: ProwlarrClientOptions): {
 	application: {
 		getAll(): Promise<ApplicationResource[]>;
-		create(resource: ApplicationResource, forceSave?: boolean): Promise<ApplicationResource>;
+		create(
+			resource: ApplicationResource,
+			forceSave?: boolean,
+		): Promise<ApplicationResource>;
 	};
 	hostConfig: {
 		get(): Promise<HostConfigResource>;
-		update(id: number, resource: HostConfigResource): Promise<HostConfigResource>;
+		update(
+			id: number,
+			resource: HostConfigResource,
+		): Promise<HostConfigResource>;
 	};
 };
 

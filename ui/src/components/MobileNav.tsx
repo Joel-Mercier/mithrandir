@@ -1,6 +1,6 @@
-import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Menu, LogOut, User } from "lucide-react";
+import { LogOut, Menu, User } from "lucide-react";
+import { useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Separator } from "#/components/ui/separator";
 import {
@@ -11,31 +11,37 @@ import {
 	SheetTrigger,
 } from "#/components/ui/sheet";
 import { useSignOut } from "#/hooks/auth";
+import { m } from "#/paraglide/messages.js";
 import LanguageSwitch from "./LanguageSwitch";
 import ThemeToggle from "./ThemeToggle";
 
-const navLinks = [
-	{ to: "/", label: "Dashboard" },
-	{ to: "/apps", label: "Apps" },
-	{ to: "/backup-restore", label: "Backup & Restore" },
-	{ to: "/settings", label: "Settings" },
-] as const;
+function getNavLinks() {
+	return [
+		{ to: "/", label: m.common_dashboard() },
+		{ to: "/apps", label: m.common_apps() },
+		{ to: "/backup-restore", label: m.common_backupRestore() },
+		{ to: "/settings", label: m.common_settings() },
+	];
+}
 
 export default function MobileNav() {
 	const [open, setOpen] = useState(false);
 	const signOut = useSignOut();
+	const navLinks = getNavLinks();
 
 	return (
 		<Sheet open={open} onOpenChange={setOpen}>
 			<SheetTrigger asChild>
 				<Button variant="ghost" size="icon" className="md:hidden">
 					<Menu className="h-5 w-5" />
-					<span className="sr-only">Open menu</span>
+					<span className="sr-only">{m.common_openMenu()}</span>
 				</Button>
 			</SheetTrigger>
 			<SheetContent side="right" className="w-64">
 				<SheetHeader>
-					<SheetTitle className="font-display text-lg">Mithrandir</SheetTitle>
+					<SheetTitle className="font-display text-lg">
+						{m.common_mithrandir()}
+					</SheetTitle>
 				</SheetHeader>
 				<nav className="mt-6 flex flex-col gap-1">
 					{navLinks.map((link) => (
@@ -45,7 +51,9 @@ export default function MobileNav() {
 							onClick={() => setOpen(false)}
 							className="rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent"
 							activeOptions={{ exact: link.to === "/" }}
-							activeProps={{ className: "rounded-md px-3 py-2 text-sm font-medium bg-accent" }}
+							activeProps={{
+								className: "rounded-md px-3 py-2 text-sm font-medium bg-accent",
+							}}
 						>
 							{link.label}
 						</Link>
@@ -58,7 +66,7 @@ export default function MobileNav() {
 					className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent"
 				>
 					<User className="h-4 w-4" />
-					Profile
+					{m.common_profile()}
 				</Link>
 				<button
 					type="button"
@@ -69,7 +77,7 @@ export default function MobileNav() {
 					className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-status-critical transition-colors hover:bg-accent"
 				>
 					<LogOut className="h-4 w-4" />
-					Sign out
+					{m.common_signOut()}
 				</button>
 				<div className="mt-auto flex items-center gap-1 pt-6">
 					<LanguageSwitch />

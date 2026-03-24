@@ -1,6 +1,6 @@
 import { Copy, ShieldCheck, ShieldOff, Smartphone } from "lucide-react";
-import { useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "#/components/ui/button";
 import {
@@ -28,6 +28,7 @@ import {
 import { Label } from "#/components/ui/label";
 import { Spinner } from "#/components/ui/spinner";
 import { authClient } from "#/lib/auth-client";
+import { m } from "#/paraglide/messages.js";
 
 type SetupStep = "password" | "qr" | "verify" | "backup-codes";
 
@@ -44,12 +45,12 @@ export function TwoFactorCard() {
 				<CardHeader>
 					<CardTitle className="flex items-center gap-2 text-sm font-medium">
 						<Smartphone className="h-4 w-4 text-muted-foreground" />
-						Two-Factor Authentication
+						{m.twoFactorCard_title()}
 					</CardTitle>
 					<CardDescription>
 						{user.twoFactorEnabled
-							? "Your account is protected with two-factor authentication"
-							: "Add an extra layer of security to your account"}
+							? m.twoFactorCard_enabledDescription()
+							: m.twoFactorCard_disabledDescription()}
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
@@ -57,7 +58,9 @@ export function TwoFactorCard() {
 						<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 							<div className="flex items-center gap-2">
 								<ShieldCheck className="h-5 w-5 text-status-healthy" />
-								<span className="text-sm font-medium">2FA is enabled</span>
+								<span className="text-sm font-medium">
+									{m.twoFactorCard_isEnabled()}
+								</span>
 							</div>
 							<div className="flex gap-2">
 								<Button
@@ -67,7 +70,7 @@ export function TwoFactorCard() {
 									onClick={() => setBackupCodesOpen(true)}
 								>
 									<Copy className="h-3.5 w-3.5" />
-									Regenerate Backup Codes
+									{m.twoFactorCard_regenerateBackupCodes()}
 								</Button>
 								<Button
 									size="sm"
@@ -76,14 +79,14 @@ export function TwoFactorCard() {
 									onClick={() => setDisableOpen(true)}
 								>
 									<ShieldOff className="h-3.5 w-3.5" />
-									Disable
+									{m.twoFactorCard_disable()}
 								</Button>
 							</div>
 						</div>
 					) : (
 						<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 							<p className="text-sm text-muted-foreground">
-								Use an authenticator app to generate one-time codes.
+								{m.twoFactorCard_useAuthenticator()}
 							</p>
 							<Button
 								size="sm"
@@ -91,17 +94,14 @@ export function TwoFactorCard() {
 								onClick={() => setSetupOpen(true)}
 							>
 								<ShieldCheck className="h-3.5 w-3.5" />
-								Enable 2FA
+								{m.twoFactorCard_enable()}
 							</Button>
 						</div>
 					)}
 				</CardContent>
 			</Card>
 
-			<SetupTwoFactorDialog
-				open={setupOpen}
-				onOpenChange={setSetupOpen}
-			/>
+			<SetupTwoFactorDialog open={setupOpen} onOpenChange={setSetupOpen} />
 			<DisableTwoFactorDialog
 				open={disableOpen}
 				onOpenChange={setDisableOpen}
@@ -117,7 +117,10 @@ export function TwoFactorCard() {
 function SetupTwoFactorDialog({
 	open,
 	onOpenChange,
-}: { open: boolean; onOpenChange: (open: boolean) => void }) {
+}: {
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
+}) {
 	const [step, setStep] = useState<SetupStep>("password");
 	const [password, setPassword] = useState("");
 	const [totpURI, setTotpURI] = useState("");
@@ -151,7 +154,7 @@ function SetupTwoFactorDialog({
 		});
 		setIsPending(false);
 		if (enableError) {
-			setError(enableError.message ?? "Failed to enable 2FA.");
+			setError(enableError.message ?? m.twoFactorCard_enableFailed());
 			return;
 		}
 		if (data) {
@@ -171,10 +174,10 @@ function SetupTwoFactorDialog({
 		});
 		setIsPending(false);
 		if (verifyError) {
-			setError(verifyError.message ?? "Invalid code.");
+			setError(verifyError.message ?? m.twoFactorCard_invalidCode());
 			return;
 		}
-		toast.success("Two-factor authentication enabled.");
+		toast.success(m.twoFactorCard_enabled());
 		setStep("backup-codes");
 	}
 
@@ -184,14 +187,14 @@ function SetupTwoFactorDialog({
 				{step === "password" && (
 					<>
 						<DialogHeader>
-							<DialogTitle>Enable Two-Factor Authentication</DialogTitle>
+							<DialogTitle>{m.twoFactorCard_enableTitle()}</DialogTitle>
 							<DialogDescription>
-								Enter your password to begin setup
+								{m.twoFactorCard_enterPassword()}
 							</DialogDescription>
 						</DialogHeader>
 						<div className="space-y-4">
 							<div className="space-y-2">
-								<Label htmlFor="2fa-password">Password</Label>
+								<Label htmlFor="2fa-password">{m.common_password()}</Label>
 								<Input
 									id="2fa-password"
 									type="password"
@@ -202,9 +205,7 @@ function SetupTwoFactorDialog({
 									autoFocus
 								/>
 							</div>
-							{error && (
-								<p className="text-sm text-status-critical">{error}</p>
-							)}
+							{error && <p className="text-sm text-status-critical">{error}</p>}
 						</div>
 						<DialogFooter>
 							<Button
@@ -215,7 +216,7 @@ function SetupTwoFactorDialog({
 								{isPending && (
 									<Spinner size="sm" className="text-primary-foreground" />
 								)}
-								Continue
+								{m.common_continue()}
 							</Button>
 						</DialogFooter>
 					</>
@@ -224,10 +225,9 @@ function SetupTwoFactorDialog({
 				{step === "qr" && (
 					<>
 						<DialogHeader>
-							<DialogTitle>Scan QR Code</DialogTitle>
+							<DialogTitle>{m.twoFactorCard_scanQR()}</DialogTitle>
 							<DialogDescription>
-								Scan this code with your authenticator app (Google Authenticator,
-								Authy, etc.)
+								{m.twoFactorCard_scanDescription()}
 							</DialogDescription>
 						</DialogHeader>
 						<div className="flex flex-col items-center gap-4">
@@ -237,14 +237,14 @@ function SetupTwoFactorDialog({
 							{secret && (
 								<div className="w-full space-y-1.5">
 									<p className="text-center text-xs text-muted-foreground">
-										Or enter this key manually:
+										{m.twoFactorCard_manualKey()}
 									</p>
 									<button
 										type="button"
 										className="flex w-full items-center justify-center gap-2 rounded-md border bg-muted/50 px-3 py-2 font-mono text-xs tracking-widest transition-colors hover:bg-muted"
 										onClick={() => {
 											navigator.clipboard.writeText(secret);
-											toast.success("Secret copied to clipboard.");
+											toast.success(m.twoFactorCard_secretCopied());
 										}}
 									>
 										{secret}
@@ -255,7 +255,7 @@ function SetupTwoFactorDialog({
 						</div>
 						<DialogFooter>
 							<Button onClick={() => setStep("verify")}>
-								I've scanned the code
+								{m.twoFactorCard_scannedCode()}
 							</Button>
 						</DialogFooter>
 					</>
@@ -264,10 +264,9 @@ function SetupTwoFactorDialog({
 				{step === "verify" && (
 					<>
 						<DialogHeader>
-							<DialogTitle>Verify Code</DialogTitle>
+							<DialogTitle>{m.twoFactorCard_verifyCode()}</DialogTitle>
 							<DialogDescription>
-								Enter the 6-digit code from your authenticator app to confirm
-								setup
+								{m.twoFactorCard_verifyDescription()}
 							</DialogDescription>
 						</DialogHeader>
 						<div className="flex flex-col items-center gap-4">
@@ -290,9 +289,7 @@ function SetupTwoFactorDialog({
 									<InputOTPSlot index={5} />
 								</InputOTPGroup>
 							</InputOTP>
-							{error && (
-								<p className="text-sm text-status-critical">{error}</p>
-							)}
+							{error && <p className="text-sm text-status-critical">{error}</p>}
 						</div>
 						<DialogFooter>
 							<Button
@@ -303,7 +300,7 @@ function SetupTwoFactorDialog({
 									setError("");
 								}}
 							>
-								Back
+								{m.common_back()}
 							</Button>
 							<Button
 								onClick={handleVerify}
@@ -313,7 +310,7 @@ function SetupTwoFactorDialog({
 								{isPending && (
 									<Spinner size="sm" className="text-primary-foreground" />
 								)}
-								Verify
+								{m.common_verify()}
 							</Button>
 						</DialogFooter>
 					</>
@@ -322,10 +319,9 @@ function SetupTwoFactorDialog({
 				{step === "backup-codes" && (
 					<>
 						<DialogHeader>
-							<DialogTitle>Save Your Backup Codes</DialogTitle>
+							<DialogTitle>{m.twoFactorCard_saveBackupCodes()}</DialogTitle>
 							<DialogDescription>
-								Store these codes in a safe place. Each code can only be used
-								once to sign in if you lose access to your authenticator.
+								{m.twoFactorCard_saveBackupDescription()}
 							</DialogDescription>
 						</DialogHeader>
 						<div className="space-y-3">
@@ -345,11 +341,11 @@ function SetupTwoFactorDialog({
 								className="w-full gap-1.5"
 								onClick={() => {
 									navigator.clipboard.writeText(backupCodes.join("\n"));
-									toast.success("Backup codes copied to clipboard.");
+									toast.success(m.twoFactorCard_backupCodesCopied());
 								}}
 							>
 								<Copy className="h-3.5 w-3.5" />
-								Copy All Codes
+								{m.twoFactorCard_copyAllCodes()}
 							</Button>
 						</div>
 						<DialogFooter>
@@ -359,7 +355,7 @@ function SetupTwoFactorDialog({
 									authClient.$store.notify("$sessionSignal");
 								}}
 							>
-								Done
+								{m.common_done()}
 							</Button>
 						</DialogFooter>
 					</>
@@ -372,7 +368,10 @@ function SetupTwoFactorDialog({
 function DisableTwoFactorDialog({
 	open,
 	onOpenChange,
-}: { open: boolean; onOpenChange: (open: boolean) => void }) {
+}: {
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
+}) {
 	const [password, setPassword] = useState("");
 	const [error, setError] = useState("");
 	const [isPending, setIsPending] = useState(false);
@@ -396,10 +395,10 @@ function DisableTwoFactorDialog({
 		});
 		setIsPending(false);
 		if (disableError) {
-			setError(disableError.message ?? "Failed to disable 2FA.");
+			setError(disableError.message ?? m.twoFactorCard_disableFailed());
 			return;
 		}
-		toast.success("Two-factor authentication disabled.");
+		toast.success(m.twoFactorCard_disabled());
 		handleOpenChange(false);
 		window.location.reload();
 	}
@@ -408,15 +407,14 @@ function DisableTwoFactorDialog({
 		<Dialog open={open} onOpenChange={handleOpenChange}>
 			<DialogContent className="sm:max-w-md">
 				<DialogHeader>
-					<DialogTitle>Disable Two-Factor Authentication</DialogTitle>
+					<DialogTitle>{m.twoFactorCard_disableTitle()}</DialogTitle>
 					<DialogDescription>
-						This will remove the extra security from your account. Enter your
-						password to confirm.
+						{m.twoFactorCard_disableDescription()}
 					</DialogDescription>
 				</DialogHeader>
 				<div className="space-y-4">
 					<div className="space-y-2">
-						<Label htmlFor="disable-2fa-password">Password</Label>
+						<Label htmlFor="disable-2fa-password">{m.common_password()}</Label>
 						<Input
 							id="disable-2fa-password"
 							type="password"
@@ -431,7 +429,7 @@ function DisableTwoFactorDialog({
 				</div>
 				<DialogFooter>
 					<Button variant="outline" onClick={() => handleOpenChange(false)}>
-						Cancel
+						{m.common_cancel()}
 					</Button>
 					<Button
 						variant="destructive"
@@ -442,7 +440,7 @@ function DisableTwoFactorDialog({
 						{isPending && (
 							<Spinner size="sm" className="text-destructive-foreground" />
 						)}
-						Disable 2FA
+						{m.twoFactorCard_disable2FA()}
 					</Button>
 				</DialogFooter>
 			</DialogContent>
@@ -453,7 +451,10 @@ function DisableTwoFactorDialog({
 function BackupCodesDialog({
 	open,
 	onOpenChange,
-}: { open: boolean; onOpenChange: (open: boolean) => void }) {
+}: {
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
+}) {
 	const [password, setPassword] = useState("");
 	const [codes, setCodes] = useState<string[]>([]);
 	const [error, setError] = useState("");
@@ -478,7 +479,7 @@ function BackupCodesDialog({
 			await authClient.twoFactor.generateBackupCodes({ password });
 		setIsPending(false);
 		if (genError) {
-			setError(genError.message ?? "Failed to generate backup codes.");
+			setError(genError.message ?? m.twoFactorCard_generateFailed());
 			return;
 		}
 		if (data?.backupCodes) {
@@ -490,11 +491,11 @@ function BackupCodesDialog({
 		<Dialog open={open} onOpenChange={handleOpenChange}>
 			<DialogContent className="sm:max-w-md">
 				<DialogHeader>
-					<DialogTitle>Backup Codes</DialogTitle>
+					<DialogTitle>{m.twoFactorCard_backupCodesTitle()}</DialogTitle>
 					<DialogDescription>
 						{codes.length > 0
-							? "Store these new codes safely. Previous codes have been invalidated."
-							: "Enter your password to generate new backup codes. This will invalidate any existing codes."}
+							? m.twoFactorCard_backupCodesNewDescription()
+							: m.twoFactorCard_backupCodesEnterPassword()}
 					</DialogDescription>
 				</DialogHeader>
 
@@ -516,17 +517,19 @@ function BackupCodesDialog({
 							className="w-full gap-1.5"
 							onClick={() => {
 								navigator.clipboard.writeText(codes.join("\n"));
-								toast.success("Backup codes copied to clipboard.");
+								toast.success(m.twoFactorCard_backupCodesCopied());
 							}}
 						>
 							<Copy className="h-3.5 w-3.5" />
-							Copy All Codes
+							{m.twoFactorCard_copyAllCodes()}
 						</Button>
 					</div>
 				) : (
 					<div className="space-y-4">
 						<div className="space-y-2">
-							<Label htmlFor="backup-codes-password">Password</Label>
+							<Label htmlFor="backup-codes-password">
+								{m.common_password()}
+							</Label>
 							<Input
 								id="backup-codes-password"
 								type="password"
@@ -537,22 +540,19 @@ function BackupCodesDialog({
 								autoFocus
 							/>
 						</div>
-						{error && (
-							<p className="text-sm text-status-critical">{error}</p>
-						)}
+						{error && <p className="text-sm text-status-critical">{error}</p>}
 					</div>
 				)}
 
 				<DialogFooter>
 					{codes.length > 0 ? (
-						<Button onClick={() => handleOpenChange(false)}>Done</Button>
+						<Button onClick={() => handleOpenChange(false)}>
+							{m.common_done()}
+						</Button>
 					) : (
 						<>
-							<Button
-								variant="outline"
-								onClick={() => handleOpenChange(false)}
-							>
-								Cancel
+							<Button variant="outline" onClick={() => handleOpenChange(false)}>
+								{m.common_cancel()}
 							</Button>
 							<Button
 								onClick={handleGenerate}
@@ -562,7 +562,7 @@ function BackupCodesDialog({
 								{isPending && (
 									<Spinner size="sm" className="text-primary-foreground" />
 								)}
-								Generate New Codes
+								{m.twoFactorCard_generateNewCodes()}
 							</Button>
 						</>
 					)}

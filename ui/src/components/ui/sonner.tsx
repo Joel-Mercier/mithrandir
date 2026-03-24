@@ -19,8 +19,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
 				loading: <Loader2Icon className="size-4 animate-spin" />,
 			}}
 			toastOptions={{
-				className:
-					"bg-background text-foreground border-border shadow-lg",
+				className: "bg-background text-foreground border-border shadow-lg",
 			}}
 			{...props}
 		/>

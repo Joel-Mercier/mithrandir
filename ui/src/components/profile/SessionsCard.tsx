@@ -12,9 +12,10 @@ import {
 import { Spinner } from "#/components/ui/spinner";
 import { useListSessions, useRevokeSession } from "#/hooks/auth";
 import { authClient } from "#/lib/auth-client";
+import { m } from "#/paraglide/messages.js";
 
 function parseUserAgent(ua: string | null | undefined): string {
-	if (!ua) return "Unknown device";
+	if (!ua) return m.sessions_unknownDevice();
 	const parts: string[] = [];
 
 	if (/Windows/.test(ua)) parts.push("Windows");
@@ -28,7 +29,7 @@ function parseUserAgent(ua: string | null | undefined): string {
 	else if (/Chrome\//.test(ua) && !/Chromium/.test(ua)) parts.push("Chrome");
 	else if (/Safari\//.test(ua) && !/Chrome/.test(ua)) parts.push("Safari");
 
-	return parts.length > 0 ? parts.join(" · ") : "Unknown device";
+	return parts.length > 0 ? parts.join(" · ") : m.sessions_unknownDevice();
 }
 
 export function SessionsCard() {
@@ -46,11 +47,9 @@ export function SessionsCard() {
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2 text-sm font-medium">
 					<Clock className="h-4 w-4 text-muted-foreground" />
-					Sessions
+					{m.sessions_title()}
 				</CardTitle>
-				<CardDescription>
-					Active sessions on your account
-				</CardDescription>
+				<CardDescription>{m.sessions_description()}</CardDescription>
 			</CardHeader>
 			<CardContent>
 				{isLoading ? (
@@ -68,12 +67,14 @@ export function SessionsCard() {
 								>
 									<div className="space-y-0.5">
 										<p className="text-sm font-medium">
-											{isCurrent ? "Current session" : parseUserAgent(s.userAgent)}
+											{isCurrent
+												? m.sessions_currentSession()
+												: parseUserAgent(s.userAgent)}
 										</p>
 										<p className="text-xs text-muted-foreground">
 											{isCurrent
 												? parseUserAgent(s.userAgent)
-												: s.ipAddress ?? "Unknown IP"}
+												: (s.ipAddress ?? m.sessions_unknownIP())}
 											{isCurrent && s.ipAddress ? ` · ${s.ipAddress}` : ""}
 										</p>
 									</div>
@@ -82,7 +83,7 @@ export function SessionsCard() {
 											variant="outline"
 											className="text-xs text-status-healthy"
 										>
-											Active
+											{m.sessions_active()}
 										</Badge>
 									) : (
 										<Button
@@ -95,12 +96,12 @@ export function SessionsCard() {
 													{ token: s.token },
 													{
 														onSuccess: () =>
-															toast.success("Session revoked."),
+															toast.success(m.sessions_revoked()),
 													},
 												);
 											}}
 										>
-											Revoke
+											{m.sessions_revoke()}
 										</Button>
 									)}
 								</div>
@@ -108,7 +109,7 @@ export function SessionsCard() {
 						})}
 						{activeSessions?.length === 0 && (
 							<p className="text-sm text-muted-foreground">
-								No active sessions found.
+								{m.sessions_noSessions()}
 							</p>
 						)}
 					</div>

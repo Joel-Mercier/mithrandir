@@ -1,26 +1,27 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Archive, Globe, Settings, Info } from "lucide-react";
+import { Archive, Globe, Info, Settings } from "lucide-react";
 import { useState } from "react";
 import Breadcrumbs from "#/components/Breadcrumbs";
 import {
+	AboutTab,
+	BackupTab,
 	GeneralTab,
 	NetworkTab,
-	BackupTab,
-	AboutTab,
 } from "#/components/settings/SettingsTabs";
+import { m } from "#/paraglide/messages.js";
 
 export const Route = createFileRoute("/_app/settings")({
 	component: SettingsPage,
 });
 
 const tabs = [
-	{ id: "general", label: "General", icon: Settings },
-	{ id: "network", label: "Network", icon: Globe },
-	{ id: "backup", label: "Backup", icon: Archive },
-	{ id: "about", label: "About", icon: Info },
-] as const;
+	{ id: "general", label: m.settings_tabGeneral(), icon: Settings },
+	{ id: "network", label: m.settings_tabNetwork(), icon: Globe },
+	{ id: "backup", label: m.settings_tabBackup(), icon: Archive },
+	{ id: "about", label: m.settings_tabAbout(), icon: Info },
+];
 
-type TabId = (typeof tabs)[number]["id"];
+type TabId = "general" | "network" | "backup" | "about";
 
 function SettingsPage() {
 	const [activeTab, setActiveTab] = useState<TabId>("general");
@@ -30,10 +31,10 @@ function SettingsPage() {
 			<Breadcrumbs />
 			<div className="mb-6">
 				<h1 className="font-display text-2xl font-bold tracking-tight">
-					Settings
+					{m.settings_title()}
 				</h1>
 				<p className="mt-1 text-sm text-muted-foreground">
-					System configuration and preferences
+					{m.settings_subtitle()}
 				</p>
 			</div>
 
@@ -47,7 +48,7 @@ function SettingsPage() {
 							<button
 								key={tab.id}
 								type="button"
-								onClick={() => setActiveTab(tab.id)}
+								onClick={() => setActiveTab(tab.id as TabId)}
 								className={`group flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
 									isActive
 										? "bg-accent text-accent-foreground shadow-sm"

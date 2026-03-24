@@ -1,12 +1,13 @@
-import { useEffect, useRef } from "react";
 import { Cloud, HardDrive, Server } from "lucide-react";
+import { useEffect, useRef } from "react";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardHeader } from "#/components/ui/card";
 import { Spinner } from "#/components/ui/spinner";
-import { useSystemRequirements, useInstallSystemDep } from "#/hooks/homelab";
-import { StepNavigation } from "../StepNavigation";
+import { useInstallSystemDep, useSystemRequirements } from "#/hooks/homelab";
+import { m } from "#/paraglide/messages.js";
 import type { SetupState } from "../SetupWizard";
+import { StepNavigation } from "../StepNavigation";
 
 type CheckStatus = SetupState["systemChecks"]["docker"];
 
@@ -16,51 +17,61 @@ interface WelcomeStepProps {
 	onComplete: () => void;
 }
 
-const checks = [
-	{
-		key: "docker" as const,
-		label: "Docker Engine",
-		icon: Server,
-		description: "Container runtime for all services",
-		action: "Install Docker",
-		optional: false,
-	},
-	{
-		key: "swap" as const,
-		label: "Swap Memory",
-		icon: HardDrive,
-		description: "Virtual memory for stability (recommended)",
-		action: "Configure Swap",
-		optional: true,
-	},
-	{
-		key: "rclone" as const,
-		label: "rclone",
-		icon: Cloud,
-		description: "Cloud storage for remote backups",
-		action: "Install rclone",
-		optional: false,
-	},
-];
+function getChecks() {
+	return [
+		{
+			key: "docker" as const,
+			label: m.welcome_dockerEngine(),
+			icon: Server,
+			description: m.welcome_dockerDesc(),
+			action: m.welcome_installDocker(),
+			optional: false,
+		},
+		{
+			key: "swap" as const,
+			label: m.welcome_swapMemory(),
+			icon: HardDrive,
+			description: m.welcome_swapDesc(),
+			action: m.welcome_configureSwap(),
+			optional: true,
+		},
+		{
+			key: "rclone" as const,
+			label: m.welcome_rclone(),
+			icon: Cloud,
+			description: m.welcome_rcloneDesc(),
+			action: m.welcome_installRclone(),
+			optional: false,
+		},
+	];
+}
 
-function StatusBadge({ status, optional }: { status: CheckStatus; optional?: boolean }) {
+function StatusBadge({
+	status,
+	optional,
+}: {
+	status: CheckStatus;
+	optional?: boolean;
+}) {
 	if (status === "checking") {
 		return (
 			<Badge variant="outline" className="gap-1">
 				<Spinner size="sm" className="h-3 w-3" />
-				Checking
+				{m.welcome_checking()}
 			</Badge>
 		);
 	}
 	if (status === "installed") {
 		return (
-			<Badge className="bg-status-healthy text-white">Installed</Badge>
+			<Badge className="bg-status-healthy text-white">
+				{m.welcome_installed()}
+			</Badge>
 		);
 	}
 	if (optional) {
-		return <Badge variant="secondary">Optional</Badge>;
+		return <Badge variant="secondary">{m.welcome_optional()}</Badge>;
 	}
-	return <Badge variant="destructive">Missing</Badge>;
+	return <Badge variant="destructive">{m.welcome_missing()}</Badge>;
 }
 
 export function WelcomeStep({
@@ -85,6 +96,8 @@ export function WelcomeStep({
 		});
 	}, [data]);
 
+	const checks = getChecks();
+
 	const allReady = checks
 		.filter((c) => !c.optional)
 		.every((c) => state.systemChecks[c.key] === "installed");
@@ -92,12 +105,9 @@ export function WelcomeStep({
 	return (
 		<div>
 			<h1 className="font-display text-3xl font-bold tracking-tight">
-				Welcome to Mithrandir
+				{m.welcome_title()}
 			</h1>
-			<p className="mt-2 text-muted-foreground">
-				Let's set up your homelab. First, we'll check that your system meets
-				the requirements.
-			</p>
+			<p className="mt-2 text-muted-foreground">{m.welcome_subtitle()}</p>
 
 			<div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-3">
 				{checks.map((check) => {
@@ -129,7 +139,7 @@ export function WelcomeStep({
 										installDep.variables === check.key ? (
 											<>
 												<Spinner size="sm" className="mr-1 h-3 w-3" />
-												Installing...
+												{m.common_installing()}
 											</>
 										) : (
 											check.action
@@ -146,7 +156,7 @@ export function WelcomeStep({
 				onNext={onComplete}
 				nextDisabled={!allReady}
 				showBack={false}
-				nextLabel="Get Started"
+				nextLabel={m.welcome_getStarted()}
 			/>
 		</div>
 	);

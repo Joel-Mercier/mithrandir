@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { Languages } from "lucide-react";
+import { Check, Languages } from "lucide-react";
 import { Button } from "#/components/ui/button";
 import {
 	DropdownMenu,
@@ -7,30 +6,17 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "#/components/ui/dropdown-menu";
+import { cn } from "#/lib/utils";
+import { getLocale, setLocale } from "#/paraglide/runtime.js";
 
 const languages = [
 	{ code: "en", label: "English" },
 	{ code: "fr", label: "Français" },
 ] as const;
 
-type LangCode = (typeof languages)[number]["code"];
-
-function getInitialLang(): LangCode {
-	if (typeof window === "undefined") return "en";
-	const stored = window.localStorage.getItem("lang");
-	if (languages.some((l) => l.code === stored)) return stored as LangCode;
-	return "en";
-}
-
 export default function LanguageSwitch() {
-	const [lang, setLang] = useState<LangCode>(getInitialLang);
-
-	function selectLang(code: LangCode) {
-		setLang(code);
-		window.localStorage.setItem("lang", code);
-	}
-
-	const current = languages.find((l) => l.code === lang);
+	const locale = getLocale();
+	const current = languages.find((l) => l.code === locale);
 
 	return (
 		<DropdownMenu>
@@ -44,13 +30,16 @@ export default function LanguageSwitch() {
 					<Languages className="h-4 w-4" />
 				</Button>
 			</DropdownMenuTrigger>
-			<DropdownMenuContent align="end" className="min-w-[8rem]">
+			<DropdownMenuContent align="end" className="min-w-32">
 				{languages.map((l) => (
 					<DropdownMenuItem
 						key={l.code}
-						onClick={() => selectLang(l.code)}
-						className={lang === l.code ? "font-medium text-foreground" : ""}
+						onClick={() => setLocale(l.code)}
+						className={cn("cursor-pointer focus:outline-0", {
+							"font-medium text-foreground": locale === l.code,
+						})}
 					>
+						{locale === l.code ? <Check className="mr-1 h-4 w-4" /> : null}
 						{l.label}
 					</DropdownMenuItem>
 				))}

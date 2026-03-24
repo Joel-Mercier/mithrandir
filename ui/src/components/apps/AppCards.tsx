@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
 import { Spinner } from "#/components/ui/spinner";
 import { useInstallApp } from "#/hooks/homelab";
 import type { AppStatus, DashboardApp } from "#/lib/types";
+import { m } from "#/paraglide/messages.js";
 
 export const statusDot: Record<AppStatus, string> = {
 	running: "bg-status-healthy",
@@ -43,7 +44,7 @@ export function AppListCard({ app }: { app: DashboardApp }) {
 					</div>
 
 					<div className="flex items-baseline justify-between text-xs text-muted-foreground">
-						<span>Uptime</span>
+						<span>{m.apps_uptime()}</span>
 						<span className="font-mono-data">{app.uptime}</span>
 					</div>
 				</CardContent>
@@ -91,17 +92,22 @@ export function AvailableAppCard({ app }: { app: DashboardApp }) {
 								onSuccess: (result) => {
 									if (result.success) {
 										toast.success(
-											`${app.displayName} installed successfully.`,
+											m.apps_installedSuccess({ appName: app.displayName }),
 										);
 									} else {
 										toast.error(
-											`Install finished with errors: ${result.output.slice(0, 200)}`,
+											m.apps_installError({
+												error: result.output.slice(0, 200),
+											}),
 										);
 									}
 								},
 								onError: (err) =>
 									toast.error(
-										`Failed to install ${app.displayName}: ${err.message}`,
+										m.apps_installFailed({
+											appName: app.displayName,
+											error: err.message,
+										}),
 									),
 							});
 						}}
@@ -111,7 +117,9 @@ export function AvailableAppCard({ app }: { app: DashboardApp }) {
 						) : (
 							<Download className="h-3.5 w-3.5" />
 						)}
-						{installMutation.isPending ? "Installing..." : "Install"}
+						{installMutation.isPending
+							? m.common_installing()
+							: m.common_install()}
 					</Button>
 				</CardContent>
 			</Card>

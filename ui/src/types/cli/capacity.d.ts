@@ -14,6 +14,7 @@ export function getPerformanceVerdict(
 	cpuCores: number,
 	ramMB: number,
 ): { label: string; color: string };
-export function getStorageVerdict(
-	storage: StorageInfo[],
-): { label: string; color: string };
+export function getStorageVerdict(storage: StorageInfo[]): {
+	label: string;
+	color: string;
+};

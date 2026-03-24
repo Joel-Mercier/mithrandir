@@ -10,10 +10,11 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import Breadcrumbs from "#/components/Breadcrumbs";
-import { Row } from "#/components/Row";
 import { AvailableDetailPage } from "#/components/apps/AvailableDetailPage";
 import { ExternalLinks } from "#/components/apps/ExternalLinks";
+import Breadcrumbs from "#/components/Breadcrumbs";
+import { ScoreBadge } from "#/components/capacity/ScoreBadge";
+import { Row } from "#/components/Row";
 import { Alert, AlertDescription } from "#/components/ui/alert";
 import {
 	AlertDialog,
@@ -25,27 +26,27 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "#/components/ui/alert-dialog";
-import { ScoreBadge } from "#/components/capacity/ScoreBadge";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
 import { Input } from "#/components/ui/input";
 import { Label } from "#/components/ui/label";
 import { Progress } from "#/components/ui/progress";
-import { Switch } from "#/components/ui/switch";
 import { ScrollArea } from "#/components/ui/scroll-area";
 import { Separator } from "#/components/ui/separator";
 import { Skeleton } from "#/components/ui/skeleton";
-import type { AppStatus } from "#/lib/types";
+import { Switch } from "#/components/ui/switch";
 import {
 	useAppDetail,
 	useApps,
 	useConfig,
+	useRestartApp,
 	useStartApp,
 	useStopApp,
-	useRestartApp,
 	useUninstallApp,
 } from "#/hooks/homelab";
+import type { AppStatus } from "#/lib/types";
+import { m } from "#/paraglide/messages.js";
 
 export const Route = createFileRoute("/_app/apps/$appName")({
 	component: AppDetailPage,
@@ -137,9 +138,7 @@ function AppDetailPage() {
 				{detailQuery.isError ? (
 					<Alert variant="destructive" className="mt-4">
 						<AlertCircle className="h-4 w-4" />
-						<AlertDescription>
-							Failed to load app details. Make sure the CLI is reachable.
-						</AlertDescription>
+						<AlertDescription>{m.appDetail_errorLoading()}</AlertDescription>
 					</Alert>
 				) : (
 					<div className="py-12 text-center text-sm text-muted-foreground">
@@ -194,14 +193,18 @@ function AppDetailPage() {
 								onClick={() => {
 									stopAppMutation.mutate(appName, {
 										onSuccess: () =>
-											toast.success(`${app.displayName} stopped.`),
+											toast.success(
+												`${app.displayName} ${m.appDetail_stopped()}`,
+											),
 										onError: (err) =>
-											toast.error(`Failed to stop: ${err.message}`),
+											toast.error(
+												m.appDetail_failedToStop({ error: err.message }),
+											),
 									});
 								}}
 							>
 								<Square className="h-3.5 w-3.5" />
-								Stop
+								{m.common_stop()}
 							</Button>
 							<Button
 								variant="outline"
@@ -211,14 +214,18 @@ function AppDetailPage() {
 								onClick={() => {
 									restartAppMutation.mutate(appName, {
 										onSuccess: () =>
-											toast.success(`${app.displayName} restarted.`),
+											toast.success(
+												`${app.displayName} ${m.appDetail_restarted()}`,
+											),
 										onError: (err) =>
-											toast.error(`Failed to restart: ${err.message}`),
+											toast.error(
+												m.appDetail_failedToRestart({ error: err.message }),
+											),
 									});
 								}}
 							>
 								<RotateCcw className="h-3.5 w-3.5" />
-								Restart
+								{m.common_restart()}
 							</Button>
 							<Button
 								variant="outline"
@@ -226,12 +233,12 @@ function AppDetailPage() {
 								className="cursor-pointer gap-1.5"
 								onClick={() =>
 									toast.info(
-										`Checking for updates to ${app.displayName}...`,
+										m.appDetail_checkingUpdates({ appName: app.displayName }),
 									)
 								}
 							>
 								<ArrowDownToLine className="h-3.5 w-3.5" />
-								Update
+								{m.common_update()}
 							</Button>
 							<Button
 								variant="outline"
@@ -239,13 +246,9 @@ function AppDetailPage() {
 								className="cursor-pointer gap-1.5"
 								asChild
 							>
-								<a
-									href={appUrl}
-									target="_blank"
-									rel="noopener noreferrer"
-								>
+								<a href={appUrl} target="_blank" rel="noopener noreferrer">
 									<ExternalLink className="h-3.5 w-3.5" />
-									Open
+									{m.common_open()}
 								</a>
 							</Button>
 						</>
@@ -259,14 +262,18 @@ function AppDetailPage() {
 								onClick={() => {
 									startAppMutation.mutate(appName, {
 										onSuccess: () =>
-											toast.success(`${app.displayName} started.`),
+											toast.success(
+												`${app.displayName} ${m.appDetail_started()}`,
+											),
 										onError: (err) =>
-											toast.error(`Failed to start: ${err.message}`),
+											toast.error(
+												m.appDetail_failedToStart({ error: err.message }),
+											),
 									});
 								}}
 							>
 								<Play className="h-3.5 w-3.5" />
-								Start
+								{m.common_start()}
 							</Button>
 							<Button
 								variant="outline"
@@ -274,12 +281,12 @@ function AppDetailPage() {
 								className="cursor-pointer gap-1.5"
 								onClick={() =>
 									toast.info(
-										`Checking for updates to ${app.displayName}...`,
+										m.appDetail_checkingUpdates({ appName: app.displayName }),
 									)
 								}
 							>
 								<ArrowDownToLine className="h-3.5 w-3.5" />
-								Update
+								{m.common_update()}
 							</Button>
 						</>
 					)}
@@ -293,7 +300,7 @@ function AppDetailPage() {
 						}}
 					>
 						<Trash2 className="h-3.5 w-3.5" />
-						Uninstall
+						{m.common_uninstall()}
 					</Button>
 				</div>
 			</div>
@@ -306,18 +313,13 @@ function AppDetailPage() {
 
 			{app.status === "stopped" && (
 				<Alert className="mb-6 border-status-warning/30 text-status-warning">
-					<AlertDescription>
-						This container is stopped. Start it to view resource usage and live
-						logs.
-					</AlertDescription>
+					<AlertDescription>{m.appDetail_containerStopped()}</AlertDescription>
 				</Alert>
 			)}
 
 			{app.status === "error" && (
 				<Alert variant="destructive" className="mb-6">
-					<AlertDescription>
-						This container is in an error state. Check the logs for details.
-					</AlertDescription>
+					<AlertDescription>{m.appDetail_containerError()}</AlertDescription>
 				</Alert>
 			)}
 
@@ -327,20 +329,22 @@ function AppDetailPage() {
 				{detail && (
 					<Card>
 						<CardHeader className="pb-2">
-							<CardTitle className="text-sm font-medium">Container</CardTitle>
+							<CardTitle className="text-sm font-medium">
+								{m.appDetail_container()}
+							</CardTitle>
 						</CardHeader>
 						<CardContent className="space-y-2">
-							<Row label="Image">{detail.image}</Row>
-							<Row label="Port">:{detail.port}</Row>
-							<Row label="Restarts">{detail.restarts}</Row>
-							<Row label="Created">
+							<Row label={m.appDetail_image()}>{detail.image}</Row>
+							<Row label={m.appDetail_port()}>:{detail.port}</Row>
+							<Row label={m.appDetail_restarts()}>{detail.restarts}</Row>
+							<Row label={m.appDetail_created()}>
 								{new Date(detail.createdAt).toLocaleDateString("en-US", {
 									month: "short",
 									day: "numeric",
 									year: "numeric",
 								})}
 							</Row>
-							<Row label="Uptime">{detail.uptime}</Row>
+							<Row label={m.appDetail_uptime()}>{detail.uptime}</Row>
 						</CardContent>
 					</Card>
 				)}
@@ -349,12 +353,16 @@ function AppDetailPage() {
 				{detail && app.status === "running" && (
 					<Card>
 						<CardHeader className="pb-2">
-							<CardTitle className="text-sm font-medium">Resources</CardTitle>
+							<CardTitle className="text-sm font-medium">
+								{m.appDetail_resources()}
+							</CardTitle>
 						</CardHeader>
 						<CardContent className="space-y-4">
 							<div className="space-y-1.5">
 								<div className="flex items-baseline justify-between text-sm">
-									<span className="text-muted-foreground">CPU</span>
+									<span className="text-muted-foreground">
+										{m.appDetail_cpu()}
+									</span>
 									<span className="font-mono-data text-xs">
 										{detail.cpuUsage}%
 									</span>
@@ -366,7 +374,9 @@ function AppDetailPage() {
 							</div>
 							<div className="space-y-1.5">
 								<div className="flex items-baseline justify-between text-sm">
-									<span className="text-muted-foreground">Memory</span>
+									<span className="text-muted-foreground">
+										{m.appDetail_memory()}
+									</span>
 									<span className="font-mono-data text-xs">
 										{detail.ramUsageMB} MB
 									</span>
@@ -382,8 +392,8 @@ function AppDetailPage() {
 								/>
 							</div>
 							<Separator />
-							<Row label="Net In">{detail.networkRx}</Row>
-							<Row label="Net Out">{detail.networkTx}</Row>
+							<Row label={m.appDetail_netIn()}>{detail.networkRx}</Row>
+							<Row label={m.appDetail_netOut()}>{detail.networkTx}</Row>
 						</CardContent>
 					</Card>
 				)}
@@ -393,11 +403,11 @@ function AppDetailPage() {
 					<Card>
 						<CardHeader className="pb-2">
 							<CardTitle className="text-sm font-medium">
-								Volumes & Config
+								{m.appDetail_volumesConfig()}
 							</CardTitle>
 						</CardHeader>
 						<CardContent className="space-y-2">
-							<Row label="Config path">{detail.configPath}</Row>
+							<Row label={m.appDetail_configPath()}>{detail.configPath}</Row>
 							<Separator className="my-2" />
 							{detail.volumes.map((vol) => (
 								<div key={vol} className="font-mono-data text-xs break-all">
@@ -413,16 +423,20 @@ function AppDetailPage() {
 					<Card>
 						<CardHeader className="pb-2">
 							<CardTitle className="text-sm font-medium">
-								Capacity Impact
+								{m.appDetail_capacityImpact()}
 							</CardTitle>
 						</CardHeader>
 						<CardContent className="space-y-3">
 							<div className="flex items-baseline justify-between text-sm">
-								<span className="text-muted-foreground">Performance</span>
+								<span className="text-muted-foreground">
+									{m.appDetail_performance()}
+								</span>
 								<ScoreBadge score={summary.performanceScore} />
 							</div>
 							<div className="flex items-baseline justify-between text-sm">
-								<span className="text-muted-foreground">Storage</span>
+								<span className="text-muted-foreground">
+									{m.appDetail_storage()}
+								</span>
 								<ScoreBadge score={summary.storageScore!} />
 							</div>
 							{summary.capacityNote && (
@@ -442,7 +456,7 @@ function AppDetailPage() {
 					<Card className="col-span-full">
 						<CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
 							<CardTitle className="text-sm font-medium">
-								Recent Logs
+								{m.appDetail_recentLogs()}
 							</CardTitle>
 							<div className="flex items-center gap-3">
 								<div className="flex items-center gap-1.5">
@@ -450,7 +464,7 @@ function AppDetailPage() {
 										htmlFor="log-tail"
 										className="text-xs text-muted-foreground"
 									>
-										Tail
+										{m.appDetail_tail()}
 									</Label>
 									<Input
 										id="log-tail"
@@ -465,7 +479,7 @@ function AppDetailPage() {
 										htmlFor="log-since"
 										className="text-xs text-muted-foreground"
 									>
-										Since
+										{m.appDetail_since()}
 									</Label>
 									<Input
 										id="log-since"
@@ -479,14 +493,17 @@ function AppDetailPage() {
 										htmlFor="log-follow"
 										className="mr-2 text-xs text-muted-foreground"
 									>
-										Follow
+										{m.appDetail_follow()}
 									</Label>
 									<Switch id="log-follow" />
 								</div>
 							</div>
 						</CardHeader>
 						<CardContent>
-							<ScrollArea ref={logAreaRef} className="h-64 rounded-md border border-border/50 bg-muted/30 p-3">
+							<ScrollArea
+								ref={logAreaRef}
+								className="h-64 rounded-md border border-border/50 bg-muted/30 p-3"
+							>
 								<pre className="font-mono-data text-xs leading-relaxed">
 									{detail.logs.join("\n")}
 								</pre>
@@ -498,7 +515,7 @@ function AppDetailPage() {
 				{/* No detail data state */}
 				{!detail && !detailQuery.isPending && (
 					<div className="col-span-full py-8 text-center text-sm text-muted-foreground">
-						Detailed container information is not available.
+						{m.appDetail_noDetail()}
 					</div>
 				)}
 			</div>
@@ -508,27 +525,23 @@ function AppDetailPage() {
 					<AlertDialogContent>
 						<AlertDialogHeader>
 							<AlertDialogTitle>
-								Uninstall {app.displayName}?
+								{m.appDetail_uninstallTitle({ appName: app.displayName })}
 							</AlertDialogTitle>
 							<AlertDialogDescription>
-								This will stop and remove the container. This action cannot be
-								undone.
+								{m.appDetail_uninstallDescription()}
 							</AlertDialogDescription>
 						</AlertDialogHeader>
 						<div className="flex items-center justify-between rounded-lg border border-border/50 p-3 transition-colors hover:bg-muted/50">
 							<div className="space-y-0.5">
-								<Label>Erase data &amp; config</Label>
+								<Label>{m.appDetail_eraseData()}</Label>
 								<p className="text-xs text-muted-foreground font-mono-data break-all">
 									{detail.configPath}
 								</p>
 							</div>
-							<Switch
-								checked={eraseData}
-								onCheckedChange={setEraseData}
-							/>
+							<Switch checked={eraseData} onCheckedChange={setEraseData} />
 						</div>
 						<AlertDialogFooter>
-							<AlertDialogCancel>Cancel</AlertDialogCancel>
+							<AlertDialogCancel>{m.common_cancel()}</AlertDialogCancel>
 							<AlertDialogAction
 								className="bg-status-critical text-white hover:bg-status-critical/90"
 								onClick={() => {
@@ -538,18 +551,22 @@ function AppDetailPage() {
 											onSuccess: () =>
 												toast.success(
 													eraseData
-														? `${app.displayName} uninstalled. Data erased.`
-														: `${app.displayName} uninstalled. Data preserved.`,
+														? m.appDetail_uninstalledErased({
+																appName: app.displayName,
+															})
+														: m.appDetail_uninstalledPreserved({
+																appName: app.displayName,
+															}),
 												),
 											onError: (err) =>
 												toast.error(
-													`Failed to uninstall: ${err.message}`,
+													m.appDetail_failedUninstall({ error: err.message }),
 												),
 										},
 									);
 								}}
 							>
-								Uninstall
+								{m.common_uninstall()}
 							</AlertDialogAction>
 						</AlertDialogFooter>
 					</AlertDialogContent>

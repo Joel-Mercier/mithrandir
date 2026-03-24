@@ -1,8 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { desc, sql } from "drizzle-orm";
+import { activityHistory } from "#/db/schema";
 import { ensureSession } from "#/lib/auth";
 import db from "#/lib/db";
-import { activityHistory } from "#/db/schema";
 
 const MAX_ITEMS = 100;
 

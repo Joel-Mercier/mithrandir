@@ -1,4 +1,5 @@
 import { Progress } from "#/components/ui/progress";
+import { m } from "#/paraglide/messages.js";
 
 function formatBytes(bytes: number): string {
 	if (bytes === 0) return "0 B";
@@ -37,8 +38,8 @@ export function StorageMeter({
 			</div>
 			<Progress value={pct} className={progressColor(pct)} />
 			<div className="flex justify-between text-[10px] text-muted-foreground">
-				<span>{formatBytes(usedBytes)} used</span>
-				<span>{formatBytes(availBytes)} free</span>
+				<span>{m.storageMeter_used({ size: formatBytes(usedBytes) })}</span>
+				<span>{m.storageMeter_free({ size: formatBytes(availBytes) })}</span>
 			</div>
 		</div>
 	);

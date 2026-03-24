@@ -8,16 +8,19 @@ import {
 	BreadcrumbPage,
 	BreadcrumbSeparator,
 } from "#/components/ui/breadcrumb";
+import { m } from "#/paraglide/messages.js";
 
-const routeLabels: Record<string, string> = {
-	"/": "Dashboard",
-	"/apps": "Apps",
-	"/apps/graph": "Dependency Graph",
-	"/apps/capacity": "Capacity",
-	"/backup-restore": "Backup & Restore",
-	"/settings": "Settings",
-	"/profile": "Profile",
-};
+function getRouteLabels(): Record<string, string> {
+	return {
+		"/": m.breadcrumbs_dashboard(),
+		"/apps": m.breadcrumbs_apps(),
+		"/apps/graph": m.breadcrumbs_dependencyGraph(),
+		"/apps/capacity": m.breadcrumbs_capacity(),
+		"/backup-restore": m.breadcrumbs_backupRestore(),
+		"/settings": m.breadcrumbs_settings(),
+		"/profile": m.breadcrumbs_profile(),
+	};
+}
 
 interface BreadcrumbEntry {
 	label: string;
@@ -26,6 +29,7 @@ interface BreadcrumbEntry {
 
 export default function Breadcrumbs() {
 	const matches = useMatches();
+	const routeLabels = getRouteLabels();
 
 	const crumbs: BreadcrumbEntry[] = [];
 	for (const match of matches) {
@@ -35,8 +39,11 @@ export default function Breadcrumbs() {
 		if (path === "/" || routeLabels[path]) {
 			if (path !== "/") {
 				// For nested known routes like /apps/graph, ensure parent crumb exists
-				if ((path === "/apps/graph" || path === "/apps/capacity") && !crumbs.some((c) => c.path === "/apps")) {
-					crumbs.push({ label: "Apps", path: "/apps" });
+				if (
+					(path === "/apps/graph" || path === "/apps/capacity") &&
+					!crumbs.some((c) => c.path === "/apps")
+				) {
+					crumbs.push({ label: m.breadcrumbs_apps(), path: "/apps" });
 				}
 				crumbs.push({ label: routeLabels[path], path });
 			}
@@ -45,7 +52,7 @@ export default function Breadcrumbs() {
 			const appName = path.replace("/apps/", "");
 			if (appName) {
 				if (!crumbs.some((c) => c.path === "/apps")) {
-					crumbs.push({ label: "Apps", path: "/apps" });
+					crumbs.push({ label: m.breadcrumbs_apps(), path: "/apps" });
 				}
 				crumbs.push({
 					label: appName.charAt(0).toUpperCase() + appName.slice(1),
@@ -62,7 +69,7 @@ export default function Breadcrumbs() {
 			<BreadcrumbList>
 				<BreadcrumbItem>
 					<BreadcrumbLink asChild>
-						<Link to="/">Dashboard</Link>
+						<Link to="/">{m.breadcrumbs_dashboard()}</Link>
 					</BreadcrumbLink>
 				</BreadcrumbItem>
 				{crumbs.map((crumb, i) => {

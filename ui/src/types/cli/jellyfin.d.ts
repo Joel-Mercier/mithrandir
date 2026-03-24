@@ -35,7 +35,15 @@ export interface PublicSystemInfo {
 	StartupWizardCompleted?: boolean | null;
 }
 
-export type CollectionTypeOptions = "movies" | "tvshows" | "music" | "musicvideos" | "homevideos" | "boxsets" | "books" | "mixed";
+export type CollectionTypeOptions =
+	| "movies"
+	| "tvshows"
+	| "music"
+	| "musicvideos"
+	| "homevideos"
+	| "boxsets"
+	| "books"
+	| "mixed";
 
 export interface VirtualFolderDto {
 	name: string;
@@ -69,7 +77,10 @@ export function createJellyfinClient(options?: JellyfinClientOptions): {
 		complete(): Promise<void>;
 	};
 	users: {
-		authenticateByName(username: string, password: string): Promise<AuthenticationResult>;
+		authenticateByName(
+			username: string,
+			password: string,
+		): Promise<AuthenticationResult>;
 		getAll(): Promise<UserDto[]>;
 	};
 	library: {

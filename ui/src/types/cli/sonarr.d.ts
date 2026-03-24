@@ -45,7 +45,10 @@ export function getSonarrApiKey(baseDir: string): Promise<string | null>;
 export function createSonarrClient(options: SonarrClientOptions): {
 	hostConfig: {
 		get(): Promise<HostConfigResource>;
-		update(id: number, resource: HostConfigResource): Promise<HostConfigResource>;
+		update(
+			id: number,
+			resource: HostConfigResource,
+		): Promise<HostConfigResource>;
 	};
 	downloadClient: {
 		create(resource: DownloadClientResource): Promise<DownloadClientResource>;
