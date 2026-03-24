@@ -44,6 +44,15 @@ import {
 	fetchVersion,
 	updateConfig,
 } from "#/lib/server/system";
+import {
+	buildCli,
+	buildUi,
+	checkForUpdates,
+	finalizeUpdate,
+	installDeps,
+	pingHealth,
+	pullLatestChanges,
+} from "#/lib/server/update";
 
 export type { SetupStatus } from "#/lib/server/setup";
 
@@ -429,5 +438,54 @@ export function useFetchServiceUrls() {
 			httpsEnabled: boolean;
 			localIp: string;
 		}) => fetchServiceUrls({ data: params }),
+	});
+}
+
+// ─── Self-update hooks ───────────────────────────────────────────────────────
+
+export function useCheckForUpdates() {
+	return useMutation({
+		mutationFn: () => checkForUpdates(),
+	});
+}
+
+export function usePullLatestChanges() {
+	return useMutation({
+		mutationFn: () => pullLatestChanges(),
+	});
+}
+
+export function useInstallDeps() {
+	return useMutation({
+		mutationFn: () => installDeps(),
+	});
+}
+
+export function useBuildCli() {
+	return useMutation({
+		mutationFn: () => buildCli(),
+	});
+}
+
+export function useBuildUi() {
+	return useMutation({
+		mutationFn: () => buildUi(),
+	});
+}
+
+export function useFinalizeUpdate() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: () => finalizeUpdate(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: keys.version });
+			queryClient.invalidateQueries({ queryKey: keys.activity });
+		},
+	});
+}
+
+export function usePingHealth() {
+	return useMutation({
+		mutationFn: () => pingHealth(),
 	});
 }

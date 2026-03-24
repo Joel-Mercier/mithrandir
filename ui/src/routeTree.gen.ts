@@ -9,9 +9,11 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as UpdateRouteImport } from './routes/_update'
 import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
+import { Route as UpdateSelfUpdateRouteImport } from './routes/_update/self-update'
 import { Route as AuthTwoFactorRouteImport } from './routes/_auth/two-factor'
 import { Route as AuthSignUpRouteImport } from './routes/_auth/sign-up'
 import { Route as AuthSignInRouteImport } from './routes/_auth/sign-in'
@@ -26,6 +28,10 @@ import { Route as AppAppsCapacityRouteImport } from './routes/_app/apps/capacity
 import { Route as AppAppsAppNameRouteImport } from './routes/_app/apps/$appName'
 import { Route as ApiHomelabLogsAppNameRouteImport } from './routes/api/homelab/logs.$appName'
 
+const UpdateRoute = UpdateRouteImport.update({
+  id: '/_update',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/_auth',
   getParentRoute: () => rootRouteImport,
@@ -38,6 +44,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AppRoute,
+} as any)
+const UpdateSelfUpdateRoute = UpdateSelfUpdateRouteImport.update({
+  id: '/self-update',
+  path: '/self-update',
+  getParentRoute: () => UpdateRoute,
 } as any)
 const AuthTwoFactorRoute = AuthTwoFactorRouteImport.update({
   id: '/two-factor',
@@ -114,6 +125,7 @@ export interface FileRoutesByFullPath {
   '/sign-in': typeof AuthSignInRoute
   '/sign-up': typeof AuthSignUpRoute
   '/two-factor': typeof AuthTwoFactorRoute
+  '/self-update': typeof UpdateSelfUpdateRoute
   '/apps/$appName': typeof AppAppsAppNameRoute
   '/apps/capacity': typeof AppAppsCapacityRoute
   '/apps/graph': typeof AppAppsGraphRoute
@@ -130,6 +142,7 @@ export interface FileRoutesByTo {
   '/sign-in': typeof AuthSignInRoute
   '/sign-up': typeof AuthSignUpRoute
   '/two-factor': typeof AuthTwoFactorRoute
+  '/self-update': typeof UpdateSelfUpdateRoute
   '/apps/$appName': typeof AppAppsAppNameRoute
   '/apps/capacity': typeof AppAppsCapacityRoute
   '/apps/graph': typeof AppAppsGraphRoute
@@ -141,6 +154,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_app': typeof AppRouteWithChildren
   '/_auth': typeof AuthRouteWithChildren
+  '/_update': typeof UpdateRouteWithChildren
   '/_app/backup-restore': typeof AppBackupRestoreRoute
   '/_app/profile': typeof AppProfileRoute
   '/_app/settings': typeof AppSettingsRoute
@@ -148,6 +162,7 @@ export interface FileRoutesById {
   '/_auth/sign-in': typeof AuthSignInRoute
   '/_auth/sign-up': typeof AuthSignUpRoute
   '/_auth/two-factor': typeof AuthTwoFactorRoute
+  '/_update/self-update': typeof UpdateSelfUpdateRoute
   '/_app/': typeof AppIndexRoute
   '/_app/apps/$appName': typeof AppAppsAppNameRoute
   '/_app/apps/capacity': typeof AppAppsCapacityRoute
@@ -167,6 +182,7 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/two-factor'
+    | '/self-update'
     | '/apps/$appName'
     | '/apps/capacity'
     | '/apps/graph'
@@ -183,6 +199,7 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/two-factor'
+    | '/self-update'
     | '/apps/$appName'
     | '/apps/capacity'
     | '/apps/graph'
@@ -193,6 +210,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_app'
     | '/_auth'
+    | '/_update'
     | '/_app/backup-restore'
     | '/_app/profile'
     | '/_app/settings'
@@ -200,6 +218,7 @@ export interface FileRouteTypes {
     | '/_auth/sign-in'
     | '/_auth/sign-up'
     | '/_auth/two-factor'
+    | '/_update/self-update'
     | '/_app/'
     | '/_app/apps/$appName'
     | '/_app/apps/capacity'
@@ -212,12 +231,20 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRouteWithChildren
+  UpdateRoute: typeof UpdateRouteWithChildren
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiHomelabLogsAppNameRoute: typeof ApiHomelabLogsAppNameRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/_update': {
+      id: '/_update'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof UpdateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_auth': {
       id: '/_auth'
       path: ''
@@ -238,6 +265,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/_update/self-update': {
+      id: '/_update/self-update'
+      path: '/self-update'
+      fullPath: '/self-update'
+      preLoaderRoute: typeof UpdateSelfUpdateRouteImport
+      parentRoute: typeof UpdateRoute
     }
     '/_auth/two-factor': {
       id: '/_auth/two-factor'
@@ -373,9 +407,21 @@ const AuthRouteChildren: AuthRouteChildren = {
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
+interface UpdateRouteChildren {
+  UpdateSelfUpdateRoute: typeof UpdateSelfUpdateRoute
+}
+
+const UpdateRouteChildren: UpdateRouteChildren = {
+  UpdateSelfUpdateRoute: UpdateSelfUpdateRoute,
+}
+
+const UpdateRouteWithChildren =
+  UpdateRoute._addFileChildren(UpdateRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRouteWithChildren,
+  UpdateRoute: UpdateRouteWithChildren,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiHomelabLogsAppNameRoute: ApiHomelabLogsAppNameRoute,
 }

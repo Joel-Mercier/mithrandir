@@ -1,4 +1,5 @@
-import { Plus, Save, Shield, Trash2 } from "lucide-react";
+import { ArrowRight, Check, Plus, Save, Shield, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Row } from "#/components/Row";
 import { Badge } from "#/components/ui/badge";
@@ -14,9 +15,16 @@ import { Input } from "#/components/ui/input";
 import { Label } from "#/components/ui/label";
 import { Separator } from "#/components/ui/separator";
 import { Skeleton } from "#/components/ui/skeleton";
+import { Spinner } from "#/components/ui/spinner";
 import { Switch } from "#/components/ui/switch";
-import { useConfig, useUpdateConfig, useVersion } from "#/hooks/homelab";
+import {
+	useCheckForUpdates,
+	useConfig,
+	useUpdateConfig,
+	useVersion,
+} from "#/hooks/homelab";
 import { m } from "#/paraglide/messages.js";
+import { useNavigate } from "@tanstack/react-router";
 
 function SettingsCardSkeleton() {
 	return (
@@ -486,6 +494,46 @@ export function BackupTab() {
 
 export function AboutTab() {
 	const versionQuery = useVersion();
+	const navigate = useNavigate();
+	const checkUpdatesMutation = useCheckForUpdates();
+	const [updateStatus, setUpdateStatus] = useState<
+		| { checked: false }
+		| { checked: true; available: false; commit: string }
+		| {
+				checked: true;
+				available: true;
+				current: string;
+				remote: string;
+		  }
+	>({ checked: false });
+
+	const handleChangelogClick = () => {
+		window.open("https://joel-mercier.github.io/mithrandir/changelog.html");
+	};
+
+	const handleCheckUpdates = async () => {
+		try {
+			const result = await checkUpdatesMutation.mutateAsync(undefined);
+			if (result.updateAvailable) {
+				setUpdateStatus({
+					checked: true,
+					available: true,
+					current: result.currentCommit,
+					remote: result.remoteCommit,
+				});
+			} else {
+				setUpdateStatus({
+					checked: true,
+					available: false,
+					commit: result.currentCommit,
+				});
+			}
+		} catch (err) {
+			toast.error(
+				`Failed to check: ${err instanceof Error ? err.message : String(err)}`,
+			);
+		}
+	};
 
 	if (versionQuery.isPending) {
 		return (
@@ -532,14 +580,76 @@ export function AboutTab() {
 			</CardHeader>
 			<CardContent className="space-y-3">
 				<Row label={m.settings_version()}>v{version.version}</Row>
-				<Row label={m.settings_commit()}>{version.gitCommit.slice(0, 7)}</Row>
+				<Row label={m.settings_commit()}>
+					{version.gitCommit.slice(0, 7)}
+				</Row>
 				<Row label={m.settings_buildDate()}>{version.buildDate}</Row>
 				<Separator />
+
+				{/* Update check result */}
+				{updateStatus.checked && (
+					<div
+						className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
+							updateStatus.available
+								? "border-status-warning/30 bg-status-warning/5 text-status-warning"
+								: "border-status-healthy/30 bg-status-healthy/5 text-status-healthy"
+						}`}
+					>
+						{updateStatus.available ? (
+							<>
+								<ArrowRight className="h-3.5 w-3.5" />
+								<span className="font-mono-data text-xs">
+									{m.settings_updateAvailable({
+										current: updateStatus.current,
+										remote: updateStatus.remote,
+									})}
+								</span>
+							</>
+						) : (
+							<>
+								<Check className="h-3.5 w-3.5" />
+								<span className="font-mono-data text-xs">
+									{m.settings_upToDate({
+										commit: updateStatus.commit,
+									})}
+								</span>
+							</>
+						)}
+					</div>
+				)}
+
 				<div className="flex gap-2">
-					<Button variant="outline" size="sm" className="gap-1.5">
-						{m.settings_checkUpdates()}
-					</Button>
-					<Button variant="outline" size="sm" className="gap-1.5">
+					{updateStatus.checked && updateStatus.available ? (
+						<Button
+							size="sm"
+							className="gap-1.5"
+							onClick={() => navigate({ to: "/self-update" })}
+						>
+							<ArrowRight className="h-3.5 w-3.5" />
+							{m.settings_updateNow()}
+						</Button>
+					) : (
+						<Button
+							variant="outline"
+							size="sm"
+							className="gap-1.5"
+							disabled={checkUpdatesMutation.isPending}
+							onClick={handleCheckUpdates}
+						>
+							{checkUpdatesMutation.isPending && (
+								<Spinner size="sm" />
+							)}
+							{checkUpdatesMutation.isPending
+								? m.settings_checking()
+								: m.settings_checkUpdates()}
+						</Button>
+					)}
+					<Button
+						variant="outline"
+						size="sm"
+						className="gap-1.5"
+						onClick={handleChangelogClick}
+					>
 						{m.settings_viewChangelog()}
 					</Button>
 				</div>
