@@ -26,6 +26,14 @@ import { runHealthChecks } from "@mithrandir/cli/lib/health";
 import { shell } from "@mithrandir/cli/lib/shell";
 import { gatherSystemInfo } from "@mithrandir/cli/lib/status";
 import {
+	createRemote,
+	deleteRemote,
+	getRemoteType,
+	isRcloneInstalled,
+	isRemoteReachable,
+	obscurePassword,
+} from "@mithrandir/cli/lib/rclone";
+import {
 	enableUfw,
 	installUfw,
 	installUfwDocker,
@@ -651,5 +659,144 @@ export const disableFirewall = createServerFn({ method: "POST" }).handler(
 			"Disabled UFW firewall",
 			"/settings",
 		);
+	},
+);
+
+// ─── Backup Remotes ───────────────────────────────────────────────────────────
+
+export const checkRcloneInstalled = createServerFn({ method: "GET" }).handler(
+	async (): Promise<boolean> => {
+		await ensureSession();
+		return isRcloneInstalled();
+	},
+);
+
+export const addBackupRemote = createServerFn({ method: "POST" })
+	.inputValidator(
+		(d: {
+			name: string;
+			providerType: string;
+			params: Record<string, string>;
+		}) => d,
+	)
+	.handler(async ({ data }) => {
+		await ensureSession();
+		const { name, providerType, params } = data;
+
+		// Validate remote name
+		if (!/^[a-zA-Z0-9_-]+$/.test(name)) {
+			throw new Error(
+				"Remote name can only contain letters, numbers, hyphens, and underscores",
+			);
+		}
+
+		// For iCloud Drive, obscure the password
+		const finalParams = { ...params };
+		if (providerType === "iclouddrive" && finalParams.password) {
+			finalParams.password = await obscurePassword(finalParams.password);
+		}
+
+		// Filter out empty values
+		const filtered: Record<string, string> = {};
+		for (const [k, v] of Object.entries(finalParams)) {
+			if (v) filtered[k] = v;
+		}
+
+		// Create the rclone remote
+		await createRemote(name, providerType, filtered);
+
+		// Test connectivity
+		const reachable = await isRemoteReachable(name);
+
+		// Add to RCLONE_REMOTES in .env
+		const projectRoot = getProjectRoot();
+		const envConfig = await loadEnvConfig(projectRoot);
+		const backupConfig = getBackupConfig(envConfig);
+		const currentRemotes = backupConfig.RCLONE_REMOTES;
+		if (!currentRemotes.includes(name)) {
+			const newRemotes = [...currentRemotes, name].join(",");
+			envConfig.RCLONE_REMOTES = newRemotes;
+			delete envConfig.RCLONE_REMOTE;
+			await saveEnvConfig(envConfig, projectRoot);
+		}
+
+		await logActivity(
+			"remote_added",
+			"system",
+			null,
+			`Added backup remote '${name}' (${providerType})`,
+			"/settings",
+		);
+
+		return { reachable };
+	});
+
+export const removeBackupRemote = createServerFn({ method: "POST" })
+	.inputValidator(
+		(d: { name: string; deleteFromRclone: boolean }) => d,
+	)
+	.handler(async ({ data }) => {
+		await ensureSession();
+		const { name, deleteFromRclone: shouldDeleteFromRclone } = data;
+		const projectRoot = getProjectRoot();
+		const envConfig = await loadEnvConfig(projectRoot);
+		const backupConfig = getBackupConfig(envConfig);
+
+		// Remove from RCLONE_REMOTES
+		const newRemotes = backupConfig.RCLONE_REMOTES.filter((r) => r !== name);
+		if (newRemotes.length > 0) {
+			envConfig.RCLONE_REMOTES = newRemotes.join(",");
+		} else {
+			delete envConfig.RCLONE_REMOTES;
+		}
+		if (envConfig.RCLONE_REMOTE === name) {
+			delete envConfig.RCLONE_REMOTE;
+		}
+		await saveEnvConfig(envConfig, projectRoot);
+
+		// Optionally remove from rclone.conf
+		if (shouldDeleteFromRclone) {
+			try {
+				await deleteRemote(name);
+			} catch {
+				// Ignore errors deleting from rclone.conf
+			}
+		}
+
+		await logActivity(
+			"remote_removed",
+			"system",
+			null,
+			`Removed backup remote '${name}'`,
+			"/settings",
+		);
+	});
+
+export const fetchRemoteDetails = createServerFn({ method: "GET" }).handler(
+	async (): Promise<
+		{ name: string; type: string | null; reachable: boolean | null }[]
+	> => {
+		await ensureSession();
+		const projectRoot = getProjectRoot();
+		const envConfig = await loadEnvConfig(projectRoot);
+		const backupConfig = getBackupConfig(envConfig);
+		const results: {
+			name: string;
+			type: string | null;
+			reachable: boolean | null;
+		}[] = [];
+
+		for (const name of backupConfig.RCLONE_REMOTES) {
+			const type = await getRemoteType(name);
+			let reachable: boolean | null = null;
+			try {
+				reachable = await isRemoteReachable(name);
+			} catch {
+				reachable = false;
+			}
+			results.push({ name, type, reachable });
+		}
+
+		return results;
 	},
 );

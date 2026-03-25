@@ -37,8 +37,10 @@ import {
 	skipSetup,
 } from "#/lib/server/setup";
 import {
+	addBackupRemote,
 	checkFirewallPrerequisites,
 	checkHttpsPrerequisites,
+	checkRcloneInstalled,
 	disableFirewall,
 	disableHttps,
 	enableFirewall,
@@ -46,9 +48,11 @@ import {
 	fetchConfig,
 	fetchFirewallRules,
 	fetchHealthChecks,
+	fetchRemoteDetails,
 	fetchResources,
 	fetchSystemStatus,
 	fetchVersion,
+	removeBackupRemote,
 	updateConfig,
 } from "#/lib/server/system";
 import {
@@ -360,6 +364,55 @@ export function useDisableFirewall() {
 			});
 			queryClient.invalidateQueries({
 				queryKey: ["homelab", "firewall-rules"],
+			});
+			queryClient.invalidateQueries({ queryKey: keys.activity });
+		},
+	});
+}
+
+// ─── Backup remote hooks ─────────────────────────────────────────────────────
+
+export function useRcloneInstalled() {
+	return useQuery({
+		queryKey: ["homelab", "rclone-installed"],
+		queryFn: () => checkRcloneInstalled(),
+	});
+}
+
+export function useRemoteDetails() {
+	return useQuery({
+		queryKey: ["homelab", "remote-details"],
+		queryFn: () => fetchRemoteDetails(),
+	});
+}
+
+export function useAddBackupRemote() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (params: {
+			name: string;
+			providerType: string;
+			params: Record<string, string>;
+		}) => addBackupRemote({ data: params }),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: keys.config });
+			queryClient.invalidateQueries({
+				queryKey: ["homelab", "remote-details"],
+			});
+			queryClient.invalidateQueries({ queryKey: keys.activity });
+		},
+	});
+}
+
+export function useRemoveBackupRemote() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (params: { name: string; deleteFromRclone: boolean }) =>
+			removeBackupRemote({ data: params }),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: keys.config });
+			queryClient.invalidateQueries({
+				queryKey: ["homelab", "remote-details"],
 			});
 			queryClient.invalidateQueries({ queryKey: keys.activity });
 		},

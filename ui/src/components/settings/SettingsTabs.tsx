@@ -20,13 +20,30 @@ import {
 	CardHeader,
 	CardTitle,
 } from "#/components/ui/card";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "#/components/ui/dialog";
 import { Input } from "#/components/ui/input";
 import { Label } from "#/components/ui/label";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "#/components/ui/select";
 import { Separator } from "#/components/ui/separator";
 import { Skeleton } from "#/components/ui/skeleton";
 import { Spinner } from "#/components/ui/spinner";
 import { Switch } from "#/components/ui/switch";
 import {
+	useAddBackupRemote,
 	useCheckForUpdates,
 	useConfig,
 	useDisableFirewall,
@@ -36,6 +53,8 @@ import {
 	useFirewallPrerequisites,
 	useFirewallRules,
 	useHttpsPrerequisites,
+	useRcloneInstalled,
+	useRemoveBackupRemote,
 	useUpdateConfig,
 	useVersion,
 } from "#/hooks/homelab";
@@ -445,6 +464,385 @@ function FirewallCard({ config }: { config: SystemConfig }) {
 	);
 }
 
+// ─── Provider definitions (mirrors CLI backup-remote.tsx) ─────────────────────
+
+interface ProviderField {
+	key: string;
+	label: string;
+	sensitive?: boolean;
+	defaultValue?: string;
+	required?: boolean;
+}
+
+interface Provider {
+	name: string;
+	rcloneType: string;
+	defaultRemoteName: string;
+	fields: ProviderField[];
+	oauth?: boolean;
+	notes?: string[];
+}
+
+const PROVIDERS: Provider[] = [
+	{
+		name: "Google Drive",
+		rcloneType: "drive",
+		defaultRemoteName: "gdrive",
+		oauth: true,
+		fields: [
+			{ key: "client_id", label: "Client ID", required: true },
+			{ key: "client_secret", label: "Client secret", sensitive: true, required: true },
+			{ key: "token", label: "OAuth token (JSON)", sensitive: true, required: true },
+		],
+		notes: [
+			"Get a client ID: https://rclone.org/drive/#making-your-own-client-id",
+			"Run on a machine with a browser: rclone authorize \"drive\" \"<client_id>\" \"<client_secret>\"",
+		],
+	},
+	{
+		name: "SFTP",
+		rcloneType: "sftp",
+		defaultRemoteName: "my-sftp",
+		fields: [
+			{ key: "host", label: "Hostname or IP", required: true },
+			{ key: "user", label: "SSH username", required: true },
+			{ key: "port", label: "SSH port", defaultValue: "22" },
+			{ key: "key_file", label: "SSH private key path" },
+			{ key: "pass", label: "SSH password", sensitive: true },
+		],
+	},
+	{
+		name: "S3",
+		rcloneType: "s3",
+		defaultRemoteName: "my-s3",
+		fields: [
+			{ key: "provider", label: "S3 provider", required: true, defaultValue: "AWS" },
+			{ key: "access_key_id", label: "Access key ID", required: true },
+			{ key: "secret_access_key", label: "Secret access key", sensitive: true, required: true },
+			{ key: "region", label: "Region", defaultValue: "us-east-1" },
+			{ key: "endpoint", label: "Endpoint URL (non-AWS)" },
+		],
+	},
+	{
+		name: "Dropbox",
+		rcloneType: "dropbox",
+		defaultRemoteName: "my-dropbox",
+		oauth: true,
+		fields: [
+			{ key: "client_id", label: "App key", required: true },
+			{ key: "client_secret", label: "App secret", sensitive: true, required: true },
+			{ key: "token", label: "OAuth token (JSON)", sensitive: true, required: true },
+		],
+		notes: [
+			"Create an app at: https://www.dropbox.com/developers/apps",
+			"Run on a machine with a browser: rclone authorize \"dropbox\" \"<client_id>\" \"<client_secret>\"",
+		],
+	},
+	{
+		name: "OneDrive",
+		rcloneType: "onedrive",
+		defaultRemoteName: "my-onedrive",
+		oauth: true,
+		fields: [
+			{ key: "client_id", label: "Application (client) ID", required: true },
+			{ key: "client_secret", label: "Client secret", sensitive: true, required: true },
+			{ key: "token", label: "OAuth token (JSON)", sensitive: true, required: true },
+		],
+		notes: [
+			"Register an app at: https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps",
+			"Run on a machine with a browser: rclone authorize \"onedrive\" \"<client_id>\" \"<client_secret>\"",
+		],
+	},
+	{
+		name: "iCloud Drive",
+		rcloneType: "iclouddrive",
+		defaultRemoteName: "my-icloud",
+		fields: [
+			{ key: "apple_id", label: "Apple ID (email)", required: true },
+			{ key: "password", label: "App-specific password", sensitive: true, required: true },
+		],
+		notes: [
+			"Experimental: iCloud Drive support is experimental in rclone.",
+			"Generate an app-specific password at: https://appleid.apple.com",
+		],
+	},
+];
+
+// ─── Add Remote Dialog ────────────────────────────────────────────────────────
+
+function AddRemoteDialog({ onSuccess }: { onSuccess?: () => void }) {
+	const [open, setOpen] = useState(false);
+	const [selectedProvider, setSelectedProvider] = useState<string>("");
+	const [remoteName, setRemoteName] = useState("");
+	const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
+	const addRemoteMutation = useAddBackupRemote();
+
+	const provider = PROVIDERS.find((p) => p.rcloneType === selectedProvider);
+
+	const handleProviderChange = (value: string) => {
+		setSelectedProvider(value);
+		const p = PROVIDERS.find((pv) => pv.rcloneType === value);
+		if (p) {
+			setRemoteName(p.defaultRemoteName);
+			const defaults: Record<string, string> = {};
+			for (const f of p.fields) {
+				if (f.defaultValue) defaults[f.key] = f.defaultValue;
+			}
+			setFieldValues(defaults);
+		}
+	};
+
+	const handleFieldChange = (key: string, value: string) => {
+		setFieldValues((prev) => ({ ...prev, [key]: value }));
+	};
+
+	const handleReset = () => {
+		setSelectedProvider("");
+		setRemoteName("");
+		setFieldValues({});
+	};
+
+	const nameValid = /^[a-zA-Z0-9_-]+$/.test(remoteName);
+	const requiredFieldsFilled =
+		provider?.fields
+			.filter((f) => f.required)
+			.every((f) => fieldValues[f.key]?.trim()) ?? false;
+	const canSubmit =
+		!!provider && nameValid && requiredFieldsFilled && !addRemoteMutation.isPending;
+
+	const handleSubmit = () => {
+		if (!provider || !canSubmit) return;
+		addRemoteMutation.mutate(
+			{ name: remoteName, providerType: provider.rcloneType, params: fieldValues },
+			{
+				onSuccess: (result) => {
+					if (result.reachable) {
+						toast.success(m.settings_remoteCreated());
+					} else {
+						toast.warning(m.settings_remoteCreatedUnreachable());
+					}
+					setOpen(false);
+					handleReset();
+					onSuccess?.();
+				},
+				onError: (err) => toast.error(`Failed to add remote: ${err.message}`),
+			},
+		);
+	};
+
+	return (
+		<Dialog
+			open={open}
+			onOpenChange={(v) => {
+				setOpen(v);
+				if (!v) handleReset();
+			}}
+		>
+			<DialogTrigger asChild>
+				<Button variant="outline" size="sm" className="w-full gap-1.5">
+					<Plus className="h-3.5 w-3.5" />
+					{m.settings_addRemote()}
+				</Button>
+			</DialogTrigger>
+			<DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+				<DialogHeader>
+					<DialogTitle>{m.settings_addRemoteTitle()}</DialogTitle>
+					<DialogDescription>{m.settings_addRemoteDesc()}</DialogDescription>
+				</DialogHeader>
+				<div className="space-y-4">
+					{/* Provider select */}
+					<div className="space-y-2">
+						<Label>{m.settings_remoteProvider()}</Label>
+						<Select value={selectedProvider} onValueChange={handleProviderChange}>
+							<SelectTrigger>
+								<SelectValue placeholder="Select a provider..." />
+							</SelectTrigger>
+							<SelectContent>
+								{PROVIDERS.map((p) => (
+									<SelectItem key={p.rcloneType} value={p.rcloneType}>
+										{p.name}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+					</div>
+
+					{provider && (
+						<>
+							{/* Provider notes */}
+							{provider.notes && (
+								<div className="space-y-1 rounded-lg border border-border/50 bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+									{provider.notes.map((note) => (
+										<p key={note}>{note}</p>
+									))}
+								</div>
+							)}
+
+							{/* Remote name */}
+							<div className="space-y-2">
+								<Label>{m.settings_remoteName()}</Label>
+								<Input
+									value={remoteName}
+									onChange={(e) => setRemoteName(e.target.value)}
+									className="font-mono-data"
+								/>
+								<p className="text-xs text-muted-foreground">
+									{m.settings_remoteNameDesc()}
+								</p>
+							</div>
+
+							{/* Dynamic fields */}
+							{provider.fields.map((field) => (
+								<div key={field.key} className="space-y-2">
+									<Label>
+										{field.label}
+										{field.required && (
+											<span className="ml-1 text-status-critical">*</span>
+										)}
+									</Label>
+									<Input
+										type={field.sensitive ? "password" : "text"}
+										value={fieldValues[field.key] ?? ""}
+										onChange={(e) => handleFieldChange(field.key, e.target.value)}
+										placeholder={field.defaultValue}
+										className="font-mono-data"
+									/>
+								</div>
+							))}
+						</>
+					)}
+				</div>
+				<DialogFooter>
+					<Button
+						disabled={!canSubmit}
+						onClick={handleSubmit}
+						className="gap-2"
+					>
+						{addRemoteMutation.isPending && <Spinner size="sm" />}
+						{addRemoteMutation.isPending
+							? m.settings_remoteCreating()
+							: m.settings_addRemote()}
+					</Button>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
+	);
+}
+
+// ─── Encryption & Remotes Card ────────────────────────────────────────────────
+
+function EncryptionRemotesCard({ config }: { config: SystemConfig }) {
+	const rcloneQuery = useRcloneInstalled();
+	const removeRemoteMutation = useRemoveBackupRemote();
+	const rcloneInstalled = rcloneQuery.data ?? true; // default to true while loading
+
+	const handleRemoveRemote = (name: string) => {
+		if (!confirm(m.settings_removeRemoteConfirm({ name }))) return;
+		removeRemoteMutation.mutate(
+			{ name, deleteFromRclone: true },
+			{
+				onSuccess: () => toast.success(m.settings_remoteRemoved()),
+				onError: (err) => toast.error(`Failed to remove: ${err.message}`),
+			},
+		);
+	};
+
+	return (
+		<Card>
+			<CardHeader>
+				<CardTitle className="text-sm font-medium">
+					{m.settings_encryptionRemotes()}
+				</CardTitle>
+				<CardDescription>
+					{m.settings_encryptionRemotesDesc()}
+				</CardDescription>
+			</CardHeader>
+			<CardContent className="space-y-4">
+				{/* rclone not installed warning */}
+				{rcloneQuery.isSuccess && !rcloneInstalled && (
+					<div className="flex items-start gap-2 rounded-lg border border-status-warning/30 bg-status-warning/5 px-3 py-2 text-sm text-status-warning">
+						<AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+						<p>{m.settings_rcloneNotInstalled()}</p>
+					</div>
+				)}
+
+				<div className="flex items-center justify-between rounded-lg border border-border/50 p-3 transition-colors hover:bg-muted/50">
+					<div className="space-y-0.5">
+						<Label>{m.settings_encryption()}</Label>
+						<p className="text-xs text-muted-foreground">
+							{m.settings_encryptionDesc()}
+						</p>
+					</div>
+					<Badge
+						variant="outline"
+						className={
+							config.backupPassword
+								? "border-status-healthy/30 bg-status-healthy/15 text-status-healthy"
+								: ""
+						}
+					>
+						<Shield className="mr-1 h-3 w-3" />
+						{config.backupPassword ? m.common_enabled() : m.common_disabled()}
+					</Badge>
+				</div>
+				<Separator />
+				<div className="space-y-3">
+					<p className="text-sm font-medium">
+						{m.settings_configuredRemotes()}
+					</p>
+					{config.remotes.length > 0 ? (
+						<div className="space-y-2">
+							{config.remotes.map((remote) => (
+								<div
+									key={remote}
+									className="group flex items-center justify-between rounded-lg border border-border/50 px-3 py-2.5 transition-colors hover:bg-muted/50"
+								>
+									<div className="flex items-center gap-2">
+										<span className="font-mono-data text-sm">{remote}</span>
+										<Badge variant="outline" className="text-xs">
+											rclone
+										</Badge>
+									</div>
+									<Button
+										variant="ghost"
+										size="icon-xs"
+										className="opacity-0 transition-opacity group-hover:opacity-100"
+										disabled={removeRemoteMutation.isPending}
+										onClick={() => handleRemoveRemote(remote)}
+									>
+										{removeRemoteMutation.isPending ? (
+											<Spinner size="sm" />
+										) : (
+											<Trash2 className="h-3 w-3 text-muted-foreground" />
+										)}
+									</Button>
+								</div>
+							))}
+						</div>
+					) : (
+						<p className="text-sm text-muted-foreground">
+							{m.settings_noRemotes()}
+						</p>
+					)}
+					{rcloneInstalled ? (
+						<AddRemoteDialog />
+					) : (
+						<Button
+							variant="outline"
+							size="sm"
+							className="w-full gap-1.5"
+							disabled
+						>
+							<Plus className="h-3.5 w-3.5" />
+							{m.settings_addRemote()}
+						</Button>
+					)}
+				</div>
+			</CardContent>
+		</Card>
+	);
+}
+
 export function BackupTab() {
 	const configQuery = useConfig();
 	const config = configQuery.data;
@@ -562,75 +960,7 @@ export function BackupTab() {
 				</CardContent>
 			</Card>
 
-			<Card>
-				<CardHeader>
-					<CardTitle className="text-sm font-medium">
-						{m.settings_encryptionRemotes()}
-					</CardTitle>
-					<CardDescription>
-						{m.settings_encryptionRemotesDesc()}
-					</CardDescription>
-				</CardHeader>
-				<CardContent className="space-y-4">
-					<div className="flex items-center justify-between rounded-lg border border-border/50 p-3 transition-colors hover:bg-muted/50">
-						<div className="space-y-0.5">
-							<Label>{m.settings_encryption()}</Label>
-							<p className="text-xs text-muted-foreground">
-								{m.settings_encryptionDesc()}
-							</p>
-						</div>
-						<Badge
-							variant="outline"
-							className={
-								config.backupPassword
-									? "border-status-healthy/30 bg-status-healthy/15 text-status-healthy"
-									: ""
-							}
-						>
-							<Shield className="mr-1 h-3 w-3" />
-							{config.backupPassword ? m.common_enabled() : m.common_disabled()}
-						</Badge>
-					</div>
-					<Separator />
-					<div className="space-y-3">
-						<p className="text-sm font-medium">
-							{m.settings_configuredRemotes()}
-						</p>
-						{config.remotes.length > 0 ? (
-							<div className="space-y-2">
-								{config.remotes.map((remote) => (
-									<div
-										key={remote}
-										className="group flex items-center justify-between rounded-lg border border-border/50 px-3 py-2.5 transition-colors hover:bg-muted/50"
-									>
-										<div className="flex items-center gap-2">
-											<span className="font-mono-data text-sm">{remote}</span>
-											<Badge variant="outline" className="text-xs">
-												rclone
-											</Badge>
-										</div>
-										<Button
-											variant="ghost"
-											size="icon-xs"
-											className="opacity-0 transition-opacity group-hover:opacity-100"
-										>
-											<Trash2 className="h-3 w-3 text-muted-foreground" />
-										</Button>
-									</div>
-								))}
-							</div>
-						) : (
-							<p className="text-sm text-muted-foreground">
-								{m.settings_noRemotes()}
-							</p>
-						)}
-						<Button variant="outline" size="sm" className="w-full gap-1.5">
-							<Plus className="h-3.5 w-3.5" />
-							{m.settings_addRemote()}
-						</Button>
-					</div>
-				</CardContent>
-			</Card>
+			<EncryptionRemotesCard config={config} />
 		</div>
 	);
 }
