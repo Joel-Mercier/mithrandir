@@ -85,9 +85,10 @@ if [[ ! -L /usr/local/bin/bun ]]; then
   sudo ln -sf "$BUN_INSTALL/bin/bunx" /usr/local/bin/bunx
 fi
 
-# Ensure project dir is writable by the real user
+# Ensure project dir is writable by the real user (skip node_modules and .git
+# which are large, full of symlinks, and already have correct ownership)
 if [[ "$REAL_USER" != "root" ]]; then
-  sudo chown -R "$REAL_USER:" "$SCRIPT_DIR"
+  find "$SCRIPT_DIR" \( -name node_modules -o -name .git -o -name .claude \) -prune -o -exec chown -h "$REAL_USER:" {} +
 fi
 
 # Install Node dependencies (as real user)
@@ -97,6 +98,7 @@ sudo -u "$REAL_USER" "$BUN_INSTALL/bin/bun" install
 
 # Build the CLI bundle (as real user)
 mkdir -p "$SCRIPT_DIR/cli/dist"
+chown "$REAL_USER:" "$SCRIPT_DIR/cli/dist"
 log "Building CLI..."
 sudo -u "$REAL_USER" "$BUN_INSTALL/bin/bun" run cli:build
 
@@ -109,8 +111,7 @@ log "Building UI..."
 sudo -u "$REAL_USER" "$BUN_INSTALL/bin/bun" run ui:build
 
 # Create UI data directory
-mkdir -p "$SCRIPT_DIR/ui/data"
-chown "$REAL_USER:" "$SCRIPT_DIR/ui/data"
+sudo -u "$REAL_USER" mkdir -p "$SCRIPT_DIR/ui/data"
 
 # Write default ui/.env.local if not exists
 if [[ ! -f "$SCRIPT_DIR/ui/.env.local" ]]; then
