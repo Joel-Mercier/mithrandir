@@ -37,7 +37,7 @@ describe("generateUiServiceUnit", () => {
   });
 
   test("loads env files", () => {
-    expect(unit).toContain("EnvironmentFile=/home/user/homelab/.env");
+    expect(unit).toContain("EnvironmentFile=-/home/user/homelab/.env");
     expect(unit).toContain("EnvironmentFile=/home/user/homelab/ui/.env.local");
   });
 

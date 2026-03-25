@@ -15,7 +15,7 @@ Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin"
 Environment="NODE_ENV=production"
 Environment="PORT=4180"
 Environment="HOME=/home/user"
-EnvironmentFile=/home/user/homelab/.env
+EnvironmentFile=-/home/user/homelab/.env
 EnvironmentFile=/home/user/homelab/ui/.env.local
 Restart=on-failure
 RestartSec=5

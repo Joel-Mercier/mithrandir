@@ -37,7 +37,7 @@ Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin"
 Environment="NODE_ENV=production"
 Environment="PORT=4180"
 Environment="HOME=${ownerHome}"
-EnvironmentFile=${repoRoot}/.env
+EnvironmentFile=-${repoRoot}/.env
 EnvironmentFile=${repoRoot}/ui/.env.local
 Restart=on-failure
 RestartSec=5
