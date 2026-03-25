@@ -172,6 +172,9 @@ function AppDetailPage() {
 			{/* Header */}
 			<div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 				<div className="flex items-center gap-3">
+					{app.icon && (
+						<img src={app.icon} alt="" className="h-8 w-8 rounded" />
+					)}
 					<h1 className="font-display text-2xl font-bold tracking-tight">
 						{app.displayName}
 					</h1>

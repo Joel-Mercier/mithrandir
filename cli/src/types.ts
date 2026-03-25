@@ -9,6 +9,8 @@ export interface AppDefinition {
   description: string;
   /** Docker image reference */
   image: string;
+  /** Icon URL for UI display */
+  icon?: string;
   /** Container name (defaults to `name` if not set) */
   containerName?: string;
   /** WebUI port (host-side), null for background services like duckdns */

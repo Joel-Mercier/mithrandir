@@ -72,14 +72,15 @@ export function AppSelectStep({
 
 	const allApps = useMemo(() => {
 		if (!registry)
-			return {} as Record<string, { displayName: string; description: string }>;
-		const result: Record<string, { displayName: string; description: string }> =
+			return {} as Record<string, { displayName: string; description: string; icon?: string }>;
+		const result: Record<string, { displayName: string; description: string; icon?: string }> =
 			{};
 		for (const app of registry.apps) {
 			if (app.hidden) continue;
 			result[app.name] = {
 				displayName: app.displayName,
 				description: app.description,
+				icon: app.icon,
 			};
 		}
 		return result;
@@ -251,6 +252,9 @@ export function AppSelectStep({
 											onClick={(e) => e.stopPropagation()}
 											onCheckedChange={() => toggleApp(name)}
 										/>
+										{app.icon && (
+											<img src={app.icon} alt="" className="h-5 w-5 shrink-0 rounded" />
+										)}
 										<div className="min-w-0">
 											<p className="text-sm font-medium leading-tight">
 												{app.displayName}

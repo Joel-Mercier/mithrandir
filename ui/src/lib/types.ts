@@ -24,6 +24,7 @@ export interface DashboardApp {
 	status: AppStatus;
 	category: AppCategory;
 	uptime: string;
+	icon?: string;
 	hidden?: boolean;
 	website?: string;
 	github?: string;

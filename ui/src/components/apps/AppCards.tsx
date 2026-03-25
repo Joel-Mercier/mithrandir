@@ -25,6 +25,9 @@ export function AppListCard({ app }: { app: DashboardApp }) {
 						<span
 							className={`inline-block h-2 w-2 rounded-full ${statusDot[app.status]}`}
 						/>
+						{app.icon && (
+							<img src={app.icon} alt="" className="h-5 w-5 shrink-0 rounded" />
+						)}
 						<CardTitle className="text-sm font-medium">
 							{app.displayName}
 						</CardTitle>
@@ -62,6 +65,9 @@ export function AvailableAppCard({ app }: { app: DashboardApp }) {
 				<CardHeader className="flex flex-row items-center justify-between pb-2">
 					<div className="flex items-center gap-2">
 						<span className="inline-block h-2 w-2 rounded-full border border-dashed border-muted-foreground" />
+						{app.icon && (
+							<img src={app.icon} alt="" className="h-5 w-5 shrink-0 rounded opacity-50" />
+						)}
 						<CardTitle className="text-sm font-medium text-muted-foreground">
 							{app.displayName}
 						</CardTitle>

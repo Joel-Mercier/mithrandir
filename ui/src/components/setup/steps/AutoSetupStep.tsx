@@ -37,6 +37,7 @@ interface AppPrompt {
 interface AutoSetupApp {
 	name: string;
 	displayName: string;
+	icon?: string;
 	prompts: AppPrompt[];
 }
 
@@ -56,6 +57,7 @@ const AUTO_SETUP_APP_NAMES = [
 const AUTO_SETUP_APPS: AutoSetupApp[] = [
 	{
 		name: "qbittorrent",
+		icon: "https://cdn.jsdelivr.net/gh/selfhst/icons/png/qbittorrent.png",
 		displayName: "qBittorrent",
 		prompts: [
 			{
@@ -82,6 +84,7 @@ const AUTO_SETUP_APPS: AutoSetupApp[] = [
 	},
 	{
 		name: "prowlarr",
+		icon: "https://cdn.jsdelivr.net/gh/selfhst/icons/png/prowlarr.png",
 		displayName: "Prowlarr",
 		prompts: [
 			{
@@ -101,6 +104,7 @@ const AUTO_SETUP_APPS: AutoSetupApp[] = [
 	},
 	{
 		name: "radarr",
+		icon: "https://cdn.jsdelivr.net/gh/selfhst/icons/png/radarr.png",
 		displayName: "Radarr",
 		prompts: [
 			{
@@ -127,6 +131,7 @@ const AUTO_SETUP_APPS: AutoSetupApp[] = [
 	},
 	{
 		name: "sonarr",
+		icon: "https://cdn.jsdelivr.net/gh/selfhst/icons/png/sonarr.png",
 		displayName: "Sonarr",
 		prompts: [
 			{
@@ -153,6 +158,7 @@ const AUTO_SETUP_APPS: AutoSetupApp[] = [
 	},
 	{
 		name: "lidarr",
+		icon: "https://cdn.jsdelivr.net/gh/selfhst/icons/png/lidarr.png",
 		displayName: "Lidarr",
 		prompts: [
 			{
@@ -179,6 +185,7 @@ const AUTO_SETUP_APPS: AutoSetupApp[] = [
 	},
 	{
 		name: "jellyfin",
+		icon: "https://cdn.jsdelivr.net/gh/selfhst/icons/png/jellyfin.png",
 		displayName: "Jellyfin",
 		prompts: [
 			{
@@ -198,6 +205,7 @@ const AUTO_SETUP_APPS: AutoSetupApp[] = [
 	},
 	{
 		name: "jellyseerr",
+		icon: "https://cdn.jsdelivr.net/gh/selfhst/icons/png/jellyseerr.png",
 		displayName: "Jellyseerr",
 		prompts: [
 			{
@@ -216,6 +224,7 @@ const AUTO_SETUP_APPS: AutoSetupApp[] = [
 	},
 	{
 		name: "gatus",
+		icon: "https://cdn.jsdelivr.net/gh/selfhst/icons/png/gatus.png",
 		displayName: "Gatus",
 		prompts: [],
 	},
@@ -527,9 +536,14 @@ export function AutoSetupStep({
 						className="mt-6 animate-in fade-in-0 duration-200"
 					>
 						<CardHeader className="pb-3">
-							<h3 className="text-base font-semibold">
-								{currentApp.displayName}
-							</h3>
+							<div className="flex items-center gap-2">
+								{currentApp.icon && (
+									<img src={currentApp.icon} alt="" className="h-5 w-5 shrink-0 rounded" />
+								)}
+								<h3 className="text-base font-semibold">
+									{currentApp.displayName}
+								</h3>
+							</div>
 							<p className="text-xs text-muted-foreground">
 								{m.autoSetup_configureFor({ appName: currentApp.displayName })}
 							</p>
@@ -606,7 +620,10 @@ export function AutoSetupStep({
 									<div className="h-2 w-2 rounded-full bg-muted-foreground/30" />
 								)}
 							</div>
-							<div className="min-w-0 flex-1">
+							{setupApps.find((s) => s.name === app.name)?.icon && (
+							<img src={setupApps.find((s) => s.name === app.name)!.icon} alt="" className="h-5 w-5 shrink-0 rounded" />
+						)}
+						<div className="min-w-0 flex-1">
 								<p className="text-sm font-medium">{app.displayName}</p>
 								{app.status === "configuring" && (
 									<p className="text-xs text-muted-foreground">
@@ -655,7 +672,10 @@ export function AutoSetupStep({
 										<AlertTriangle className="h-4 w-4 text-status-warning" />
 									)}
 								</div>
-								<div className="min-w-0 flex-1">
+								{setupApps.find((s) => s.name === app.name)?.icon && (
+								<img src={setupApps.find((s) => s.name === app.name)!.icon} alt="" className="h-5 w-5 shrink-0 rounded" />
+							)}
+							<div className="min-w-0 flex-1">
 									<p className="text-sm font-medium">{app.displayName}</p>
 									{app.warning && (
 										<p className="text-xs text-status-warning">{app.warning}</p>

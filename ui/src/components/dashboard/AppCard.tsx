@@ -18,6 +18,9 @@ export default function AppCard({ app }: { app: DashboardApp }) {
 					<span
 						className={`mt-1.5 inline-block h-2 w-2 shrink-0 rounded-full ${statusDot[app.status]}`}
 					/>
+					{app.icon && (
+						<img src={app.icon} alt="" className="mt-0.5 h-5 w-5 shrink-0 rounded" />
+					)}
 					<div className="min-w-0 flex-1">
 						<div className="flex items-center gap-2">
 							<span className="font-medium text-sm">{app.displayName}</span>

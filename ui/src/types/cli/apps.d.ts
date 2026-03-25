@@ -3,6 +3,7 @@ export interface AppDefinition {
 	displayName: string;
 	description: string;
 	image: string;
+	icon?: string;
 	containerName?: string;
 	port: number | null;
 	containerPort?: number;

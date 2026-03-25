@@ -59,11 +59,13 @@ export function InstallStep({
 	const installRef = useRef(installMutation);
 	installRef.current = installMutation;
 
-	// Build display name lookup from registry data
+	// Build display name and icon lookup from registry data
 	const displayNames = useRef<Record<string, string>>({});
+	const appIcons = useRef<Record<string, string>>({});
 	if (registryData?.apps) {
 		for (const app of registryData.apps) {
 			displayNames.current[app.name] = app.displayName;
+			if (app.icon) appIcons.current[app.name] = app.icon;
 		}
 	}
 
@@ -208,7 +210,10 @@ export function InstallStep({
 							)}
 						</div>
 
-						{/* App info */}
+						{/* App icon + info */}
+						{appIcons.current[app.name] && (
+							<img src={appIcons.current[app.name]} alt="" className="h-5 w-5 shrink-0 rounded" />
+						)}
 						<div className="min-w-0 flex-1">
 							<div className="flex items-baseline justify-between">
 								<p className="text-sm font-medium">{app.displayName}</p>

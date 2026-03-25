@@ -100,6 +100,7 @@ export interface AppRegistryEntry {
 	name: string;
 	displayName: string;
 	description: string;
+	icon?: string;
 	port: number | null;
 	category: string;
 	hidden: boolean;
@@ -255,6 +256,7 @@ export const fetchAppRegistry = createServerFn({ method: "GET" }).handler(
 			name: app.name,
 			displayName: app.displayName,
 			description: app.description,
+			icon: app.icon,
 			port: app.port,
 			category: findCategory(app.name),
 			hidden: app.hidden ?? false,
