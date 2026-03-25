@@ -116,9 +116,12 @@ sudo -u "$REAL_USER" mkdir -p "$SCRIPT_DIR/ui/data"
 # Write default ui/.env.local if not exists
 if [[ ! -f "$SCRIPT_DIR/ui/.env.local" ]]; then
   SECRET=$(openssl rand -hex 32)
+  # Detect LAN IP so the UI is accessible from other machines on the network
+  LAN_IP=$(hostname -I 2>/dev/null | awk '{print $1}')
+  AUTH_HOST="${LAN_IP:-localhost}"
   cat > "$SCRIPT_DIR/ui/.env.local" <<UIENV
 BETTER_AUTH_SECRET=$SECRET
-BETTER_AUTH_URL=http://localhost:4180
+BETTER_AUTH_URL=http://${AUTH_HOST}:4180
 DB_FILE_NAME=file:$SCRIPT_DIR/ui/data/local.db
 UIENV
   chown "$REAL_USER:" "$SCRIPT_DIR/ui/.env.local"
