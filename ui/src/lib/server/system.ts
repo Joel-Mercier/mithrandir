@@ -1,18 +1,37 @@
-import { getDuckDnsDomain } from "@mithrandir/cli/lib/caddy";
+import {
+	APP_REGISTRY,
+	getApp,
+	getAppDir,
+	getComposePath,
+} from "@mithrandir/cli/lib/apps";
+import {
+	generate404Page,
+	generateCaddyDockerfile,
+	generateCaddyfile,
+	getDuckDnsDomain,
+} from "@mithrandir/cli/lib/caddy";
+import { generateCompose } from "@mithrandir/cli/lib/compose";
 import {
 	getBackupConfig,
 	loadEnvConfig,
 	saveEnvConfig,
 } from "@mithrandir/cli/lib/config";
+import { getLocalIp } from "@mithrandir/cli/lib/distro";
+import {
+	composeDown,
+	composeUp,
+	isContainerRunning,
+} from "@mithrandir/cli/lib/docker";
 import { runHealthChecks } from "@mithrandir/cli/lib/health";
 import { shell } from "@mithrandir/cli/lib/shell";
 import { gatherSystemInfo } from "@mithrandir/cli/lib/status";
 import { createServerFn } from "@tanstack/react-start";
-import { readFileSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import { resolve } from "path";
 import { ensureSession } from "#/lib/auth";
 import type {
 	HealthStatus,
+	HttpsPrerequisites,
 	SystemConfig,
 	SystemResources,
 	VersionInfo,
@@ -262,3 +281,228 @@ export const updateConfig = createServerFn({ method: "POST" })
 			"/settings",
 		);
 	});
+
+// ─── HTTPS ───────────────────────────────────────────────────────────────────
+
+export const checkHttpsPrerequisites = createServerFn({
+	method: "GET",
+}).handler(async (): Promise<HttpsPrerequisites> => {
+	await ensureSession();
+	const projectRoot = getProjectRoot();
+	const envConfig = await loadEnvConfig(projectRoot);
+
+	const duckdnsConfigured = !!(
+		envConfig.DUCKDNS_TOKEN && envConfig.DUCKDNS_SUBDOMAINS
+	);
+
+	const duckdnsApp = getApp("duckdns");
+	const duckdnsInstalled = duckdnsApp
+		? existsSync(getComposePath(duckdnsApp, envConfig.BASE_DIR))
+		: false;
+
+	const duckdnsRunning = duckdnsInstalled
+		? await isContainerRunning("duckdns")
+		: false;
+
+	const domain = getDuckDnsDomain(envConfig);
+
+	return {
+		duckdnsConfigured,
+		duckdnsInstalled,
+		duckdnsRunning,
+		domain,
+		ready: duckdnsConfigured && duckdnsInstalled && duckdnsRunning && !!domain,
+	};
+});
+
+export const enableHttps = createServerFn({ method: "POST" })
+	.inputValidator((d: { acmeEmail: string }) => d)
+	.handler(async ({ data }) => {
+		await ensureSession();
+		const { acmeEmail } = data;
+		const projectRoot = getProjectRoot();
+		const envConfig = await loadEnvConfig(projectRoot);
+
+		// Validate prerequisites
+		if (!envConfig.DUCKDNS_TOKEN || !envConfig.DUCKDNS_SUBDOMAINS) {
+			throw new Error("DuckDNS is not configured");
+		}
+		const domain = getDuckDnsDomain(envConfig);
+		if (!domain) {
+			throw new Error("Could not derive domain from DUCKDNS_SUBDOMAINS");
+		}
+
+		const caddyApp = getApp("caddy");
+		if (!caddyApp) throw new Error("Caddy app not found in registry");
+
+		const baseDir = envConfig.BASE_DIR;
+		const caddyDir = getAppDir(caddyApp, baseDir);
+
+		// Save config
+		envConfig.ACME_EMAIL = acmeEmail;
+		envConfig.ENABLE_HTTPS = "true";
+
+		// Create directories
+		await shell("mkdir", ["-p", caddyDir], { sudo: true });
+		await shell("mkdir", ["-p", `${caddyDir}/config`], { sudo: true });
+		await shell("mkdir", ["-p", `${caddyDir}/data`], { sudo: true });
+		await shell("mkdir", ["-p", `${caddyDir}/srv`], { sudo: true });
+
+		// Build Caddy Docker image with DuckDNS module
+		const dockerfile = generateCaddyDockerfile();
+		await shell(
+			"bash",
+			[
+				"-c",
+				`cat > "${caddyDir}/Dockerfile" << 'DOCKERFILE_EOF'\n${dockerfile}DOCKERFILE_EOF`,
+			],
+			{ sudo: true },
+		);
+		await shell(
+			"docker",
+			[
+				"build",
+				"-t",
+				"mithrandir/caddy-duckdns:latest",
+				"-f",
+				`${caddyDir}/Dockerfile`,
+				caddyDir,
+			],
+			{ sudo: true, timeout: 300000 },
+		);
+
+		// Generate Caddyfile from all installed apps
+		const installedApps = APP_REGISTRY.filter((app) =>
+			existsSync(getComposePath(app, baseDir)),
+		);
+		const caddyfile = generateCaddyfile(installedApps, envConfig);
+		const page404 = generate404Page(installedApps, envConfig);
+		await shell(
+			"bash",
+			[
+				"-c",
+				`cat > "${caddyDir}/Caddyfile" << 'CADDY_EOF'\n${caddyfile}CADDY_EOF`,
+			],
+			{ sudo: true },
+		);
+		await shell(
+			"bash",
+			[
+				"-c",
+				`cat > "${caddyDir}/srv/404.html" << 'HTML_EOF'\n${page404}HTML_EOF`,
+			],
+			{ sudo: true },
+		);
+
+		// Generate compose and start Caddy
+		const compose = caddyApp.rawCompose!(envConfig as Record<string, string>);
+		const composePath = getComposePath(caddyApp, baseDir);
+		await shell(
+			"bash",
+			[
+				"-c",
+				`cat > "${composePath}" << 'COMPOSE_EOF'\n${compose}COMPOSE_EOF`,
+			],
+			{ sudo: true },
+		);
+		await composeDown(composePath).catch(() => {});
+		await composeUp(composePath);
+
+		// Handle Pi-hole if installed (port conflict + wildcard DNS)
+		const piholeApp = getApp("pihole");
+		if (piholeApp) {
+			const piholeCompose = getComposePath(piholeApp, baseDir);
+			if (existsSync(piholeCompose)) {
+				const piholeComposeContent = generateCompose(
+					piholeApp,
+					envConfig as Record<string, string | undefined>,
+				);
+				await shell(
+					"bash",
+					[
+						"-c",
+						`cat > "${piholeCompose}" << 'COMPOSE_EOF'\n${piholeComposeContent}COMPOSE_EOF`,
+					],
+					{ sudo: true },
+				);
+
+				const localIp = await getLocalIp().catch(() => "localhost");
+				const dnsmasqDir = `${baseDir}/pihole/config/dnsmasq.d`;
+				await shell("mkdir", ["-p", dnsmasqDir], { sudo: true });
+				await shell(
+					"bash",
+					[
+						"-c",
+						`echo "address=/*.${domain}/${localIp}" > "${dnsmasqDir}/99-wildcard.conf"`,
+					],
+					{ sudo: true },
+				);
+
+				await composeDown(piholeCompose).catch(() => {});
+				await composeUp(piholeCompose);
+			}
+		}
+
+		await saveEnvConfig(envConfig, projectRoot);
+
+		await logActivity(
+			"https_enabled",
+			"system",
+			null,
+			`Enabled HTTPS with Caddy (${domain})`,
+			"/settings",
+		);
+	});
+
+export const disableHttps = createServerFn({ method: "POST" }).handler(
+	async () => {
+		await ensureSession();
+		const projectRoot = getProjectRoot();
+		const envConfig = await loadEnvConfig(projectRoot);
+
+		const caddyApp = getApp("caddy");
+		if (!caddyApp) throw new Error("Caddy app not found in registry");
+
+		const baseDir = envConfig.BASE_DIR;
+		const composePath = getComposePath(caddyApp, baseDir);
+
+		// Stop Caddy container
+		if (existsSync(composePath)) {
+			await composeDown(composePath).catch(() => {});
+		}
+
+		// Update config
+		envConfig.ENABLE_HTTPS = "false";
+		await saveEnvConfig(envConfig, projectRoot);
+
+		// Regenerate Pi-hole compose to restore port 443
+		const piholeApp = getApp("pihole");
+		if (piholeApp) {
+			const piholeCompose = getComposePath(piholeApp, baseDir);
+			if (existsSync(piholeCompose)) {
+				const piholeComposeContent = generateCompose(
+					piholeApp,
+					envConfig as Record<string, string | undefined>,
+				);
+				await shell(
+					"bash",
+					[
+						"-c",
+						`cat > "${piholeCompose}" << 'COMPOSE_EOF'\n${piholeComposeContent}COMPOSE_EOF`,
+					],
+					{ sudo: true },
+				);
+				await composeDown(piholeCompose).catch(() => {});
+				await composeUp(piholeCompose);
+			}
+		}
+
+		await logActivity(
+			"https_disabled",
+			"system",
+			null,
+			"Disabled HTTPS and stopped Caddy",
+			"/settings",
+		);
+	},
+);

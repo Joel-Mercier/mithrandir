@@ -13,7 +13,7 @@ const statusDot: Record<string, string> = {
 export default function AppCard({ app }: { app: DashboardApp }) {
 	return (
 		<Link to="/apps/$appName" params={{ appName: app.name }}>
-			<Card className="group transition-colors hover:bg-muted/50">
+			<Card className="group transition-colors hover:bg-muted/50 h-full">
 				<CardContent className="flex items-start gap-3 p-4">
 					<span
 						className={`mt-1.5 inline-block h-2 w-2 shrink-0 rounded-full ${statusDot[app.status]}`}

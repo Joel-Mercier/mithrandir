@@ -19,7 +19,7 @@ export const statusDot: Record<AppStatus, string> = {
 export function AppListCard({ app }: { app: DashboardApp }) {
 	return (
 		<Link to="/apps/$appName" params={{ appName: app.name }}>
-			<Card className="group">
+			<Card className="group h-full">
 				<CardHeader className="flex flex-row items-center justify-between pb-2">
 					<div className="flex items-center gap-2">
 						<span
@@ -31,18 +31,18 @@ export function AppListCard({ app }: { app: DashboardApp }) {
 					</div>
 					<ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
 				</CardHeader>
-				<CardContent className="space-y-3">
+				<CardContent className="space-y-3 flex flex-1 flex-col">
 					<p className="text-xs text-muted-foreground">{app.description}</p>
-
-					<div className="flex items-center justify-between">
-						<span className="font-mono-data text-xs text-muted-foreground">
-							:{app.port}
-						</span>
-						<Badge variant="outline" className="text-xs capitalize">
-							{app.category}
-						</Badge>
-					</div>
-
+          <div className="mt-auto">
+            <div className="flex items-center justify-between">
+              <span className="font-mono-data text-xs text-muted-foreground">
+                :{app.port}
+              </span>
+              <Badge variant="outline" className="text-xs capitalize">
+                {app.category}
+              </Badge>
+            </div>
+          </div>
 					<div className="flex items-baseline justify-between text-xs text-muted-foreground">
 						<span>{m.apps_uptime()}</span>
 						<span className="font-mono-data">{app.uptime}</span>
@@ -58,7 +58,7 @@ export function AvailableAppCard({ app }: { app: DashboardApp }) {
 
 	return (
 		<Link to="/apps/$appName" params={{ appName: app.name }}>
-			<Card className="group border-dashed">
+			<Card className="group border-dashed h-full">
 				<CardHeader className="flex flex-row items-center justify-between pb-2">
 					<div className="flex items-center gap-2">
 						<span className="inline-block h-2 w-2 rounded-full border border-dashed border-muted-foreground" />
@@ -68,7 +68,7 @@ export function AvailableAppCard({ app }: { app: DashboardApp }) {
 					</div>
 					<ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
 				</CardHeader>
-				<CardContent className="space-y-3">
+				<CardContent className="space-y-3 flex flex-1 flex-col">
 					<p className="text-xs text-muted-foreground">{app.description}</p>
 
 					<div className="flex items-center justify-between">
@@ -83,7 +83,7 @@ export function AvailableAppCard({ app }: { app: DashboardApp }) {
 					<Button
 						variant="outline"
 						size="sm"
-						className="w-full gap-1.5"
+						className="w-full gap-1.5 mt-auto"
 						disabled={installMutation.isPending}
 						onClick={(e) => {
 							e.preventDefault();

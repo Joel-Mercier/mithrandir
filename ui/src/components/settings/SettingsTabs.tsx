@@ -1,5 +1,13 @@
-import { ArrowRight, Check, Plus, Save, Shield, Trash2 } from "lucide-react";
-import { useState } from "react";
+import {
+	AlertTriangle,
+	ArrowRight,
+	Check,
+	Plus,
+	Save,
+	Shield,
+	Trash2,
+} from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Row } from "#/components/Row";
 import { Badge } from "#/components/ui/badge";
@@ -20,6 +28,9 @@ import { Switch } from "#/components/ui/switch";
 import {
 	useCheckForUpdates,
 	useConfig,
+	useDisableHttps,
+	useEnableHttps,
+	useHttpsPrerequisites,
 	useUpdateConfig,
 	useVersion,
 } from "#/hooks/homelab";
@@ -177,6 +188,20 @@ export function NetworkTab() {
 	const configQuery = useConfig();
 	const config = configQuery.data;
 	const updateConfigMutation = useUpdateConfig();
+	const prereqsQuery = useHttpsPrerequisites();
+	const enableHttpsMutation = useEnableHttps();
+	const disableHttpsMutation = useDisableHttps();
+
+	const [acmeEmail, setAcmeEmail] = useState("");
+	const [emailSaved, setEmailSaved] = useState(false);
+
+	// Sync form state when config loads
+	useEffect(() => {
+		if (config) {
+			setAcmeEmail(config.acmeEmail);
+			setEmailSaved(!!config.acmeEmail);
+		}
+	}, [config]);
 
 	if (configQuery.isPending) {
 		return (
@@ -195,6 +220,41 @@ export function NetworkTab() {
 		);
 	}
 
+	const prereqs = prereqsQuery.data;
+	const isHttpsBusy =
+		enableHttpsMutation.isPending || disableHttpsMutation.isPending;
+	const emailValid = acmeEmail.trim().includes("@");
+	const canToggleHttps =
+		prereqs?.ready && emailSaved && emailValid && !isHttpsBusy;
+
+	const handleSaveEmail = () => {
+		updateConfigMutation.mutate(
+			{ acmeEmail: acmeEmail.trim() },
+			{
+				onSuccess: () => {
+					toast.success(m.settings_saved());
+					setEmailSaved(true);
+				},
+				onError: (err) => toast.error(`Failed to save: ${err.message}`),
+			},
+		);
+	};
+
+	const handleHttpsToggle = async (checked: boolean) => {
+		if (checked) {
+			enableHttpsMutation.mutate(acmeEmail.trim(), {
+				onSuccess: () => toast.success("HTTPS enabled with Caddy"),
+				onError: (err) => toast.error(`Failed to enable HTTPS: ${err.message}`),
+			});
+		} else {
+			disableHttpsMutation.mutate(undefined, {
+				onSuccess: () => toast.success("HTTPS disabled"),
+				onError: (err) =>
+					toast.error(`Failed to disable HTTPS: ${err.message}`),
+			});
+		}
+	};
+
 	return (
 		<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 			<Card>
@@ -205,6 +265,29 @@ export function NetworkTab() {
 					<CardDescription>{m.settings_httpsDesc()}</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-4">
+					{/* Prerequisites warning */}
+					{prereqs && !prereqs.ready && (
+						<div className="flex items-start gap-2 rounded-lg border border-status-warning/30 bg-status-warning/5 px-3 py-2 text-sm text-status-warning">
+							<AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+							<div className="space-y-1">
+								{!prereqs.duckdnsConfigured && (
+									<p>DuckDNS secrets are not configured in .env</p>
+								)}
+								{prereqs.duckdnsConfigured && !prereqs.duckdnsInstalled && (
+									<p>DuckDNS app is not installed</p>
+								)}
+								{prereqs.duckdnsInstalled && !prereqs.duckdnsRunning && (
+									<p>DuckDNS container is not running</p>
+								)}
+								{!prereqs.domain &&
+									prereqs.duckdnsConfigured && (
+										<p>Could not derive domain from DuckDNS config</p>
+									)}
+							</div>
+						</div>
+					)}
+
+					{/* HTTPS toggle */}
 					<div className="flex items-center justify-between rounded-lg border border-border/50 p-3 transition-colors hover:bg-muted/50">
 						<div className="space-y-0.5">
 							<Label>{m.settings_enableHttps()}</Label>
@@ -212,22 +295,36 @@ export function NetworkTab() {
 								{m.settings_httpsNote()}
 							</p>
 						</div>
-						<Switch defaultChecked={config.httpsEnabled} />
+						<div className="flex items-center gap-2">
+							{isHttpsBusy && <Spinner size="sm" />}
+							<Switch
+								checked={config.httpsEnabled}
+								disabled={
+									config.httpsEnabled ? isHttpsBusy : !canToggleHttps
+								}
+								onCheckedChange={handleHttpsToggle}
+							/>
+						</div>
 					</div>
 					<Separator />
 					<div className="space-y-2">
 						<Label htmlFor="acmeEmail">{m.settings_acmeEmail()}</Label>
 						<Input
 							id="acmeEmail"
-							defaultValue={config.acmeEmail}
+							value={acmeEmail}
+							onChange={(e) => {
+								setAcmeEmail(e.target.value);
+								setEmailSaved(false);
+							}}
 							className="font-mono-data"
+							placeholder="you@example.com"
 						/>
 					</div>
 					<div className="space-y-2">
 						<Label htmlFor="domain">{m.settings_duckdnsDomain()}</Label>
 						<Input
 							id="domain"
-							defaultValue={config.duckdnsDomain}
+							value={prereqs?.domain ?? config.duckdnsDomain}
 							className="font-mono-data"
 							readOnly
 						/>
@@ -237,23 +334,17 @@ export function NetworkTab() {
 					</div>
 					<Button
 						className="gap-2"
-						disabled={updateConfigMutation.isPending}
-						onClick={() => {
-							const acmeEmail = (
-								document.getElementById("acmeEmail") as HTMLInputElement
-							)?.value;
-							updateConfigMutation.mutate(
-								{ acmeEmail },
-								{
-									onSuccess: () => toast.success(m.settings_saved()),
-									onError: (err) =>
-										toast.error(`Failed to save: ${err.message}`),
-								},
-							);
-						}}
+						disabled={
+							updateConfigMutation.isPending || !emailValid || emailSaved
+						}
+						onClick={handleSaveEmail}
 					>
-						<Save className="h-4 w-4" />
-						{m.common_save()}
+						{emailSaved ? (
+							<Check className="h-4 w-4" />
+						) : (
+							<Save className="h-4 w-4" />
+						)}
+						{emailSaved ? "Saved" : m.common_save()}
 					</Button>
 				</CardContent>
 			</Card>

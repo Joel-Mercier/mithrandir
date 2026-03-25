@@ -37,6 +37,9 @@ import {
 	skipSetup,
 } from "#/lib/server/setup";
 import {
+	checkHttpsPrerequisites,
+	disableHttps,
+	enableHttps,
 	fetchConfig,
 	fetchHealthChecks,
 	fetchResources,
@@ -273,6 +276,37 @@ export function useUpdateConfig() {
 			updateConfig({ data: { changes } }),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: keys.config });
+			queryClient.invalidateQueries({ queryKey: keys.activity });
+		},
+	});
+}
+
+export function useHttpsPrerequisites() {
+	return useQuery({
+		queryKey: ["homelab", "https-prereqs"],
+		queryFn: () => checkHttpsPrerequisites(),
+	});
+}
+
+export function useEnableHttps() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (acmeEmail: string) => enableHttps({ data: { acmeEmail } }),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: keys.config });
+			queryClient.invalidateQueries({ queryKey: keys.apps });
+			queryClient.invalidateQueries({ queryKey: keys.activity });
+		},
+	});
+}
+
+export function useDisableHttps() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: () => disableHttps(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: keys.config });
+			queryClient.invalidateQueries({ queryKey: keys.apps });
 			queryClient.invalidateQueries({ queryKey: keys.activity });
 		},
 	});

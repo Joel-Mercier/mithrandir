@@ -1,6 +1,6 @@
 import type { DashboardApp } from "#/lib/types";
 import { m } from "#/paraglide/messages.js";
-import AppCard from "./AppCard";
+import { AppListCard } from "#/components/apps/AppCards.js";
 
 export default function AppsGrid({ apps }: { apps: DashboardApp[] }) {
 	return (
@@ -10,7 +10,7 @@ export default function AppsGrid({ apps }: { apps: DashboardApp[] }) {
 			</h2>
 			<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
 				{apps.map((app) => (
-					<AppCard key={app.name} app={app} />
+					<AppListCard key={app.name} app={app} />
 				))}
 			</div>
 		</div>

@@ -96,6 +96,14 @@ export interface SystemConfig {
 	pgid: number;
 }
 
+export interface HttpsPrerequisites {
+	duckdnsConfigured: boolean;
+	duckdnsInstalled: boolean;
+	duckdnsRunning: boolean;
+	domain: string | null;
+	ready: boolean;
+}
+
 export type HealthVerdict = "Comfortable" | "Adequate" | "Tight" | "Overloaded";
 export type StorageVerdict = "Healthy" | "Moderate" | "Warning" | "Critical";
 
