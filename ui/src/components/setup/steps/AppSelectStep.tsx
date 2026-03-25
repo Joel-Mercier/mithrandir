@@ -33,7 +33,9 @@ interface AppSelectStepProps {
 }
 
 const CATEGORY_ICONS: Record<string, typeof Film> = {
-	media: Film,
+	"media-movies-tv": Film,
+	"media-audio": Film,
+	"media-pictures": Film,
 	automation: Cog,
 	monitoring: MonitorSmartphone,
 	productivity: Sparkles,

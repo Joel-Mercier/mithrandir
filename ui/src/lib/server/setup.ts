@@ -531,9 +531,14 @@ export const setupHttps = createServerFn({ method: "POST" })
 			{ sudo: true, timeout: 300000 },
 		);
 
+		// Detect installed apps for Caddyfile generation
+		const installedApps = APP_REGISTRY.filter((app) =>
+			existsSync(getComposePath(app, baseDir)),
+		);
+
 		// Generate Caddyfile and 404 page
-		const caddyfile = generateCaddyfile(envConfig);
-		const page404 = generate404Page();
+		const caddyfile = generateCaddyfile(installedApps, envConfig);
+		const page404 = generate404Page(installedApps, envConfig);
 
 		await shell(
 			"bash",

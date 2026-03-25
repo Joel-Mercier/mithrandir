@@ -1323,10 +1323,22 @@ export interface AppCategory {
 
 export const APP_CATEGORIES: AppCategory[] = [
   {
-    label: "Media",
-    value: "media",
-    description: "qBittorrent, Prowlarr, Radarr, Sonarr, Bazarr, Seerr, Jellyfin, Navidrome, Lidarr, Audiobookshelf, Immich, Profilarr",
-    apps: ["qbittorrent", "prowlarr", "radarr", "sonarr", "bazarr", "seerr", "jellyfin", "navidrome", "lidarr", "audiobookshelf", "immich", "profilarr"],
+    label: "Media: Movies & TV",
+    value: "media-movies-tv",
+    description: "qBittorrent, Prowlarr, Radarr, Sonarr, Bazarr, Seerr, Jellyfin, Profilarr",
+    apps: ["qbittorrent", "prowlarr", "radarr", "sonarr", "bazarr", "seerr", "jellyfin", "profilarr"],
+  },
+  {
+    label: "Media: Audio",
+    value: "media-audio",
+    description: "Navidrome, Lidarr, Audiobookshelf",
+    apps: ["navidrome", "lidarr", "audiobookshelf"],
+  },
+  {
+    label: "Media: Pictures",
+    value: "media-pictures",
+    description: "Immich",
+    apps: ["immich"],
   },
   {
     label: "Automation",
