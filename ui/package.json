@@ -60,7 +60,6 @@
     "jsdom": "^28.1.0",
     "typescript": "^5.7.2",
     "vite": "^8.0.2",
-    "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^4.1.1",
     "@inlang/paraglide-js": "^2.15.1"
   },

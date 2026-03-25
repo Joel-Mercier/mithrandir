@@ -123,7 +123,7 @@ TanStack Start app with SSR, file-based routing, and Vite. Created via `create-t
 
 ### Key Patterns
 
-- **Path aliases**: `#/*` and `@/*` both map to `./src/*` (tsconfig paths + `vite-tsconfig-paths`)
+- **Path aliases**: `#/*` and `@/*` both map to `./src/*` (tsconfig paths)
 - **Route files**: `src/routes/` directory. `__root.tsx` defines the root layout with `createRootRouteWithContext<{ queryClient: QueryClient }>()`. Pages use `createFileRoute()`.
 - **Server handlers**: API routes use TanStack Start server handlers pattern: `createFileRoute().server.handlers.{GET,POST}`
 - **shadcn components**: `src/components/ui/` — added via `npx shadcn@latest add <component>`. Config in `components.json`.
