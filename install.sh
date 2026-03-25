@@ -29,10 +29,10 @@ else
 fi
 
 # Install system dependencies
-log "Installing system dependencies (curl, unzip)..."
-if ! command -v curl &>/dev/null || ! command -v unzip &>/dev/null; then
+log "Installing system dependencies (curl, unzip, git)..."
+if ! command -v curl &>/dev/null || ! command -v unzip &>/dev/null || ! command -v git &>/dev/null; then
   sudo apt-get update -qq
-  sudo apt-get install -y -qq curl unzip
+  sudo apt-get install -y -qq curl unzip git
 fi
 
 # Determine the real user's login shell and its rc file
