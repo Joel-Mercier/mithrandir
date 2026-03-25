@@ -25,11 +25,22 @@ import {
 import { runHealthChecks } from "@mithrandir/cli/lib/health";
 import { shell } from "@mithrandir/cli/lib/shell";
 import { gatherSystemInfo } from "@mithrandir/cli/lib/status";
+import {
+	enableUfw,
+	installUfw,
+	installUfwDocker,
+	isUfwActive,
+	isUfwDockerInstalled,
+	isUfwInstalled,
+	syncAllAppPorts,
+} from "@mithrandir/cli/lib/ufw";
 import { createServerFn } from "@tanstack/react-start";
 import { existsSync, readFileSync } from "fs";
 import { resolve } from "path";
 import { ensureSession } from "#/lib/auth";
 import type {
+	FirewallPrerequisites,
+	FirewallRule,
 	HealthStatus,
 	HttpsPrerequisites,
 	SystemConfig,
@@ -399,10 +410,7 @@ export const enableHttps = createServerFn({ method: "POST" })
 		const composePath = getComposePath(caddyApp, baseDir);
 		await shell(
 			"bash",
-			[
-				"-c",
-				`cat > "${composePath}" << 'COMPOSE_EOF'\n${compose}COMPOSE_EOF`,
-			],
+			["-c", `cat > "${composePath}" << 'COMPOSE_EOF'\n${compose}COMPOSE_EOF`],
 			{ sudo: true },
 		);
 		await composeDown(composePath).catch(() => {});
@@ -502,6 +510,145 @@ export const disableHttps = createServerFn({ method: "POST" }).handler(
 			"system",
 			null,
 			"Disabled HTTPS and stopped Caddy",
+			"/settings",
+		);
+	},
+);
+
+// ─── Firewall ─────────────────────────────────────────────────────────────────
+
+export const checkFirewallPrerequisites = createServerFn({
+	method: "GET",
+}).handler(async (): Promise<FirewallPrerequisites> => {
+	await ensureSession();
+
+	const ufwInstalled = await isUfwInstalled().catch(() => false);
+	const ufwDockerInstalled = await isUfwDockerInstalled().catch(() => false);
+	const ufwActive = ufwInstalled
+		? await isUfwActive().catch(() => false)
+		: false;
+
+	return {
+		ufwInstalled,
+		ufwDockerInstalled,
+		ufwActive,
+		ready: ufwInstalled && ufwDockerInstalled && ufwActive,
+	};
+});
+
+export const fetchFirewallRules = createServerFn({ method: "GET" }).handler(
+	async (): Promise<FirewallRule[]> => {
+		await ensureSession();
+		const projectRoot = getProjectRoot();
+		const envConfig = await loadEnvConfig(projectRoot);
+		const rules: FirewallRule[] = [];
+
+		// Get installed apps and their ports
+		const installedApps = APP_REGISTRY.filter((app) =>
+			existsSync(getComposePath(app, envConfig.BASE_DIR)),
+		);
+
+		for (const app of installedApps) {
+			const isHostNetwork = app.networkMode === "host";
+			if (app.port) {
+				rules.push({
+					port: app.port,
+					protocol: "tcp",
+					app: app.name,
+					type: isHostNetwork ? "ufw" : "ufw-docker",
+				});
+			}
+			if (app.extraPorts) {
+				for (const ep of app.extraPorts) {
+					rules.push({
+						port: ep.host,
+						protocol: ep.protocol ?? "tcp",
+						app: app.name,
+						type: isHostNetwork ? "ufw" : "ufw-docker",
+					});
+				}
+			}
+		}
+
+		// Always include SSH
+		rules.unshift({
+			port: 22,
+			protocol: "tcp",
+			app: "SSH",
+			type: "ufw",
+		});
+
+		return rules;
+	},
+);
+
+export const enableFirewall = createServerFn({ method: "POST" }).handler(
+	async () => {
+		await ensureSession();
+		const projectRoot = getProjectRoot();
+		const envConfig = await loadEnvConfig(projectRoot);
+
+		// Install UFW if needed
+		const ufwInstalled = await isUfwInstalled().catch(() => false);
+		if (!ufwInstalled) {
+			await installUfw();
+		}
+
+		// Install ufw-docker if needed
+		const ufwDockerInstalled = await isUfwDockerInstalled().catch(() => false);
+		if (!ufwDockerInstalled) {
+			await installUfwDocker();
+		}
+
+		// Enable UFW if not active
+		const ufwActive = await isUfwActive().catch(() => false);
+		if (!ufwActive) {
+			await enableUfw();
+		}
+
+		// Sync rules for all installed apps
+		const installedApps = APP_REGISTRY.filter((app) =>
+			existsSync(getComposePath(app, envConfig.BASE_DIR)),
+		);
+		if (installedApps.length > 0) {
+			await syncAllAppPorts(installedApps);
+		}
+
+		// Save to .env
+		envConfig.ENABLE_FIREWALL = "true";
+		await saveEnvConfig(envConfig, projectRoot);
+
+		await logActivity(
+			"firewall_enabled",
+			"system",
+			null,
+			"Enabled UFW firewall with ufw-docker",
+			"/settings",
+		);
+	},
+);
+
+export const disableFirewall = createServerFn({ method: "POST" }).handler(
+	async () => {
+		await ensureSession();
+		const projectRoot = getProjectRoot();
+		const envConfig = await loadEnvConfig(projectRoot);
+
+		// Disable UFW
+		await shell("ufw", ["--force", "disable"], {
+			sudo: true,
+			ignoreError: true,
+		});
+
+		// Save to .env
+		envConfig.ENABLE_FIREWALL = "false";
+		await saveEnvConfig(envConfig, projectRoot);
+
+		await logActivity(
+			"firewall_disabled",
+			"system",
+			null,
+			"Disabled UFW firewall",
 			"/settings",
 		);
 	},

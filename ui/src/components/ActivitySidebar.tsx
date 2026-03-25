@@ -49,7 +49,7 @@ export default function ActivitySidebar({
 
 	return (
 		<Sheet open={open} onOpenChange={onOpenChange}>
-			<SheetContent side="right" className="flex flex-col gap-0 p-0">
+			<SheetContent side="right" className="flex flex-col gap-0 p-0 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
 				<SheetHeader className="border-b border-border/50 px-4 py-3">
 					<SheetTitle className="flex items-center gap-2 text-base">
 						<History className="size-4" />

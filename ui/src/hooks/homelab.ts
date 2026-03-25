@@ -37,10 +37,14 @@ import {
 	skipSetup,
 } from "#/lib/server/setup";
 import {
+	checkFirewallPrerequisites,
 	checkHttpsPrerequisites,
+	disableFirewall,
 	disableHttps,
+	enableFirewall,
 	enableHttps,
 	fetchConfig,
+	fetchFirewallRules,
 	fetchHealthChecks,
 	fetchResources,
 	fetchSystemStatus,
@@ -307,6 +311,56 @@ export function useDisableHttps() {
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: keys.config });
 			queryClient.invalidateQueries({ queryKey: keys.apps });
+			queryClient.invalidateQueries({ queryKey: keys.activity });
+		},
+	});
+}
+
+// ─── Firewall hooks ──────────────────────────────────────────────────────────
+
+export function useFirewallPrerequisites() {
+	return useQuery({
+		queryKey: ["homelab", "firewall-prereqs"],
+		queryFn: () => checkFirewallPrerequisites(),
+	});
+}
+
+export function useFirewallRules() {
+	return useQuery({
+		queryKey: ["homelab", "firewall-rules"],
+		queryFn: () => fetchFirewallRules(),
+	});
+}
+
+export function useEnableFirewall() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: () => enableFirewall(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: keys.config });
+			queryClient.invalidateQueries({
+				queryKey: ["homelab", "firewall-prereqs"],
+			});
+			queryClient.invalidateQueries({
+				queryKey: ["homelab", "firewall-rules"],
+			});
+			queryClient.invalidateQueries({ queryKey: keys.activity });
+		},
+	});
+}
+
+export function useDisableFirewall() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: () => disableFirewall(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: keys.config });
+			queryClient.invalidateQueries({
+				queryKey: ["homelab", "firewall-prereqs"],
+			});
+			queryClient.invalidateQueries({
+				queryKey: ["homelab", "firewall-rules"],
+			});
 			queryClient.invalidateQueries({ queryKey: keys.activity });
 		},
 	});

@@ -1,3 +1,4 @@
+import { useNavigate } from "@tanstack/react-router";
 import {
 	AlertTriangle,
 	ArrowRight,
@@ -28,14 +29,18 @@ import { Switch } from "#/components/ui/switch";
 import {
 	useCheckForUpdates,
 	useConfig,
+	useDisableFirewall,
 	useDisableHttps,
+	useEnableFirewall,
 	useEnableHttps,
+	useFirewallPrerequisites,
+	useFirewallRules,
 	useHttpsPrerequisites,
 	useUpdateConfig,
 	useVersion,
 } from "#/hooks/homelab";
+import type { SystemConfig } from "#/lib/types";
 import { m } from "#/paraglide/messages.js";
-import { useNavigate } from "@tanstack/react-router";
 
 function SettingsCardSkeleton() {
 	return (
@@ -279,10 +284,9 @@ export function NetworkTab() {
 								{prereqs.duckdnsInstalled && !prereqs.duckdnsRunning && (
 									<p>DuckDNS container is not running</p>
 								)}
-								{!prereqs.domain &&
-									prereqs.duckdnsConfigured && (
-										<p>Could not derive domain from DuckDNS config</p>
-									)}
+								{!prereqs.domain && prereqs.duckdnsConfigured && (
+									<p>Could not derive domain from DuckDNS config</p>
+								)}
 							</div>
 						</div>
 					)}
@@ -299,9 +303,7 @@ export function NetworkTab() {
 							{isHttpsBusy && <Spinner size="sm" />}
 							<Switch
 								checked={config.httpsEnabled}
-								disabled={
-									config.httpsEnabled ? isHttpsBusy : !canToggleHttps
-								}
+								disabled={config.httpsEnabled ? isHttpsBusy : !canToggleHttps}
 								onCheckedChange={handleHttpsToggle}
 							/>
 						</div>
@@ -349,47 +351,97 @@ export function NetworkTab() {
 				</CardContent>
 			</Card>
 
-			<Card>
-				<CardHeader>
-					<CardTitle className="text-sm font-medium">
-						{m.settings_firewall()}
-					</CardTitle>
-					<CardDescription>{m.settings_firewallDesc()}</CardDescription>
-				</CardHeader>
-				<CardContent className="space-y-4">
-					<div className="flex items-center justify-between rounded-lg border border-border/50 p-3 transition-colors hover:bg-muted/50">
-						<div className="space-y-0.5">
-							<Label>{m.settings_enableFirewall()}</Label>
-							<p className="text-xs text-muted-foreground">
-								{m.settings_firewallNote()}
-							</p>
-						</div>
-						<Switch defaultChecked={config.firewallEnabled} />
+			<FirewallCard config={config} />
+		</div>
+	);
+}
+
+function FirewallCard({ config }: { config: SystemConfig }) {
+	const firewallPrereqsQuery = useFirewallPrerequisites();
+	const firewallRulesQuery = useFirewallRules();
+	const enableFirewallMutation = useEnableFirewall();
+	const disableFirewallMutation = useDisableFirewall();
+
+	const prereqs = firewallPrereqsQuery.data;
+	const rules = firewallRulesQuery.data;
+	const isFirewallBusy =
+		enableFirewallMutation.isPending || disableFirewallMutation.isPending;
+
+	const handleFirewallToggle = async (checked: boolean) => {
+		if (checked) {
+			enableFirewallMutation.mutate(undefined, {
+				onSuccess: () => toast.success(m.settings_saved()),
+				onError: (err) =>
+					toast.error(`Failed to enable firewall: ${err.message}`),
+			});
+		} else {
+			disableFirewallMutation.mutate(undefined, {
+				onSuccess: () => toast.success(m.settings_saved()),
+				onError: (err) =>
+					toast.error(`Failed to disable firewall: ${err.message}`),
+			});
+		}
+	};
+
+	return (
+		<Card>
+			<CardHeader>
+				<CardTitle className="text-sm font-medium">
+					{m.settings_firewall()}
+				</CardTitle>
+				<CardDescription>{m.settings_firewallDesc()}</CardDescription>
+			</CardHeader>
+			<CardContent className="space-y-4">
+				{/* Prerequisites warning when enabling */}
+				{!config.firewallEnabled && prereqs && !prereqs.ufwInstalled && (
+					<div className="flex items-start gap-2 rounded-lg border border-status-warning/30 bg-status-warning/5 px-3 py-2 text-sm text-status-warning">
+						<AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+						<p>
+							UFW is not installed. Enabling the firewall will install UFW and
+							ufw-docker automatically.
+						</p>
 					</div>
-					<Separator />
-					<div className="space-y-2 text-sm">
-						<p className="font-medium">{m.settings_activeRules()}</p>
+				)}
+
+				<div className="flex items-center justify-between rounded-lg border border-border/50 p-3 transition-colors hover:bg-muted/50">
+					<div className="space-y-0.5">
+						<Label>{m.settings_enableFirewall()}</Label>
+						<p className="text-xs text-muted-foreground">
+							{m.settings_firewallNote()}
+						</p>
+					</div>
+					<div className="flex items-center gap-2">
+						{isFirewallBusy && <Spinner size="sm" />}
+						<Switch
+							checked={config.firewallEnabled}
+							disabled={isFirewallBusy}
+							onCheckedChange={handleFirewallToggle}
+						/>
+					</div>
+				</div>
+				<Separator />
+				<div className="space-y-2 text-sm">
+					<p className="font-medium">{m.settings_activeRules()}</p>
+					{rules && rules.length > 0 ? (
 						<div className="space-y-0 overflow-hidden rounded-lg border border-border/50">
-							{[
-								"22/tcp — SSH (allow)",
-								"8096/tcp — Jellyfin (ufw-docker)",
-								"7878/tcp — Radarr (ufw-docker)",
-								"8989/tcp — Sonarr (ufw-docker)",
-								"8123/tcp — Home Assistant (allow)",
-								"53/tcp,udp — Pi-hole (ufw-docker)",
-							].map((rule, i) => (
+							{rules.map((rule, i) => (
 								<div
-									key={rule}
+									key={`${rule.port}-${rule.protocol}-${rule.app}`}
 									className={`flex items-center px-3 py-2 font-mono-data text-xs transition-colors hover:bg-muted/50 ${i > 0 ? "border-t border-border/50" : ""}`}
 								>
-									{rule}
+									{rule.port}/{rule.protocol} — {rule.app} (
+									{rule.type === "ufw" ? "allow" : "ufw-docker"})
 								</div>
 							))}
 						</div>
-					</div>
-				</CardContent>
-			</Card>
-		</div>
+					) : (
+						<p className="text-sm text-muted-foreground">
+							No firewall rules configured yet.
+						</p>
+					)}
+				</div>
+			</CardContent>
+		</Card>
 	);
 }
 
@@ -671,9 +723,7 @@ export function AboutTab() {
 			</CardHeader>
 			<CardContent className="space-y-3">
 				<Row label={m.settings_version()}>v{version.version}</Row>
-				<Row label={m.settings_commit()}>
-					{version.gitCommit.slice(0, 7)}
-				</Row>
+				<Row label={m.settings_commit()}>{version.gitCommit.slice(0, 7)}</Row>
 				<Row label={m.settings_buildDate()}>{version.buildDate}</Row>
 				<Separator />
 
@@ -727,9 +777,7 @@ export function AboutTab() {
 							disabled={checkUpdatesMutation.isPending}
 							onClick={handleCheckUpdates}
 						>
-							{checkUpdatesMutation.isPending && (
-								<Spinner size="sm" />
-							)}
+							{checkUpdatesMutation.isPending && <Spinner size="sm" />}
 							{checkUpdatesMutation.isPending
 								? m.settings_checking()
 								: m.settings_checkUpdates()}

@@ -95,7 +95,7 @@ function Dashboard() {
 			)}
 
 			{setupStatusQuery.data?.status === "skipped" && (
-				<Alert className="mb-6">
+				<Alert className="mb-6 items-center">
 					<Wand2 className="h-4 w-4" />
 					<AlertDescription className="flex items-center justify-between">
 						<span>{m.dashboard_setupSkipped()}</span>

@@ -104,6 +104,20 @@ export interface HttpsPrerequisites {
 	ready: boolean;
 }
 
+export interface FirewallPrerequisites {
+	ufwInstalled: boolean;
+	ufwDockerInstalled: boolean;
+	ufwActive: boolean;
+	ready: boolean;
+}
+
+export interface FirewallRule {
+	port: number;
+	protocol: string;
+	app: string;
+	type: "ufw" | "ufw-docker";
+}
+
 export type HealthVerdict = "Comfortable" | "Adequate" | "Tight" | "Overloaded";
 export type StorageVerdict = "Healthy" | "Moderate" | "Warning" | "Critical";
 
