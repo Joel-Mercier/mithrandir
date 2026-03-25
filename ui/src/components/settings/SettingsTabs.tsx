@@ -644,7 +644,7 @@ function AddRemoteDialog({ onSuccess }: { onSuccess?: () => void }) {
 					{m.settings_addRemote()}
 				</Button>
 			</DialogTrigger>
-			<DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+			<DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg bg-background/95 backdrop-blur">
 				<DialogHeader>
 					<DialogTitle>{m.settings_addRemoteTitle()}</DialogTitle>
 					<DialogDescription>{m.settings_addRemoteDesc()}</DialogDescription>

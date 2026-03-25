@@ -53,6 +53,7 @@ import {
 	fetchSystemStatus,
 	fetchVersion,
 	removeBackupRemote,
+	runDoctor,
 	updateConfig,
 } from "#/lib/server/system";
 import {
@@ -416,6 +417,14 @@ export function useRemoveBackupRemote() {
 			});
 			queryClient.invalidateQueries({ queryKey: keys.activity });
 		},
+	});
+}
+
+// ─── Doctor hooks ─────────────────────────────────────────────────────────────
+
+export function useDoctor() {
+	return useMutation({
+		mutationFn: () => runDoctor(),
 	});
 }
 

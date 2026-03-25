@@ -522,7 +522,7 @@ function AppDetailPage() {
 
 			{detail && (
 				<AlertDialog open={uninstallOpen} onOpenChange={setUninstallOpen}>
-					<AlertDialogContent>
+					<AlertDialogContent className="bg-background/95 backdrop-blur">
 						<AlertDialogHeader>
 							<AlertDialogTitle>
 								{m.appDetail_uninstallTitle({ appName: app.displayName })}

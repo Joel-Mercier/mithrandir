@@ -3,6 +3,7 @@ import { AlertCircle, ArrowRight, Wand2 } from "lucide-react";
 import AppsGrid from "#/components/dashboard/AppsGrid";
 import BackupStatusCard from "#/components/dashboard/BackupStatusCard";
 import ConfigCard from "#/components/dashboard/ConfigCard";
+import DoctorDialog from "#/components/dashboard/DoctorDialog";
 import ResourcesCard from "#/components/dashboard/ResourcesCard";
 import SystemStatusCard from "#/components/dashboard/SystemStatusCard";
 import VersionCard from "#/components/dashboard/VersionCard";
@@ -78,13 +79,16 @@ function Dashboard() {
 
 	return (
 		<div className="mx-auto max-w-7xl px-4 py-8">
-			<div className="mb-6">
-				<h1 className="font-display text-2xl font-bold tracking-tight">
-					{m.dashboard_title()}
-				</h1>
-				<p className="mt-1 text-sm text-muted-foreground">
-					{m.dashboard_subtitle()}
-				</p>
+			<div className="mb-6 flex items-start justify-between">
+				<div>
+					<h1 className="font-display text-2xl font-bold tracking-tight">
+						{m.dashboard_title()}
+					</h1>
+					<p className="mt-1 text-sm text-muted-foreground">
+						{m.dashboard_subtitle()}
+					</p>
+				</div>
+				<DoctorDialog />
 			</div>
 
 			{hasError && (

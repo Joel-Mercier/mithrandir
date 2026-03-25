@@ -183,7 +183,7 @@ function SetupTwoFactorDialog({
 
 	return (
 		<Dialog open={open} onOpenChange={handleOpenChange}>
-			<DialogContent className="sm:max-w-md">
+			<DialogContent className="sm:max-w-md bg-background/95 backdrop-blur">
 				{step === "password" && (
 					<>
 						<DialogHeader>

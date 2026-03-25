@@ -3,6 +3,8 @@ import {
 	getApp,
 	getAppDir,
 	getComposePath,
+	getConfigPaths,
+	getContainerName,
 } from "@mithrandir/cli/lib/apps";
 import {
 	generate404Page,
@@ -21,6 +23,7 @@ import {
 	composeDown,
 	composeUp,
 	isContainerRunning,
+	isDockerInstalled,
 } from "@mithrandir/cli/lib/docker";
 import { runHealthChecks } from "@mithrandir/cli/lib/health";
 import { shell } from "@mithrandir/cli/lib/shell";
@@ -30,9 +33,12 @@ import {
 	deleteRemote,
 	getRemoteType,
 	isRcloneInstalled,
+	isRcloneRemoteConfigured,
 	isRemoteReachable,
 	obscurePassword,
 } from "@mithrandir/cli/lib/rclone";
+import { getSwapInfo, formatSwapSize } from "@mithrandir/cli/lib/swap";
+import { isTimerActive } from "@mithrandir/cli/lib/systemd";
 import {
 	enableUfw,
 	installUfw,
@@ -47,6 +53,8 @@ import { existsSync, readFileSync } from "fs";
 import { resolve } from "path";
 import { ensureSession } from "#/lib/auth";
 import type {
+	DoctorCheckResult,
+	DoctorResult,
 	FirewallPrerequisites,
 	FirewallRule,
 	HealthStatus,
@@ -798,5 +806,397 @@ export const fetchRemoteDetails = createServerFn({ method: "GET" }).handler(
 		}
 
 		return results;
+	},
+);
+
+// ─── Doctor ───────────────────────────────────────────────────────────────────
+
+export const runDoctor = createServerFn({ method: "GET" }).handler(
+	async (): Promise<DoctorResult> => {
+		await ensureSession();
+		const projectRoot = getProjectRoot();
+		const envConfig = await loadEnvConfig(projectRoot);
+		const backupConfig = getBackupConfig(envConfig);
+		const baseDir = envConfig.BASE_DIR;
+
+		const results: DoctorCheckResult[] = [];
+
+		// ── System checks ──
+
+		// .env file
+		const envPath = resolve(projectRoot, ".env");
+		results.push(
+			existsSync(envPath)
+				? {
+						category: "System",
+						name: ".env file",
+						status: "pass",
+						message: "Found",
+					}
+				: {
+						category: "System",
+						name: ".env file",
+						status: "fail",
+						message: "Missing",
+						hint: "Run `mithrandir setup` to create it",
+					},
+		);
+
+		// Docker
+		const dockerInstalled = await isDockerInstalled();
+		if (!dockerInstalled) {
+			results.push({
+				category: "System",
+				name: "Docker",
+				status: "fail",
+				message: "Not installed",
+				hint: "Run `mithrandir install docker` to install it",
+			});
+		} else {
+			const dockerInfo = await shell("docker", ["info"], {
+				sudo: true,
+				ignoreError: true,
+			});
+			results.push(
+				dockerInfo.exitCode !== 0
+					? {
+							category: "System",
+							name: "Docker",
+							status: "fail",
+							message: "Installed but daemon not running",
+							hint: "Run `sudo systemctl start docker`",
+						}
+					: {
+							category: "System",
+							name: "Docker",
+							status: "pass",
+							message: "Installed and running",
+						},
+			);
+		}
+
+		// Swap
+		const swapInfo = await getSwapInfo();
+		if (!swapInfo) {
+			results.push({
+				category: "System",
+				name: "Swap",
+				status: "fail",
+				message: "No swap configured",
+				hint: "Run `mithrandir install docker` to configure swap",
+			});
+		} else {
+			const sizeStr = formatSwapSize(swapInfo.totalBytes);
+			const oneGB = 1024 * 1024 * 1024;
+			results.push(
+				swapInfo.totalBytes < oneGB
+					? {
+							category: "System",
+							name: "Swap",
+							status: "warn",
+							message: `${sizeStr} configured (recommend >= 2 GB)`,
+							hint: "Run `mithrandir install docker` to configure 2 GB swap",
+						}
+					: {
+							category: "System",
+							name: "Swap",
+							status: "pass",
+							message: `${sizeStr} configured`,
+						},
+			);
+		}
+
+		// Firewall
+		if (envConfig.ENABLE_FIREWALL !== "true") {
+			results.push({
+				category: "System",
+				name: "Firewall",
+				status: "warn",
+				message: "Not enabled",
+				hint: "Run `mithrandir install firewall` to set up UFW",
+			});
+		} else {
+			const ufwInst = await isUfwInstalled().catch(() => false);
+			if (!ufwInst) {
+				results.push({
+					category: "System",
+					name: "Firewall",
+					status: "fail",
+					message: "ENABLE_FIREWALL=true but UFW is not installed",
+					hint: "Run `mithrandir install firewall`",
+				});
+			} else {
+				const active = await isUfwActive().catch(() => false);
+				if (!active) {
+					results.push({
+						category: "System",
+						name: "Firewall",
+						status: "fail",
+						message: "UFW is installed but not active",
+						hint: "Run `mithrandir install firewall`",
+					});
+				} else {
+					const ufwDocker = await isUfwDockerInstalled().catch(
+						() => false,
+					);
+					results.push(
+						ufwDocker
+							? {
+									category: "System",
+									name: "Firewall",
+									status: "pass",
+									message: "UFW active with ufw-docker",
+								}
+							: {
+									category: "System",
+									name: "Firewall",
+									status: "fail",
+									message:
+										"UFW is active but ufw-docker is not installed",
+									hint: "Run `mithrandir install firewall`",
+								},
+					);
+				}
+			}
+		}
+
+		// ── App checks ──
+
+		const installedApps = APP_REGISTRY.filter((app) =>
+			existsSync(getComposePath(app, baseDir)),
+		);
+
+		// Stopped containers
+		if (installedApps.length === 0) {
+			results.push({
+				category: "Apps",
+				name: "Stopped containers",
+				status: "pass",
+				message: "No apps installed",
+			});
+		} else {
+			const stopped: string[] = [];
+			for (const app of installedApps) {
+				const containerName = getContainerName(app);
+				const inspectResult = await shell(
+					"docker",
+					[
+						"inspect",
+						"--format",
+						"{{.State.Status}}",
+						containerName,
+					],
+					{ sudo: true, ignoreError: true },
+				);
+				if (inspectResult.exitCode !== 0) {
+					stopped.push(app.name);
+				} else if (inspectResult.stdout.trim() !== "running") {
+					stopped.push(app.name);
+				}
+			}
+			results.push(
+				stopped.length > 0
+					? {
+							category: "Apps",
+							name: "Stopped containers",
+							status: "warn",
+							message: stopped.join(", "),
+							hint: "Run `mithrandir start <app>` to start them",
+						}
+					: {
+							category: "Apps",
+							name: "Stopped containers",
+							status: "pass",
+							message: "All running",
+						},
+			);
+		}
+
+		// Config directories
+		if (installedApps.length === 0) {
+			results.push({
+				category: "Apps",
+				name: "Config directories",
+				status: "pass",
+				message: "No apps installed",
+			});
+		} else {
+			const missing: string[] = [];
+			for (const app of installedApps) {
+				for (const p of getConfigPaths(app, baseDir)) {
+					if (!existsSync(p)) missing.push(`${app.name}: ${p}`);
+				}
+			}
+			results.push(
+				missing.length > 0
+					? {
+							category: "Apps",
+							name: "Config directories",
+							status: "warn",
+							message: missing.join(", "),
+							hint: "Run `mithrandir reinstall <app>` to recreate missing directories",
+						}
+					: {
+							category: "Apps",
+							name: "Config directories",
+							status: "pass",
+							message: "All present",
+						},
+			);
+		}
+
+		// Secrets
+		const missingRequired: string[] = [];
+		const missingOptional: string[] = [];
+		for (const app of installedApps) {
+			if (!app.secrets) continue;
+			for (const secret of app.secrets) {
+				const value = envConfig[secret.envVar];
+				if (!value || value.trim() === "") {
+					if (secret.required) {
+						missingRequired.push(
+							`${secret.envVar} (${app.name})`,
+						);
+					} else {
+						missingOptional.push(
+							`${secret.envVar} (${app.name})`,
+						);
+					}
+				}
+			}
+		}
+		results.push(
+			missingRequired.length > 0
+				? {
+						category: "Apps",
+						name: "Required secrets",
+						status: "fail",
+						message: missingRequired.join(", "),
+						hint: "Run `mithrandir setup` to configure secrets",
+					}
+				: {
+						category: "Apps",
+						name: "Required secrets",
+						status: "pass",
+						message: "All set",
+					},
+		);
+		results.push(
+			missingOptional.length > 0
+				? {
+						category: "Apps",
+						name: "Optional secrets",
+						status: "warn",
+						message: missingOptional.join(", "),
+						hint: "Run `mithrandir setup` to configure secrets",
+					}
+				: {
+						category: "Apps",
+						name: "Optional secrets",
+						status: "pass",
+						message: "All set",
+					},
+		);
+
+		// ── Backup checks (skip if no apps installed) ──
+
+		if (installedApps.length > 0) {
+			// Backup directory
+			results.push(
+				existsSync(backupConfig.BACKUP_DIR)
+					? {
+							category: "Backup",
+							name: "Backup directory",
+							status: "pass",
+							message: `${backupConfig.BACKUP_DIR} exists`,
+						}
+					: {
+							category: "Backup",
+							name: "Backup directory",
+							status: "fail",
+							message: `${backupConfig.BACKUP_DIR} missing`,
+							hint: "Run `mithrandir install backup`",
+						},
+			);
+
+			// Systemd service
+			results.push(
+				existsSync("/etc/systemd/system/homelab-backup.service")
+					? {
+							category: "Backup",
+							name: "Systemd service",
+							status: "pass",
+							message: "Installed",
+						}
+					: {
+							category: "Backup",
+							name: "Systemd service",
+							status: "fail",
+							message: "Missing",
+							hint: "Run `mithrandir install backup`",
+						},
+			);
+
+			// Systemd timer
+			const timerActive = await isTimerActive().catch(() => false);
+			results.push(
+				timerActive
+					? {
+							category: "Backup",
+							name: "Backup timer",
+							status: "pass",
+							message: "Active",
+						}
+					: {
+							category: "Backup",
+							name: "Backup timer",
+							status: "fail",
+							message: "Not active",
+							hint: "Run `mithrandir install backup`",
+						},
+			);
+
+			// rclone
+			const rcloneInst = await isRcloneInstalled();
+			if (!rcloneInst) {
+				results.push({
+					category: "Backup",
+					name: "rclone",
+					status: "fail",
+					message: "Not installed",
+					hint: "Run `mithrandir install backup`",
+				});
+			} else {
+				for (const remote of backupConfig.RCLONE_REMOTES) {
+					const configured = await isRcloneRemoteConfigured(
+						remote,
+						envConfig,
+					);
+					results.push(
+						configured.configured
+							? {
+									category: "Backup",
+									name: `rclone (${remote})`,
+									status: "pass",
+									message: "Configured",
+								}
+							: {
+									category: "Backup",
+									name: `rclone (${remote})`,
+									status: "fail",
+									message: "Not configured",
+									hint: "Run `mithrandir backup remote add`",
+								},
+					);
+				}
+			}
+		}
+
+		const issueCount = results.filter(
+			(r) => r.status === "fail" || r.status === "warn",
+		).length;
+		const hasFail = results.some((r) => r.status === "fail");
+
+		return { checks: results, issueCount, hasFail };
 	},
 );

@@ -135,3 +135,19 @@ export interface VersionInfo {
 	gitCommit: string;
 	buildDate: string;
 }
+
+export type DoctorCheckStatus = "pass" | "warn" | "fail";
+
+export interface DoctorCheckResult {
+	category: string;
+	name: string;
+	status: DoctorCheckStatus;
+	message: string;
+	hint?: string;
+}
+
+export interface DoctorResult {
+	checks: DoctorCheckResult[];
+	issueCount: number;
+	hasFail: boolean;
+}

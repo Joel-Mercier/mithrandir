@@ -623,5 +623,15 @@
 
   "stepNav_back": "Retour",
   "stepNav_next": "Suivant",
-  "stepNav_skip": "Passer"
+  "stepNav_skip": "Passer",
+
+  "doctor_title": "Diagnostics du système",
+  "doctor_description": "Exécuter des vérifications pour diagnostiquer les problèmes de configuration.",
+  "doctor_runButton": "Lancer les diagnostics",
+  "doctor_running": "Diagnostics en cours...",
+  "doctor_noIssues": "Aucun problème trouvé.",
+  "doctor_issuesFound": "{count} problème{s} trouvé{s}. Exécutez les commandes suggérées pour les corriger.",
+  "doctor_close": "Fermer",
+  "doctor_rerun": "Relancer",
+  "doctor_error": "Échec des diagnostics : {error}"
 }

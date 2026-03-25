@@ -623,5 +623,15 @@
 
   "stepNav_back": "Back",
   "stepNav_next": "Next",
-  "stepNav_skip": "Skip"
+  "stepNav_skip": "Skip",
+
+  "doctor_title": "System Diagnostics",
+  "doctor_description": "Run checks to diagnose configuration and setup issues.",
+  "doctor_runButton": "Run Diagnostics",
+  "doctor_running": "Running diagnostics...",
+  "doctor_noIssues": "No issues found.",
+  "doctor_issuesFound": "{count} issue{s} found. Run the suggested commands to fix them.",
+  "doctor_close": "Close",
+  "doctor_rerun": "Run Again",
+  "doctor_error": "Diagnostics failed: {error}"
 }
