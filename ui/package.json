@@ -7,6 +7,7 @@
   },
   "scripts": {
     "dev": "bunx --bun vite dev --port 3000",
+    "prebuild": "sh ./prebuild.sh",
     "build": "bunx --bun vite build",
     "preview": "bunx --bun vite preview",
     "test": "vitest run",
