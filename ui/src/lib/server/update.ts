@@ -27,6 +27,14 @@ export interface StepResult {
 	willRestart?: boolean;
 }
 
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+/** Build git args with safe.directory config to avoid dubious ownership errors
+ *  when the UI service runs as root but the repo is owned by another user */
+function gitArgs(root: string, args: string[]): string[] {
+	return ["-c", `safe.directory=${root}`, ...args];
+}
+
 // ─── Server functions ────────────────────────────────────────────────────────
 
 export const checkForUpdates = createServerFn({ method: "GET" }).handler(
@@ -34,7 +42,7 @@ export const checkForUpdates = createServerFn({ method: "GET" }).handler(
 		await ensureSession();
 		const root = getProjectRoot();
 
-		const fetch = await shell("git", ["fetch", "--all"], {
+		const fetch = await shell("git", gitArgs(root, ["fetch", "--all"]), {
 			cwd: root,
 			ignoreError: true,
 			timeout: 30000,
@@ -45,7 +53,7 @@ export const checkForUpdates = createServerFn({ method: "GET" }).handler(
 
 		const branchResult = await shell(
 			"git",
-			["rev-parse", "--abbrev-ref", "HEAD"],
+			gitArgs(root, ["rev-parse", "--abbrev-ref", "HEAD"]),
 			{ cwd: root, ignoreError: true },
 		);
 		if (branchResult.exitCode !== 0) {
@@ -55,15 +63,16 @@ export const checkForUpdates = createServerFn({ method: "GET" }).handler(
 		}
 		const branch = branchResult.stdout.trim();
 
-		const localResult = await shell("git", ["rev-parse", "HEAD"], {
-			cwd: root,
-			ignoreError: true,
-		});
+		const localResult = await shell(
+			"git",
+			gitArgs(root, ["rev-parse", "HEAD"]),
+			{ cwd: root, ignoreError: true },
+		);
 		const currentCommit = localResult.stdout.trim().slice(0, 8);
 
 		const remoteResult = await shell(
 			"git",
-			["rev-parse", `origin/${branch}`],
+			gitArgs(root, ["rev-parse", `origin/${branch}`]),
 			{ cwd: root, ignoreError: true },
 		);
 		const remoteCommit = remoteResult.stdout.trim().slice(0, 8);
@@ -84,31 +93,34 @@ export const pullLatestChanges = createServerFn({ method: "POST" }).handler(
 
 		const branchResult = await shell(
 			"git",
-			["rev-parse", "--abbrev-ref", "HEAD"],
+			gitArgs(root, ["rev-parse", "--abbrev-ref", "HEAD"]),
 			{ cwd: root, ignoreError: true },
 		);
 		const branch = branchResult.stdout.trim();
 
-		const beforeResult = await shell("git", ["rev-parse", "HEAD"], {
-			cwd: root,
-			ignoreError: true,
-		});
+		const beforeResult = await shell(
+			"git",
+			gitArgs(root, ["rev-parse", "HEAD"]),
+			{ cwd: root, ignoreError: true },
+		);
 		const before = beforeResult.stdout.trim().slice(0, 8);
 
-		const pull = await shell("git", ["pull", "--ff-only"], {
-			cwd: root,
-			ignoreError: true,
-		});
+		const pull = await shell(
+			"git",
+			gitArgs(root, ["pull", "--ff-only"]),
+			{ cwd: root, ignoreError: true },
+		);
 		if (pull.exitCode !== 0) {
 			throw new Error(
 				`git pull failed (non-fast-forward?):\n${pull.stderr}`,
 			);
 		}
 
-		const afterResult = await shell("git", ["rev-parse", "HEAD"], {
-			cwd: root,
-			ignoreError: true,
-		});
+		const afterResult = await shell(
+			"git",
+			gitArgs(root, ["rev-parse", "HEAD"]),
+			{ cwd: root, ignoreError: true },
+		);
 		const after = afterResult.stdout.trim().slice(0, 8);
 
 		return { before, after, branch, skipped: before === after };

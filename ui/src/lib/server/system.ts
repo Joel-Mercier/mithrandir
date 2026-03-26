@@ -246,22 +246,22 @@ export const fetchVersion = createServerFn({ method: "GET" }).handler(
 
 		// Get git commit
 		let gitCommit = "unknown";
-		const gitResult = await shell("git", ["rev-parse", "--short", "HEAD"], {
-			cwd: projectRoot,
-			ignoreError: true,
-			timeout: 5000,
-		});
+		const gitResult = await shell(
+			"git",
+			["-c", `safe.directory=${projectRoot}`, "rev-parse", "--short", "HEAD"],
+			{ cwd: projectRoot, ignoreError: true, timeout: 5000 },
+		);
 		if (gitResult.exitCode === 0 && gitResult.stdout.trim()) {
 			gitCommit = gitResult.stdout.trim();
 		}
 
 		// Get build date from git
 		let buildDate = new Date().toISOString().split("T")[0];
-		const dateResult = await shell("git", ["log", "-1", "--format=%ci"], {
-			cwd: projectRoot,
-			ignoreError: true,
-			timeout: 5000,
-		});
+		const dateResult = await shell(
+			"git",
+			["-c", `safe.directory=${projectRoot}`, "log", "-1", "--format=%ci"],
+			{ cwd: projectRoot, ignoreError: true, timeout: 5000 },
+		);
 		if (dateResult.exitCode === 0 && dateResult.stdout.trim()) {
 			buildDate = dateResult.stdout.trim().split(" ")[0];
 		}
