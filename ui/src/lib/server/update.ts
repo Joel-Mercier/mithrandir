@@ -35,12 +35,18 @@ function gitArgs(root: string, args: string[]): string[] {
 	return ["-c", `safe.directory=${root}`, ...args];
 }
 
-/** Env vars for git commands that talk to remotes (fetch/pull).
- *  Accepts new SSH host keys automatically so git works when the UI service
- *  runs as root and root's known_hosts doesn't have GitHub's key yet. */
-const GIT_REMOTE_ENV = {
-	GIT_SSH_COMMAND: "ssh -o StrictHostKeyChecking=accept-new",
-};
+/** Build git args for commands that talk to remotes (fetch/pull).
+ *  Rewrites SSH URLs to HTTPS so git works when the UI service runs as root
+ *  without the user's SSH keys (works for public repos without auth). */
+function gitRemoteArgs(root: string, args: string[]): string[] {
+	return [
+		"-c",
+		`safe.directory=${root}`,
+		"-c",
+		"url.https://github.com/.insteadOf=git@github.com:",
+		...args,
+	];
+}
 
 // ─── Server functions ────────────────────────────────────────────────────────
 
@@ -49,11 +55,10 @@ export const checkForUpdates = createServerFn({ method: "GET" }).handler(
 		await ensureSession();
 		const root = getProjectRoot();
 
-		const fetch = await shell("git", gitArgs(root, ["fetch", "--all"]), {
+		const fetch = await shell("git", gitRemoteArgs(root, ["fetch", "--all"]), {
 			cwd: root,
 			ignoreError: true,
 			timeout: 30000,
-			env: GIT_REMOTE_ENV,
 		});
 		if (fetch.exitCode !== 0) {
 			throw new Error(`git fetch failed: ${fetch.stderr}`);
@@ -115,8 +120,8 @@ export const pullLatestChanges = createServerFn({ method: "POST" }).handler(
 
 		const pull = await shell(
 			"git",
-			gitArgs(root, ["pull", "--ff-only"]),
-			{ cwd: root, ignoreError: true, env: GIT_REMOTE_ENV },
+			gitRemoteArgs(root, ["pull", "--ff-only"]),
+			{ cwd: root, ignoreError: true },
 		);
 		if (pull.exitCode !== 0) {
 			throw new Error(
