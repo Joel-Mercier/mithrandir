@@ -7,6 +7,7 @@ import {
 	isRcloneRemoteConfigured,
 	listDirs,
 	listFiles,
+	listRemotes,
 } from "@mithrandir/cli/lib/rclone";
 import { shell } from "@mithrandir/cli/lib/shell";
 import { createServerFn } from "@tanstack/react-start";
@@ -43,12 +44,14 @@ export const fetchBackupStatus = createServerFn({ method: "GET" }).handler(
 			}
 		}
 
+		const rcloneRemotes = await listRemotes();
+
 		return {
 			lastBackupDate,
 			nextScheduledHour: backupConfig.BACKUP_HOUR,
 			localRetention: backupConfig.LOCAL_RETENTION,
 			remoteRetention: backupConfig.REMOTE_RETENTION,
-			remotes: backupConfig.RCLONE_REMOTES,
+			remotes: rcloneRemotes.map((r) => r.name),
 			encrypted: !!backupConfig.BACKUP_PASSWORD,
 		};
 	},

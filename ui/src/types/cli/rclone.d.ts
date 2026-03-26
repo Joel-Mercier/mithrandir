@@ -1,6 +1,7 @@
 import type { EnvConfig } from "@mithrandir/cli/lib/config";
 
 export function isRcloneInstalled(): Promise<boolean>;
+export function listRemotes(): Promise<{ name: string; type: string }[]>;
 export function installRclone(): Promise<void>;
 export function listDirs(remote: string, remotePath: string): Promise<string[]>;
 export function listFiles(

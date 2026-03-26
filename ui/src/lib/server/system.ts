@@ -31,10 +31,10 @@ import { gatherSystemInfo } from "@mithrandir/cli/lib/status";
 import {
 	createRemote,
 	deleteRemote,
-	getRemoteType,
 	isRcloneInstalled,
 	isRcloneRemoteConfigured,
 	isRemoteReachable,
+	listRemotes,
 	obscurePassword,
 } from "@mithrandir/cli/lib/rclone";
 import { getSwapInfo, formatSwapSize } from "@mithrandir/cli/lib/swap";
@@ -103,6 +103,7 @@ export const fetchConfig = createServerFn({ method: "GET" }).handler(
 		const envConfig = await loadEnvConfig(projectRoot);
 		const backupConfig = getBackupConfig(envConfig);
 		const domain = getDuckDnsDomain(envConfig);
+		const rcloneRemotes = await listRemotes();
 
 		return {
 			baseDir: envConfig.BASE_DIR,
@@ -116,7 +117,7 @@ export const fetchConfig = createServerFn({ method: "GET" }).handler(
 			backupPassword: !!backupConfig.BACKUP_PASSWORD,
 			localRetention: backupConfig.LOCAL_RETENTION,
 			remoteRetention: backupConfig.REMOTE_RETENTION,
-			remotes: backupConfig.RCLONE_REMOTES,
+			remotes: rcloneRemotes.map((r) => r.name),
 			puid: parseInt(envConfig.PUID ?? "1000", 10),
 			pgid: parseInt(envConfig.PGID ?? "1000", 10),
 		};
@@ -785,24 +786,21 @@ export const fetchRemoteDetails = createServerFn({ method: "GET" }).handler(
 		{ name: string; type: string | null; reachable: boolean | null }[]
 	> => {
 		await ensureSession();
-		const projectRoot = getProjectRoot();
-		const envConfig = await loadEnvConfig(projectRoot);
-		const backupConfig = getBackupConfig(envConfig);
+		const rcloneRemotes = await listRemotes();
 		const results: {
 			name: string;
 			type: string | null;
 			reachable: boolean | null;
 		}[] = [];
 
-		for (const name of backupConfig.RCLONE_REMOTES) {
-			const type = await getRemoteType(name);
+		for (const remote of rcloneRemotes) {
 			let reachable: boolean | null = null;
 			try {
-				reachable = await isRemoteReachable(name);
+				reachable = await isRemoteReachable(remote.name);
 			} catch {
 				reachable = false;
 			}
-			results.push({ name, type, reachable });
+			results.push({ name: remote.name, type: remote.type, reachable });
 		}
 
 		return results;

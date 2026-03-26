@@ -116,6 +116,25 @@ export async function ensureRcloneConfig(env: EnvConfig): Promise<boolean> {
   return true;
 }
 
+/** List all rclone remotes with their types via `rclone listremotes --long`. */
+export async function listRemotes(): Promise<{ name: string; type: string }[]> {
+  const configArgs = await resolveRcloneConfigArgs();
+  const result = await shell("rclone", [...configArgs, "listremotes", "--long"], { ignoreError: true });
+  if (result.exitCode !== 0) return [];
+
+  return result.stdout
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const parts = line.split(/\s+/);
+      const name = (parts[0] ?? "").replace(/:$/, "");
+      const type = parts[1] ?? "unknown";
+      return { name, type };
+    })
+    .filter((r) => r.name !== "");
+}
+
 /**
  * Check if a specific rclone remote is configured (matches bash: rclone listremotes | grep).
  * Returns { configured: true } or { configured: false, reason: string } for diagnostics.
