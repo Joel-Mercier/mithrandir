@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import {
 	ArrowLeft,
 	Check,
@@ -47,7 +47,6 @@ interface Step {
 const REDIRECT_DELAY = 4;
 
 function SelfUpdatePage() {
-	const navigate = useNavigate();
 	const [steps, setSteps] = useState<Step[]>([
 		{ id: "pull", name: m.selfUpdate_stepGitPull(), status: "pending" },
 		{ id: "deps", name: m.selfUpdate_stepDeps(), status: "pending" },
@@ -248,12 +247,12 @@ function SelfUpdatePage() {
 	useEffect(() => {
 		if (phase !== "done") return;
 		if (countdown <= 0) {
-			navigate({ to: "/settings" });
+			window.location.href = "/settings";
 			return;
 		}
 		const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
 		return () => clearTimeout(timer);
-	}, [phase, countdown, navigate]);
+	}, [phase, countdown]);
 
 	const doneCount = steps.filter(
 		(s) => s.status === "done" || s.status === "skipped",
@@ -392,7 +391,7 @@ function SelfUpdatePage() {
 						variant="ghost"
 						size="sm"
 						className="gap-2 text-muted-foreground"
-						onClick={() => navigate({ to: "/settings" })}
+						onClick={() => { window.location.href = "/settings"; }}
 					>
 						<ArrowLeft className="h-3.5 w-3.5" />
 						{m.selfUpdate_backToSettings()}
