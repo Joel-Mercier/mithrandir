@@ -181,12 +181,14 @@ export const buildUi = createServerFn({ method: "POST" }).handler(
 		await ensureSession();
 		const root = getProjectRoot();
 
-		// Remove previous build output — it may be owned by root (created by
-		// the systemd service) so the build process can't overwrite it
-		await shell("rm", ["-rf", join(root, "ui", ".output")], {
-			sudo: true,
-			ignoreError: true,
-		});
+		// Fix ownership of generated dirs that may be root-owned (created by
+		// the systemd service) so the build process can overwrite them
+		for (const dir of [".output", "src/paraglide"]) {
+			await shell("rm", ["-rf", join(root, "ui", dir)], {
+				sudo: true,
+				ignoreError: true,
+			});
+		}
 
 		const result = await shell("bun", ["run", "ui:build"], {
 			cwd: root,
