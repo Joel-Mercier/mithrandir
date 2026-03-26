@@ -1,13 +1,36 @@
 import { paraglideVitePlugin } from '@inlang/paraglide-js'
-import { defineConfig } from 'vite'
+import { defineConfig, type Plugin } from 'vite'
 import { devtools } from '@tanstack/devtools-vite'
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 import { nitro } from 'nitro/vite'
 import viteReact from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import { accessSync, constants, existsSync, rmSync } from 'node:fs'
+import { execSync } from 'node:child_process'
+import { resolve } from 'node:path'
+
+function cleanRootOwnedOutput(): Plugin {
+  return {
+    name: 'clean-root-owned-output',
+    buildStart() {
+      const outputDir = resolve(import.meta.dirname, '.output')
+      if (!existsSync(outputDir)) return
+      try {
+        accessSync(outputDir, constants.W_OK)
+      } catch {
+        try {
+          rmSync(outputDir, { recursive: true, force: true })
+        } catch {
+          execSync(`sudo rm -rf ${outputDir}`)
+        }
+      }
+    },
+  }
+}
 
 const config = defineConfig({
   plugins: [
+    cleanRootOwnedOutput(),
     paraglideVitePlugin({
       project: './project.inlang',
       outdir: './src/paraglide',
