@@ -213,6 +213,8 @@
   "appDetail_eraseData": "Erase data & config",
   "appDetail_uninstalledErased": "{appName} uninstalled. Data erased.",
   "appDetail_uninstalledPreserved": "{appName} uninstalled. Data preserved.",
+  "appDetail_uninstallDependencyWarning": "{count} installed app(s) depend on this",
+  "appDetail_uninstallAffectedApps": "Affected: {apps}",
   "appDetail_failedUninstall": "Failed to uninstall: {error}",
   "appDetail_details": "Details",
   "appDetail_defaultPort": "Default port",

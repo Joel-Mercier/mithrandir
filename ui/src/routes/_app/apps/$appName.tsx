@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
 	AlertCircle,
+	AlertTriangle,
 	ArrowDownToLine,
 	ExternalLink,
 	Play,
@@ -51,6 +52,20 @@ import { m } from "#/paraglide/messages.js";
 export const Route = createFileRoute("/_app/apps/$appName")({
 	component: AppDetailPage,
 });
+
+/**
+ * Maps an app to the apps that directly depend on it.
+ * Derived from the dependency graph — standalone apps are excluded.
+ */
+const APP_DEPENDENTS: Record<string, string[]> = {
+	qbittorrent: ["radarr", "sonarr", "lidarr"],
+	prowlarr: ["radarr", "sonarr", "lidarr"],
+	radarr: ["bazarr", "seerr", "profilarr"],
+	sonarr: ["bazarr", "seerr", "profilarr"],
+	jellyfin: ["seerr"],
+	duckdns: ["caddy"],
+	caddy: ["vaultwarden"],
+};
 
 const statusColor: Record<AppStatus, string> = {
 	running: "bg-status-healthy/15 text-status-healthy border-status-healthy/30",
@@ -523,7 +538,17 @@ function AppDetailPage() {
 				)}
 			</div>
 
-			{detail && (
+			{detail && (() => {
+				const installedNames = new Set(
+					allApps
+						.filter((a) => a.status !== "available")
+						.map((a) => a.name),
+				);
+				const affectedApps = (APP_DEPENDENTS[appName] ?? [])
+					.filter((dep) => installedNames.has(dep))
+					.map((dep) => allApps.find((a) => a.name === dep)?.displayName ?? dep);
+
+				return (
 				<AlertDialog open={uninstallOpen} onOpenChange={setUninstallOpen}>
 					<AlertDialogContent className="bg-background/95 backdrop-blur">
 						<AlertDialogHeader>
@@ -534,6 +559,23 @@ function AppDetailPage() {
 								{m.appDetail_uninstallDescription()}
 							</AlertDialogDescription>
 						</AlertDialogHeader>
+						{affectedApps.length > 0 && (
+							<div className="flex gap-2 rounded-lg border border-status-warning/40 bg-status-warning/10 p-3 text-sm">
+								<AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-status-warning" />
+								<div>
+									<p className="font-medium text-status-warning">
+										{m.appDetail_uninstallDependencyWarning({
+											count: affectedApps.length,
+										})}
+									</p>
+									<p className="mt-1 text-muted-foreground">
+										{m.appDetail_uninstallAffectedApps({
+											apps: affectedApps.join(", "),
+										})}
+									</p>
+								</div>
+							</div>
+						)}
 						<div className="flex items-center justify-between rounded-lg border border-border/50 p-3 transition-colors hover:bg-muted/50">
 							<div className="space-y-0.5">
 								<Label>{m.appDetail_eraseData()}</Label>
@@ -574,7 +616,8 @@ function AppDetailPage() {
 						</AlertDialogFooter>
 					</AlertDialogContent>
 				</AlertDialog>
-			)}
+				);
+			})()}
 		</div>
 	);
 }
