@@ -181,10 +181,17 @@ export const buildUi = createServerFn({ method: "POST" }).handler(
 		await ensureSession();
 		const root = getProjectRoot();
 
-		// Fix ownership of generated dirs that may be root-owned (created by
-		// the systemd service) so the build process can overwrite them
-		for (const dir of [".output", "src/paraglide"]) {
-			await shell("rm", ["-rf", join(root, "ui", dir)], {
+		// Fix ownership of the entire ui/ directory — the systemd service runs
+		// as root and creates various dirs (.output, src/paraglide, node_modules/.nitro)
+		// that the build process needs to overwrite
+		const { stdout: owner } = await shell(
+			"stat",
+			["-c", "%U", root],
+			{ ignoreError: true },
+		);
+		const repoOwner = owner.trim();
+		if (repoOwner && repoOwner !== "root") {
+			await shell("chown", ["-R", `${repoOwner}:`, join(root, "ui")], {
 				sudo: true,
 				ignoreError: true,
 			});

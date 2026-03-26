@@ -157,10 +157,10 @@ function SelfUpdateCommand() {
 
       // Step 5: Rebuild UI
       setCurrentLabel("Building UI...");
-      // Remove generated dirs that may be root-owned (created by the systemd
-      // service) so the build process can overwrite them
-      for (const dir of [".output", "src/paraglide"]) {
-        await shell("rm", ["-rf", join(root, "ui", dir)], { sudo: true, ignoreError: true });
+      // Fix ownership of ui/ — the systemd service runs as root and creates
+      // various dirs that the build process needs to overwrite
+      if (sudoUser) {
+        await shell("chown", ["-R", `${sudoUser}:`, join(root, "ui")], { ignoreError: true });
       }
       const uiBuild = await shell(bunPath, ["run", "ui:build"], { cwd: root, ignoreError: true, ...userOpts });
       if (uiBuild.exitCode !== 0) {
