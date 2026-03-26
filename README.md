@@ -30,7 +30,7 @@ Automated setup and backup system for Docker-based homelab applications.
 ## Quick Start
 
 ```bash
-git clone git@github.com:Joel-Mercier/mithrandir.git && cd mithrandir
+git clone https://github.com/Joel-Mercier/mithrandir.git && cd mithrandir
 sudo bash install.sh          # Installs Bun + dependencies
 mithrandir setup              # No sudo needed — CLI elevates internally when required
 ```
@@ -450,7 +450,7 @@ Checks configuration correctness across three categories: System (.env file, Doc
 The project is a [Bun workspaces](https://bun.sh/docs/install/workspaces) monorepo. Each subproject (`cli/`, `docs/`) has its own `package.json` with workspace-scoped dependencies, while the root `package.json` provides global proxy scripts and a single `bun.lock`. Running `bun install` at the root installs everything.
 
 ```bash
-git clone git@github.com:Joel-Mercier/mithrandir.git && cd mithrandir
+git clone https://github.com/Joel-Mercier/mithrandir.git && cd mithrandir
 bun install
 ```
 

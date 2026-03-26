@@ -17,7 +17,7 @@ The project is a [Bun workspaces](https://bun.sh/docs/install/workspaces) monore
 ## Getting Started
 
 ```bash
-git clone git@github.com:Joel-Mercier/mithrandir.git && cd mithrandir
+git clone https://github.com/Joel-Mercier/mithrandir.git && cd mithrandir
 bun install
 ```
 
