@@ -35,6 +35,7 @@ export interface DashboardApp {
 
 export interface AppDetail extends DashboardApp {
 	image: string;
+	version: string;
 	configPath: string;
 	volumes: string[];
 	cpuUsage: number;

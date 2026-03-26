@@ -189,6 +189,7 @@
   "appDetail_containerError": "Ce conteneur est en état d'erreur. Consultez les journaux pour plus de détails.",
   "appDetail_container": "Conteneur",
   "appDetail_image": "Image",
+  "appDetail_version": "Version",
   "appDetail_port": "Port",
   "appDetail_restarts": "Redémarrages",
   "appDetail_created": "Créé",

@@ -189,6 +189,7 @@
   "appDetail_containerError": "This container is in an error state. Check the logs for details.",
   "appDetail_container": "Container",
   "appDetail_image": "Image",
+  "appDetail_version": "Version",
   "appDetail_port": "Port",
   "appDetail_restarts": "Restarts",
   "appDetail_created": "Created",

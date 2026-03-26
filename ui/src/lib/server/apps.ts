@@ -129,6 +129,7 @@ export const fetchAppDetail = createServerFn({ method: "GET" })
 		let restarts = 0;
 		let createdAt = "";
 		let image = app.image;
+		let version = "";
 
 		if (inspectResult.exitCode === 0) {
 			try {
@@ -143,6 +144,8 @@ export const fetchAppDetail = createServerFn({ method: "GET" })
 				restarts = info.RestartCount ?? 0;
 				createdAt = info.Created ?? "";
 				image = info.Config?.Image ?? app.image;
+				version =
+					info.Config?.Labels?.["org.opencontainers.image.version"] ?? "";
 				if (stateStatus === "running" && info.State?.StartedAt) {
 					uptime = formatUptime(info.State.StartedAt);
 				}
@@ -208,6 +211,7 @@ export const fetchAppDetail = createServerFn({ method: "GET" })
 			uptime,
 			icon: app.icon,
 			image,
+			version,
 			configPath,
 			volumes,
 			cpuUsage: Math.round(cpuUsage),

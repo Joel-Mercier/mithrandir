@@ -353,6 +353,9 @@ function AppDetailPage() {
 						</CardHeader>
 						<CardContent className="space-y-2">
 							<Row label={m.appDetail_image()}>{detail.image}</Row>
+							{detail.version && (
+								<Row label={m.appDetail_version()}>{detail.version}</Row>
+							)}
 							<Row label={m.appDetail_port()}>:{detail.port}</Row>
 							<Row label={m.appDetail_restarts()}>{detail.restarts}</Row>
 							<Row label={m.appDetail_created()}>
