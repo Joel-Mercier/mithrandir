@@ -181,10 +181,17 @@ export const buildUi = createServerFn({ method: "POST" }).handler(
 		await ensureSession();
 		const root = getProjectRoot();
 
+		// Remove previous build output — it may be owned by root (created by
+		// the systemd service) so the build process can't overwrite it
+		await shell("rm", ["-rf", join(root, "ui", ".output")], {
+			sudo: true,
+			ignoreError: true,
+		});
+
 		const result = await shell("bun", ["run", "ui:build"], {
 			cwd: root,
 			ignoreError: true,
-			timeout: 180000,
+			timeout: 300000,
 		});
 		if (result.exitCode !== 0) {
 			throw new Error(`UI build failed:\n${result.stderr}`);

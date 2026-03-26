@@ -157,6 +157,9 @@ function SelfUpdateCommand() {
 
       // Step 5: Rebuild UI
       setCurrentLabel("Building UI...");
+      // Remove previous build output — it may be owned by root (created by
+      // the systemd service) so the build process can't overwrite it
+      await shell("rm", ["-rf", join(root, "ui", ".output")], { sudo: true, ignoreError: true });
       const uiBuild = await shell(bunPath, ["run", "ui:build"], { cwd: root, ignoreError: true, ...userOpts });
       if (uiBuild.exitCode !== 0) {
         addStep({ name: "Build UI", status: "skipped", message: "UI build failed (non-critical)" });

@@ -65,6 +65,11 @@ function SelfUpdatePage() {
 			name: m.selfUpdate_stepFinalize(),
 			status: "pending",
 		},
+		{
+			id: "restart",
+			name: m.selfUpdate_stepRestart(),
+			status: "pending",
+		},
 	]);
 	const [phase, setPhase] = useState<"running" | "reconnecting" | "done" | "error">("running");
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -150,13 +155,20 @@ function SelfUpdatePage() {
 				message: m.selfUpdate_cliBuildDone(),
 			});
 
-			// Step 4: Build UI
+			// Step 4: Build UI (non-critical — may fail on low-resource devices)
 			updateStep("build-ui", { status: "running" });
-			await buildUiRef.current.mutateAsync(undefined);
-			updateStep("build-ui", {
-				status: "done",
-				message: m.selfUpdate_uiBuildDone(),
-			});
+			try {
+				await buildUiRef.current.mutateAsync(undefined);
+				updateStep("build-ui", {
+					status: "done",
+					message: m.selfUpdate_uiBuildDone(),
+				});
+			} catch {
+				updateStep("build-ui", {
+					status: "skipped",
+					message: "UI build failed (non-critical)",
+				});
+			}
 
 			// Step 5: Finalize
 			updateStep("finalize", { status: "running" });
@@ -167,17 +179,12 @@ function SelfUpdatePage() {
 				message: m.selfUpdate_symlinkDone(),
 			});
 
-			// Step 6 (conditional): Restart UI service
+			// Step 6: Restart UI service (or skip if not running as a service)
 			if (finalizeResult.willRestart) {
-				setSteps((prev) => [
-					...prev,
-					{
-						id: "restart",
-						name: m.selfUpdate_stepRestart(),
-						status: "running",
-						message: m.selfUpdate_restarting(),
-					},
-				]);
+				updateStep("restart", {
+					status: "running",
+					message: m.selfUpdate_restarting(),
+				});
 				setPhase("reconnecting");
 
 				// Wait for the restart to kick in
@@ -198,31 +205,18 @@ function SelfUpdatePage() {
 				}
 
 				if (connected) {
-					setSteps((prev) =>
-						prev.map((s) =>
-							s.id === "restart"
-								? {
-										...s,
-										status: "done" as const,
-										message: m.selfUpdate_restartDone(),
-									}
-								: s,
-						),
-					);
+					updateStep("restart", {
+						status: "done",
+						message: m.selfUpdate_restartDone(),
+					});
 				} else {
-					setSteps((prev) =>
-						prev.map((s) =>
-							s.id === "restart"
-								? {
-										...s,
-										status: "error" as const,
-										message:
-											"Timed out waiting for server",
-									}
-								: s,
-						),
-					);
+					updateStep("restart", {
+						status: "error",
+						message: "Timed out waiting for server",
+					});
 				}
+			} else {
+				updateStep("restart", { status: "skipped" });
 			}
 
 			setPhase("done");
