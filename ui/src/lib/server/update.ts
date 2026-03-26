@@ -35,6 +35,13 @@ function gitArgs(root: string, args: string[]): string[] {
 	return ["-c", `safe.directory=${root}`, ...args];
 }
 
+/** Env vars for git commands that talk to remotes (fetch/pull).
+ *  Accepts new SSH host keys automatically so git works when the UI service
+ *  runs as root and root's known_hosts doesn't have GitHub's key yet. */
+const GIT_REMOTE_ENV = {
+	GIT_SSH_COMMAND: "ssh -o StrictHostKeyChecking=accept-new",
+};
+
 // ─── Server functions ────────────────────────────────────────────────────────
 
 export const checkForUpdates = createServerFn({ method: "GET" }).handler(
@@ -46,6 +53,7 @@ export const checkForUpdates = createServerFn({ method: "GET" }).handler(
 			cwd: root,
 			ignoreError: true,
 			timeout: 30000,
+			env: GIT_REMOTE_ENV,
 		});
 		if (fetch.exitCode !== 0) {
 			throw new Error(`git fetch failed: ${fetch.stderr}`);
@@ -108,7 +116,7 @@ export const pullLatestChanges = createServerFn({ method: "POST" }).handler(
 		const pull = await shell(
 			"git",
 			gitArgs(root, ["pull", "--ff-only"]),
-			{ cwd: root, ignoreError: true },
+			{ cwd: root, ignoreError: true, env: GIT_REMOTE_ENV },
 		);
 		if (pull.exitCode !== 0) {
 			throw new Error(

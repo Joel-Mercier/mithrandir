@@ -49,7 +49,7 @@ function SettingsPage() {
 								key={tab.id}
 								type="button"
 								onClick={() => setActiveTab(tab.id as TabId)}
-								className={`group flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
+								className={`group flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all cursor-pointer ${
 									isActive
 										? "bg-accent text-accent-foreground shadow-sm"
 										: "text-muted-foreground hover:bg-accent/50 hover:text-foreground"

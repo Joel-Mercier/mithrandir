@@ -248,8 +248,7 @@ export default defineConfig({
   },
   themeConfig: {
     footer: {
-      message: 'Released under the MIT License.',
-      copyright: 'Copyright © 2026-present Joel Mercier'
+      copyright: 'Released under the MIT License.'
     },
     nav: [
       { text: "Home", link: "/" },
