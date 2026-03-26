@@ -242,14 +242,7 @@ export const startApp = createServerFn({ method: "POST" })
 		}
 
 		await composeUp(composePath);
-		const displayName = app.displayName;
-		await logActivity(
-			"started",
-			"app",
-			appName,
-			`Started ${displayName}`,
-			`/apps/${appName}`,
-		);
+		await logActivity("started", "app", appName, `/apps/${appName}`);
 	});
 
 export const stopApp = createServerFn({ method: "POST" })
@@ -270,14 +263,7 @@ export const stopApp = createServerFn({ method: "POST" })
 		}
 
 		await composeDown(composePath);
-		const displayName = app.displayName;
-		await logActivity(
-			"stopped",
-			"app",
-			appName,
-			`Stopped ${displayName}`,
-			`/apps/${appName}`,
-		);
+		await logActivity("stopped", "app", appName, `/apps/${appName}`);
 	});
 
 export const restartApp = createServerFn({ method: "POST" })
@@ -299,14 +285,7 @@ export const restartApp = createServerFn({ method: "POST" })
 
 		await composeDown(composePath);
 		await composeUp(composePath);
-		const displayName = app.displayName;
-		await logActivity(
-			"restarted",
-			"app",
-			appName,
-			`Restarted ${displayName}`,
-			`/apps/${appName}`,
-		);
+		await logActivity("restarted", "app", appName, `/apps/${appName}`);
 	});
 
 export const installApp = createServerFn({ method: "POST" })
@@ -333,13 +312,7 @@ export const installApp = createServerFn({ method: "POST" })
 
 		const success = (result.exitCode ?? 0) === 0;
 		if (success) {
-			await logActivity(
-				"installed",
-				"app",
-				appName,
-				`Installed ${app.displayName}`,
-				`/apps/${appName}`,
-			);
+			await logActivity("installed", "app", appName, `/apps/${appName}`);
 		}
 		return {
 			success,
@@ -394,12 +367,6 @@ export const uninstallApp = createServerFn({ method: "POST" })
 			} catch {}
 		}
 
-		await logActivity(
-			"uninstalled",
-			"app",
-			appName,
-			`Uninstalled ${app.displayName}`,
-			"/apps",
-		);
+		await logActivity("uninstalled", "app", appName, "/apps");
 		return { success: true, output: `${app.displayName} uninstalled` };
 	});

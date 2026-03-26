@@ -11,7 +11,6 @@ export type ActivityItem = {
 	action: string;
 	targetType: string;
 	targetName: string | null;
-	title: string;
 	route: string;
 	createdAt: Date;
 };
@@ -35,7 +34,6 @@ export async function logActivity(
 	action: string,
 	targetType: string,
 	targetName: string | null,
-	title: string,
 	route: string,
 ) {
 	await db.insert(activityHistory).values({
@@ -43,7 +41,6 @@ export async function logActivity(
 		action,
 		targetType,
 		targetName,
-		title,
 		route,
 	});
 

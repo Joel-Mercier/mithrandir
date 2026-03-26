@@ -301,13 +301,7 @@ export const updateConfig = createServerFn({ method: "POST" })
 		await saveEnvConfig(envConfig, projectRoot);
 
 		const changedKeys = Object.keys(changes).join(", ");
-		await logActivity(
-			"config_updated",
-			"system",
-			null,
-			`Updated settings: ${changedKeys}`,
-			"/settings",
-		);
+		await logActivity("config_updated", "system", changedKeys, "/settings");
 	});
 
 // ─── HTTPS ───────────────────────────────────────────────────────────────────
@@ -470,13 +464,7 @@ export const enableHttps = createServerFn({ method: "POST" })
 
 		await saveEnvConfig(envConfig, projectRoot);
 
-		await logActivity(
-			"https_enabled",
-			"system",
-			null,
-			`Enabled HTTPS with Caddy (${domain})`,
-			"/settings",
-		);
+		await logActivity("https_enabled", "system", domain, "/settings");
 	});
 
 export const disableHttps = createServerFn({ method: "POST" }).handler(
@@ -522,13 +510,7 @@ export const disableHttps = createServerFn({ method: "POST" }).handler(
 			}
 		}
 
-		await logActivity(
-			"https_disabled",
-			"system",
-			null,
-			"Disabled HTTPS and stopped Caddy",
-			"/settings",
-		);
+		await logActivity("https_disabled", "system", null, "/settings");
 	},
 );
 
@@ -635,13 +617,7 @@ export const enableFirewall = createServerFn({ method: "POST" }).handler(
 		envConfig.ENABLE_FIREWALL = "true";
 		await saveEnvConfig(envConfig, projectRoot);
 
-		await logActivity(
-			"firewall_enabled",
-			"system",
-			null,
-			"Enabled UFW firewall with ufw-docker",
-			"/settings",
-		);
+		await logActivity("firewall_enabled", "system", null, "/settings");
 	},
 );
 
@@ -661,13 +637,7 @@ export const disableFirewall = createServerFn({ method: "POST" }).handler(
 		envConfig.ENABLE_FIREWALL = "false";
 		await saveEnvConfig(envConfig, projectRoot);
 
-		await logActivity(
-			"firewall_disabled",
-			"system",
-			null,
-			"Disabled UFW firewall",
-			"/settings",
-		);
+		await logActivity("firewall_disabled", "system", null, "/settings");
 	},
 );
 
@@ -729,13 +699,7 @@ export const addBackupRemote = createServerFn({ method: "POST" })
 			await saveEnvConfig(envConfig, projectRoot);
 		}
 
-		await logActivity(
-			"remote_added",
-			"system",
-			null,
-			`Added backup remote '${name}' (${providerType})`,
-			"/settings",
-		);
+		await logActivity("remote_added", "system", name, "/settings");
 
 		return { reachable };
 	});
@@ -772,13 +736,7 @@ export const removeBackupRemote = createServerFn({ method: "POST" })
 			}
 		}
 
-		await logActivity(
-			"remote_removed",
-			"system",
-			null,
-			`Removed backup remote '${name}'`,
-			"/settings",
-		);
+		await logActivity("remote_removed", "system", name, "/settings");
 	});
 
 export const fetchRemoteDetails = createServerFn({ method: "GET" }).handler(

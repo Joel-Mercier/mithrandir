@@ -171,13 +171,7 @@ export const triggerBackup = createServerFn({ method: "POST" }).handler(
 			["-c", `cd ${projectRoot} && /usr/local/bin/mithrandir backup &`],
 			{ ignoreError: true, timeout: 5000 },
 		);
-		await logActivity(
-			"backup_triggered",
-			"backup",
-			null,
-			"Triggered backup",
-			"/backup-restore",
-		);
+		await logActivity("backup_triggered", "backup", null, "/backup-restore");
 		return { started: true };
 	},
 );
@@ -222,13 +216,7 @@ export const deleteBackup = createServerFn({ method: "POST" })
 
 		const success = result.exitCode === 0;
 		if (success) {
-			await logActivity(
-				"backup_deleted",
-				"backup",
-				dateStr,
-				`Deleted ${location} backup ${dateStr}`,
-				"/backup-restore",
-			);
+			await logActivity("backup_deleted", "backup", dateStr, "/backup-restore");
 		}
 		return {
 			success,

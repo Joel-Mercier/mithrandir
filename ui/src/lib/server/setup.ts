@@ -185,13 +185,7 @@ export const installSystemDep = createServerFn({ method: "POST" })
 				break;
 		}
 
-		await logActivity(
-			"setup_installed",
-			"system",
-			dep,
-			`Installed ${dep} during setup`,
-			"/setup",
-		);
+		await logActivity("setup_installed", "system", dep, "/setup");
 	});
 
 // ─── Base directory ──────────────────────────────────────────────────────────
@@ -234,13 +228,7 @@ export const setupBaseDir = createServerFn({ method: "POST" })
 		envConfig.BASE_DIR = baseDir;
 		await saveEnvConfig(envConfig, projectRoot);
 
-		await logActivity(
-			"setup_basedir",
-			"system",
-			null,
-			`Set base directory to ${baseDir}`,
-			"/setup",
-		);
+		await logActivity("setup_basedir", "system", baseDir, "/setup");
 	});
 
 // ─── App registry ────────────────────────────────────────────────────────────
@@ -355,8 +343,7 @@ export const saveSetupSecrets = createServerFn({ method: "POST" })
 		await logActivity(
 			"setup_secrets",
 			"system",
-			null,
-			`Saved ${Object.keys(secrets).length} secrets during setup`,
+			String(Object.keys(secrets).length),
 			"/setup",
 		);
 	});
@@ -392,13 +379,7 @@ export const installSetupApp = createServerFn({ method: "POST" })
 			// Write compose and start (inline from writeComposeAndStart)
 			await writeComposeAndStart(app, envConfig);
 
-			await logActivity(
-				"setup_installed",
-				"app",
-				appName,
-				`Installed ${app.displayName} during setup`,
-				"/setup",
-			);
+			await logActivity("setup_installed", "app", appName, "/setup");
 
 			return { success: true };
 		} catch (err: unknown) {
@@ -597,13 +578,7 @@ export const setupHttps = createServerFn({ method: "POST" })
 
 		await saveEnvConfig(envConfig, projectRoot);
 
-		await logActivity(
-			"setup_https",
-			"system",
-			null,
-			"Enabled HTTPS with Caddy during setup",
-			"/setup",
-		);
+		await logActivity("setup_https", "system", null, "/setup");
 	});
 
 // ─── Auto-setup apps ─────────────────────────────────────────────────────────
@@ -1150,13 +1125,7 @@ export const autoSetupApp = createServerFn({ method: "POST" })
 					}
 				}
 
-				await logActivity(
-					"setup_autosetup",
-					"app",
-					appName,
-					`Auto-configured ${app.displayName} during setup`,
-					"/setup",
-				);
+				await logActivity("setup_autosetup", "app", appName, "/setup");
 
 				return { success: true, warnings };
 			} catch (err: unknown) {
@@ -1201,13 +1170,7 @@ export const setupFirewall = createServerFn({ method: "POST" })
 		envConfig.ENABLE_FIREWALL = "true";
 		await saveEnvConfig(envConfig, projectRoot);
 
-		await logActivity(
-			"setup_firewall",
-			"system",
-			null,
-			"Enabled firewall during setup",
-			"/setup",
-		);
+		await logActivity("setup_firewall", "system", null, "/setup");
 	});
 
 // ─── Backup timer ────────────────────────────────────────────────────────────
@@ -1228,13 +1191,7 @@ export const setupBackupTimer = createServerFn({ method: "POST" })
 		envConfig.BACKUP_HOUR = String(hour);
 		await saveEnvConfig(envConfig, projectRoot);
 
-		await logActivity(
-			"setup_backup",
-			"system",
-			null,
-			`Set backup timer to ${hour}:00 during setup`,
-			"/setup",
-		);
+		await logActivity("setup_backup", "system", String(hour), "/setup");
 
 		return { installed: hasSystemdResult };
 	});
@@ -1266,13 +1223,7 @@ export const completeSetup = createServerFn({ method: "POST" }).handler(
 	async () => {
 		await ensureSession();
 		await upsertSetupStatus("completed");
-		await logActivity(
-			"setup_completed",
-			"system",
-			null,
-			"Completed initial setup",
-			"/setup",
-		);
+		await logActivity("setup_completed", "system", null, "/setup");
 	},
 );
 
@@ -1280,13 +1231,7 @@ export const skipSetup = createServerFn({ method: "POST" }).handler(
 	async () => {
 		await ensureSession();
 		await upsertSetupStatus("skipped");
-		await logActivity(
-			"setup_skipped",
-			"system",
-			null,
-			"Skipped initial setup",
-			"/setup",
-		);
+		await logActivity("setup_skipped", "system", null, "/setup");
 	},
 );
 
@@ -1294,13 +1239,7 @@ export const resumeSetup = createServerFn({ method: "POST" }).handler(
 	async () => {
 		await ensureSession();
 		await upsertSetupStatus("started");
-		await logActivity(
-			"setup_resumed",
-			"system",
-			null,
-			"Resumed setup",
-			"/setup",
-		);
+		await logActivity("setup_resumed", "system", null, "/setup");
 	},
 );
 

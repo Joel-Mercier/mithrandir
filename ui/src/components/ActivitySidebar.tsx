@@ -21,6 +21,41 @@ import type { ActivityItem } from "#/lib/server/activity";
 import { m } from "#/paraglide/messages.js";
 import { formatRelativeTime } from "#/lib/utils";
 
+// biome-ignore lint/suspicious/noExplicitAny: paraglide message functions have varying signatures
+const activityMessages: Record<string, (params?: any) => string> = {
+	started: m.activity_started,
+	stopped: m.activity_stopped,
+	restarted: m.activity_restarted,
+	installed: m.activity_installed,
+	uninstalled: m.activity_uninstalled,
+	backup_triggered: m.activity_backup_triggered,
+	backup_deleted: m.activity_backup_deleted,
+	config_updated: m.activity_config_updated,
+	https_enabled: m.activity_https_enabled,
+	https_disabled: m.activity_https_disabled,
+	firewall_enabled: m.activity_firewall_enabled,
+	firewall_disabled: m.activity_firewall_disabled,
+	remote_added: m.activity_remote_added,
+	remote_removed: m.activity_remote_removed,
+	self_update: m.activity_self_update,
+	setup_installed: m.activity_setup_installed,
+	setup_basedir: m.activity_setup_basedir,
+	setup_secrets: m.activity_setup_secrets,
+	setup_https: m.activity_setup_https,
+	setup_autosetup: m.activity_setup_autosetup,
+	setup_firewall: m.activity_setup_firewall,
+	setup_backup: m.activity_setup_backup,
+	setup_completed: m.activity_setup_completed,
+	setup_skipped: m.activity_setup_skipped,
+	setup_resumed: m.activity_setup_resumed,
+};
+
+function getActivityTitle(action: string, targetName: string | null): string {
+	const msgFn = activityMessages[action];
+	if (!msgFn) return m.activity_unknown();
+	return msgFn({ name: targetName ?? "" });
+}
+
 const actionIcons: Record<string, typeof Play> = {
 	started: Play,
 	stopped: Square,
@@ -89,7 +124,7 @@ export default function ActivitySidebar({
 											<Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
 											<div className="min-w-0 flex-1">
 												<p className="truncate text-sm font-medium">
-													{item.title}
+													{getActivityTitle(item.action, item.targetName)}
 												</p>
 												<p className="text-xs text-muted-foreground">
 													{formatRelativeTime(item.createdAt)}

@@ -1,0 +1,1 @@
+ALTER TABLE `activity_history` DROP COLUMN `title`;

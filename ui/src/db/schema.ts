@@ -148,7 +148,6 @@ export const activityHistory = sqliteTable(
 		action: text("action").notNull(),
 		targetType: text("target_type").notNull(),
 		targetName: text("target_name"),
-		title: text("title").notNull(),
 		route: text("route").notNull(),
 		createdAt: integer("created_at", { mode: "timestamp_ms" })
 			.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)

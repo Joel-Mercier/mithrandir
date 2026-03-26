@@ -221,13 +221,7 @@ export const finalizeUpdate = createServerFn({ method: "POST" }).handler(
 			sudo: true,
 		});
 
-		await logActivity(
-			"self_update",
-			"system",
-			null,
-			"Mithrandir updated via UI",
-			"/settings",
-		);
+		await logActivity("self_update", "system", null, "/settings");
 
 		// Check if UI service is active and trigger a delayed restart
 		let willRestart = false;
