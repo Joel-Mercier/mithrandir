@@ -17,6 +17,7 @@ import { Route as UpdateSelfUpdateRouteImport } from './routes/_update/self-upda
 import { Route as AuthTwoFactorRouteImport } from './routes/_auth/two-factor'
 import { Route as AuthSignUpRouteImport } from './routes/_auth/sign-up'
 import { Route as AuthSignInRouteImport } from './routes/_auth/sign-in'
+import { Route as AppUploadRouteImport } from './routes/_app/upload'
 import { Route as AppSetupRouteImport } from './routes/_app/setup'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppProfileRouteImport } from './routes/_app/profile'
@@ -64,6 +65,11 @@ const AuthSignInRoute = AuthSignInRouteImport.update({
   id: '/sign-in',
   path: '/sign-in',
   getParentRoute: () => AuthRoute,
+} as any)
+const AppUploadRoute = AppUploadRouteImport.update({
+  id: '/upload',
+  path: '/upload',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppSetupRoute = AppSetupRouteImport.update({
   id: '/setup',
@@ -122,6 +128,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof AppProfileRoute
   '/settings': typeof AppSettingsRoute
   '/setup': typeof AppSetupRoute
+  '/upload': typeof AppUploadRoute
   '/sign-in': typeof AuthSignInRoute
   '/sign-up': typeof AuthSignUpRoute
   '/two-factor': typeof AuthTwoFactorRoute
@@ -139,6 +146,7 @@ export interface FileRoutesByTo {
   '/profile': typeof AppProfileRoute
   '/settings': typeof AppSettingsRoute
   '/setup': typeof AppSetupRoute
+  '/upload': typeof AppUploadRoute
   '/sign-in': typeof AuthSignInRoute
   '/sign-up': typeof AuthSignUpRoute
   '/two-factor': typeof AuthTwoFactorRoute
@@ -159,6 +167,7 @@ export interface FileRoutesById {
   '/_app/profile': typeof AppProfileRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/setup': typeof AppSetupRoute
+  '/_app/upload': typeof AppUploadRoute
   '/_auth/sign-in': typeof AuthSignInRoute
   '/_auth/sign-up': typeof AuthSignUpRoute
   '/_auth/two-factor': typeof AuthTwoFactorRoute
@@ -179,6 +188,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/settings'
     | '/setup'
+    | '/upload'
     | '/sign-in'
     | '/sign-up'
     | '/two-factor'
@@ -196,6 +206,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/settings'
     | '/setup'
+    | '/upload'
     | '/sign-in'
     | '/sign-up'
     | '/two-factor'
@@ -215,6 +226,7 @@ export interface FileRouteTypes {
     | '/_app/profile'
     | '/_app/settings'
     | '/_app/setup'
+    | '/_app/upload'
     | '/_auth/sign-in'
     | '/_auth/sign-up'
     | '/_auth/two-factor'
@@ -294,6 +306,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthSignInRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_app/upload': {
+      id: '/_app/upload'
+      path: '/upload'
+      fullPath: '/upload'
+      preLoaderRoute: typeof AppUploadRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/setup': {
       id: '/_app/setup'
       path: '/setup'
@@ -372,6 +391,7 @@ interface AppRouteChildren {
   AppProfileRoute: typeof AppProfileRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppSetupRoute: typeof AppSetupRoute
+  AppUploadRoute: typeof AppUploadRoute
   AppIndexRoute: typeof AppIndexRoute
   AppAppsAppNameRoute: typeof AppAppsAppNameRoute
   AppAppsCapacityRoute: typeof AppAppsCapacityRoute
@@ -384,6 +404,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppProfileRoute: AppProfileRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppSetupRoute: AppSetupRoute,
+  AppUploadRoute: AppUploadRoute,
   AppIndexRoute: AppIndexRoute,
   AppAppsAppNameRoute: AppAppsAppNameRoute,
   AppAppsCapacityRoute: AppAppsCapacityRoute,

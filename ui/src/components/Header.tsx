@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { History, LogOut, Settings, User } from "lucide-react";
+import { History, LogOut, Settings, Upload, User } from "lucide-react";
 import { useState } from "react";
 import { Avatar, AvatarFallback } from "#/components/ui/avatar";
 import { Badge } from "#/components/ui/badge";
@@ -88,6 +88,17 @@ export default function Header() {
 
 				{/* Right side */}
 				<div className="ml-auto flex items-center gap-1">
+					<Button
+						variant="ghost"
+						size="icon"
+						asChild
+						className="hidden md:inline-flex"
+					>
+						<Link to="/upload">
+							<Upload className="size-4" />
+							<span className="sr-only">{m.upload_title()}</span>
+						</Link>
+					</Button>
 					<div className="hidden md:block">
 						<LanguageSwitch />
 					</div>

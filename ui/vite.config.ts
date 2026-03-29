@@ -5,6 +5,39 @@ import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 import { nitro } from 'nitro/vite'
 import viteReact from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import type { Plugin } from 'vite'
+
+// Vite plugin that handles tus upload requests via raw Node.js req/res,
+// bypassing TanStack Start's routing which double-dispatches handlers.
+function tusUploadPlugin(): Plugin {
+  let tusServerPromise: Promise<import("@tus/server").Server> | null = null
+
+  return {
+    name: 'tus-upload',
+    configureServer(server) {
+      server.middlewares.use(async (req, res, next) => {
+        if (!req.url?.startsWith('/api/media/upload/tus')) {
+          return next()
+        }
+        try {
+          if (!tusServerPromise) {
+            tusServerPromise = import('./src/lib/server/upload.ts')
+              .then((mod) => mod.getTusServer())
+          }
+          const tusServer = await tusServerPromise
+          await tusServer.handle(req, res)
+        } catch (err) {
+          console.error('[tus] Error:', err)
+          tusServerPromise = null
+          if (!res.headersSent) {
+            res.statusCode = 500
+            res.end('Internal Server Error')
+          }
+        }
+      })
+    },
+  }
+}
 
 const config = defineConfig({
   plugins: [
@@ -24,6 +57,7 @@ const config = defineConfig({
         },
       ],
     }),
+    tusUploadPlugin(),
     devtools(),
     tailwindcss(),
     tanstackStart(),

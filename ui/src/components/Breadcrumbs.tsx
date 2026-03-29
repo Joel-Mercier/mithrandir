@@ -19,6 +19,7 @@ function getRouteLabels(): Record<string, string> {
 		"/backup-restore": m.breadcrumbs_backupRestore(),
 		"/settings": m.breadcrumbs_settings(),
 		"/profile": m.breadcrumbs_profile(),
+		"/upload": m.breadcrumbs_upload(),
 	};
 }
 

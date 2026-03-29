@@ -662,5 +662,25 @@
   "doctor_issuesFound": "{count} problème{s} trouvé{s}. Exécutez les commandes suggérées pour les corriger.",
   "doctor_close": "Fermer",
   "doctor_rerun": "Relancer",
-  "doctor_error": "Échec des diagnostics : {error}"
+  "doctor_error": "Échec des diagnostics : {error}",
+
+  "breadcrumbs_upload": "Téléverser",
+  "upload_title": "Téléverser des médias",
+  "upload_subtitle": "Téléversez des fichiers vers votre bibliothèque multimédia",
+  "upload_selectType": "Sélectionner le type de média",
+  "upload_movies": "Films",
+  "upload_tv": "Séries TV",
+  "upload_music": "Musique",
+  "upload_audiobooks": "Livres audio",
+  "upload_podcasts": "Podcasts",
+  "upload_pictures": "Photos",
+  "upload_dropzoneText": "Glissez des fichiers ici ou cliquez pour parcourir",
+  "upload_dropzoneActive": "Déposez les fichiers pour téléverser",
+  "upload_dropzoneDisabled": "Sélectionnez d'abord un type de média",
+  "upload_complete": "Téléversement terminé",
+  "upload_failed": "Échec du téléversement",
+  "upload_cancel": "Annuler",
+  "upload_clearCompleted": "Effacer les terminés",
+  "upload_queued": "{count} fichier(s) en file d'attente",
+  "upload_uploading": "Téléversement en cours..."
 }

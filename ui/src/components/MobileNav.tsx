@@ -21,6 +21,7 @@ function getNavLinks() {
 		{ to: "/apps", label: m.common_apps() },
 		{ to: "/backup-restore", label: m.common_backupRestore() },
 		{ to: "/settings", label: m.common_settings() },
+		{ to: "/upload", label: m.upload_title() },
 	];
 }
 

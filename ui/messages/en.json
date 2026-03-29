@@ -662,5 +662,25 @@
   "doctor_issuesFound": "{count} issue{s} found. Run the suggested commands to fix them.",
   "doctor_close": "Close",
   "doctor_rerun": "Run Again",
-  "doctor_error": "Diagnostics failed: {error}"
+  "doctor_error": "Diagnostics failed: {error}",
+
+  "breadcrumbs_upload": "Upload",
+  "upload_title": "Upload Media",
+  "upload_subtitle": "Upload files to your media library",
+  "upload_selectType": "Select media type",
+  "upload_movies": "Movies",
+  "upload_tv": "TV Shows",
+  "upload_music": "Music",
+  "upload_audiobooks": "Audiobooks",
+  "upload_podcasts": "Podcasts",
+  "upload_pictures": "Pictures",
+  "upload_dropzoneText": "Drag files here or click to browse",
+  "upload_dropzoneActive": "Drop files to upload",
+  "upload_dropzoneDisabled": "Select a media type first",
+  "upload_complete": "Upload complete",
+  "upload_failed": "Upload failed",
+  "upload_cancel": "Cancel",
+  "upload_clearCompleted": "Clear completed",
+  "upload_queued": "{count} file(s) queued",
+  "upload_uploading": "Uploading..."
 }
