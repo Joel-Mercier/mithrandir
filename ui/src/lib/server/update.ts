@@ -248,10 +248,13 @@ export const finalizeUpdate = createServerFn({ method: "POST" }).handler(
 		}
 
 		// Check if UI service is active and trigger a delayed restart
+		// Only restart if the build output exists — if the UI build failed,
+		// restarting would cause an infinite crash loop
 		let willRestart = false;
+		const outputExists = existsSync(join(root, "ui", ".output", "server", "index.mjs"));
 		try {
 			const active = await isUiServiceActive();
-			if (active) {
+			if (active && outputExists) {
 				willRestart = true;
 				// Spawn a detached background process that restarts both tusd and UI
 				// after a 2-second delay, giving time for this response to be sent.

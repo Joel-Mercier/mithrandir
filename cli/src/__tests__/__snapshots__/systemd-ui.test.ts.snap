@@ -19,6 +19,8 @@ EnvironmentFile=-/home/user/homelab/.env
 EnvironmentFile=/home/user/homelab/ui/.env.local
 Restart=on-failure
 RestartSec=5
+StartLimitBurst=5
+StartLimitIntervalSec=60
 StandardOutput=journal
 StandardError=journal
 

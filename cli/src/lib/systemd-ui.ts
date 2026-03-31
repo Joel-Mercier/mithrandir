@@ -41,6 +41,8 @@ EnvironmentFile=-${repoRoot}/.env
 EnvironmentFile=${repoRoot}/ui/.env.local
 Restart=on-failure
 RestartSec=5
+StartLimitBurst=5
+StartLimitIntervalSec=60
 StandardOutput=journal
 StandardError=journal
 
