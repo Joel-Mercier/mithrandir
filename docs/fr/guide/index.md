@@ -2,12 +2,8 @@
 
 Mithrandir est un système automatisé de configuration, sauvegarde et restauration de homelab basé sur Docker pour les serveurs Raspberry Pi OS, Debian et Ubuntu. Il fournit une seule CLI pour installer, configurer et gérer une suite complète de services auto-hébergés — du streaming multimédia à la domotique en passant par la sécurité réseau.
 
-::: warning
-Ce projet est développé avec l'aide de LLMs et de codage agentique. Bien que je sois un développeur logiciel professionnel, j'ai davantage d'expérience dans le développement de sites web et d'applications mobiles.
-:::
-
-::: warning
-Mithrandir n'a pour l'instant été testé que sur un Raspberry Pi 5 avec 4 Go de RAM sous Raspberry Pi OS en mode headless. Il peut ne pas fonctionner sur d'autres matériels ou systèmes d'exploitation.
+::: tip Testé sur
+Raspberry Pi 5 avec 4 Go de RAM sous Raspberry Pi OS en mode headless. D'autres systèmes Debian/Ubuntu sur x86_64 ou ARM64 devraient fonctionner mais n'ont pas encore été testés de manière approfondie.
 :::
 
 ## Fonctionnalités
@@ -21,34 +17,6 @@ Mithrandir n'a pour l'instant été testé que sur un Raspberry Pi 5 avec 4 Go d
 - **Configuration automatique** — Configuration automatique optionnelle des intégrations entre applications (Prowlarr → Sonarr/Radarr, bibliothèques Jellyfin, etc.)
 - **Surveillance de la santé** — Vérifications de santé intégrées pour Docker, l'espace disque, la fraîcheur des sauvegardes et l'état des conteneurs
 - **Mise à jour automatique** — Mettez à jour la CLI et toutes les images de conteneurs avec de simples commandes
-
-## Prérequis
-
-- **OS** : Debian ou Ubuntu (y compris Raspberry Pi OS)
-- **Architecture** : x86_64 ou ARM64
-- **RAM** : 2 Go minimum (4 Go ou plus recommandés)
-- **Stockage** : Dépend de votre utilisation — les bibliothèques multimédias nécessitent plus d'espace
-- **Réseau** : Accès Internet pour télécharger les images Docker et (optionnellement) DuckDNS pour le HTTPS
-
-## Démarrage rapide
-
-```sh
-# Cloner le dépôt
-git clone https://github.com/Joel-Mercier/homelab.git
-cd homelab
-
-# Tout installer (Bun, dépendances, CLI)
-sudo bash install.sh
-
-# Lancer l'assistant de configuration
-mithrandir setup
-```
-
-Le script d'installation gère tout — installation de Bun, compilation de la CLI et création de la commande `mithrandir`. Consultez les pages [Installation](./installation) et [Configuration](./setup) pour des instructions détaillées.
-
-::: tip
-Il est fortement recommandé d'attribuer une adresse IP DHCP statique à votre serveur afin que son adresse IP ne change jamais. Vous pouvez configurer cela dans les paramètres de baux statiques DHCP de l'interface web de votre routeur.
-:::
 
 ## Comment ça fonctionne
 
@@ -69,3 +37,31 @@ Un timer systemd déclenche des sauvegardes quotidiennes à 2h00 du matin. Les r
 ### HTTPS
 
 Lorsqu'il est activé, Caddy agit comme un reverse proxy wildcard. Il obtient automatiquement des certificats Let's Encrypt via le challenge DNS-01 de DuckDNS. Toutes les applications installées obtiennent des points d'accès HTTPS à `appname.yourdomain.duckdns.org`.
+
+## Prérequis
+
+- **OS** : Debian ou Ubuntu (y compris Raspberry Pi OS)
+- **Architecture** : x86_64 ou ARM64
+- **RAM** : 2 Go minimum (4 Go ou plus recommandés)
+- **Stockage** : Dépend de votre utilisation — les bibliothèques multimédias nécessitent plus d'espace
+- **Réseau** : Accès Internet pour télécharger les images Docker et (optionnellement) DuckDNS pour le HTTPS
+
+## Démarrage rapide
+
+```sh
+# Cloner le dépôt
+git clone https://github.com/Joel-Mercier/mithrandir.git
+cd homelab
+
+# Tout installer (Bun, dépendances, CLI)
+sudo bash install.sh
+
+# Lancer l'assistant de configuration
+mithrandir setup
+```
+
+Le script d'installation gère tout — installation de Bun, compilation de la CLI et création de la commande `mithrandir`. Consultez les pages [Installation](./installation) et [Configuration](./setup) pour des instructions détaillées.
+
+## À propos
+
+Ce projet est développé avec l'aide de LLMs et de codage agentique. Bien que l'auteur soit un développeur logiciel professionnel, son expérience principale est dans le développement web et d'applications mobiles.

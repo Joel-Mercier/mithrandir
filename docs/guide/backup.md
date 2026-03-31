@@ -10,13 +10,13 @@ The backup directory structure looks like:
 
 ```
 /backups/
-├── 2024-01-15/
+├── 2025-06-15/
 │   ├── jellyfin.tar.zst
 │   ├── sonarr.tar.zst
 │   ├── radarr.tar.zst
 │   ├── secrets.tar.zst
 │   └── ...
-├── 2024-01-14/
+├── 2025-06-14/
 │   └── ...
 └── ...
 ```
@@ -87,12 +87,12 @@ Check that backup archives are intact:
 mithrandir backup verify
 
 # Verify a specific date
-mithrandir backup verify 2024-01-15
+mithrandir backup verify 2025-06-15
 
-# Verify remote backups
+# Verify remote backups instead of local ones
 mithrandir backup verify -r
 
-# Also test extraction
+# Also test extracting each archive to a temp directory (slower but more thorough)
 mithrandir backup verify -x
 ```
 
@@ -105,7 +105,7 @@ Restore a single app or everything:
 mithrandir restore sonarr
 
 # Restore from a specific date
-mithrandir restore sonarr 2024-01-15
+mithrandir restore sonarr 2025-06-15
 
 # Full restore of all apps
 mithrandir restore full
@@ -204,9 +204,11 @@ BACKUP_PASSWORD=your-secure-password
 
 When set, all new backups are encrypted with AES-256-CBC (PBKDF2 key derivation, 100k iterations) using `openssl`. Encrypted files have the `.tar.zst.enc` extension.
 
-**Important:** Store your password somewhere safe. Without it, encrypted backups cannot be restored.
+::: danger
+Store your backup password somewhere safe outside of your homelab (e.g. a password manager). Without it, encrypted backups cannot be restored. This is especially important for disaster recovery — `mithrandir recover` needs the password to decrypt `secrets.tar.zst`, which contains the `.env` file itself. You must know your `BACKUP_PASSWORD` before starting recovery on a fresh machine.
+:::
 
-### How it works
+### How Encryption Works
 
 - **Backup:** Archives are created as `.tar.zst`, then encrypted to `.tar.zst.enc`. The unencrypted file is removed.
 - **Restore:** Encrypted backups are detected automatically by extension. The password is read from `BACKUP_PASSWORD` in `.env`.
@@ -231,11 +233,11 @@ Old backups are pruned automatically after each backup run. Configure retention 
 
 ```sh
 # Delete a specific local backup
-mithrandir backup delete local 2024-01-10
+mithrandir backup delete local 2025-06-10
 
 # Delete a remote backup (with confirmation prompt)
-mithrandir backup delete remote 2024-01-10
+mithrandir backup delete remote 2025-06-10
 
 # Skip confirmation
-mithrandir backup delete --yes local 2024-01-10
+mithrandir backup delete --yes local 2025-06-10
 ```

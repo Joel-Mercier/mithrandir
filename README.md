@@ -11,7 +11,7 @@ Automated setup and backup system for Docker-based homelab applications.
 [![Deploy VitePress site to Pages](https://github.com/Joel-Mercier/mithrandir/actions/workflows/deploy.yml/badge.svg)](https://github.com/Joel-Mercier/mithrandir/actions/workflows/deploy.yml)
 
 > [!WARNING]
-> This project is being developed with the help of LLMs and agentic coding. Altough I'm a professional software developer, I'm more experienced in developing websites and mobile apps.
+> This project is being developed with the help of LLMs and agentic coding. Although I'm a professional software developer, I'm more experienced in developing websites and mobile apps.
 
 > [!WARNING]
 > Mithrandir has for now only been tested on a Raspberry Pi 5 with 4GB RAM and running Raspberry Pi OS in headless mode. It may not work on other hardware or operating systems.

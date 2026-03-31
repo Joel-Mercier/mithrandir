@@ -6,6 +6,10 @@ Mithrandir can optionally configure [UFW](https://wiki.ubuntu.com/UncomplicatedF
 
 Docker manipulates `iptables` directly, which means standard UFW rules **do not apply** to Docker-published ports. The `ufw-docker` utility solves this by managing rules in the `DOCKER-USER` iptables chain, which Docker respects.
 
+::: danger
+Always ensure SSH access is working before enabling the firewall on a remote server. The installer always allows port 22, but verify you can connect before closing your current session.
+:::
+
 ## Install
 
 ```sh
@@ -29,6 +33,8 @@ Once the firewall is enabled (`ENABLE_FIREWALL=true` in `.env`), mithrandir auto
 - **`mithrandir install <stack>`** — adds rules for all apps in the stack
 
 ### Host-networked vs bridge-networked apps
+
+Most Docker containers use **bridge networking**, where they communicate through Docker's virtual network and publish specific ports. Some apps use **host networking**, where the container shares the host's network stack directly. This distinction matters for firewall rules:
 
 - **Bridge-networked apps** (most apps): Rules are managed via `ufw-docker allow <container> <port>`, which works with the `DOCKER-USER` iptables chain.
 - **Host-networked apps** (Home Assistant, DuckDNS): Rules are managed via standard `ufw allow <port>`, since Docker doesn't manage their iptables entries.
@@ -57,6 +63,12 @@ The `mithrandir doctor` command also checks firewall status and reports any issu
 The firewall requires the `ufw-docker` third-party utility, which is downloaded from GitHub. It modifies `/etc/ufw/after.rules` to integrate with Docker's iptables chains. If you have custom UFW rules, review the changes after installation.
 :::
 
-::: danger
-Always ensure SSH access is working before enabling the firewall on a remote server. The installer always allows port 22, but verify you can connect before closing your current session.
-:::
+## Emergency Recovery
+
+If you lose SSH access after enabling the firewall, you will need physical access or out-of-band console access (e.g. IPMI, cloud provider console) to your server. Once connected, disable the firewall:
+
+```sh
+sudo ufw disable
+```
+
+Then review your rules with `sudo ufw status` before re-enabling.

@@ -13,7 +13,7 @@ Avant d'installer Mithrandir, assurez-vous d'avoir :
 Clonez le dépôt et lancez le script d'installation :
 
 ```sh
-git clone https://github.com/Joel-Mercier/homelab.git
+git clone https://github.com/Joel-Mercier/mithrandir.git
 cd homelab
 sudo bash install.sh
 ```
@@ -47,16 +47,19 @@ Configurez l'auto-complétion pour votre shell :
 ::: code-group
 
 ```sh [Bash]
+# Ajouter au profil shell pour persister les complétions entre les sessions
 mithrandir completions bash >> ~/.bashrc
 source ~/.bashrc
 ```
 
 ```sh [Zsh]
+# Ajouter au profil shell pour persister les complétions entre les sessions
 mithrandir completions zsh >> ~/.zshrc
 source ~/.zshrc
 ```
 
 ```sh [Fish]
+# Fish charge automatiquement les fichiers de complétion depuis ce répertoire
 mithrandir completions fish > ~/.config/fish/completions/mithrandir.fish
 ```
 
@@ -79,3 +82,13 @@ mithrandir self-update
 ```
 
 Cela récupère les derniers changements depuis git, réinstalle les dépendances et recompile la CLI.
+
+## Désinstallation
+
+Pour supprimer Mithrandir de votre système :
+
+```sh
+sudo rm /usr/local/bin/mithrandir
+```
+
+Cela supprime la commande CLI. Vos données d'applications, conteneurs Docker et configuration `.env` dans le répertoire du projet restent intacts — supprimez-les manuellement si vous souhaitez repartir de zéro.

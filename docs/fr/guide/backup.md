@@ -10,13 +10,13 @@ La structure du répertoire de sauvegarde ressemble à ceci :
 
 ```
 /backups/
-├── 2024-01-15/
+├── 2025-06-15/
 │   ├── jellyfin.tar.zst
 │   ├── sonarr.tar.zst
 │   ├── radarr.tar.zst
 │   ├── secrets.tar.zst
 │   └── ...
-├── 2024-01-14/
+├── 2025-06-14/
 │   └── ...
 └── ...
 ```
@@ -87,12 +87,12 @@ Vérifiez que les archives de sauvegarde sont intactes :
 mithrandir backup verify
 
 # Vérifier une date spécifique
-mithrandir backup verify 2024-01-15
+mithrandir backup verify 2025-06-15
 
-# Vérifier les sauvegardes distantes
+# Vérifier les sauvegardes distantes au lieu des locales
 mithrandir backup verify -r
 
-# Tester également l'extraction
+# Tester aussi l'extraction de chaque archive dans un répertoire temporaire (plus lent mais plus complet)
 mithrandir backup verify -x
 ```
 
@@ -105,7 +105,7 @@ Restaurez une seule application ou tout :
 mithrandir restore sonarr
 
 # Restaurer à partir d'une date spécifique
-mithrandir restore sonarr 2024-01-15
+mithrandir restore sonarr 2025-06-15
 
 # Restauration complète de toutes les applications
 mithrandir restore full
@@ -210,9 +210,11 @@ BACKUP_PASSWORD=your-secure-password
 
 Lorsqu'il est défini, toutes les nouvelles sauvegardes sont chiffrées avec AES-256-CBC (dérivation de clé PBKDF2, 100 000 itérations) via `openssl`. Les fichiers chiffrés ont l'extension `.tar.zst.enc`.
 
-**Important :** Conservez votre mot de passe en lieu sûr. Sans lui, les sauvegardes chiffrées ne peuvent pas être restaurées.
+::: danger
+Conservez votre mot de passe de sauvegarde en lieu sûr en dehors de votre homelab (ex. un gestionnaire de mots de passe). Sans lui, les sauvegardes chiffrées ne peuvent pas être restaurées. C'est particulièrement important pour la reprise après sinistre — `mithrandir recover` a besoin du mot de passe pour déchiffrer `secrets.tar.zst`, qui contient le fichier `.env` lui-même. Vous devez connaître votre `BACKUP_PASSWORD` avant de lancer la récupération sur une machine neuve.
+:::
 
-### Comment ça fonctionne
+### Fonctionnement du chiffrement
 
 - **Sauvegarde :** Les archives sont créées en `.tar.zst`, puis chiffrées en `.tar.zst.enc`. Le fichier non chiffré est supprimé.
 - **Restauration :** Les sauvegardes chiffrées sont détectées automatiquement par leur extension. Le mot de passe est lu depuis `BACKUP_PASSWORD` dans `.env`.
@@ -237,11 +239,11 @@ Les anciennes sauvegardes sont automatiquement purgées après chaque exécution
 
 ```sh
 # Supprimer une sauvegarde locale spécifique
-mithrandir backup delete local 2024-01-10
+mithrandir backup delete local 2025-06-10
 
 # Supprimer une sauvegarde distante (avec invite de confirmation)
-mithrandir backup delete remote 2024-01-10
+mithrandir backup delete remote 2025-06-10
 
 # Ignorer la confirmation
-mithrandir backup delete --yes local 2024-01-10
+mithrandir backup delete --yes local 2025-06-10
 ```

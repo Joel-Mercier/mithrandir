@@ -31,22 +31,23 @@ You can select apps by category or pick individually:
 
 | Category | Apps |
 | --- | --- |
-| **Media: Movies & TV** | qBittorrent, Prowlarr, Radarr, Sonarr, Bazarr, Seerr, Jellyfin |
-| **Media: Music** | Navidrome, Lidarr, qBittorrent |
+| **Media: Movies & TV** | qBittorrent, Prowlarr, Radarr, Sonarr, Bazarr, Seerr, Jellyfin, Profilarr |
+| **Media: Audio** | Navidrome, Lidarr, Audiobookshelf |
 | **Media: Pictures** | Immich |
-| **Automation** | Home Assistant |
+| **Automation** | Home Assistant, n8n |
 | **Monitoring** | Gatus |
-| **Productivity** | Excalidraw, Omni Tools, Open WebUI, Vaultwarden |
-| **Security** | Caddy, Pi-hole |
-| **Utilities** | DuckDNS, WireGuard, Homarr |
+| **Productivity** | AFFiNE, Excalidraw, Omni Tools, Paperless-ngx, Penpot, Stirling PDF |
+| **AI** | Open WebUI |
+| **Finance** | Actual Budget, Sure |
+| **Network & Security** | Pi-hole, WireGuard, DuckDNS, Vaultwarden |
+| **Travel** | AdventureLog, TRIP |
+| **Statistics** | Your Spotify |
+| **Household** | CookCLI |
+| **Utilities** | Homarr |
 
 Some apps have dependencies that are automatically included. For example, selecting Vaultwarden also installs Caddy, DuckDNS, and Pi-hole.
 
 ## Auto-Configuration
-
-::: warning
-Due to API limitations and timing behaviors of some apps, auto-configuration may not always complete fully. Some apps may not be ready to accept API calls immediately after starting, and certain settings can only be configured through the app's web UI. Always double-check each app's configuration after the wizard finishes.
-:::
 
 After installing apps, the wizard optionally auto-configures integrations between services:
 
@@ -56,6 +57,10 @@ After installing apps, the wizard optionally auto-configures integrations betwee
 - **Jellyfin** — Sets up media libraries
 - **Seerr** — Connects to Jellyfin, Sonarr, and Radarr
 - **Gatus** — Configures health checks for all installed services
+
+::: warning Known Limitations
+Due to API limitations and timing behaviors of some apps, auto-configuration may not always complete fully. Some apps may not be ready to accept API calls immediately after starting, and certain settings can only be configured through the app's web UI. Always double-check each app's configuration after the wizard finishes.
+:::
 
 ## Configuration File
 
@@ -76,6 +81,7 @@ Key settings include:
 | `LOCAL_RETENTION` | `5` | Number of local backups to keep |
 | `REMOTE_RETENTION` | `10` | Number of remote backups to keep |
 | `RCLONE_REMOTES` | `gdrive` | Comma-separated list of rclone remotes for cloud backups |
+| `BACKUP_HOUR` | `2` | Hour (0-23) when the daily backup runs |
 | `ENABLE_HTTPS` | `false` | Enable Caddy HTTPS reverse proxy |
 | `ENABLE_FIREWALL` | *(not set)* | Enable UFW firewall with automatic rule management |
 
@@ -87,4 +93,17 @@ To run the setup without prompts (useful for scripting), pass `--yes`:
 mithrandir setup --yes
 ```
 
-This uses default values and skips confirmation prompts.
+In `--yes` mode, the wizard runs unattended with these defaults:
+
+| Step | Behavior |
+| --- | --- |
+| **Base directory** | Uses existing `BASE_DIR` from `.env`, or defaults to your home directory |
+| **App selection** | Installs **all** non-hidden apps (after filtering out conflicts) |
+| **Secrets** | Skipped — any secrets not already in `.env` are left unset. Apps that require them will be installed but may not work until you add the missing values manually |
+| **Auto-configuration** | Proceeds automatically. Default credentials are `admin` / `admin` for services like qBittorrent, Prowlarr, Radarr, Sonarr, Lidarr, Jellyfin, and Seerr |
+| **HTTPS** | Enabled only if `DUCKDNS_TOKEN`, `DUCKDNS_SUBDOMAINS`, and `ACME_EMAIL` are all already set in `.env`. Otherwise skipped silently |
+| **Firewall** | Installed and enabled automatically |
+
+::: tip
+For a fully unattended setup, pre-populate your `.env` file with all required secrets before running `--yes`. See `.env.example` for the full list of available variables.
+:::

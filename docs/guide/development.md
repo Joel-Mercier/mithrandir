@@ -13,6 +13,7 @@ The project is a [Bun workspaces](https://bun.sh/docs/install/workspaces) monore
 |-----------|------|-------------|
 | `@mithrandir/cli` | `cli/` | Bun/Ink terminal CLI |
 | `@mithrandir/docs` | `docs/` | VitePress documentation site |
+| `@mithrandir/ui` | `ui/` | TanStack Start web dashboard |
 
 ## Getting Started
 

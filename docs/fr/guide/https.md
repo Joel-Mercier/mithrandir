@@ -38,7 +38,7 @@ Caddy agit comme un reverse proxy situé devant tous vos services. Il :
 2. Renouvelle automatiquement les certificats avant leur expiration
 3. Redirige `https://appname.yourdomain.duckdns.org` vers le port de conteneur correspondant
 
-Le Caddyfile est régénéré automatiquement chaque fois que vous installez ou désinstallez une application, de sorte que les nouveaux services soient immédiatement disponibles en HTTPS.
+Le Caddyfile est régénéré automatiquement chaque fois que vous installez ou désinstallez une application, de sorte que les nouveaux services soient immédiatement disponibles en HTTPS. Cela déclenche un rechargement gracieux de Caddy — pas un redémarrage du conteneur — il n'y a donc aucune interruption pour les services existants.
 
 ## Configuration
 

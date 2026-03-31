@@ -6,6 +6,10 @@ Mithrandir peut optionnellement configurer [UFW](https://wiki.ubuntu.com/Uncompl
 
 Docker manipule directement `iptables`, ce qui signifie que les règles UFW standard **ne s'appliquent pas** aux ports publiés par Docker. L'utilitaire `ufw-docker` résout ce problème en gérant les règles dans la chaîne iptables `DOCKER-USER`, que Docker respecte.
 
+::: danger
+Assurez-vous toujours que l'accès SSH fonctionne avant d'activer le pare-feu sur un serveur distant. L'installateur autorise toujours le port 22, mais vérifiez que vous pouvez vous connecter avant de fermer votre session actuelle.
+:::
+
 ## Installation
 
 ```sh
@@ -29,6 +33,8 @@ Une fois le pare-feu activé (`ENABLE_FIREWALL=true` dans `.env`), mithrandir g�
 - **`mithrandir install <stack>`** — ajoute les règles pour toutes les applications de la stack
 
 ### Applications en réseau hôte vs réseau bridge
+
+La plupart des conteneurs Docker utilisent le **réseau bridge**, où ils communiquent via le réseau virtuel de Docker et publient des ports spécifiques. Certaines applications utilisent le **réseau hôte**, où le conteneur partage directement la pile réseau de l'hôte. Cette distinction est importante pour les règles de pare-feu :
 
 - **Applications en réseau bridge** (la plupart des applications) : Les règles sont gérées via `ufw-docker allow <container> <port>`, qui fonctionne avec la chaîne iptables `DOCKER-USER`.
 - **Applications en réseau hôte** (Home Assistant, DuckDNS) : Les règles sont gérées via le standard `ufw allow <port>`, car Docker ne gère pas leurs entrées iptables.
@@ -57,6 +63,12 @@ La commande `mithrandir doctor` vérifie également l'état du pare-feu et signa
 Le pare-feu nécessite l'utilitaire tiers `ufw-docker`, qui est téléchargé depuis GitHub. Il modifie `/etc/ufw/after.rules` pour s'intégrer aux chaînes iptables de Docker. Si vous avez des règles UFW personnalisées, vérifiez les modifications après l'installation.
 :::
 
-::: danger
-Assurez-vous toujours que l'accès SSH fonctionne avant d'activer le pare-feu sur un serveur distant. L'installateur autorise toujours le port 22, mais vérifiez que vous pouvez vous connecter avant de fermer votre session actuelle.
-:::
+## Récupération d'urgence
+
+Si vous perdez l'accès SSH après avoir activé le pare-feu, vous aurez besoin d'un accès physique ou d'un accès console hors bande (ex. IPMI, console du fournisseur cloud) à votre serveur. Une fois connecté, désactivez le pare-feu :
+
+```sh
+sudo ufw disable
+```
+
+Puis examinez vos règles avec `sudo ufw status` avant de le réactiver.

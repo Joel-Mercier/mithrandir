@@ -2,12 +2,8 @@
 
 Mithrandir is an automated Docker-based homelab setup, backup, and restore system for Raspberry Pi OS, Debian and Ubuntu servers. It provides a single CLI to install, configure, and manage a full suite of self-hosted services — from media streaming to home automation to network security.
 
-::: warning
-This project is being developed with the help of LLMs and agentic coding. Altough I'm a professional software developer, I'm more experienced in developing websites and mobile apps.
-:::
-
-::: warning
-Mithrandir has for now only been tested on a Raspberry Pi 5 with 4GB RAM and running Raspberry Pi OS in headless mode. It may not work on other hardware or operating systems.
+::: tip Tested on
+Raspberry Pi 5 with 4 GB RAM running Raspberry Pi OS in headless mode. Other Debian/Ubuntu systems on x86_64 or ARM64 should work but have not been extensively tested yet.
 :::
 
 ## Features
@@ -21,34 +17,6 @@ Mithrandir has for now only been tested on a Raspberry Pi 5 with 4GB RAM and run
 - **Auto-configuration** — Optional automatic setup of app integrations (Prowlarr → Sonarr/Radarr, Jellyfin libraries, etc.)
 - **Health monitoring** — Built-in health checks for Docker, disk space, backup freshness, and container status
 - **Self-updating** — Update the CLI and all container images with simple commands
-
-## Requirements
-
-- **OS**: Debian or Ubuntu (including Raspberry Pi OS)
-- **Architecture**: x86_64 or ARM64
-- **RAM**: 2 GB minimum (4 GB+ recommended)
-- **Storage**: Depends on your use case — media libraries need more space
-- **Network**: Internet access for pulling Docker images and (optionally) DuckDNS for HTTPS
-
-## Quick Start
-
-```sh
-# Clone the repository
-git clone https://github.com/Joel-Mercier/homelab.git
-cd homelab
-
-# Install everything (Bun, dependencies, CLI)
-sudo bash install.sh
-
-# Run the setup wizard
-mithrandir setup
-```
-
-The install script handles everything — installing Bun, building the CLI, and creating the `mithrandir` command. See the [Installation](./installation) and [Setup](./setup) pages for detailed instructions.
-
-::: tip
-It is highly recommended to assign a static DHCP IP address to your server so it's IP never changes. You can configure this in the DHCP static leases settings in your router's web interface.
-:::
 
 ## How It Works
 
@@ -69,3 +37,31 @@ A systemd timer triggers daily backups at 2:00 AM. Each app's configuration and 
 ### HTTPS
 
 When enabled, Caddy acts as a wildcard reverse proxy. It obtains Let's Encrypt certificates automatically via DuckDNS DNS-01 challenge. All installed apps get HTTPS endpoints at `appname.yourdomain.duckdns.org`.
+
+## Requirements
+
+- **OS**: Debian or Ubuntu (including Raspberry Pi OS)
+- **Architecture**: x86_64 or ARM64
+- **RAM**: 2 GB minimum (4 GB+ recommended)
+- **Storage**: Depends on your use case — media libraries need more space
+- **Network**: Internet access for pulling Docker images and (optionally) DuckDNS for HTTPS
+
+## Quick Start
+
+```sh
+# Clone the repository
+git clone https://github.com/Joel-Mercier/mithrandir.git
+cd homelab
+
+# Install everything (Bun, dependencies, CLI)
+sudo bash install.sh
+
+# Run the setup wizard
+mithrandir setup
+```
+
+The install script handles everything — installing Bun, building the CLI, and creating the `mithrandir` command. See the [Installation](./installation) and [Setup](./setup) pages for detailed instructions.
+
+## About
+
+This project is developed with the help of LLMs and agentic coding. Although the author is a professional software developer, their primary experience is in web and mobile app development.

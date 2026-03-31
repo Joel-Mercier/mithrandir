@@ -13,7 +13,7 @@ Before installing Mithrandir, make sure you have:
 Clone the repository and run the install script:
 
 ```sh
-git clone https://github.com/Joel-Mercier/homelab.git
+git clone https://github.com/Joel-Mercier/mithrandir.git
 cd homelab
 sudo bash install.sh
 ```
@@ -37,7 +37,7 @@ If `bun` is not found in a new terminal session, run `source ~/.bashrc` (or `sou
 :::
 
 ::: tip
-It is highly recommended to assign a static DHCP IP address to your server so it's IP never changes. You can configure this in the DHCP static leases settings in your router's web interface.
+It is highly recommended to assign a static DHCP IP address to your server so its IP never changes. You can configure this in the DHCP static leases settings in your router's web interface.
 :::
 
 ## Shell Completions
@@ -47,16 +47,19 @@ Set up tab completion for your shell:
 ::: code-group
 
 ```sh [Bash]
+# Append to your shell profile so completions persist across sessions
 mithrandir completions bash >> ~/.bashrc
 source ~/.bashrc
 ```
 
 ```sh [Zsh]
+# Append to your shell profile so completions persist across sessions
 mithrandir completions zsh >> ~/.zshrc
 source ~/.zshrc
 ```
 
 ```sh [Fish]
+# Fish loads completion files from this directory automatically
 mithrandir completions fish > ~/.config/fish/completions/mithrandir.fish
 ```
 
@@ -79,3 +82,13 @@ mithrandir self-update
 ```
 
 This pulls the latest changes from git, reinstalls dependencies, and rebuilds the CLI.
+
+## Uninstalling
+
+To remove Mithrandir from your system:
+
+```sh
+sudo rm /usr/local/bin/mithrandir
+```
+
+This removes the CLI command. Your app data, Docker containers, and `.env` configuration in the project directory are left untouched — remove them manually if you want a clean slate.

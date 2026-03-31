@@ -31,22 +31,23 @@ Vous pouvez sélectionner les applications par catégorie ou individuellement :
 
 | Catégorie | Applications |
 | --- | --- |
-| **Média : Films et séries** | qBittorrent, Prowlarr, Radarr, Sonarr, Bazarr, Seerr, Jellyfin |
-| **Média : Musique** | Navidrome, Lidarr, qBittorrent |
+| **Média : Films et séries** | qBittorrent, Prowlarr, Radarr, Sonarr, Bazarr, Seerr, Jellyfin, Profilarr |
+| **Média : Audio** | Navidrome, Lidarr, Audiobookshelf |
 | **Média : Photos** | Immich |
-| **Automatisation** | Home Assistant |
+| **Automatisation** | Home Assistant, n8n |
 | **Surveillance** | Gatus |
-| **Productivité** | Excalidraw, Omni Tools, Open WebUI, Vaultwarden |
-| **Sécurité** | Caddy, Pi-hole |
-| **Utilitaires** | DuckDNS, WireGuard, Homarr |
+| **Productivité** | AFFiNE, Excalidraw, Omni Tools, Paperless-ngx, Penpot, Stirling PDF |
+| **IA** | Open WebUI |
+| **Finance** | Actual Budget, Sure |
+| **Réseau et sécurité** | Pi-hole, WireGuard, DuckDNS, Vaultwarden |
+| **Voyage** | AdventureLog, TRIP |
+| **Statistiques** | Your Spotify |
+| **Maison** | CookCLI |
+| **Utilitaires** | Homarr |
 
 Certaines applications ont des dépendances qui sont automatiquement incluses. Par exemple, sélectionner Vaultwarden installe également Caddy, DuckDNS et Pi-hole.
 
 ## Configuration automatique
-
-::: warning
-En raison des limitations des API et du comportement au démarrage de certaines applications, la configuration automatique peut ne pas toujours se terminer complètement. Certaines applications peuvent ne pas être prêtes à accepter des appels API immédiatement après leur démarrage, et certains paramètres ne peuvent être configurés qu'à travers l'interface web de l'application. Vérifiez toujours la configuration de chaque application une fois l'assistant terminé.
-:::
 
 Après l'installation des applications, l'assistant propose optionnellement de configurer automatiquement les intégrations entre les services :
 
@@ -56,6 +57,10 @@ Après l'installation des applications, l'assistant propose optionnellement de c
 - **Jellyfin** — Configure les bibliothèques multimédias
 - **Seerr** — Se connecte à Jellyfin, Sonarr et Radarr
 - **Gatus** — Configure les vérifications de santé pour tous les services installés
+
+::: warning Limitations connues
+En raison des limitations des API et du comportement au démarrage de certaines applications, la configuration automatique peut ne pas toujours se terminer complètement. Certaines applications peuvent ne pas être prêtes à accepter des appels API immédiatement après leur démarrage, et certains paramètres ne peuvent être configurés qu'à travers l'interface web de l'application. Vérifiez toujours la configuration de chaque application une fois l'assistant terminé.
+:::
 
 ## Fichier de configuration
 
@@ -76,6 +81,7 @@ Les paramètres principaux incluent :
 | `LOCAL_RETENTION` | `5` | Nombre de sauvegardes locales à conserver |
 | `REMOTE_RETENTION` | `10` | Nombre de sauvegardes distantes à conserver |
 | `RCLONE_REMOTES` | `gdrive` | Noms des remotes rclone pour les sauvegardes cloud, séparés par des virgules |
+| `BACKUP_HOUR` | `2` | Heure (0-23) d'exécution de la sauvegarde quotidienne |
 | `ENABLE_HTTPS` | `false` | Activer le reverse proxy HTTPS Caddy |
 | `ENABLE_FIREWALL` | *(non défini)* | Activer le pare-feu UFW avec gestion automatique des règles |
 
@@ -87,4 +93,17 @@ Pour lancer la configuration sans invites (utile pour les scripts), passez `--ye
 mithrandir setup --yes
 ```
 
-Cela utilise les valeurs par défaut et ignore les invites de confirmation.
+En mode `--yes`, l'assistant s'exécute sans intervention avec ces valeurs par défaut :
+
+| Étape | Comportement |
+| --- | --- |
+| **Répertoire de base** | Utilise le `BASE_DIR` existant du `.env`, ou par défaut votre répertoire personnel |
+| **Sélection des applications** | Installe **toutes** les applications non cachées (après filtrage des conflits) |
+| **Secrets** | Ignorés — les secrets absents du `.env` ne sont pas définis. Les applications qui en ont besoin seront installées mais peuvent ne pas fonctionner tant que vous n'ajoutez pas les valeurs manquantes manuellement |
+| **Configuration automatique** | S'exécute automatiquement. Les identifiants par défaut sont `admin` / `admin` pour des services comme qBittorrent, Prowlarr, Radarr, Sonarr, Lidarr, Jellyfin et Seerr |
+| **HTTPS** | Activé uniquement si `DUCKDNS_TOKEN`, `DUCKDNS_SUBDOMAINS` et `ACME_EMAIL` sont tous déjà définis dans `.env`. Sinon ignoré silencieusement |
+| **Pare-feu** | Installé et activé automatiquement |
+
+::: tip
+Pour une configuration entièrement automatisée, pré-remplissez votre fichier `.env` avec tous les secrets nécessaires avant de lancer `--yes`. Consultez `.env.example` pour la liste complète des variables disponibles.
+:::

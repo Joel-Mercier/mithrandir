@@ -16,6 +16,7 @@ Lorsque vous exécutez `mithrandir capacity`, la CLI recueille les spécificatio
 | Application    | Performance | Stockage | Notes                                                                                 |
 | -------------- | ----------- | -------- | ------------------------------------------------------------------------------------- |
 | Actual Budget  | Faible      | Faible   | Finances personnelles, petite base de données                                         |
+| Audiobookshelf | Faible      | Moyen    | Streaming de livres audio et podcasts, stocke les métadonnées                         |
 | AdventureLog   | Moyen       | Moyen    | Backend Django avec base de données PostGIS                                           |
 | AFFiNE         | Moyen       | Moyen    | Base de connaissances avec PostgreSQL                                                 |
 | Bazarr         | Faible      | Faible   | Récupération de sous-titres, ressources minimales                                     |
@@ -47,28 +48,41 @@ Lorsque vous exécutez `mithrandir capacity`, la CLI recueille les spécificatio
 | TRIP           | Faible      | Faible   | Journal de voyage, petite base de données                                             |
 | Vaultwarden    | Faible      | Faible   | Coffre-fort de mots de passe, stockage minimal                                        |
 | WireGuard      | Faible      | Faible   | Tunnel VPN, module noyau                                                              |
-| Your Spotify   | Faible      | Moyen    | Statistiques d'écoute et historique Spotify                                           |
+| Your Spotify   | Faible      | Moyen    | Suivi d'historique Spotify avec MongoDB                                               |
 
+## Fonctionnement du scoring
+
+Chaque niveau de score correspond à un poids numérique : **Faible = 1**, **Moyen = 2**, **Élevé = 3**. Seules les applications installées sont comptées.
+
+Le **score de performance agrégé** est la somme des poids de performance de toutes les applications installées. Par exemple, si vous avez Jellyfin (3), Immich (3), Prowlarr (1) et Radarr (1) installés, votre total est de 8.
+
+Ce total est ensuite comparé à votre matériel en utilisant une heuristique approximative : chaque point de score correspond à environ **0,15 cœur CPU** et **200 Mo de RAM**. Le système calcule un **ratio de marge** — vos ressources disponibles divisées par le besoin estimé — en utilisant le facteur le plus contraignant (CPU ou RAM).
 
 ## Verdicts
 
 ### Verdict de performance
 
-Basé sur votre score de performance agrégé vs. les cœurs CPU et la RAM disponibles :
+Basé sur le ratio de marge (ressources disponibles / besoin estimé) :
 
-- **Confortable** — Beaucoup de marge, le système peut gérer plus d'applications
-- **Adéquat** — Le système gère bien la charge
-- **Serré** — Les ressources sont sollicitées, envisagez une mise à niveau avant d'ajouter d'autres applications lourdes
-- **Surchargé** — Le système peut avoir des difficultés sous charge, mise à niveau recommandée
+| Marge | Verdict | Signification |
+| --- | --- | --- |
+| 3x ou plus | **Confortable** | Beaucoup de marge, le système peut gérer plus d'applications |
+| 1,5x – 3x | **Adéquat** | Le système gère bien la charge |
+| 0,8x – 1,5x | **Serré** | Les ressources sont sollicitées, envisagez une mise à niveau avant d'ajouter d'autres applications lourdes |
+| Moins de 0,8x | **Surchargé** | Le système peut avoir des difficultés sous charge, mise à niveau recommandée |
 
 ### Verdict de stockage
 
-Basé sur le point de montage le plus contraint :
+Basé sur le pourcentage d'utilisation du point de montage le plus contraint :
 
 - **Sain** — Moins de 60% utilisé
 - **Modéré** — 60-80% utilisé
 - **Attention** — 80-95% utilisé
 - **Critique** — Plus de 95% utilisé
+
+::: tip
+Les verdicts de stockage sont basés sur l'utilisation réelle du disque, pas sur les scores des applications. Les scores de stockage dans le tableau ci-dessus indiquent la vitesse à laquelle le stockage d'une application tend à croître, ce qui vous aide à planifier.
+:::
 
 ## Utilisation
 
