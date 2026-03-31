@@ -27,6 +27,7 @@ import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as AppAppsGraphRouteImport } from './routes/_app/apps/graph'
 import { Route as AppAppsCapacityRouteImport } from './routes/_app/apps/capacity'
 import { Route as AppAppsAppNameRouteImport } from './routes/_app/apps/$appName'
+import { Route as ApiMediaUploadHooksRouteImport } from './routes/api/media/upload/hooks'
 import { Route as ApiHomelabLogsAppNameRouteImport } from './routes/api/homelab/logs.$appName'
 
 const UpdateRoute = UpdateRouteImport.update({
@@ -116,6 +117,11 @@ const AppAppsAppNameRoute = AppAppsAppNameRouteImport.update({
   path: '/apps/$appName',
   getParentRoute: () => AppRoute,
 } as any)
+const ApiMediaUploadHooksRoute = ApiMediaUploadHooksRouteImport.update({
+  id: '/api/media/upload/hooks',
+  path: '/api/media/upload/hooks',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiHomelabLogsAppNameRoute = ApiHomelabLogsAppNameRouteImport.update({
   id: '/api/homelab/logs/$appName',
   path: '/api/homelab/logs/$appName',
@@ -139,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/apps/': typeof AppAppsIndexRoute
   '/api/homelab/logs/$appName': typeof ApiHomelabLogsAppNameRoute
+  '/api/media/upload/hooks': typeof ApiMediaUploadHooksRoute
 }
 export interface FileRoutesByTo {
   '/': typeof AppIndexRoute
@@ -157,6 +164,7 @@ export interface FileRoutesByTo {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/apps': typeof AppAppsIndexRoute
   '/api/homelab/logs/$appName': typeof ApiHomelabLogsAppNameRoute
+  '/api/media/upload/hooks': typeof ApiMediaUploadHooksRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -179,6 +187,7 @@ export interface FileRoutesById {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/_app/apps/': typeof AppAppsIndexRoute
   '/api/homelab/logs/$appName': typeof ApiHomelabLogsAppNameRoute
+  '/api/media/upload/hooks': typeof ApiMediaUploadHooksRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -199,6 +208,7 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/apps/'
     | '/api/homelab/logs/$appName'
+    | '/api/media/upload/hooks'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -217,6 +227,7 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/apps'
     | '/api/homelab/logs/$appName'
+    | '/api/media/upload/hooks'
   id:
     | '__root__'
     | '/_app'
@@ -238,6 +249,7 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/_app/apps/'
     | '/api/homelab/logs/$appName'
+    | '/api/media/upload/hooks'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -246,6 +258,7 @@ export interface RootRouteChildren {
   UpdateRoute: typeof UpdateRouteWithChildren
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiHomelabLogsAppNameRoute: typeof ApiHomelabLogsAppNameRoute
+  ApiMediaUploadHooksRoute: typeof ApiMediaUploadHooksRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -376,6 +389,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAppsAppNameRouteImport
       parentRoute: typeof AppRoute
     }
+    '/api/media/upload/hooks': {
+      id: '/api/media/upload/hooks'
+      path: '/api/media/upload/hooks'
+      fullPath: '/api/media/upload/hooks'
+      preLoaderRoute: typeof ApiMediaUploadHooksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/homelab/logs/$appName': {
       id: '/api/homelab/logs/$appName'
       path: '/api/homelab/logs/$appName'
@@ -445,6 +465,7 @@ const rootRouteChildren: RootRouteChildren = {
   UpdateRoute: UpdateRouteWithChildren,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiHomelabLogsAppNameRoute: ApiHomelabLogsAppNameRoute,
+  ApiMediaUploadHooksRoute: ApiMediaUploadHooksRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -21,6 +21,7 @@ cli/integration-tests/result
 # UI
 ui/data/
 ui/.output/
+ui/.tusd/
 
 # Vitepress
 /docs/.vitepress/cache/

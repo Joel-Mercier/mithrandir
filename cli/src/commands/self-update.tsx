@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import { render, Box, Text, useApp } from "ink";
 import Spinner from "ink-spinner";
 import { StatusMessage } from "@inkjs/ui";
-import { existsSync } from "fs";
+import { existsSync, mkdirSync } from "fs";
 import { join } from "path";
 import { shell } from "@/lib/shell.js";
-import { getProjectRoot } from "@/lib/config.js";
+import { getProjectRoot, loadEnvConfig } from "@/lib/config.js";
 import { isUiServiceActive, restartUiService } from "@/lib/systemd-ui.js";
+import { isTusdServiceActive, installTusdService } from "@/lib/systemd-tusd.js";
 import { Header } from "@/components/Header.js";
 import { AppStatus } from "@/components/AppStatus.js";
 
@@ -168,9 +169,40 @@ function SelfUpdateCommand() {
       } else {
         addStep({ name: "Build UI", status: "done", message: "UI rebuilt" });
 
-        // Restart UI service if it was running
+        // Ensure tusd is set up (handles upgrade from pre-tusd versions)
         const uiWasActive = await isUiServiceActive();
         if (uiWasActive) {
+          setCurrentLabel("Setting up upload server...");
+          try {
+            const tusdBin = join(root, "ui", ".tusd", "tusd");
+            if (!existsSync(tusdBin)) {
+              const dl = await shell(bunPath, ["run", join(root, "ui", "scripts", "download-tusd.ts")], {
+                cwd: join(root, "ui"),
+                ignoreError: true,
+                ...userOpts,
+              });
+              if ((dl.exitCode ?? 0) === 0) {
+                addStep({ name: "Download tusd", status: "done" });
+              } else {
+                addStep({ name: "Download tusd", status: "skipped", message: "Download failed (non-critical)" });
+              }
+            }
+
+            const tusdWasActive = await isTusdServiceActive();
+            if (!tusdWasActive && existsSync(tusdBin)) {
+              const envConfig = await loadEnvConfig();
+              const uploadDir = join(envConfig.BASE_DIR, "data/media/.uploads");
+              mkdirSync(uploadDir, { recursive: true });
+              await installTusdService(root, uploadDir);
+              addStep({ name: "tusd service", status: "done", message: "Installed" });
+            } else if (tusdWasActive) {
+              await shell("systemctl", ["restart", "mithrandir-tusd"], { sudo: true });
+              addStep({ name: "tusd service", status: "done", message: "Restarted" });
+            }
+          } catch {
+            addStep({ name: "tusd service", status: "skipped", message: "Setup failed (non-critical)" });
+          }
+
           setCurrentLabel("Restarting UI service...");
           try {
             await restartUiService();

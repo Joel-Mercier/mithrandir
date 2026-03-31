@@ -1,6 +1,9 @@
 import { isUiServiceActive } from "@mithrandir/cli/lib/systemd-ui";
+import { isTusdServiceActive, installTusdService } from "@mithrandir/cli/lib/systemd-tusd";
+import { loadEnvConfig } from "@mithrandir/cli/lib/config";
 import { shell } from "@mithrandir/cli/lib/shell";
 import { createServerFn } from "@tanstack/react-start";
+import { existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { ensureSession } from "#/lib/auth";
 import { logActivity } from "./activity";
@@ -223,20 +226,43 @@ export const finalizeUpdate = createServerFn({ method: "POST" }).handler(
 
 		await logActivity("self_update", "system", null, "/settings");
 
+		// Ensure tusd is set up (handles upgrade from pre-tusd versions)
+		try {
+			const tusdBin = join(root, "ui", ".tusd", "tusd");
+			if (!existsSync(tusdBin)) {
+				await shell("bun", ["run", join(root, "ui", "scripts", "download-tusd.ts")], {
+					cwd: join(root, "ui"),
+					ignoreError: true,
+					timeout: 120000,
+				});
+			}
+			const tusdActive = await isTusdServiceActive();
+			if (!tusdActive && existsSync(join(root, "ui", ".tusd", "tusd"))) {
+				const envConfig = await loadEnvConfig(root);
+				const uploadDir = join(envConfig.BASE_DIR, "data/media/.uploads");
+				mkdirSync(uploadDir, { recursive: true });
+				await installTusdService(root, uploadDir);
+			}
+		} catch {
+			// Non-critical — uploads will be unavailable but app still works
+		}
+
 		// Check if UI service is active and trigger a delayed restart
 		let willRestart = false;
 		try {
 			const active = await isUiServiceActive();
 			if (active) {
 				willRestart = true;
-				// Spawn a detached background process that restarts the service
-				// after a 2-second delay, giving time for this response to be sent
+				// Spawn a detached background process that restarts both tusd and UI
+				// after a 2-second delay, giving time for this response to be sent.
+				// Restart tusd first since the UI's upload hooks depend on it.
+				const tusdActive = await isTusdServiceActive();
+				const restartCmd = tusdActive
+					? "sleep 2 && systemctl restart mithrandir-tusd && systemctl restart mithrandir-ui"
+					: "sleep 2 && systemctl restart mithrandir-ui";
 				await shell(
 					"sh",
-					[
-						"-c",
-						"nohup sh -c 'sleep 2 && systemctl restart mithrandir-ui' >/dev/null 2>&1 &",
-					],
+					["-c", `nohup sh -c '${restartCmd}' >/dev/null 2>&1 &`],
 					{ sudo: true, ignoreError: true },
 				);
 			}

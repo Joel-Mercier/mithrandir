@@ -10,6 +10,7 @@ import { getDuckDnsDomain, regenerateCaddyfile } from "@/lib/caddy.js";
 import { getLocalIp } from "@/lib/distro.js";
 import { shell } from "@/lib/shell.js";
 import { isUiServiceActive, installUiService, restartUiService } from "@/lib/systemd-ui.js";
+import { installTusdService, isTusdServiceActive } from "@/lib/systemd-tusd.js";
 import { Header } from "@/components/Header.js";
 import { AppStatus } from "@/components/AppStatus.js";
 import type { EnvConfig } from "@/types.js";
@@ -69,6 +70,33 @@ function UiStart() {
 
     const running = await isUiServiceActive();
     if (running) {
+      // Even if UI is running, ensure tusd is set up (handles upgrade)
+      const tusdRunning = await isTusdServiceActive();
+      if (!tusdRunning) {
+        const tusdBin = join(repoRoot, "ui", ".tusd", "tusd");
+        if (!existsSync(tusdBin)) {
+          const sudoUser = process.env.SUDO_USER;
+          const userOpts = sudoUser ? { user: sudoUser } : {};
+          await shell("bun", ["run", join(repoRoot, "ui", "scripts", "download-tusd.ts")], {
+            cwd: join(repoRoot, "ui"),
+            ignoreError: true,
+            ...userOpts,
+          });
+        }
+        if (existsSync(join(repoRoot, "ui", ".tusd", "tusd"))) {
+          try {
+            const uploadDir = join(envConfig.BASE_DIR, "data/media/.uploads");
+            mkdirSync(uploadDir, { recursive: true });
+            await installTusdService(repoRoot, uploadDir);
+            addStep("Start tusd service", "done");
+            // Regenerate Caddyfile to include tusd route
+            try { await regenerateCaddyfile(envConfig); } catch {}
+          } catch {
+            // Non-critical
+          }
+        }
+      }
+
       setPhase("done");
       addStep("Already running", "done");
       const t = setTimeout(() => exit(), 100);
@@ -98,7 +126,40 @@ function UiStart() {
       addStep("Build UI", "done");
     }
 
+    // Download tusd binary if not present
+    const tusdBin = join(repoRoot, "ui", ".tusd", "tusd");
+    if (!existsSync(tusdBin)) {
+      setPhase("building");
+      const sudoUser = process.env.SUDO_USER;
+      const userOpts = sudoUser ? { user: sudoUser } : {};
+      const dl = await shell("bun", ["run", join(repoRoot, "ui", "scripts", "download-tusd.ts")], {
+        cwd: join(repoRoot, "ui"),
+        ignoreError: true,
+        ...userOpts,
+      });
+      if ((dl.exitCode ?? 0) !== 0) {
+        setError(`tusd download failed: ${dl.stderr?.trim() || "unknown error"}`);
+        return;
+      }
+      addStep("Download tusd", "done");
+    }
+
     setPhase("starting");
+
+    // Install tusd service if not running
+    const tusdRunning = await isTusdServiceActive();
+    if (!tusdRunning) {
+      try {
+        const uploadDir = join(envConfig.BASE_DIR, "data/media/.uploads");
+        mkdirSync(uploadDir, { recursive: true });
+        await installTusdService(repoRoot, uploadDir);
+      } catch (err: any) {
+        setError(`Failed to start tusd: ${err.stderr?.trim() || err.message || "unknown error"}`);
+        return;
+      }
+      addStep("Start tusd service", "done");
+    }
+
     try {
       await installUiService(repoRoot);
     } catch (err: any) {
@@ -166,8 +227,9 @@ function UiStopDisplay() {
   }, []);
 
   async function run() {
-    const running = await isUiServiceActive();
-    if (!running) {
+    const uiRunning = await isUiServiceActive();
+    const tusdRunning = await isTusdServiceActive();
+    if (!uiRunning && !tusdRunning) {
       setInfo("UI is not running.");
       const t = setTimeout(() => exit(), 100);
       t.unref();
@@ -177,11 +239,17 @@ function UiStopDisplay() {
     const envConfig = await loadEnvConfig();
 
     setPhase("stopping");
-    try {
-      await shell("systemctl", ["stop", "mithrandir-ui"], { sudo: true });
-    } catch (err: any) {
-      setError(`Failed to stop service: ${err.stderr?.trim() || err.message || "unknown error"}`);
-      return;
+    if (uiRunning) {
+      try {
+        await shell("systemctl", ["stop", "mithrandir-ui"], { sudo: true });
+      } catch (err: any) {
+        setError(`Failed to stop service: ${err.stderr?.trim() || err.message || "unknown error"}`);
+        return;
+      }
+    }
+
+    if (tusdRunning) {
+      await shell("systemctl", ["stop", "mithrandir-tusd"], { sudo: true, ignoreError: true });
     }
 
     try {

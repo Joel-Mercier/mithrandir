@@ -3,6 +3,7 @@ import { APP_REGISTRY, getComposePath } from "@/lib/apps.js";
 import { PIHOLE_HTTPS_PORT } from "@/lib/compose.js";
 import { isContainerRunning } from "@/lib/docker.js";
 import { isUiServiceActive } from "@/lib/systemd-ui.js";
+import { TUSD_PORT } from "@/lib/systemd-tusd.js";
 import { shell } from "@/lib/shell.js";
 import type { AppDefinition, EnvConfig } from "@/types.js";
 
@@ -87,6 +88,10 @@ export function generateCaddyfile(
     lines.push("");
     lines.push(`    @mithrandir host mithrandir.${domain}`);
     lines.push("    handle @mithrandir {");
+    // Route tus uploads directly to tusd for performance
+    lines.push("        handle /api/media/upload/tus/* {");
+    lines.push(`            reverse_proxy localhost:${TUSD_PORT}`);
+    lines.push("        }");
     lines.push("        reverse_proxy localhost:4180");
     lines.push("    }");
   }
