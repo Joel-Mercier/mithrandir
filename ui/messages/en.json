@@ -694,5 +694,13 @@
   "mediaLibrary_diskUsage": "Disk Usage",
   "mediaLibrary_used": "used",
   "mediaLibrary_free": "free",
-  "mediaLibrary_total": "total"
+  "mediaLibrary_total": "total",
+  "mediaLibrary_searchPlaceholder": "Search files and folders…",
+  "mediaLibrary_sortByName": "Name",
+  "mediaLibrary_sortBySize": "Size",
+  "mediaLibrary_ascending": "Ascending",
+  "mediaLibrary_descending": "Descending",
+  "mediaLibrary_noResults": "No files match your search",
+  "mediaLibrary_emptyCategory": "This category is empty",
+  "mediaLibrary_loadingCategory": "Loading files…"
 }

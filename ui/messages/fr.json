@@ -694,5 +694,13 @@
   "mediaLibrary_diskUsage": "Espace disque",
   "mediaLibrary_used": "utilisé",
   "mediaLibrary_free": "disponible",
-  "mediaLibrary_total": "total"
+  "mediaLibrary_total": "total",
+  "mediaLibrary_searchPlaceholder": "Rechercher des fichiers et dossiers…",
+  "mediaLibrary_sortByName": "Nom",
+  "mediaLibrary_sortBySize": "Taille",
+  "mediaLibrary_ascending": "Croissant",
+  "mediaLibrary_descending": "Décroissant",
+  "mediaLibrary_noResults": "Aucun fichier ne correspond à votre recherche",
+  "mediaLibrary_emptyCategory": "Cette catégorie est vide",
+  "mediaLibrary_loadingCategory": "Chargement des fichiers…"
 }

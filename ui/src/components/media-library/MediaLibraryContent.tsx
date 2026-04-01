@@ -1,17 +1,23 @@
 import type { MediaCategoryInfo } from "@mithrandir/cli/lib/media";
+import type { MediaSortDirection, MediaSortField } from "@mithrandir/cli/lib/media";
 import { Link } from "@tanstack/react-router";
 import {
+	ArrowDownAZ,
+	ArrowDownZA,
+	ArrowUpDown,
 	Film,
 	FolderOpen,
 	HardDrive,
 	Headphones,
 	Image,
+	Loader2,
 	Music,
 	Podcast,
+	Search,
 	Tv,
 	Upload,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import {
@@ -21,9 +27,18 @@ import {
 	CardHeader,
 	CardTitle,
 } from "#/components/ui/card";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuRadioGroup,
+	DropdownMenuRadioItem,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "#/components/ui/dropdown-menu";
+import { Input } from "#/components/ui/input";
 import { Progress } from "#/components/ui/progress";
 import { Skeleton } from "#/components/ui/skeleton";
-import { useMediaLibrary } from "#/hooks/homelab";
+import { useMediaCategory, useMediaLibrary } from "#/hooks/homelab";
 import { formatFileSize } from "#/lib/utils";
 import { m } from "#/paraglide/messages.js";
 import FileTree from "./FileTree";
@@ -155,6 +170,33 @@ function LoadingSkeleton() {
 export default function MediaLibraryContent() {
 	const { data, isPending, isError } = useMediaLibrary();
 	const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+	const [search, setSearch] = useState("");
+	const [debouncedSearch, setDebouncedSearch] = useState("");
+	const [sortBy, setSortBy] = useState<MediaSortField>("name");
+	const [sortDirection, setSortDirection] = useState<MediaSortDirection>("asc");
+
+	// Debounce search input
+	useEffect(() => {
+		const timer = setTimeout(() => setDebouncedSearch(search), 300);
+		return () => clearTimeout(timer);
+	}, [search]);
+
+	// Reset search when category changes
+	// biome-ignore lint/correctness/useExhaustiveDependencies: intentional trigger on category change
+	useEffect(() => {
+		setSearch("");
+		setDebouncedSearch("");
+	}, [selectedCategory]);
+
+	const {
+		data: categoryData,
+		isPending: isCategoryPending,
+		isFetching: isCategoryFetching,
+	} = useMediaCategory(selectedCategory, {
+		search: debouncedSearch || undefined,
+		sortBy,
+		sortDirection,
+	});
 
 	if (isPending) return <LoadingSkeleton />;
 
@@ -168,12 +210,12 @@ export default function MediaLibraryContent() {
 		);
 	}
 
-	const selected = data.categories.find(
-		(c) => c.category === selectedCategory,
-	);
+	const categoryDetail = categoryData?.categories[0];
 
 	const totalFiles = data.categories.reduce((sum, c) => sum + c.fileCount, 0);
 	const totalSize = data.categories.reduce((sum, c) => sum + c.totalSize, 0);
+
+	const sortLabel = sortBy === "name" ? m.mediaLibrary_sortByName() : m.mediaLibrary_sortBySize();
 
 	return (
 		<div className="space-y-6">
@@ -216,33 +258,97 @@ export default function MediaLibraryContent() {
 			</div>
 
 			{/* File tree */}
-			{selected && (
+			{selectedCategory && (
 				<Card>
 					<CardHeader>
 						<div className="flex items-center gap-2">
 							{(() => {
-								const meta = CATEGORY_META[selected.category];
+								const meta = CATEGORY_META[selectedCategory];
 								if (!meta) return null;
 								const Icon = meta.icon;
 								return <Icon className="size-4 text-primary" />;
 							})()}
 							<CardTitle className="text-sm">
-								{CATEGORY_META[selected.category]?.label()}
+								{CATEGORY_META[selectedCategory]?.label()}
 							</CardTitle>
 						</div>
 						<CardDescription>
-							{data.mediaDir}/{selected.category}
+							{data.mediaDir}/{selectedCategory}
 						</CardDescription>
 					</CardHeader>
-					<CardContent>
-						<div className="max-h-[500px] overflow-y-auto rounded-md border border-border/30 bg-muted/20 p-2">
-							<FileTree nodes={selected.tree} />
+					<CardContent className="space-y-3">
+						{/* Search and sort controls */}
+						<div className="flex items-center gap-2">
+							<div className="relative flex-1">
+								<Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+								<Input
+									value={search}
+									onChange={(e) => setSearch(e.target.value)}
+									placeholder={m.mediaLibrary_searchPlaceholder()}
+									className="pl-9"
+								/>
+							</div>
+							<DropdownMenu>
+								<DropdownMenuTrigger asChild>
+									<Button variant="outline" size="sm" className="shrink-0 gap-1.5">
+										<ArrowUpDown className="size-3.5" />
+										<span className="hidden sm:inline">{sortLabel}</span>
+										{sortDirection === "asc" ? (
+											<ArrowDownAZ className="size-3.5 text-muted-foreground" />
+										) : (
+											<ArrowDownZA className="size-3.5 text-muted-foreground" />
+										)}
+									</Button>
+								</DropdownMenuTrigger>
+								<DropdownMenuContent align="end">
+									<DropdownMenuRadioGroup value={sortBy} onValueChange={(v) => setSortBy(v as MediaSortField)}>
+										<DropdownMenuRadioItem value="name">{m.mediaLibrary_sortByName()}</DropdownMenuRadioItem>
+										<DropdownMenuRadioItem value="size">{m.mediaLibrary_sortBySize()}</DropdownMenuRadioItem>
+									</DropdownMenuRadioGroup>
+									<DropdownMenuSeparator />
+									<DropdownMenuRadioGroup value={sortDirection} onValueChange={(v) => setSortDirection(v as MediaSortDirection)}>
+										<DropdownMenuRadioItem value="asc">{m.mediaLibrary_ascending()}</DropdownMenuRadioItem>
+										<DropdownMenuRadioItem value="desc">{m.mediaLibrary_descending()}</DropdownMenuRadioItem>
+									</DropdownMenuRadioGroup>
+								</DropdownMenuContent>
+							</DropdownMenu>
 						</div>
+
+						{/* Tree content */}
+						{isCategoryPending ? (
+							<div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">
+								<Loader2 className="size-4 animate-spin" />
+								{m.mediaLibrary_loadingCategory()}
+							</div>
+						) : categoryDetail?.tree.length === 0 && debouncedSearch ? (
+							<div className="flex flex-col items-center justify-center py-8 text-center">
+								<Search className="mb-3 size-8 text-muted-foreground/40" />
+								<p className="text-sm text-muted-foreground">
+									{m.mediaLibrary_noResults()}
+								</p>
+							</div>
+						) : categoryDetail?.tree.length === 0 ? (
+							<div className="flex flex-col items-center justify-center py-8 text-center">
+								<FolderOpen className="mb-3 size-8 text-muted-foreground/40" />
+								<p className="text-sm text-muted-foreground">
+									{m.mediaLibrary_emptyCategory()}
+								</p>
+							</div>
+						) : (
+							<div className="relative max-h-[500px] overflow-y-auto rounded-md border border-border/30 bg-muted/20 p-2">
+								{isCategoryFetching && (
+									<div className="absolute inset-0 z-10 flex items-center justify-center bg-background/50">
+										<Loader2 className="size-5 animate-spin text-muted-foreground" />
+									</div>
+								)}
+								<FileTree nodes={categoryDetail?.tree ?? []} />
+							</div>
+						)}
 					</CardContent>
 				</Card>
 			)}
 
-			{!selected && (
+			{!selectedCategory && (
 				<Card>
 					<CardContent className="flex flex-col items-center justify-center py-12 text-center">
 						<FolderOpen className="mb-3 size-10 text-muted-foreground/40" />

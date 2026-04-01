@@ -17,7 +17,7 @@ import {
 	verifyBackup,
 } from "#/lib/server/backup";
 import { fetchCapacity } from "#/lib/server/capacity";
-import { fetchMediaLibrary } from "#/lib/server/media";
+import { fetchMediaCategory, fetchMediaLibrary } from "#/lib/server/media";
 import {
 	autoSetupApp,
 	checkSystemRequirements,
@@ -84,6 +84,8 @@ const keys = {
 	capacity: ["homelab", "capacity"],
 	activity: ["homelab", "activity"],
 	mediaLibrary: ["homelab", "media-library"],
+	mediaCategory: (category: string, search?: string, sortBy?: string, sortDirection?: string) =>
+		["homelab", "media-category", category, search ?? "", sortBy ?? "", sortDirection ?? ""],
 	setupStatus: ["homelab", "setup-status"],
 	systemRequirements: ["homelab", "setup", "system-requirements"],
 	appRegistry: ["homelab", "setup", "app-registry"],
@@ -178,6 +180,31 @@ export function useMediaLibrary() {
 	return useQuery({
 		queryKey: keys.mediaLibrary,
 		queryFn: () => fetchMediaLibrary(),
+		staleTime: 60_000,
+	});
+}
+
+export function useMediaCategory(
+	category: string | null,
+	options?: { search?: string; sortBy?: "name" | "size"; sortDirection?: "asc" | "desc" },
+) {
+	return useQuery({
+		queryKey: keys.mediaCategory(
+			category ?? "",
+			options?.search,
+			options?.sortBy,
+			options?.sortDirection,
+		),
+		queryFn: () =>
+			fetchMediaCategory({
+				data: {
+					category: category as string,
+					search: options?.search,
+					sortBy: options?.sortBy,
+					sortDirection: options?.sortDirection,
+				},
+			}),
+		enabled: !!category,
 		staleTime: 60_000,
 	});
 }

@@ -1,8 +1,12 @@
+import uFuzzy from "@leeoniya/ufuzzy";
 import { loadEnvConfig } from "@mithrandir/cli/lib/config";
 import type {
 	DiskUsageInfo,
+	FileNode,
 	MediaCategory,
 	MediaLibraryData,
+	MediaSortDirection,
+	MediaSortField,
 } from "@mithrandir/cli/lib/media";
 import { MEDIA_CATEGORIES, scanMediaCategory, scanMediaLibrary } from "@mithrandir/cli/lib/media";
 import { shell } from "@mithrandir/cli/lib/shell";
@@ -59,7 +63,7 @@ export const fetchMediaLibrary = createServerFn({ method: "GET" }).handler(
 );
 
 export const fetchMediaCategory = createServerFn({ method: "GET" })
-	.inputValidator((d: { category: string }) => d)
+	.inputValidator((d: { category: string; search?: string; sortBy?: MediaSortField; sortDirection?: MediaSortDirection }) => d)
 	.handler(async ({ data }): Promise<MediaLibraryData> => {
 		await ensureSession();
 		const projectRoot = getProjectRoot();
@@ -77,5 +81,104 @@ export const fetchMediaCategory = createServerFn({ method: "GET" })
 			getMediaDiskUsage(mediaDir),
 		]);
 
-		return { categories: [categoryInfo], disk, mediaDir };
+		let tree = categoryInfo.tree;
+
+		// Apply fuzzy search filtering
+		if (data.search?.trim()) {
+			tree = filterTreeBySearch(tree, data.search.trim());
+		}
+
+		// Apply sorting
+		if (data.sortBy) {
+			tree = sortTree(tree, data.sortBy, data.sortDirection ?? "asc");
+		}
+
+		return {
+			categories: [{ ...categoryInfo, tree }],
+			disk,
+			mediaDir,
+		};
 	});
+
+// ─── Search & Sort helpers ─────────────────────────────────────────
+
+const uf = new uFuzzy({ intraMode: 1, intraIns: 1 });
+
+/** Collect all file/directory names from a tree into a flat list with paths back to nodes */
+function collectNames(nodes: FileNode[]): { name: string; node: FileNode; parents: FileNode[] }[] {
+	const result: { name: string; node: FileNode; parents: FileNode[] }[] = [];
+
+	function walk(items: FileNode[], parents: FileNode[]) {
+		for (const node of items) {
+			result.push({ name: node.name, node, parents: [...parents] });
+			if (node.children) {
+				walk(node.children, [...parents, node]);
+			}
+		}
+	}
+	walk(nodes, []);
+	return result;
+}
+
+/** Filter the tree to only include nodes whose names fuzzy-match the query, preserving parent paths */
+function filterTreeBySearch(tree: FileNode[], query: string): FileNode[] {
+	const entries = collectNames(tree);
+	const haystack = entries.map((e) => e.name);
+
+	const idxs = uf.filter(haystack, query);
+	if (!idxs || idxs.length === 0) return [];
+
+	// Rank results for better ordering
+	const info = uf.info(idxs, haystack, query);
+	const order = uf.sort(info, haystack, query);
+
+	// Collect all matched nodes and their ancestors
+	const matchedNodes = new Set<FileNode>();
+	for (const i of order) {
+		const entry = entries[idxs[i]];
+		matchedNodes.add(entry.node);
+		for (const parent of entry.parents) {
+			matchedNodes.add(parent);
+		}
+	}
+
+	// Rebuild tree keeping only matched paths
+	function pruneTree(nodes: FileNode[]): FileNode[] {
+		const result: FileNode[] = [];
+		for (const node of nodes) {
+			if (!matchedNodes.has(node)) continue;
+			if (node.type === "directory" && node.children) {
+				result.push({ ...node, children: pruneTree(node.children) });
+			} else {
+				result.push(node);
+			}
+		}
+		return result;
+	}
+
+	return pruneTree(tree);
+}
+
+/** Recursively sort tree nodes by name or size */
+function sortTree(nodes: FileNode[], field: MediaSortField, direction: MediaSortDirection): FileNode[] {
+	const compare = (a: FileNode, b: FileNode): number => {
+		// Directories always first
+		if (a.type !== b.type) return a.type === "directory" ? -1 : 1;
+
+		let cmp: number;
+		if (field === "size") {
+			cmp = a.size - b.size;
+		} else {
+			cmp = a.name.localeCompare(b.name);
+		}
+		return direction === "desc" ? -cmp : cmp;
+	};
+
+	return [...nodes]
+		.sort(compare)
+		.map((node) =>
+			node.children
+				? { ...node, children: sortTree(node.children, field, direction) }
+				: node,
+		);
+}

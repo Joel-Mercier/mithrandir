@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@better-auth/i18n": "^1.5.5",
+    "@leeoniya/ufuzzy": "^1.0.19",
     "@libsql/client": "^0.17.0",
     "@mithrandir/cli": "workspace:*",
     "@tailwindcss/vite": "^4.1.18",

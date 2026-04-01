@@ -41,6 +41,9 @@ export interface MediaLibraryData {
   mediaDir: string;
 }
 
+export type MediaSortField = "name" | "size";
+export type MediaSortDirection = "asc" | "desc";
+
 // ─── Helpers ────────────────────────────────────────────────────────
 
 const IGNORED = new Set([".uploads", "@eaDir", ".DS_Store", "Thumbs.db"]);
