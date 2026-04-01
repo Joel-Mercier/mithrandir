@@ -156,17 +156,6 @@ export const APP_REGISTRY: AppDefinition[] = [
     environment: {
       ND_LOGLEVEL: "info",
     },
-    secrets: [
-      {
-        envVar: "ND_SPOTIFY_ID",
-        prompt: "Spotify Client ID (for artist images)",
-      },
-      {
-        envVar: "ND_SPOTIFY_SECRET",
-        prompt: "Spotify Client Secret",
-        sensitive: true,
-      },
-    ],
   },
   {
     name: "audiobookshelf",

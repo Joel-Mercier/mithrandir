@@ -110,8 +110,6 @@ export interface EnvConfig {
   DUCKDNS_TOKEN?: string;
   WG_SERVERURL?: string;
   WG_PEERS?: string;
-  ND_SPOTIFY_ID?: string;
-  ND_SPOTIFY_SECRET?: string;
   BACKUP_DIR?: string;
   LOCAL_RETENTION?: string;
   REMOTE_RETENTION?: string;

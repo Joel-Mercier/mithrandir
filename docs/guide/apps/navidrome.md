@@ -23,15 +23,6 @@ Modern music server and streamer — compatible with Subsonic clients (DSub, Sym
 mithrandir install navidrome
 ```
 
-## Optional Secrets
-
-| Variable | Description |
-| --- | --- |
-| `ND_SPOTIFY_ID` | Spotify client ID for fetching artist images |
-| `ND_SPOTIFY_SECRET` | Spotify client secret |
-
-These are optional — Navidrome works without them, but artist images won't be fetched from Spotify.
-
 ## Setup
 
 - Navidrome is setup to read files from `{BASE_DIR}/data/media/music`.

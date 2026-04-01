@@ -23,15 +23,6 @@ Serveur et lecteur de musique moderne — compatible avec les clients Subsonic (
 mithrandir install navidrome
 ```
 
-## Secrets optionnels
-
-| Variable | Description |
-| --- | --- |
-| `ND_SPOTIFY_ID` | Identifiant client Spotify pour récupérer les images d'artistes |
-| `ND_SPOTIFY_SECRET` | Secret client Spotify |
-
-Ces variables sont optionnelles — Navidrome fonctionne sans elles, mais les images d'artistes ne seront pas récupérées depuis Spotify.
-
 ## Configuration
 
 - Navidrome est configuré pour lire les fichiers depuis `{BASE_DIR}/data/media/music`.

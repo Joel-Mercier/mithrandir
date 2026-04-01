@@ -62,7 +62,6 @@ All configuration lives in a single `.env` file at the project root.
 - `DUCKDNS_SUBDOMAINS`, `DUCKDNS_TOKEN`: Required for DuckDNS
 - `WG_SERVERURL`: Required for WireGuard
 - `WG_PEERS`: Number of WireGuard peers (default: `1`)
-- `ND_SPOTIFY_ID`, `ND_SPOTIFY_SECRET`: Optional for Navidrome artist images
 - `SURE_SECRET_KEY_BASE`: Required Rails secret for Sure
 - `SURE_DB_PASSWORD`: Optional database password for Sure
 - `AFFINE_DB_PASSWORD`: Optional database password for AFFiNE
