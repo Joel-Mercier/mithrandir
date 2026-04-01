@@ -682,5 +682,17 @@
   "upload_cancel": "Annuler",
   "upload_clearCompleted": "Effacer les terminés",
   "upload_queued": "{count} fichier(s) en file d'attente",
-  "upload_uploading": "Téléversement en cours..."
+  "upload_uploading": "Téléversement en cours...",
+
+  "common_mediaLibrary": "Médiathèque",
+  "breadcrumbs_mediaLibrary": "Médiathèque",
+  "mediaLibrary_title": "Médiathèque",
+  "mediaLibrary_subtitle": "Parcourez vos fichiers et répertoires multimédias",
+  "mediaLibrary_errorLoading": "Impossible de charger la médiathèque. Vérifiez que le CLI est accessible.",
+  "mediaLibrary_selectCategory": "Sélectionnez une catégorie ci-dessus pour parcourir les fichiers",
+  "mediaLibrary_uploadFiles": "Téléverser",
+  "mediaLibrary_diskUsage": "Espace disque",
+  "mediaLibrary_used": "utilisé",
+  "mediaLibrary_free": "disponible",
+  "mediaLibrary_total": "total"
 }

@@ -682,5 +682,17 @@
   "upload_cancel": "Cancel",
   "upload_clearCompleted": "Clear completed",
   "upload_queued": "{count} file(s) queued",
-  "upload_uploading": "Uploading..."
+  "upload_uploading": "Uploading...",
+
+  "common_mediaLibrary": "Media Library",
+  "breadcrumbs_mediaLibrary": "Media Library",
+  "mediaLibrary_title": "Media Library",
+  "mediaLibrary_subtitle": "Browse your media files and directories",
+  "mediaLibrary_errorLoading": "Failed to load media library. Make sure the CLI is reachable.",
+  "mediaLibrary_selectCategory": "Select a media category above to browse files",
+  "mediaLibrary_uploadFiles": "Upload Files",
+  "mediaLibrary_diskUsage": "Disk Usage",
+  "mediaLibrary_used": "used",
+  "mediaLibrary_free": "free",
+  "mediaLibrary_total": "total"
 }

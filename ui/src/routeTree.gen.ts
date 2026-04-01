@@ -21,6 +21,7 @@ import { Route as AppUploadRouteImport } from './routes/_app/upload'
 import { Route as AppSetupRouteImport } from './routes/_app/setup'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppProfileRouteImport } from './routes/_app/profile'
+import { Route as AppMediaLibraryRouteImport } from './routes/_app/media-library'
 import { Route as AppBackupRestoreRouteImport } from './routes/_app/backup-restore'
 import { Route as AppAppsIndexRouteImport } from './routes/_app/apps/index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
@@ -87,6 +88,11 @@ const AppProfileRoute = AppProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => AppRoute,
 } as any)
+const AppMediaLibraryRoute = AppMediaLibraryRouteImport.update({
+  id: '/media-library',
+  path: '/media-library',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppBackupRestoreRoute = AppBackupRestoreRouteImport.update({
   id: '/backup-restore',
   path: '/backup-restore',
@@ -131,6 +137,7 @@ const ApiHomelabLogsAppNameRoute = ApiHomelabLogsAppNameRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/backup-restore': typeof AppBackupRestoreRoute
+  '/media-library': typeof AppMediaLibraryRoute
   '/profile': typeof AppProfileRoute
   '/settings': typeof AppSettingsRoute
   '/setup': typeof AppSetupRoute
@@ -150,6 +157,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof AppIndexRoute
   '/backup-restore': typeof AppBackupRestoreRoute
+  '/media-library': typeof AppMediaLibraryRoute
   '/profile': typeof AppProfileRoute
   '/settings': typeof AppSettingsRoute
   '/setup': typeof AppSetupRoute
@@ -172,6 +180,7 @@ export interface FileRoutesById {
   '/_auth': typeof AuthRouteWithChildren
   '/_update': typeof UpdateRouteWithChildren
   '/_app/backup-restore': typeof AppBackupRestoreRoute
+  '/_app/media-library': typeof AppMediaLibraryRoute
   '/_app/profile': typeof AppProfileRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/setup': typeof AppSetupRoute
@@ -194,6 +203,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/backup-restore'
+    | '/media-library'
     | '/profile'
     | '/settings'
     | '/setup'
@@ -213,6 +223,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/backup-restore'
+    | '/media-library'
     | '/profile'
     | '/settings'
     | '/setup'
@@ -234,6 +245,7 @@ export interface FileRouteTypes {
     | '/_auth'
     | '/_update'
     | '/_app/backup-restore'
+    | '/_app/media-library'
     | '/_app/profile'
     | '/_app/settings'
     | '/_app/setup'
@@ -347,6 +359,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProfileRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/media-library': {
+      id: '/_app/media-library'
+      path: '/media-library'
+      fullPath: '/media-library'
+      preLoaderRoute: typeof AppMediaLibraryRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/backup-restore': {
       id: '/_app/backup-restore'
       path: '/backup-restore'
@@ -408,6 +427,7 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppBackupRestoreRoute: typeof AppBackupRestoreRoute
+  AppMediaLibraryRoute: typeof AppMediaLibraryRoute
   AppProfileRoute: typeof AppProfileRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppSetupRoute: typeof AppSetupRoute
@@ -421,6 +441,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppBackupRestoreRoute: AppBackupRestoreRoute,
+  AppMediaLibraryRoute: AppMediaLibraryRoute,
   AppProfileRoute: AppProfileRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppSetupRoute: AppSetupRoute,

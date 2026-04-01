@@ -20,6 +20,7 @@ function getRouteLabels(): Record<string, string> {
 		"/settings": m.breadcrumbs_settings(),
 		"/profile": m.breadcrumbs_profile(),
 		"/upload": m.breadcrumbs_upload(),
+		"/media-library": m.breadcrumbs_mediaLibrary(),
 	};
 }
 

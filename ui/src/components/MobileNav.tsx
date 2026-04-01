@@ -19,6 +19,7 @@ function getNavLinks() {
 	return [
 		{ to: "/", label: m.common_dashboard() },
 		{ to: "/apps", label: m.common_apps() },
+		{ to: "/media-library", label: m.common_mediaLibrary() },
 		{ to: "/backup-restore", label: m.common_backupRestore() },
 		{ to: "/settings", label: m.common_settings() },
 		{ to: "/upload", label: m.upload_title() },

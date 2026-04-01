@@ -17,6 +17,7 @@ import {
 	verifyBackup,
 } from "#/lib/server/backup";
 import { fetchCapacity } from "#/lib/server/capacity";
+import { fetchMediaLibrary } from "#/lib/server/media";
 import {
 	autoSetupApp,
 	checkSystemRequirements,
@@ -82,6 +83,7 @@ const keys = {
 	version: ["homelab", "version"],
 	capacity: ["homelab", "capacity"],
 	activity: ["homelab", "activity"],
+	mediaLibrary: ["homelab", "media-library"],
 	setupStatus: ["homelab", "setup-status"],
 	systemRequirements: ["homelab", "setup", "system-requirements"],
 	appRegistry: ["homelab", "setup", "app-registry"],
@@ -169,6 +171,14 @@ export function useActivity() {
 	return useQuery({
 		queryKey: keys.activity,
 		queryFn: () => fetchActivity(),
+	});
+}
+
+export function useMediaLibrary() {
+	return useQuery({
+		queryKey: keys.mediaLibrary,
+		queryFn: () => fetchMediaLibrary(),
+		staleTime: 60_000,
 	});
 }
 
