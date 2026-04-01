@@ -128,9 +128,14 @@ function UiStart() {
     }
 
     // Bootstrap blue-green deployment structure (migrates from .output/ if needed)
-    await bootstrapDeployment(uiDir);
+    try {
+      await bootstrapDeployment(uiDir);
+    } catch (err: any) {
+      setError(`Deployment bootstrap failed: ${err.stderr?.trim() || err.message || "unknown error"}`);
+      return;
+    }
     if (!hasValidDeployment(uiDir)) {
-      setError("Failed to set up deployment structure");
+      setError("Failed to set up deployment structure — no valid build found");
       return;
     }
 
