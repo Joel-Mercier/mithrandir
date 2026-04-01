@@ -89,7 +89,9 @@ export function generateCaddyfile(
     lines.push(`    @mithrandir host mithrandir.${domain}`);
     lines.push("    handle @mithrandir {");
     // Route tus uploads directly to tusd for performance
-    lines.push("        handle /api/media/upload/tus/* {");
+    // Match both the base path (POST to create) and sub-paths (PATCH chunks)
+    lines.push("        @tus path /api/media/upload/tus /api/media/upload/tus/*");
+    lines.push("        handle @tus {");
     lines.push(`            reverse_proxy localhost:${TUSD_PORT}`);
     lines.push("        }");
     lines.push("        reverse_proxy localhost:4180");
