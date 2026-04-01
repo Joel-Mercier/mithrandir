@@ -23,7 +23,7 @@ describe("generateUiServiceUnit", () => {
   });
 
   test("starts Nitro server", () => {
-    expect(unit).toContain("ExecStart=/usr/local/bin/bun run .output/server/index.mjs");
+    expect(unit).toContain("ExecStart=/usr/local/bin/bun run .deployments/current/server/index.mjs");
   });
 
   test("sets working directory to ui/", () => {

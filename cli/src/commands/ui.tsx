@@ -11,6 +11,7 @@ import { getLocalIp } from "@/lib/distro.js";
 import { shell } from "@/lib/shell.js";
 import { isUiServiceActive, installUiService, restartUiService } from "@/lib/systemd-ui.js";
 import { installTusdService, isTusdServiceActive } from "@/lib/systemd-tusd.js";
+import { bootstrapDeployment, hasValidDeployment } from "@/lib/deploy-ui.js";
 import { Header } from "@/components/Header.js";
 import { AppStatus } from "@/components/AppStatus.js";
 import type { EnvConfig } from "@/types.js";
@@ -108,9 +109,9 @@ function UiStart() {
     ensureDataDir(repoRoot);
     ensureEnvLocal(repoRoot);
 
-    // Build the UI if .output doesn't exist
-    const outputDir = join(repoRoot, "ui", ".output");
-    if (!existsSync(outputDir)) {
+    // Build the UI if no valid deployment exists
+    const uiDir = join(repoRoot, "ui");
+    if (!hasValidDeployment(uiDir)) {
       setPhase("building");
       const sudoUser = process.env.SUDO_USER;
       const userOpts = sudoUser ? { user: sudoUser } : {};
@@ -124,6 +125,13 @@ function UiStart() {
         return;
       }
       addStep("Build UI", "done");
+    }
+
+    // Bootstrap blue-green deployment structure (migrates from .output/ if needed)
+    await bootstrapDeployment(uiDir);
+    if (!hasValidDeployment(uiDir)) {
+      setError("Failed to set up deployment structure");
+      return;
     }
 
     // Download tusd binary if not present

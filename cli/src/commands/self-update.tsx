@@ -8,6 +8,7 @@ import { shell } from "@/lib/shell.js";
 import { getProjectRoot, loadEnvConfig } from "@/lib/config.js";
 import { isUiServiceActive, restartUiService } from "@/lib/systemd-ui.js";
 import { isTusdServiceActive, installTusdService } from "@/lib/systemd-tusd.js";
+import { deployUiBuild } from "@/lib/deploy-ui.js";
 import { Header } from "@/components/Header.js";
 import { AppStatus } from "@/components/AppStatus.js";
 
@@ -167,7 +168,9 @@ function SelfUpdateCommand() {
       if (uiBuild.exitCode !== 0) {
         addStep({ name: "Build UI", status: "skipped", message: "UI build failed (non-critical)" });
       } else {
-        addStep({ name: "Build UI", status: "done", message: "UI rebuilt" });
+        // Deploy build output to blue-green deployment slot
+        await deployUiBuild(join(root, "ui"));
+        addStep({ name: "Build UI", status: "done", message: "UI rebuilt and deployed" });
 
         // Ensure tusd is set up (handles upgrade from pre-tusd versions)
         const uiWasActive = await isUiServiceActive();

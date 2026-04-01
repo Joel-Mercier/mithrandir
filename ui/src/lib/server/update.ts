@@ -1,5 +1,6 @@
 import { isUiServiceActive } from "@mithrandir/cli/lib/systemd-ui";
 import { isTusdServiceActive, installTusdService } from "@mithrandir/cli/lib/systemd-tusd";
+import { deployUiBuild, hasValidDeployment } from "@mithrandir/cli/lib/deploy-ui";
 import { loadEnvConfig } from "@mithrandir/cli/lib/config";
 import { shell } from "@mithrandir/cli/lib/shell";
 import { createServerFn } from "@tanstack/react-start";
@@ -209,6 +210,10 @@ export const buildUi = createServerFn({ method: "POST" }).handler(
 			throw new Error(`UI build failed:\n${result.stderr}`);
 		}
 
+		// Deploy build output to blue-green deployment slot
+		const uiDir = join(root, "ui");
+		await deployUiBuild(uiDir);
+
 		return { success: true };
 	},
 );
@@ -251,7 +256,7 @@ export const finalizeUpdate = createServerFn({ method: "POST" }).handler(
 		// Only restart if the build output exists — if the UI build failed,
 		// restarting would cause an infinite crash loop
 		let willRestart = false;
-		const outputExists = existsSync(join(root, "ui", ".output", "server", "index.mjs"));
+		const outputExists = hasValidDeployment(join(root, "ui"));
 		try {
 			const active = await isUiServiceActive();
 			if (active && outputExists) {

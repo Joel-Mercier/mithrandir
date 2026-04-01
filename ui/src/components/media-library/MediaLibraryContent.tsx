@@ -72,9 +72,9 @@ function CategoryCard({
 		<button
 			type="button"
 			onClick={onSelect}
-			className={`flex items-center gap-3 rounded-lg border px-4 py-3 text-left transition-all ${
+			className={`flex items-center gap-3 rounded-lg border cursor-pointer px-4 py-3 text-left transition-all ${
 				isSelected
-					? "border-primary bg-primary/5 shadow-sm"
+					? "border-border/30 bg-primary/5 shadow-sm"
 					: "border-border/50 hover:border-border hover:bg-accent/30"
 			}`}
 		>

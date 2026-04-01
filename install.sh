@@ -110,6 +110,17 @@ sudo ln -sf "$SCRIPT_DIR/cli/dist/mithrandir.js" /usr/local/bin/mithrandir
 log "Building UI..."
 sudo -u "$REAL_USER" "$BUN_INSTALL/bin/bun" run ui:build
 
+# Bootstrap blue-green deployment structure
+log "Setting up UI deployment..."
+UI_DIR="$SCRIPT_DIR/ui"
+DEPLOY_DIR="$UI_DIR/.deployments"
+sudo -u "$REAL_USER" mkdir -p "$DEPLOY_DIR"
+rm -rf "$DEPLOY_DIR/blue"
+cp -r "$UI_DIR/.output" "$DEPLOY_DIR/blue"
+ln -sfn blue "$DEPLOY_DIR/current"
+rm -rf "$UI_DIR/.output"
+chown -R "$REAL_USER:" "$DEPLOY_DIR"
+
 # Create UI data directory
 sudo -u "$REAL_USER" mkdir -p "$SCRIPT_DIR/ui/data"
 
