@@ -40,6 +40,7 @@ import {
   isWsl,
   installSystemdUnits,
 } from "@/lib/systemd.js";
+import { isUiServiceActive } from "@/lib/systemd-ui.js";
 import { detectDistro, getLocalIp } from "@/lib/distro.js";
 import {
   isUfwInstalled,
@@ -1310,9 +1311,11 @@ function HttpsSetupStep({ selectedApps, envConfig, autoYes, onComplete, onEnvUpd
     const installedApps = APP_REGISTRY.filter((app) =>
       existsSync(getComposePath(app, baseDir)),
     );
-    const caddyfile = generateCaddyfile(installedApps, updated);
+    const includeDocs = await isContainerRunning("mithrandir-docs");
+    const includeUi = await isUiServiceActive();
+    const caddyfile = generateCaddyfile(installedApps, updated, { includeDocs, includeUi });
     await Bun.write(`${caddyDir}/Caddyfile`, caddyfile);
-    const notFoundPage = generate404Page(installedApps, updated);
+    const notFoundPage = generate404Page(installedApps, updated, { includeDocs, includeUi });
     await Bun.write(`${caddyDir}/srv/404.html`, notFoundPage);
     const proxyCount = installedApps.filter((a) => a.port && a.name !== "caddy").length;
     addStep({ name: "Caddyfile", status: "done", message: `${proxyCount} app${proxyCount !== 1 ? "s" : ""} configured` });

@@ -26,6 +26,7 @@ import {
 import { shell } from "@/lib/shell.js";
 import { generateCompose } from "@/lib/compose.js";
 import { generate404Page, generateCaddyfile, generateCaddyDockerfile, getDuckDnsDomain, regenerateCaddyfile } from "@/lib/caddy.js";
+import { isUiServiceActive } from "@/lib/systemd-ui.js";
 import { regenerateGatusConfig } from "@/lib/gatus.js";
 import { getLocalIp } from "@/lib/distro.js";
 import {
@@ -412,9 +413,11 @@ function InstallHttps() {
     const installedApps = APP_REGISTRY.filter((app) =>
       existsSync(getComposePath(app, baseDir)),
     );
-    const caddyfile = generateCaddyfile(installedApps, env);
+    const includeDocs = await isContainerRunning("mithrandir-docs");
+    const includeUi = await isUiServiceActive();
+    const caddyfile = generateCaddyfile(installedApps, env, { includeDocs, includeUi });
     await Bun.write(`${caddyDir}/Caddyfile`, caddyfile);
-    const notFoundPage = generate404Page(installedApps, env);
+    const notFoundPage = generate404Page(installedApps, env, { includeDocs, includeUi });
     await Bun.write(`${caddyDir}/srv/404.html`, notFoundPage);
     const proxyCount = installedApps.filter((a) => a.port && a.name !== "caddy").length;
     addStep({ name: "Caddyfile", status: "done", message: `${proxyCount} app${proxyCount !== 1 ? "s" : ""} configured` });
