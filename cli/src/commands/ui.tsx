@@ -11,7 +11,7 @@ import { getLocalIp } from "@/lib/distro.js";
 import { shell } from "@/lib/shell.js";
 import { isUiServiceActive, installUiService, restartUiService } from "@/lib/systemd-ui.js";
 import { installTusdService, isTusdServiceActive } from "@/lib/systemd-tusd.js";
-import { bootstrapDeployment, hasValidDeployment } from "@/lib/deploy-ui.js";
+import { bootstrapDeployment, deployUiBuild, hasValidDeployment } from "@/lib/deploy-ui.js";
 import { Header } from "@/components/Header.js";
 import { AppStatus } from "@/components/AppStatus.js";
 import type { EnvConfig } from "@/types.js";
@@ -109,9 +109,12 @@ function UiStart() {
     ensureDataDir(repoRoot);
     ensureEnvLocal(repoRoot);
 
-    // Build the UI if no valid deployment exists
+    // Build and deploy the UI
     const uiDir = join(repoRoot, "ui");
-    if (!hasValidDeployment(uiDir)) {
+    const hasStagedBuild = existsSync(join(uiDir, ".output", "server", "index.mjs"));
+
+    if (!hasValidDeployment(uiDir) && !hasStagedBuild) {
+      // No deployment and no staged build — need to build from scratch
       setPhase("building");
       const sudoUser = process.env.SUDO_USER;
       const userOpts = sudoUser ? { user: sudoUser } : {};
@@ -127,15 +130,19 @@ function UiStart() {
       addStep("Build UI", "done");
     }
 
-    // Bootstrap blue-green deployment structure (migrates from .output/ if needed)
+    // Deploy staged .output/ to blue-green slot, or bootstrap if first time
     try {
-      await bootstrapDeployment(uiDir);
+      if (existsSync(join(uiDir, ".output", "server", "index.mjs"))) {
+        // Fresh build waiting to be deployed (manual bun run ui:build, or just built above)
+        await deployUiBuild(uiDir);
+        addStep("Deploy UI", "done");
+      } else if (!hasValidDeployment(uiDir)) {
+        // No .output and no deployment — shouldn't happen after build step, but guard anyway
+        setError("Failed to set up deployment structure — no valid build found");
+        return;
+      }
     } catch (err: any) {
-      setError(`Deployment bootstrap failed: ${err.stderr?.trim() || err.message || "unknown error"}`);
-      return;
-    }
-    if (!hasValidDeployment(uiDir)) {
-      setError("Failed to set up deployment structure — no valid build found");
+      setError(`Deployment failed: ${err.stderr?.trim() || err.message || "unknown error"}`);
       return;
     }
 
