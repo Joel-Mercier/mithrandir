@@ -163,10 +163,11 @@ function SelfUpdatePage() {
 					status: "done",
 					message: m.selfUpdate_uiBuildDone(),
 				});
-			} catch {
+			} catch (err: unknown) {
+				const detail = err instanceof Error ? err.message : String(err);
 				updateStep("build-ui", {
 					status: "skipped",
-					message: "UI build failed (non-critical)",
+					message: `UI build failed (non-critical): ${detail}`,
 				});
 			}
 

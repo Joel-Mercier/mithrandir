@@ -207,7 +207,8 @@ export const buildUi = createServerFn({ method: "POST" }).handler(
 			timeout: 300000,
 		});
 		if (result.exitCode !== 0) {
-			throw new Error(`UI build failed:\n${result.stderr}`);
+			const output = [result.stderr, result.stdout].filter(Boolean).join("\n");
+			throw new Error(`UI build failed (exit ${result.exitCode}):\n${output}`);
 		}
 
 		// Deploy build output to blue-green deployment slot
