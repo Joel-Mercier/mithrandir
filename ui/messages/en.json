@@ -702,5 +702,7 @@
   "mediaLibrary_descending": "Descending",
   "mediaLibrary_noResults": "No files match your search",
   "mediaLibrary_emptyCategory": "This category is empty",
-  "mediaLibrary_loadingCategory": "Loading files…"
+  "mediaLibrary_loadingCategory": "Loading files…",
+  "mediaLibrary_file": "file",
+  "mediaLibrary_files": "files"
 }

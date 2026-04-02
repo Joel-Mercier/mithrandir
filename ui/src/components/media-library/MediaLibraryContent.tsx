@@ -90,7 +90,7 @@ function CategoryCard({
 			<div className="min-w-0 flex-1">
 				<p className="text-sm font-semibold">{meta.label()}</p>
 				<p className="text-xs text-muted-foreground">
-					{info.fileCount} {info.fileCount === 1 ? "file" : "files"}
+					{info.fileCount} {info.fileCount === 1 ? m.mediaLibrary_file() : m.mediaLibrary_files()}
 					{info.totalSize > 0 && ` \u00b7 ${formatFileSize(info.totalSize)}`}
 				</p>
 			</div>

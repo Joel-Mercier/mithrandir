@@ -702,5 +702,7 @@
   "mediaLibrary_descending": "Décroissant",
   "mediaLibrary_noResults": "Aucun fichier ne correspond à votre recherche",
   "mediaLibrary_emptyCategory": "Cette catégorie est vide",
-  "mediaLibrary_loadingCategory": "Chargement des fichiers…"
+  "mediaLibrary_loadingCategory": "Chargement des fichiers…",
+  "mediaLibrary_file": "fichier",
+  "mediaLibrary_files": "fichiers"
 }
