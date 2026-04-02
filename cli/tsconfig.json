@@ -5,9 +5,8 @@
     "outDir": "dist",
     "rootDir": "src",
     "types": ["bun"],
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     }
   },
   "include": ["src/**/*"],
