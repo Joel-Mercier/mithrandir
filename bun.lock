@@ -29,7 +29,7 @@
       "name": "@mithrandir/docs",
       "version": "1.0.0",
       "devDependencies": {
-        "vitepress": "^1.6.3",
+        "vitepress": "^1.6.4",
       },
     },
     "ui": {
