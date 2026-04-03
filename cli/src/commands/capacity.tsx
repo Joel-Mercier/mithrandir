@@ -9,8 +9,6 @@ import {
   gatherCapacityReport,
   formatBytes,
   scoreLabel,
-  scoreColor,
-  scoreToNumeric,
   type CapacityReport,
   type StorageInfo,
 } from "@/lib/capacity.js";

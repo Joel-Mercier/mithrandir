@@ -26,3 +26,5 @@ ui/.tusd/
 # Vitepress
 /docs/.vitepress/cache/
 /docs/.vitepress/dist/
+
+.fallow

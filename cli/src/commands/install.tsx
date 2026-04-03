@@ -4,7 +4,7 @@ import Spinner from "ink-spinner";
 import { StatusMessage, TextInput, PasswordInput } from "@inkjs/ui";
 import type { SecretDefinition, EnvConfig } from "@/types.js";
 import { existsSync } from "fs";
-import { getApp, getAppNames, getAppDir, getComposePath, getCompanionApps, getStack, getStackNames, APP_REGISTRY } from "@/lib/apps.js";
+import { getApp, getAppNames, getComposePath, getCompanionApps, getStack, getStackNames, APP_REGISTRY } from "@/lib/apps.js";
 import { loadEnvConfig, saveEnvConfig } from "@/lib/config.js";
 import {
   isDockerInstalled,

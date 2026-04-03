@@ -1,7 +1,7 @@
 import { APP_REGISTRY, getComposePath, getAppDir } from "@/lib/apps.js";
 import { loadEnvConfig } from "@/lib/config.js";
 import { shell } from "@/lib/shell.js";
-import type { AppDefinition, EnvConfig } from "@/types.js";
+import type { AppDefinition } from "@/types.js";
 import { existsSync } from "fs";
 import { platform } from "os";
 

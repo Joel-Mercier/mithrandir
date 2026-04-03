@@ -1,13 +1,10 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { render, Box, Text, useApp, useInput } from "ink";
 import Spinner from "ink-spinner";
 import { TextInput, ConfirmInput } from "@inkjs/ui";
 import { StatusMessage } from "@inkjs/ui";
 import {
-  APP_REGISTRY,
   getApp,
-  getAppDir,
-  getConfigPaths,
 } from "@/lib/apps.js";
 import {
   isDockerInstalled,
@@ -47,7 +44,6 @@ import { ProgressBar } from "@/components/ProgressBar.js";
 import { ErrorBoundary } from "@/components/ErrorBoundary.js";
 import type { EnvConfig } from "@/types.js";
 import { homedir } from "os";
-import { existsSync } from "fs";
 
 const TOTAL_STEPS = 9;
 

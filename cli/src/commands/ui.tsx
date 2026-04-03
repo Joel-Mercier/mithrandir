@@ -2,19 +2,18 @@ import { useState, useEffect } from "react";
 import { Box, render, Text, useApp } from "ink";
 import Spinner from "ink-spinner";
 import { StatusMessage } from "@inkjs/ui";
-import { existsSync, mkdirSync, writeFileSync, readFileSync } from "fs";
+import { existsSync, mkdirSync, writeFileSync } from "fs";
 import { join } from "path";
 import { randomBytes } from "crypto";
 import { getProjectRoot, loadEnvConfig } from "@/lib/config.js";
 import { getDuckDnsDomain, regenerateCaddyfile } from "@/lib/caddy.js";
 import { getLocalIp } from "@/lib/distro.js";
 import { shell } from "@/lib/shell.js";
-import { isUiServiceActive, installUiService, restartUiService } from "@/lib/systemd-ui.js";
+import { isUiServiceActive, installUiService } from "@/lib/systemd-ui.js";
 import { installTusdService, isTusdServiceActive } from "@/lib/systemd-tusd.js";
-import { bootstrapDeployment, deployUiBuild, hasValidDeployment } from "@/lib/deploy-ui.js";
+import { deployUiBuild, hasValidDeployment } from "@/lib/deploy-ui.js";
 import { Header } from "@/components/Header.js";
 import { AppStatus } from "@/components/AppStatus.js";
-import type { EnvConfig } from "@/types.js";
 
 /** Ensure ui/.env.local exists with required secrets */
 function ensureEnvLocal(repoRoot: string): void {

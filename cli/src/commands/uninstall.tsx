@@ -4,7 +4,7 @@ import Spinner from "ink-spinner";
 import { ConfirmInput, StatusMessage } from "@inkjs/ui";
 import { existsSync, readdirSync, statSync } from "fs";
 import { homedir } from "os";
-import { getApp, getAppNames, getAppDir, getCompanionApps, getComposePath } from "@/lib/apps.js";
+import { getApp, getAppNames, getAppDir, getCompanionApps } from "@/lib/apps.js";
 import { shell, commandExists } from "@/lib/shell.js";
 import { loadEnvConfig } from "@/lib/config.js";
 import { regenerateCaddyfile } from "@/lib/caddy.js";

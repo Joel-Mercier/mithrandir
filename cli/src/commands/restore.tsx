@@ -29,8 +29,6 @@ import { ProgressBar } from "@/components/ProgressBar.js";
 import { decryptFile, isEncryptedBackup } from "@/lib/crypto.js";
 import {
   findArchiveFile,
-  isBackupArchive,
-  stripArchiveSuffix,
   ARCHIVE_EXT,
   ENCRYPTED_EXT,
 } from "@/lib/backup-utils.js";

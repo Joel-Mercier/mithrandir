@@ -1,4 +1,4 @@
-import { Box, render, Text } from "ink";
+import { Box, render } from "ink";
 import { Header } from "@/components/Header.js";
 import { readFileSync } from "fs";
 import { execSync } from "child_process";

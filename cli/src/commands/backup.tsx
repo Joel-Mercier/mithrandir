@@ -19,9 +19,6 @@ import {
   purgeRemote,
   listDirs,
   listFiles,
-  uploadToAllRemotes,
-  rotateAllRemotes,
-  listDirsAllRemotes,
 } from "@/lib/rclone.js";
 import { shell } from "@/lib/shell.js";
 import { createBackupLogger, Logger } from "@/lib/logger.js";
@@ -32,7 +29,6 @@ import { encryptFile, decryptFile, isEncryptedBackup } from "@/lib/crypto.js";
 import {
   stripArchiveSuffix as sharedStripArchiveSuffix,
   isBackupArchive,
-  ENCRYPTED_EXT,
 } from "@/lib/backup-utils.js";
 import { hasSystemd, isWsl, installSystemdUnits, isTimerActive } from "@/lib/systemd.js";
 import type { AppDefinition, BackupConfig, EnvConfig } from "@/types.js";

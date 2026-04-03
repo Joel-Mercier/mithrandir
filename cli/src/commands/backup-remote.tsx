@@ -15,7 +15,6 @@ import {
 } from "@/lib/rclone.js";
 import { Header } from "@/components/Header.js";
 import { AppStatus } from "@/components/AppStatus.js";
-import type { EnvConfig } from "@/types.js";
 
 // ─── Provider definitions ────────────────────────────────────────────────────
 
