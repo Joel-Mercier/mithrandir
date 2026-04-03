@@ -9,7 +9,6 @@ import {
 	Shield,
 	Upload,
 } from "lucide-react";
-import { useState } from "react";
 import { toast } from "sonner";
 import Breadcrumbs from "#/components/Breadcrumbs";
 import { BackupTable, formatDate } from "#/components/backup/BackupTable";
@@ -20,6 +19,12 @@ import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
 import { Skeleton } from "#/components/ui/skeleton";
+import {
+	Tabs,
+	TabsContent,
+	TabsList,
+	TabsTrigger,
+} from "#/components/ui/tabs";
 import {
 	useBackupHistory,
 	useBackupStatus,
@@ -38,8 +43,6 @@ const tabs = [
 	{ id: "restore", label: m.backup_tabRestore(), icon: Download },
 ];
 
-type TabId = "local" | "remote" | "restore";
-
 function StatusCardSkeleton() {
 	return (
 		<Card>
@@ -57,7 +60,6 @@ function StatusCardSkeleton() {
 }
 
 function BackupRestorePage() {
-	const [activeTab, setActiveTab] = useState<TabId>("local");
 	const backupStatusQuery = useBackupStatus();
 	const backupHistoryQuery = useBackupHistory();
 	const configQuery = useConfig();
@@ -227,38 +229,20 @@ function BackupRestorePage() {
 			</div>
 
 			{/* Backup history tabs */}
-			<div className="flex flex-col gap-6 md:flex-row">
-				{/* Sidebar nav */}
-				<nav className="flex shrink-0 flex-row gap-1 md:w-48 md:flex-col">
+			<Tabs defaultValue="local" orientation="vertical">
+				<TabsList variant="line" className="shrink-0 md:w-48">
 					{tabs.map((tab) => {
 						const Icon = tab.icon;
-						const isActive = activeTab === tab.id;
 						return (
-							<button
-								key={tab.id}
-								type="button"
-								onClick={() => setActiveTab(tab.id as TabId)}
-								className={`group flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
-									isActive
-										? "bg-accent text-accent-foreground shadow-sm"
-										: "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
-								}`}
-							>
-								<Icon
-									className={`h-4 w-4 transition-colors ${
-										isActive
-											? "text-foreground"
-											: "text-muted-foreground/70 group-hover:text-foreground"
-									}`}
-								/>
+							<TabsTrigger key={tab.id} value={tab.id}>
+								<Icon />
 								<span className="hidden md:inline">{tab.label}</span>
-							</button>
+							</TabsTrigger>
 						);
 					})}
-				</nav>
+				</TabsList>
 
-				{/* Content */}
-				<div className="flex-1">
+				<TabsContent value="local">
 					{backupHistoryQuery.isPending ? (
 						<div className="space-y-3">
 							{Array.from({ length: 4 }).map((_, i) => (
@@ -266,16 +250,24 @@ function BackupRestorePage() {
 							))}
 						</div>
 					) : (
-						<>
-							{activeTab === "local" && <BackupTable backups={localBackups} />}
-							{activeTab === "remote" && (
-								<BackupTable backups={remoteBackups} />
-							)}
-							{activeTab === "restore" && <RestorePanel />}
-						</>
+						<BackupTable backups={localBackups} />
 					)}
-				</div>
-			</div>
+				</TabsContent>
+				<TabsContent value="remote">
+					{backupHistoryQuery.isPending ? (
+						<div className="space-y-3">
+							{Array.from({ length: 4 }).map((_, i) => (
+								<Skeleton key={i} className="h-12 w-full" />
+							))}
+						</div>
+					) : (
+						<BackupTable backups={remoteBackups} />
+					)}
+				</TabsContent>
+				<TabsContent value="restore">
+					<RestorePanel />
+				</TabsContent>
+			</Tabs>
 		</div>
 	);
 }

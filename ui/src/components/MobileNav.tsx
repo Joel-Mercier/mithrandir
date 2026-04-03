@@ -70,17 +70,17 @@ export default function MobileNav() {
 					<User className="h-4 w-4" />
 					{m.common_profile()}
 				</Link>
-				<button
-					type="button"
+				<Button
+					variant="ghost"
+					className="w-full justify-start gap-2 text-status-critical hover:text-status-critical"
 					onClick={() => {
 						setOpen(false);
 						signOut.mutate();
 					}}
-					className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-status-critical transition-colors hover:bg-accent"
 				>
-					<LogOut className="h-4 w-4" />
+					<LogOut data-icon="inline-start" />
 					{m.common_signOut()}
-				</button>
+				</Button>
 				<div className="mt-auto flex items-center gap-1 pt-6">
 					<LanguageSwitch />
 					<ThemeToggle />

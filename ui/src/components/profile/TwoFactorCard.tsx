@@ -239,17 +239,17 @@ function SetupTwoFactorDialog({
 									<p className="text-center text-xs text-muted-foreground">
 										{m.twoFactorCard_manualKey()}
 									</p>
-									<button
-										type="button"
-										className="flex w-full items-center justify-center gap-2 rounded-md border bg-muted/50 px-3 py-2 font-mono text-xs tracking-widest transition-colors hover:bg-muted"
+									<Button
+										variant="outline"
+										className="w-full justify-center gap-2 font-mono text-xs tracking-widest"
 										onClick={() => {
 											navigator.clipboard.writeText(secret);
 											toast.success(m.twoFactorCard_secretCopied());
 										}}
 									>
 										{secret}
-										<Copy className="h-3 w-3 shrink-0 text-muted-foreground" />
-									</button>
+										<Copy data-icon="inline-end" className="text-muted-foreground" />
+									</Button>
 								</div>
 							)}
 						</div>

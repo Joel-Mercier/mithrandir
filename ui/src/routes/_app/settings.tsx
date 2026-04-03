@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Archive, Globe, Info, Settings } from "lucide-react";
-import { useState } from "react";
 import Breadcrumbs from "#/components/Breadcrumbs";
 import {
 	AboutTab,
@@ -8,6 +7,12 @@ import {
 	GeneralTab,
 	NetworkTab,
 } from "#/components/settings/SettingsTabs";
+import {
+	Tabs,
+	TabsContent,
+	TabsList,
+	TabsTrigger,
+} from "#/components/ui/tabs";
 import { m } from "#/paraglide/messages.js";
 
 export const Route = createFileRoute("/_app/settings")({
@@ -21,11 +26,7 @@ const tabs = [
 	{ id: "about", label: m.settings_tabAbout(), icon: Info },
 ];
 
-type TabId = "general" | "network" | "backup" | "about";
-
 function SettingsPage() {
-	const [activeTab, setActiveTab] = useState<TabId>("general");
-
 	return (
 		<div className="mx-auto max-w-7xl px-4 py-8">
 			<Breadcrumbs />
@@ -38,44 +39,32 @@ function SettingsPage() {
 				</p>
 			</div>
 
-			<div className="flex flex-col gap-6 md:flex-row">
-				{/* Sidebar nav */}
-				<nav className="flex shrink-0 flex-row gap-1 md:w-48 md:flex-col">
+			<Tabs defaultValue="general" orientation="vertical">
+				<TabsList variant="line" className="shrink-0 md:w-48">
 					{tabs.map((tab) => {
 						const Icon = tab.icon;
-						const isActive = activeTab === tab.id;
 						return (
-							<button
-								key={tab.id}
-								type="button"
-								onClick={() => setActiveTab(tab.id as TabId)}
-								className={`group flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all cursor-pointer ${
-									isActive
-										? "bg-accent text-accent-foreground shadow-sm"
-										: "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
-								}`}
-							>
-								<Icon
-									className={`h-4 w-4 transition-colors ${
-										isActive
-											? "text-foreground"
-											: "text-muted-foreground/70 group-hover:text-foreground"
-									}`}
-								/>
+							<TabsTrigger key={tab.id} value={tab.id}>
+								<Icon />
 								<span className="hidden md:inline">{tab.label}</span>
-							</button>
+							</TabsTrigger>
 						);
 					})}
-				</nav>
+				</TabsList>
 
-				{/* Content */}
-				<div className="flex-1">
-					{activeTab === "general" && <GeneralTab />}
-					{activeTab === "network" && <NetworkTab />}
-					{activeTab === "backup" && <BackupTab />}
-					{activeTab === "about" && <AboutTab />}
-				</div>
-			</div>
+				<TabsContent value="general">
+					<GeneralTab />
+				</TabsContent>
+				<TabsContent value="network">
+					<NetworkTab />
+				</TabsContent>
+				<TabsContent value="backup">
+					<BackupTab />
+				</TabsContent>
+				<TabsContent value="about">
+					<AboutTab />
+				</TabsContent>
+			</Tabs>
 		</div>
 	);
 }

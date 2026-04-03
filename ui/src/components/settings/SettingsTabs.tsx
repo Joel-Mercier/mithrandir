@@ -11,6 +11,17 @@ import {
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Row } from "#/components/Row";
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from "#/components/ui/alert-dialog";
+import { Alert, AlertDescription } from "#/components/ui/alert";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import {
@@ -291,9 +302,9 @@ export function NetworkTab() {
 				<CardContent className="space-y-4">
 					{/* Prerequisites warning */}
 					{prereqs && !prereqs.ready && (
-						<div className="flex items-start gap-2 rounded-lg border border-status-warning/30 bg-status-warning/5 px-3 py-2 text-sm text-status-warning">
-							<AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-							<div className="space-y-1">
+						<Alert className="border-status-warning/30 bg-status-warning/5 text-status-warning">
+							<AlertTriangle className="h-4 w-4" />
+							<AlertDescription className="space-y-1">
 								{!prereqs.duckdnsConfigured && (
 									<p>DuckDNS secrets are not configured in .env</p>
 								)}
@@ -306,8 +317,8 @@ export function NetworkTab() {
 								{!prereqs.domain && prereqs.duckdnsConfigured && (
 									<p>Could not derive domain from DuckDNS config</p>
 								)}
-							</div>
-						</div>
+							</AlertDescription>
+						</Alert>
 					)}
 
 					{/* HTTPS toggle */}
@@ -413,13 +424,13 @@ function FirewallCard({ config }: { config: SystemConfig }) {
 			<CardContent className="space-y-4">
 				{/* Prerequisites warning when enabling */}
 				{!config.firewallEnabled && prereqs && !prereqs.ufwInstalled && (
-					<div className="flex items-start gap-2 rounded-lg border border-status-warning/30 bg-status-warning/5 px-3 py-2 text-sm text-status-warning">
-						<AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-						<p>
+					<Alert className="border-status-warning/30 bg-status-warning/5 text-status-warning">
+						<AlertTriangle className="h-4 w-4" />
+						<AlertDescription>
 							UFW is not installed. Enabling the firewall will install UFW and
 							ufw-docker automatically.
-						</p>
-					</div>
+						</AlertDescription>
+					</Alert>
 				)}
 
 				<div className="flex items-center justify-between rounded-lg border border-border/50 p-3 transition-colors hover:bg-muted/50">
@@ -735,19 +746,24 @@ function EncryptionRemotesCard({ config }: { config: SystemConfig }) {
 	const rcloneQuery = useRcloneInstalled();
 	const removeRemoteMutation = useRemoveBackupRemote();
 	const rcloneInstalled = rcloneQuery.data ?? true; // default to true while loading
+	const [removeTarget, setRemoveTarget] = useState<string | null>(null);
 
-	const handleRemoveRemote = (name: string) => {
-		if (!confirm(m.settings_removeRemoteConfirm({ name }))) return;
+	const handleConfirmRemove = () => {
+		if (!removeTarget) return;
 		removeRemoteMutation.mutate(
-			{ name, deleteFromRclone: true },
+			{ name: removeTarget, deleteFromRclone: true },
 			{
-				onSuccess: () => toast.success(m.settings_remoteRemoved()),
+				onSuccess: () => {
+					toast.success(m.settings_remoteRemoved());
+					setRemoveTarget(null);
+				},
 				onError: (err) => toast.error(`Failed to remove: ${err.message}`),
 			},
 		);
 	};
 
 	return (
+		<>
 		<Card>
 			<CardHeader>
 				<CardTitle className="text-sm font-medium">
@@ -760,10 +776,10 @@ function EncryptionRemotesCard({ config }: { config: SystemConfig }) {
 			<CardContent className="space-y-4">
 				{/* rclone not installed warning */}
 				{rcloneQuery.isSuccess && !rcloneInstalled && (
-					<div className="flex items-start gap-2 rounded-lg border border-status-warning/30 bg-status-warning/5 px-3 py-2 text-sm text-status-warning">
-						<AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-						<p>{m.settings_rcloneNotInstalled()}</p>
-					</div>
+					<Alert className="border-status-warning/30 bg-status-warning/5 text-status-warning">
+						<AlertTriangle className="h-4 w-4" />
+						<AlertDescription>{m.settings_rcloneNotInstalled()}</AlertDescription>
+					</Alert>
 				)}
 
 				<div className="flex items-center justify-between rounded-lg border border-border/50 p-3 transition-colors hover:bg-muted/50">
@@ -808,7 +824,7 @@ function EncryptionRemotesCard({ config }: { config: SystemConfig }) {
 										size="icon-xs"
 										className="opacity-0 transition-opacity group-hover:opacity-100"
 										disabled={removeRemoteMutation.isPending}
-										onClick={() => handleRemoveRemote(remote)}
+										onClick={() => setRemoveTarget(remote)}
 									>
 										{removeRemoteMutation.isPending ? (
 											<Spinner size="sm" />
@@ -840,6 +856,34 @@ function EncryptionRemotesCard({ config }: { config: SystemConfig }) {
 				</div>
 			</CardContent>
 		</Card>
+
+		<AlertDialog
+			open={!!removeTarget}
+			onOpenChange={(open) => {
+				if (!open) setRemoveTarget(null);
+			}}
+		>
+			<AlertDialogContent>
+				<AlertDialogHeader>
+					<AlertDialogTitle>{m.common_delete()}</AlertDialogTitle>
+					<AlertDialogDescription>
+						{removeTarget
+							? m.settings_removeRemoteConfirm({ name: removeTarget })
+							: ""}
+					</AlertDialogDescription>
+				</AlertDialogHeader>
+				<AlertDialogFooter>
+					<AlertDialogCancel>{m.common_cancel()}</AlertDialogCancel>
+					<AlertDialogAction
+						className="bg-status-critical text-white hover:bg-status-critical/90"
+						onClick={handleConfirmRemove}
+					>
+						{m.common_delete()}
+					</AlertDialogAction>
+				</AlertDialogFooter>
+			</AlertDialogContent>
+		</AlertDialog>
+		</>
 	);
 }
 

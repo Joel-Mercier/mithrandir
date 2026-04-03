@@ -9,6 +9,8 @@ import {
 	Square,
 	Trash2,
 } from "lucide-react";
+import { Button } from "#/components/ui/button";
+import { ScrollArea } from "#/components/ui/scroll-area";
 import {
 	Sheet,
 	SheetContent,
@@ -92,7 +94,7 @@ export default function ActivitySidebar({
 					</SheetTitle>
 				</SheetHeader>
 
-				<div className="flex-1 overflow-y-auto">
+				<ScrollArea className="flex-1">
 					{isPending ? (
 						<div className="flex flex-col gap-3 p-4">
 							{Array.from({ length: 8 }).map((_, i) => (
@@ -116,12 +118,12 @@ export default function ActivitySidebar({
 								const Icon = actionIcons[item.action] ?? History;
 								return (
 									<li key={item.id}>
-										<button
-											type="button"
+										<Button
+											variant="ghost"
+											className="h-auto w-full justify-start gap-3 rounded-none px-4 py-3 text-left"
 											onClick={() => handleClick(item)}
-											className="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors cursor-pointer hover:bg-muted/50"
 										>
-											<Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+											<Icon className="mt-0.5 shrink-0 text-muted-foreground" />
 											<div className="min-w-0 flex-1">
 												<p className="truncate text-sm font-medium">
 													{getActivityTitle(item.action, item.targetName)}
@@ -130,13 +132,13 @@ export default function ActivitySidebar({
 													{formatRelativeTime(item.createdAt)}
 												</p>
 											</div>
-										</button>
+										</Button>
 									</li>
 								);
 							})}
 						</ul>
 					)}
-				</div>
+				</ScrollArea>
 			</SheetContent>
 		</Sheet>
 	);

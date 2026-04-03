@@ -37,9 +37,10 @@ import {
 } from "#/components/ui/dropdown-menu";
 import { Input } from "#/components/ui/input";
 import { Progress } from "#/components/ui/progress";
+import { ScrollArea } from "#/components/ui/scroll-area";
 import { Skeleton } from "#/components/ui/skeleton";
 import { useMediaCategory, useMediaLibrary } from "#/hooks/homelab";
-import { formatFileSize } from "#/lib/utils";
+import { cn, formatFileSize } from "#/lib/utils";
 import { m } from "#/paraglide/messages.js";
 import FileTree from "./FileTree";
 
@@ -69,21 +70,23 @@ function CategoryCard({
 	const Icon = meta.icon;
 
 	return (
-		<button
-			type="button"
+		<Button
+			variant="outline"
 			onClick={onSelect}
-			className={`flex items-center gap-3 rounded-lg border cursor-pointer px-4 py-3 text-left transition-all ${
+			className={cn(
+				"h-auto justify-start gap-3 px-4 py-3 text-left",
 				isSelected
 					? "border-border/30 bg-primary/5 shadow-sm"
-					: "border-border/50 hover:border-border hover:bg-accent/30"
-			}`}
+					: "border-border/50 hover:border-border hover:bg-accent/30",
+			)}
 		>
 			<div
-				className={`flex size-9 shrink-0 items-center justify-center rounded-md ${
+				className={cn(
+					"flex size-9 shrink-0 items-center justify-center rounded-md",
 					isSelected
 						? "bg-primary/10 text-primary"
-						: "bg-muted text-muted-foreground"
-				}`}
+						: "bg-muted text-muted-foreground",
+				)}
 			>
 				<Icon className="size-4" />
 			</div>
@@ -94,7 +97,7 @@ function CategoryCard({
 					{info.totalSize > 0 && ` \u00b7 ${formatFileSize(info.totalSize)}`}
 				</p>
 			</div>
-		</button>
+		</Button>
 	);
 }
 
@@ -335,13 +338,15 @@ export default function MediaLibraryContent() {
 								</p>
 							</div>
 						) : (
-							<div className="relative max-h-[500px] overflow-y-auto rounded-md border border-border/30 bg-muted/20 p-2">
+							<div className="relative rounded-md border border-border/30 bg-muted/20 p-2">
 								{isCategoryFetching && (
 									<div className="absolute inset-0 z-10 flex items-center justify-center bg-background/50">
 										<Loader2 className="size-5 animate-spin text-muted-foreground" />
 									</div>
 								)}
-								<FileTree nodes={categoryDetail?.tree ?? []} />
+								<ScrollArea className="max-h-[500px]">
+									<FileTree nodes={categoryDetail?.tree ?? []} />
+								</ScrollArea>
 							</div>
 						)}
 					</CardContent>

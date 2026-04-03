@@ -8,6 +8,10 @@ import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardHeader } from "#/components/ui/card";
 import { Input } from "#/components/ui/input";
 import { Skeleton } from "#/components/ui/skeleton";
+import {
+	ToggleGroup,
+	ToggleGroupItem,
+} from "#/components/ui/toggle-group";
 import { useApps } from "#/hooks/homelab";
 import type { AppCategory, DashboardApp } from "#/lib/types";
 import { m } from "#/paraglide/messages.js";
@@ -161,19 +165,27 @@ function AppsPage() {
 						className="pl-9"
 					/>
 				</div>
-				<div className="flex flex-wrap gap-1">
+				<ToggleGroup
+					type="single"
+					value={category}
+					onValueChange={(value) =>
+						setCategory((value as AppCategory | "all") || "all")
+					}
+					variant="outline"
+					size="sm"
+					spacing={1}
+					className="flex-wrap"
+				>
 					{categories.map((cat) => (
-						<Button
+						<ToggleGroupItem
 							key={cat}
-							variant={category === cat ? "default" : "outline"}
-							size="sm"
-							onClick={() => setCategory(category === cat ? "all" : cat)}
+							value={cat}
 							className="capitalize"
 						>
 							{cat}
-						</Button>
+						</ToggleGroupItem>
 					))}
-				</div>
+				</ToggleGroup>
 			</div>
 
 			{/* Loading state */}

@@ -1,13 +1,13 @@
 import type { FileNode } from "@mithrandir/cli/lib/media";
 import { ChevronRight, File, Folder, FolderOpen } from "lucide-react";
 import { useState } from "react";
+import { Button } from "#/components/ui/button";
 import {
 	Collapsible,
 	CollapsibleContent,
 	CollapsibleTrigger,
 } from "#/components/ui/collapsible";
-import { cn } from "#/lib/utils";
-import { formatFileSize } from "#/lib/utils";
+import { cn, formatFileSize } from "#/lib/utils";
 
 function FileTreeItem({
 	node,
@@ -35,9 +35,9 @@ function FileTreeItem({
 	return (
 		<Collapsible open={open} onOpenChange={setOpen}>
 			<CollapsibleTrigger asChild>
-				<button
-					type="button"
-					className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-sm font-medium transition-colors hover:bg-accent/50"
+				<Button
+					variant="ghost"
+					className="h-auto w-full justify-start gap-2 px-2 py-1 text-sm font-medium"
 					style={{ paddingLeft: `${depth * 16 + 8}px` }}
 				>
 					<ChevronRight
@@ -55,7 +55,7 @@ function FileTreeItem({
 					<span className="ml-auto shrink-0 font-mono-data text-xs text-muted-foreground">
 						{formatFileSize(node.size)}
 					</span>
-				</button>
+				</Button>
 			</CollapsibleTrigger>
 			{hasChildren && (
 				<CollapsibleContent>

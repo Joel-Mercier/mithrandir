@@ -563,10 +563,10 @@ function AppDetailPage() {
 							</AlertDialogDescription>
 						</AlertDialogHeader>
 						{affectedApps.length > 0 && (
-							<div className="flex gap-2 rounded-lg border border-status-warning/40 bg-status-warning/10 p-3 text-sm">
-								<AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-status-warning" />
-								<div>
-									<p className="font-medium text-status-warning">
+							<Alert className="border-status-warning/40 bg-status-warning/10 text-status-warning">
+								<AlertTriangle className="h-4 w-4" />
+								<AlertDescription>
+									<p className="font-medium">
 										{m.appDetail_uninstallDependencyWarning({
 											count: affectedApps.length,
 										})}
@@ -576,8 +576,8 @@ function AppDetailPage() {
 											apps: affectedApps.join(", "),
 										})}
 									</p>
-								</div>
-							</div>
+								</AlertDescription>
+							</Alert>
 						)}
 						<div className="flex items-center justify-between rounded-lg border border-border/50 p-3 transition-colors hover:bg-muted/50">
 							<div className="space-y-0.5">
