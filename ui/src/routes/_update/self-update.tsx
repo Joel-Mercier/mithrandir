@@ -25,6 +25,7 @@ import {
 	useBuildCli,
 	useBuildUi,
 	useFinalizeUpdate,
+	useGetUiBuildStatus,
 	useInstallDeps,
 	usePingHealth,
 	usePullLatestChanges,
@@ -81,6 +82,7 @@ function SelfUpdatePage() {
 	const depsMutation = useInstallDeps();
 	const buildCliMutation = useBuildCli();
 	const buildUiMutation = useBuildUi();
+	const buildStatusMutation = useGetUiBuildStatus();
 	const finalizeMutation = useFinalizeUpdate();
 	const pingMutation = usePingHealth();
 
@@ -89,6 +91,7 @@ function SelfUpdatePage() {
 	const depsRef = useRef(depsMutation);
 	const buildCliRef = useRef(buildCliMutation);
 	const buildUiRef = useRef(buildUiMutation);
+	const buildStatusRef = useRef(buildStatusMutation);
 	const finalizeRef = useRef(finalizeMutation);
 	const pingRef = useRef(pingMutation);
 
@@ -96,6 +99,7 @@ function SelfUpdatePage() {
 	depsRef.current = depsMutation;
 	buildCliRef.current = buildCliMutation;
 	buildUiRef.current = buildUiMutation;
+	buildStatusRef.current = buildStatusMutation;
 	finalizeRef.current = finalizeMutation;
 	pingRef.current = pingMutation;
 
@@ -157,9 +161,32 @@ function SelfUpdatePage() {
 			});
 
 			// Step 4: Build UI (non-critical — may fail on low-resource devices)
+			// The build runs as a background process on the server to avoid
+			// HTTP timeout issues. We kick it off then poll for completion.
 			updateStep("build-ui", { status: "running" });
 			try {
+				// Kick off the background build
 				await buildUiRef.current.mutateAsync(undefined);
+
+				// Poll until the build completes
+				const buildTimeout = 300000; // 5 minutes
+				const buildStart = Date.now();
+				let buildDone = false;
+				while (Date.now() - buildStart < buildTimeout) {
+					await sleep(2000);
+					const status = await buildStatusRef.current.mutateAsync(undefined);
+					if (status.state === "done") {
+						buildDone = true;
+						break;
+					}
+					if (status.state === "failed") {
+						throw new Error(status.error || "UI build failed");
+					}
+				}
+				if (!buildDone) {
+					throw new Error("UI build timed out after 5 minutes");
+				}
+
 				updateStep("build-ui", {
 					status: "done",
 					message: m.selfUpdate_uiBuildDone(),

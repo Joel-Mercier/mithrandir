@@ -62,6 +62,7 @@ import {
 	buildUi,
 	checkForUpdates,
 	finalizeUpdate,
+	getUiBuildStatus,
 	installDeps,
 	pingHealth,
 	pullLatestChanges,
@@ -657,6 +658,12 @@ export function useBuildCli() {
 export function useBuildUi() {
 	return useMutation({
 		mutationFn: () => buildUi(),
+	});
+}
+
+export function useGetUiBuildStatus() {
+	return useMutation({
+		mutationFn: () => getUiBuildStatus(),
 	});
 }
 

@@ -4,7 +4,7 @@ import { deployUiBuild, hasValidDeployment } from "@mithrandir/cli/lib/deploy-ui
 import { loadEnvConfig } from "@mithrandir/cli/lib/config";
 import { shell } from "@mithrandir/cli/lib/shell";
 import { createServerFn } from "@tanstack/react-start";
-import { appendFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ensureSession } from "#/lib/auth";
 import { logActivity } from "./activity";
@@ -31,6 +31,11 @@ export interface StepResult {
 	willRestart?: boolean;
 }
 
+export interface BuildStatus {
+	state: "idle" | "building" | "deploying" | "done" | "failed";
+	error?: string;
+}
+
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 const UPDATE_LOG = "/var/log/mithrandir-ui-update.log";
@@ -42,6 +47,23 @@ function logUpdate(message: string): void {
 		appendFileSync(UPDATE_LOG, `[${ts}] ${message}\n`);
 	} catch {
 		// Log directory might not be writable — silently ignore
+	}
+}
+
+/** Path to a JSON file tracking background UI build state. */
+function getBuildStatusPath(): string {
+	return join(getProjectRoot(), "ui", ".build-status.json");
+}
+
+function writeBuildStatus(status: BuildStatus): void {
+	try { writeFileSync(getBuildStatusPath(), JSON.stringify(status)); } catch {}
+}
+
+function readBuildStatus(): BuildStatus {
+	try {
+		return JSON.parse(readFileSync(getBuildStatusPath(), "utf-8"));
+	} catch {
+		return { state: "idle" };
 	}
 }
 
@@ -204,14 +226,28 @@ export const buildCli = createServerFn({ method: "POST" }).handler(
 	},
 );
 
+/**
+ * Kick off the UI build as a detached background process.
+ * Returns immediately — the frontend polls `getUiBuildStatus` until done.
+ *
+ * The build MUST run outside the HTTP request lifecycle because:
+ * - Vite's two-phase build (client + SSR) can take 20-30s
+ * - The HTTP connection drops before the build finishes (framework/proxy timeout)
+ * - The frontend then proceeds to finalize, which restarts the service,
+ *   sending SIGTERM to the still-running build process
+ */
 export const buildUi = createServerFn({ method: "POST" }).handler(
 	async (): Promise<StepResult> => {
 		await ensureSession();
 		const root = getProjectRoot();
 
-		// Fix ownership of the entire ui/ directory — the systemd service runs
-		// as root and creates various dirs (.output, src/paraglide, node_modules/.nitro)
-		// that the build process needs to overwrite
+		// Guard against concurrent builds
+		const current = readBuildStatus();
+		if (current.state === "building" || current.state === "deploying") {
+			return { success: true }; // already in progress, frontend will poll
+		}
+
+		// Fix ownership before spawning — needs to complete synchronously
 		const { stdout: owner } = await shell(
 			"stat",
 			["-c", "%U", root],
@@ -230,30 +266,48 @@ export const buildUi = createServerFn({ method: "POST" }).handler(
 			}
 		}
 
-		logUpdate("[build-ui] Running bun run ui:build...");
-		const result = await shell("bun", ["run", "ui:build"], {
-			cwd: root,
-			ignoreError: true,
-			timeout: 300000,
-		});
-		if (result.exitCode !== 0) {
-			const output = [result.stderr, result.stdout].filter(Boolean).join("\n");
-			logUpdate(`[build-ui] FAILED (exit ${result.exitCode}):\n${output}`);
-			throw new Error(`UI build failed (exit ${result.exitCode}). Full log: ${UPDATE_LOG}\n${output}`);
-		}
+		// Mark as building and spawn detached process
+		writeBuildStatus({ state: "building" });
+		logUpdate("[build-ui] Spawning background build...");
 
-		logUpdate("[build-ui] Build succeeded, deploying to blue-green slot...");
-		const uiDir = join(root, "ui");
-		try {
-			await deployUiBuild(uiDir);
-			logUpdate("[build-ui] Deployed successfully");
-		} catch (err) {
-			const msg = err instanceof Error ? err.message : String(err);
-			logUpdate(`[build-ui] Deploy FAILED: ${msg}`);
-			throw new Error(`UI deploy failed: ${msg}. Full log: ${UPDATE_LOG}`);
-		}
+		// Fire-and-forget: run build, deploy, and write status — all in-process
+		// but not awaited, so the HTTP response returns immediately.
+		(async () => {
+			try {
+				const result = await shell("bun", ["run", "ui:build"], {
+					cwd: root,
+					ignoreError: true,
+					timeout: 300000,
+				});
+				if (result.exitCode !== 0) {
+					const output = [result.stderr, result.stdout].filter(Boolean).join("\n");
+					logUpdate(`[build-ui] FAILED (exit ${result.exitCode}):\n${output}`);
+					writeBuildStatus({ state: "failed", error: `UI build failed (exit ${result.exitCode}). Check ${UPDATE_LOG}` });
+					return;
+				}
+
+				logUpdate("[build-ui] Build succeeded, deploying to blue-green slot...");
+				writeBuildStatus({ state: "deploying" });
+				const uiDir = join(root, "ui");
+				await deployUiBuild(uiDir);
+				logUpdate("[build-ui] Deployed successfully");
+				writeBuildStatus({ state: "done" });
+			} catch (err) {
+				const msg = err instanceof Error ? err.message : String(err);
+				logUpdate(`[build-ui] Error: ${msg}`);
+				writeBuildStatus({ state: "failed", error: msg });
+			}
+		})();
 
 		return { success: true };
+	},
+);
+
+/** Poll the background UI build status. */
+export const getUiBuildStatus = createServerFn({ method: "GET" }).handler(
+	async (): Promise<BuildStatus> => {
+		await ensureSession();
+		return readBuildStatus();
 	},
 );
 

@@ -9,6 +9,7 @@ dist-ssr
 .wrangler
 .output
 .deployments
+.build-status.json
 .vinxi
 __unconfig*
 todos.json
