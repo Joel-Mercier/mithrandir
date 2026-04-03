@@ -4,7 +4,7 @@ import { deployUiBuild, hasValidDeployment } from "@mithrandir/cli/lib/deploy-ui
 import { loadEnvConfig } from "@mithrandir/cli/lib/config";
 import { shell } from "@mithrandir/cli/lib/shell";
 import { createServerFn } from "@tanstack/react-start";
-import { existsSync, mkdirSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ensureSession } from "#/lib/auth";
 import { logActivity } from "./activity";
@@ -32,6 +32,18 @@ export interface StepResult {
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
+
+const UPDATE_LOG = "/var/log/mithrandir-ui-update.log";
+
+/** Append a timestamped line to the persistent update log. */
+function logUpdate(message: string): void {
+	const ts = new Date().toISOString();
+	try {
+		appendFileSync(UPDATE_LOG, `[${ts}] ${message}\n`);
+	} catch {
+		// Log directory might not be writable — silently ignore
+	}
+}
 
 /** Build git args with safe.directory config to avoid dubious ownership errors
  *  when the UI service runs as root but the repo is owned by another user */
@@ -65,6 +77,7 @@ export const checkForUpdates = createServerFn({ method: "GET" }).handler(
 			timeout: 30000,
 		});
 		if (fetch.exitCode !== 0) {
+			logUpdate(`[check] git fetch failed: ${fetch.stderr}`);
 			throw new Error(`git fetch failed: ${fetch.stderr}`);
 		}
 
@@ -107,6 +120,8 @@ export const pullLatestChanges = createServerFn({ method: "POST" }).handler(
 	async (): Promise<PullResult> => {
 		await ensureSession();
 		const root = getProjectRoot();
+		// Start a fresh log section for this update run
+		try { writeFileSync(UPDATE_LOG, `${"=".repeat(60)}\nSelf-update started at ${new Date().toISOString()}\nProject root: ${root}\n${"=".repeat(60)}\n`); } catch {}
 
 		const branchResult = await shell(
 			"git",
@@ -122,12 +137,14 @@ export const pullLatestChanges = createServerFn({ method: "POST" }).handler(
 		);
 		const before = beforeResult.stdout.trim().slice(0, 8);
 
+		logUpdate(`[pull] branch=${branch} before=${before}`);
 		const pull = await shell(
 			"git",
 			gitRemoteArgs(root, ["pull", "--ff-only"]),
 			{ cwd: root, ignoreError: true },
 		);
 		if (pull.exitCode !== 0) {
+			logUpdate(`[pull] FAILED (exit ${pull.exitCode}): ${pull.stderr}`);
 			throw new Error(
 				`git pull failed (non-fast-forward?):\n${pull.stderr}`,
 			);
@@ -140,6 +157,7 @@ export const pullLatestChanges = createServerFn({ method: "POST" }).handler(
 		);
 		const after = afterResult.stdout.trim().slice(0, 8);
 
+		logUpdate(`[pull] after=${after} skipped=${before === after}`);
 		return { before, after, branch, skipped: before === after };
 	},
 );
@@ -149,15 +167,18 @@ export const installDeps = createServerFn({ method: "POST" }).handler(
 		await ensureSession();
 		const root = getProjectRoot();
 
+		logUpdate("[deps] Running bun install...");
 		const result = await shell("bun", ["install"], {
 			cwd: root,
 			ignoreError: true,
 			timeout: 120000,
 		});
 		if (result.exitCode !== 0) {
+			logUpdate(`[deps] FAILED (exit ${result.exitCode}):\nstdout: ${result.stdout}\nstderr: ${result.stderr}`);
 			throw new Error(`bun install failed:\n${result.stderr}`);
 		}
 
+		logUpdate("[deps] OK");
 		return { success: true };
 	},
 );
@@ -167,15 +188,18 @@ export const buildCli = createServerFn({ method: "POST" }).handler(
 		await ensureSession();
 		const root = getProjectRoot();
 
+		logUpdate("[build-cli] Running bun run cli:build...");
 		const result = await shell("bun", ["run", "cli:build"], {
 			cwd: root,
 			ignoreError: true,
 			timeout: 120000,
 		});
 		if (result.exitCode !== 0) {
+			logUpdate(`[build-cli] FAILED (exit ${result.exitCode}):\nstdout: ${result.stdout}\nstderr: ${result.stderr}`);
 			throw new Error(`CLI build failed:\n${result.stderr}`);
 		}
 
+		logUpdate("[build-cli] OK");
 		return { success: true };
 	},
 );
@@ -194,13 +218,19 @@ export const buildUi = createServerFn({ method: "POST" }).handler(
 			{ ignoreError: true },
 		);
 		const repoOwner = owner.trim();
+		logUpdate(`[build-ui] Repo owner: "${repoOwner}", running as uid=${process.getuid?.()}`);
 		if (repoOwner && repoOwner !== "root") {
-			await shell("chown", ["-R", `${repoOwner}:`, join(root, "ui")], {
+			logUpdate(`[build-ui] Fixing ownership: chown -R ${repoOwner}: ui/`);
+			const chownResult = await shell("chown", ["-R", `${repoOwner}:`, join(root, "ui")], {
 				sudo: true,
 				ignoreError: true,
 			});
+			if (chownResult.exitCode !== 0) {
+				logUpdate(`[build-ui] chown warning (exit ${chownResult.exitCode}): ${chownResult.stderr}`);
+			}
 		}
 
+		logUpdate("[build-ui] Running bun run ui:build...");
 		const result = await shell("bun", ["run", "ui:build"], {
 			cwd: root,
 			ignoreError: true,
@@ -208,12 +238,20 @@ export const buildUi = createServerFn({ method: "POST" }).handler(
 		});
 		if (result.exitCode !== 0) {
 			const output = [result.stderr, result.stdout].filter(Boolean).join("\n");
-			throw new Error(`UI build failed (exit ${result.exitCode}):\n${output}`);
+			logUpdate(`[build-ui] FAILED (exit ${result.exitCode}):\n${output}`);
+			throw new Error(`UI build failed (exit ${result.exitCode}). Full log: ${UPDATE_LOG}\n${output}`);
 		}
 
-		// Deploy build output to blue-green deployment slot
+		logUpdate("[build-ui] Build succeeded, deploying to blue-green slot...");
 		const uiDir = join(root, "ui");
-		await deployUiBuild(uiDir);
+		try {
+			await deployUiBuild(uiDir);
+			logUpdate("[build-ui] Deployed successfully");
+		} catch (err) {
+			const msg = err instanceof Error ? err.message : String(err);
+			logUpdate(`[build-ui] Deploy FAILED: ${msg}`);
+			throw new Error(`UI deploy failed: ${msg}. Full log: ${UPDATE_LOG}`);
+		}
 
 		return { success: true };
 	},
@@ -224,6 +262,7 @@ export const finalizeUpdate = createServerFn({ method: "POST" }).handler(
 		await ensureSession();
 		const root = getProjectRoot();
 
+		logUpdate("[finalize] Re-creating CLI symlink...");
 		// Re-create the CLI symlink
 		const distFile = join(root, "cli", "dist", "mithrandir.js");
 		await shell("ln", ["-sf", distFile, "/usr/local/bin/mithrandir"], {
@@ -258,8 +297,10 @@ export const finalizeUpdate = createServerFn({ method: "POST" }).handler(
 		// restarting would cause an infinite crash loop
 		let willRestart = false;
 		const outputExists = hasValidDeployment(join(root, "ui"));
+		logUpdate(`[finalize] Valid deployment exists: ${outputExists}`);
 		try {
 			const active = await isUiServiceActive();
+			logUpdate(`[finalize] UI service active: ${active}`);
 			if (active && outputExists) {
 				willRestart = true;
 				// Spawn a detached background process that restarts both tusd and UI
@@ -279,6 +320,7 @@ export const finalizeUpdate = createServerFn({ method: "POST" }).handler(
 			// Non-critical — service may not be installed
 		}
 
+		logUpdate(`[finalize] Done. willRestart=${willRestart}`);
 		return { success: true, willRestart };
 	},
 );

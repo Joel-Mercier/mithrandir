@@ -71,8 +71,9 @@ function SelfUpdatePage() {
 			status: "pending",
 		},
 	]);
-	const [phase, setPhase] = useState<"running" | "reconnecting" | "done" | "error">("running");
+	const [phase, setPhase] = useState<"running" | "reconnecting" | "done" | "partial" | "error">("running");
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
+	const buildFailed = useRef(false);
 	const [countdown, setCountdown] = useState(REDIRECT_DELAY);
 	const hasStarted = useRef(false);
 
@@ -165,9 +166,10 @@ function SelfUpdatePage() {
 				});
 			} catch (err: unknown) {
 				const detail = err instanceof Error ? err.message : String(err);
+				buildFailed.current = true;
 				updateStep("build-ui", {
-					status: "skipped",
-					message: `UI build failed (non-critical): ${detail}`,
+					status: "error",
+					message: detail,
 				});
 			}
 
@@ -220,7 +222,7 @@ function SelfUpdatePage() {
 				updateStep("restart", { status: "skipped" });
 			}
 
-			setPhase("done");
+			setPhase(buildFailed.current ? "partial" : "done");
 		} catch (err: unknown) {
 			const message =
 				err instanceof Error ? err.message : String(err);
@@ -250,7 +252,7 @@ function SelfUpdatePage() {
 	}, [phase, countdown]);
 
 	const doneCount = steps.filter(
-		(s) => s.status === "done" || s.status === "skipped",
+		(s) => s.status === "done" || s.status === "skipped" || s.status === "error",
 	).length;
 	const currentRunning = steps.find((s) => s.status === "running");
 
@@ -275,16 +277,18 @@ function SelfUpdatePage() {
 						<CardTitle className="text-sm">
 							{phase === "done"
 								? m.selfUpdate_success()
-								: phase === "error"
-									? m.selfUpdate_error()
-									: m.selfUpdate_title()}
+								: phase === "partial"
+									? "UI build failed"
+									: phase === "error"
+										? m.selfUpdate_error()
+										: m.selfUpdate_title()}
 						</CardTitle>
 						<Badge
 							variant="outline"
 							className={
 								phase === "done"
 									? "border-status-healthy/30 bg-status-healthy/15 text-status-healthy"
-									: phase === "error"
+									: phase === "error" || phase === "partial"
 										? "border-destructive/30 bg-destructive/15 text-destructive"
 										: ""
 							}
@@ -363,6 +367,19 @@ function SelfUpdatePage() {
 					</CardFooter>
 				)}
 
+				{/* Partial success — UI build failed */}
+				{phase === "partial" && (
+					<CardFooter>
+						<Alert variant="destructive" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+							<X className="h-4 w-4" />
+							<AlertTitle>UI build failed — still running old version</AlertTitle>
+							<AlertDescription className="font-mono-data text-xs">
+								CLI was updated but the UI build failed, so the UI was not redeployed. Check the full log on the server at /var/log/mithrandir-ui-update.log and rebuild manually with: git pull && bun run ui:build && mithrandir ui stop && mithrandir ui
+							</AlertDescription>
+						</Alert>
+					</CardFooter>
+				)}
+
 				{/* Error state */}
 				{phase === "error" && (
 					<CardFooter>
@@ -381,7 +398,7 @@ function SelfUpdatePage() {
 
 			{/* Bottom actions */}
 			<div className="mt-6 flex justify-center">
-				{(phase === "done" || phase === "error") && (
+				{(phase === "done" || phase === "error" || phase === "partial") && (
 					<Button
 						variant="ghost"
 						size="sm"
