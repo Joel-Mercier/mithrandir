@@ -23,5 +23,8 @@
     "typecheck": "bun run --filter '*' typecheck",
     "test": "bun run --filter '*' test",
     "release": "bash scripts/release.sh"
+  },
+  "devDependencies": {
+    "fallow": "^2.13.0"
   }
 }

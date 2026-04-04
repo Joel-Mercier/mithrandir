@@ -1,0 +1,6 @@
+{
+  "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
+  "rules": {
+  },
+  "ignorePatterns": ["cli/src/__tests__/**/*", "ui/src/components/ui/**/*"]
+}
