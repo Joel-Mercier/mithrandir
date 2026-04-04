@@ -24,6 +24,7 @@ Automated setup and backup system for Docker-based homelab applications.
 - [Configuration](#configuration)
 - [Usage](#usage)
 - [Available Apps](#available-apps)
+- [Web Dashboard (UI)](#web-dashboard-ui)
 - [Local Development](#local-development)
 - [Testing](#testing)
 
@@ -444,9 +445,54 @@ Checks configuration correctness across three categories: System (.env file, Doc
 | Your Spotify   | 3456      | Spotify listening statistics and history tracker                                        |
 
 
+## Web Dashboard (UI)
+
+Mithrandir includes a web-based dashboard for managing your homelab from a browser. It provides the same capabilities as the CLI in a visual interface.
+
+**Tech stack:** TanStack Start (SSR) + React 19 + Vite, styled with Tailwind CSS v4 and shadcn/ui components. Authentication via Better-Auth with email/password and optional two-factor (TOTP). Data is stored in a local SQLite database via Drizzle ORM. Internationalized with Paraglide (English and French).
+
+**Features:**
+
+- **Dashboard** — Overview of system status, installed apps, backup status, resource usage, and configuration at a glance. Includes a doctor dialog for diagnosing issues.
+- **App management** — Browse all available apps with search and category filtering, view app details, install/uninstall/start/stop/restart apps, and stream container logs in real time.
+- **Dependency graph** — Visual representation of inter-app dependencies with installation status.
+- **Capacity planning** — System resource overview with per-app performance and storage scores, rendered with score rings and storage meters.
+- **Backup & restore** — View local and remote backups, trigger backups, and restore apps or full system from the UI.
+- **Setup wizard** — Step-by-step guided setup with the same workflow as the CLI wizard.
+- **Media library** — Browse media files on the server with a file tree viewer.
+- **File upload** — Upload files to the server via resumable uploads (tus protocol with Uppy).
+- **Settings** — Configure general, backup, and network settings. View system information.
+- **User profile** — Manage account, active sessions, and two-factor authentication.
+- **Self-update** — Update Mithrandir from git directly in the browser with a step-by-step progress view.
+- **Dark mode** — Light, dark, and auto themes with a toggle in the header.
+
+**Deployment:**
+
+The UI runs in production as two systemd services:
+
+- **`mithrandir-ui.service`** — Serves the TanStack Start SSR app on port 4180. Runs database migrations on startup, loads env vars from both `.env` and `ui/.env.local`.
+- **`mithrandir-tusd.service`** — Runs [tusd](https://tus.io/), a resumable upload server, on port 1080. Handles chunked file uploads and forwards lifecycle hooks (pre-create, post-finish) to the UI for authentication and processing.
+
+Both services are installed automatically by `mithrandir ui` and managed via systemd (enable, start, stop, restart). When Caddy HTTPS is enabled, the Caddyfile is regenerated to reverse-proxy both services.
+
+Builds use a **blue-green deployment** strategy: new builds are placed in an inactive slot under `ui/.deployments/`, then an atomic symlink swap points `current` to the new build. This allows zero-downtime updates.
+
+**Self-update** from the web UI (or `mithrandir self-update`) logs each step to `/var/log/mithrandir-ui-update.log` with timestamps. The log covers git pull, dependency install, CLI build, UI build, deployment, and service restart — useful for diagnosing update failures.
+
+**Running the UI:**
+```bash
+mithrandir ui               # Build, deploy, and start both services (production)
+mithrandir ui stop          # Stop both services
+bun run ui:dev              # Development server on port 3000 (hot reload)
+bun run ui:build            # Build for production
+bun run ui:preview          # Preview the production build
+```
+
+The UI requires a `.env.local` file in the `ui/` directory with `BETTER_AUTH_URL` and `BETTER_AUTH_SECRET` (a 32-character secret, generate with `openssl rand -base64 32`) for authentication. When started via `mithrandir ui`, this file is auto-generated if missing.
+
 ## Local Development
 
-The project is a [Bun workspaces](https://bun.sh/docs/install/workspaces) monorepo. Each subproject (`cli/`, `docs/`) has its own `package.json` with workspace-scoped dependencies, while the root `package.json` provides global proxy scripts and a single `bun.lock`. Running `bun install` at the root installs everything.
+The project is a [Bun workspaces](https://bun.sh/docs/install/workspaces) monorepo. Each subproject (`cli/`, `docs/`, `ui/`) has its own `package.json` with workspace-scoped dependencies, while the root `package.json` provides global proxy scripts and a single `bun.lock`. Running `bun install` at the root installs everything.
 
 ```bash
 git clone https://github.com/Joel-Mercier/mithrandir.git && cd mithrandir

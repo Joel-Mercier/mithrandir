@@ -61,6 +61,40 @@ You can also regenerate the changelog manually at any time:
 scripts/generate-changelog.sh
 ```
 
+## UI Dashboard
+
+The web dashboard is a TanStack Start app in the `ui/` workspace. For an overview of features and production deployment, see the [Web Dashboard](/guide/web-dashboard) page.
+
+### Dev Server
+
+```bash
+bun run ui:dev          # Dev server on port 3000 with hot reload
+```
+
+Create a `ui/.env.local` file for development:
+
+```env
+BETTER_AUTH_URL=http://localhost:3000
+BETTER_AUTH_SECRET=  # openssl rand -base64 32
+```
+
+### Building
+
+```bash
+bun run ui:build        # Build for production
+bun run ui:preview      # Preview the production build
+```
+
+### Testing and Linting
+
+```bash
+bun run ui:test         # Run Vitest unit tests
+bun run ui:typecheck    # TypeScript type checking
+bun run ui:lint         # Lint with Biome
+bun run ui:format       # Format with Biome
+bun run ui:check        # Biome check (lint + format)
+```
+
 ## Unit Tests
 
 Tests use Bun's built-in test runner. Test files are in `cli/src/__tests__/`:

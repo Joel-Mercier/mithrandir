@@ -61,6 +61,40 @@ Vous pouvez aussi régénérer le changelog manuellement à tout moment :
 scripts/generate-changelog.sh
 ```
 
+## Tableau de bord UI
+
+Le tableau de bord web est une application TanStack Start dans le workspace `ui/`. Pour un aperçu des fonctionnalités et du déploiement en production, consultez la page [Tableau de bord web](/fr/guide/web-dashboard).
+
+### Serveur de développement
+
+```bash
+bun run ui:dev          # Serveur de dev sur le port 3000 avec rechargement à chaud
+```
+
+Créez un fichier `ui/.env.local` pour le développement :
+
+```env
+BETTER_AUTH_URL=http://localhost:3000
+BETTER_AUTH_SECRET=  # openssl rand -base64 32
+```
+
+### Construction
+
+```bash
+bun run ui:build        # Build pour la production
+bun run ui:preview      # Prévisualiser le build de production
+```
+
+### Tests et linting
+
+```bash
+bun run ui:test         # Lancer les tests unitaires Vitest
+bun run ui:typecheck    # Vérification des types TypeScript
+bun run ui:lint         # Lint avec Biome
+bun run ui:format       # Formatage avec Biome
+bun run ui:check        # Vérification Biome (lint + format)
+```
+
 ## Tests unitaires
 
 Les tests utilisent le runner de tests intégré de Bun. Les fichiers de test sont dans `cli/src/__tests__/` :
