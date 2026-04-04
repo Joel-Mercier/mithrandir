@@ -62,6 +62,7 @@ import {
 	buildUi,
 	checkForUpdates,
 	finalizeUpdate,
+	getPullStatus,
 	getUiBuildStatus,
 	installDeps,
 	pingHealth,
@@ -640,6 +641,12 @@ export function useCheckForUpdates() {
 export function usePullLatestChanges() {
 	return useMutation({
 		mutationFn: () => pullLatestChanges(),
+	});
+}
+
+export function useGetPullStatus() {
+	return useMutation({
+		mutationFn: () => getPullStatus(),
 	});
 }
 

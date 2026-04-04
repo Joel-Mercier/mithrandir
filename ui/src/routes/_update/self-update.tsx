@@ -25,6 +25,7 @@ import {
 	useBuildCli,
 	useBuildUi,
 	useFinalizeUpdate,
+	useGetPullStatus,
 	useGetUiBuildStatus,
 	useInstallDeps,
 	usePingHealth,
@@ -79,6 +80,7 @@ function SelfUpdatePage() {
 	const hasStarted = useRef(false);
 
 	const pullMutation = usePullLatestChanges();
+	const pullStatusMutation = useGetPullStatus();
 	const depsMutation = useInstallDeps();
 	const buildCliMutation = useBuildCli();
 	const buildUiMutation = useBuildUi();
@@ -88,6 +90,7 @@ function SelfUpdatePage() {
 
 	// Capture mutation refs to avoid re-triggering the effect
 	const pullRef = useRef(pullMutation);
+	const pullStatusRef = useRef(pullStatusMutation);
 	const depsRef = useRef(depsMutation);
 	const buildCliRef = useRef(buildCliMutation);
 	const buildUiRef = useRef(buildUiMutation);
@@ -96,6 +99,7 @@ function SelfUpdatePage() {
 	const pingRef = useRef(pingMutation);
 
 	pullRef.current = pullMutation;
+	pullStatusRef.current = pullStatusMutation;
 	depsRef.current = depsMutation;
 	buildCliRef.current = buildCliMutation;
 	buildUiRef.current = buildUiMutation;
@@ -121,10 +125,29 @@ function SelfUpdatePage() {
 
 	async function runUpdate() {
 		try {
-			// Step 1: Git pull
+			// Step 1: Git pull (runs as background task, poll for completion)
 			updateStep("pull", { status: "running" });
-			const pullResult =
-				await pullRef.current.mutateAsync(undefined);
+			await pullRef.current.mutateAsync(undefined);
+
+			// Poll until the pull completes
+			const pullTimeout = 120000; // 2 minutes
+			const pullStart = Date.now();
+			let pullResult: { before: string; after: string; branch: string; skipped: boolean } | null = null;
+			while (Date.now() - pullStart < pullTimeout) {
+				await sleep(2000);
+				const status = await pullStatusRef.current.mutateAsync(undefined);
+				if (status.state === "done" && status.result) {
+					pullResult = status.result;
+					break;
+				}
+				if (status.state === "failed") {
+					throw new Error(status.error || "git pull failed");
+				}
+			}
+			if (!pullResult) {
+				throw new Error("git pull timed out after 2 minutes");
+			}
+
 			if (pullResult.skipped) {
 				updateStep("pull", {
 					status: "skipped",

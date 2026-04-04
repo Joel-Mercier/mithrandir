@@ -36,6 +36,12 @@ export interface BuildStatus {
 	error?: string;
 }
 
+export interface PullStatus {
+	state: "idle" | "pulling" | "done" | "failed";
+	result?: PullResult;
+	error?: string;
+}
+
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 const UPDATE_LOG = "/var/log/mithrandir-ui-update.log";
@@ -47,6 +53,23 @@ function logUpdate(message: string): void {
 		appendFileSync(UPDATE_LOG, `[${ts}] ${message}\n`);
 	} catch {
 		// Log directory might not be writable — silently ignore
+	}
+}
+
+/** Path to a JSON file tracking background git pull state. */
+function getPullStatusPath(): string {
+	return join(getProjectRoot(), "ui", ".pull-status.json");
+}
+
+function writePullStatus(status: PullStatus): void {
+	try { writeFileSync(getPullStatusPath(), JSON.stringify(status)); } catch {}
+}
+
+function readPullStatus(): PullStatus {
+	try {
+		return JSON.parse(readFileSync(getPullStatusPath(), "utf-8"));
+	} catch {
+		return { state: "idle" };
 	}
 }
 
@@ -138,49 +161,84 @@ export const checkForUpdates = createServerFn({ method: "GET" }).handler(
 	},
 );
 
+/**
+ * Kick off git pull as a background task and return immediately.
+ * The pull can take 30-60s+ on slow connections, which exceeds HTTP timeouts.
+ * The frontend polls `getPullStatus` until completion.
+ */
 export const pullLatestChanges = createServerFn({ method: "POST" }).handler(
-	async (): Promise<PullResult> => {
+	async (): Promise<StepResult> => {
 		await ensureSession();
 		const root = getProjectRoot();
+
+		// Guard against concurrent pulls
+		const current = readPullStatus();
+		if (current.state === "pulling") {
+			return { success: true }; // already in progress, frontend will poll
+		}
+
 		// Start a fresh log section for this update run
 		try { writeFileSync(UPDATE_LOG, `${"=".repeat(60)}\nSelf-update started at ${new Date().toISOString()}\nProject root: ${root}\n${"=".repeat(60)}\n`); } catch {}
 
-		const branchResult = await shell(
-			"git",
-			gitArgs(root, ["rev-parse", "--abbrev-ref", "HEAD"]),
-			{ cwd: root, ignoreError: true },
-		);
-		const branch = branchResult.stdout.trim();
+		writePullStatus({ state: "pulling" });
 
-		const beforeResult = await shell(
-			"git",
-			gitArgs(root, ["rev-parse", "HEAD"]),
-			{ cwd: root, ignoreError: true },
-		);
-		const before = beforeResult.stdout.trim().slice(0, 8);
+		// Fire-and-forget: run git pull in the background
+		(async () => {
+			try {
+				const branchResult = await shell(
+					"git",
+					gitArgs(root, ["rev-parse", "--abbrev-ref", "HEAD"]),
+					{ cwd: root, ignoreError: true },
+				);
+				const branch = branchResult.stdout.trim();
 
-		logUpdate(`[pull] branch=${branch} before=${before}`);
-		const pull = await shell(
-			"git",
-			gitRemoteArgs(root, ["pull", "--ff-only"]),
-			{ cwd: root, ignoreError: true },
-		);
-		if (pull.exitCode !== 0) {
-			logUpdate(`[pull] FAILED (exit ${pull.exitCode}): ${pull.stderr}`);
-			throw new Error(
-				`git pull failed (non-fast-forward?):\n${pull.stderr}`,
-			);
-		}
+				const beforeResult = await shell(
+					"git",
+					gitArgs(root, ["rev-parse", "HEAD"]),
+					{ cwd: root, ignoreError: true },
+				);
+				const before = beforeResult.stdout.trim().slice(0, 8);
 
-		const afterResult = await shell(
-			"git",
-			gitArgs(root, ["rev-parse", "HEAD"]),
-			{ cwd: root, ignoreError: true },
-		);
-		const after = afterResult.stdout.trim().slice(0, 8);
+				logUpdate(`[pull] branch=${branch} before=${before}`);
+				const pull = await shell(
+					"git",
+					gitRemoteArgs(root, ["pull", "--ff-only"]),
+					{ cwd: root, ignoreError: true, timeout: 120000 },
+				);
+				if (pull.exitCode !== 0) {
+					logUpdate(`[pull] FAILED (exit ${pull.exitCode}): ${pull.stderr}`);
+					writePullStatus({ state: "failed", error: `git pull failed (non-fast-forward?):\n${pull.stderr}` });
+					return;
+				}
 
-		logUpdate(`[pull] after=${after} skipped=${before === after}`);
-		return { before, after, branch, skipped: before === after };
+				const afterResult = await shell(
+					"git",
+					gitArgs(root, ["rev-parse", "HEAD"]),
+					{ cwd: root, ignoreError: true },
+				);
+				const after = afterResult.stdout.trim().slice(0, 8);
+
+				logUpdate(`[pull] after=${after} skipped=${before === after}`);
+				writePullStatus({
+					state: "done",
+					result: { before, after, branch, skipped: before === after },
+				});
+			} catch (err) {
+				const msg = err instanceof Error ? err.message : String(err);
+				logUpdate(`[pull] Error: ${msg}`);
+				writePullStatus({ state: "failed", error: msg });
+			}
+		})();
+
+		return { success: true };
+	},
+);
+
+/** Poll the background git pull status. */
+export const getPullStatus = createServerFn({ method: "GET" }).handler(
+	async (): Promise<PullStatus> => {
+		await ensureSession();
+		return readPullStatus();
 	},
 );
 
