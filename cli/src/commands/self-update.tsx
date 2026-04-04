@@ -54,6 +54,7 @@ function SelfUpdateCommand() {
       // When running under sudo, run git/bun as the original user so
       // SSH keys and credentials are available
       const sudoUser = process.env.SUDO_USER;
+      const currentUser = sudoUser || process.env.USER || process.env.LOGNAME;
       const userOpts = sudoUser ? { user: sudoUser } : {};
 
       // Step 1: Check git is available
@@ -108,8 +109,9 @@ function SelfUpdateCommand() {
       // Step 3: Install dependencies
       // Ensure the project directory is writable by the original user
       // (files may be root-owned from a previous sudo install/build)
-      if (sudoUser) {
-        await shell("chown", ["-R", `${sudoUser}:`, root], { ignoreError: true });
+      if (sudoUser || currentUser) {
+        const owner = sudoUser || currentUser;
+        await shell("chown", ["-R", `${owner}:`, root], { sudo: !sudoUser, ignoreError: true });
       }
 
       // Resolve the user's bun binary path — /usr/local/bin/bun may point to
@@ -160,9 +162,11 @@ function SelfUpdateCommand() {
       // Step 5: Rebuild UI
       setCurrentLabel("Building UI...");
       // Fix ownership of ui/ — the systemd service runs as root and creates
-      // various dirs that the build process needs to overwrite
-      if (sudoUser) {
-        await shell("chown", ["-R", `${sudoUser}:`, join(root, "ui")], { ignoreError: true });
+      // various dirs that the build process needs to overwrite.
+      // Always attempt this with sudo since root-owned files can exist
+      // regardless of whether self-update was invoked with sudo.
+      if (currentUser) {
+        await shell("chown", ["-R", `${currentUser}:`, join(root, "ui")], { sudo: true, ignoreError: true });
       }
       const uiBuild = await shell(bunPath, ["run", "ui:build"], { cwd: root, ignoreError: true, ...userOpts });
       if (uiBuild.exitCode !== 0) {
