@@ -108,9 +108,18 @@ function SelfUpdateCommand() {
 
       // Step 3: Install dependencies
       // Ensure the project directory is writable by the original user
-      // (files may be root-owned from a previous sudo install/build)
+      // (files may be root-owned from a previous sudo install/build).
+      // When running under sudo we can chown directly; otherwise use sudo
+      // but only target dirs bun install writes to (not the entire project).
       if (sudoUser) {
         await shell("chown", ["-R", `${sudoUser}:`, root], { ignoreError: true });
+      } else if (currentUser) {
+        await shell("chown", ["-R", `${currentUser}:`, join(root, "node_modules")], { sudo: true, ignoreError: true });
+        await shell("chown", [`${currentUser}:`, join(root, "bun.lock")], { sudo: true, ignoreError: true });
+        // Also fix workspace node_modules
+        for (const ws of ["cli", "ui", "docs"]) {
+          await shell("chown", ["-R", `${currentUser}:`, join(root, ws, "node_modules")], { sudo: true, ignoreError: true });
+        }
       }
 
       // Resolve the user's bun binary path — /usr/local/bin/bun may point to
