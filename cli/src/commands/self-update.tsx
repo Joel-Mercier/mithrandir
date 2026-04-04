@@ -109,9 +109,8 @@ function SelfUpdateCommand() {
       // Step 3: Install dependencies
       // Ensure the project directory is writable by the original user
       // (files may be root-owned from a previous sudo install/build)
-      if (sudoUser || currentUser) {
-        const owner = sudoUser || currentUser;
-        await shell("chown", ["-R", `${owner}:`, root], { sudo: !sudoUser, ignoreError: true });
+      if (sudoUser) {
+        await shell("chown", ["-R", `${sudoUser}:`, root], { ignoreError: true });
       }
 
       // Resolve the user's bun binary path — /usr/local/bin/bun may point to
