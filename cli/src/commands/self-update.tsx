@@ -123,11 +123,12 @@ function SelfUpdateCommand() {
       }
 
       // Resolve the user's bun binary path — /usr/local/bin/bun may point to
-      // /root/.bun which is inaccessible via sudo -u. Look up the real user's
-      // home and use their ~/.bun/bin/bun directly.
+      // /root/.bun which is inaccessible, or the bun in PATH may be a
+      // different version. Look up the real user's ~/.bun/bin/bun directly.
       let bunPath = "bun";
-      if (sudoUser) {
-        const passwd = await shell("getent", ["passwd", sudoUser], { ignoreError: true });
+      const resolveUser = sudoUser || currentUser;
+      if (resolveUser) {
+        const passwd = await shell("getent", ["passwd", resolveUser], { ignoreError: true });
         if (passwd.exitCode === 0 && passwd.stdout.trim()) {
           const userHome = passwd.stdout.split(":")[5];
           if (userHome) {
@@ -147,7 +148,8 @@ function SelfUpdateCommand() {
       setCurrentLabel("Installing dependencies...");
       const install = await shell(bunPath, ["install"], { cwd: root, ignoreError: true, ...userOpts });
       if (install.exitCode !== 0) {
-        setError(`bun install failed:\n${install.stderr}`);
+        const output = [install.stderr, install.stdout].filter(Boolean).join("\n");
+        setError(`bun install failed:\n${output}`);
         setPhase("error");
         return;
       }
