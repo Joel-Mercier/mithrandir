@@ -2,12 +2,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchActivity } from "#/lib/server/activity";
 import {
 	fetchAppDetail,
+	fetchAppLogs,
 	fetchApps,
 	installApp,
 	restartApp,
 	startApp,
 	stopApp,
 	uninstallApp,
+	updateApp,
 } from "#/lib/server/apps";
 import {
 	deleteBackup,
@@ -76,6 +78,14 @@ import type { SystemConfig } from "#/lib/types";
 const keys = {
 	apps: ["homelab", "apps"],
 	appDetail: (name: string) => ["homelab", "apps", name],
+	appLogs: (name: string, tail: number, since: string) => [
+		"homelab",
+		"apps",
+		name,
+		"logs",
+		tail,
+		since,
+	],
 	systemStatus: ["homelab", "system-status"],
 	health: ["homelab", "health"],
 	config: ["homelab", "config"],
@@ -278,6 +288,38 @@ export function useUninstallApp() {
 			queryClient.invalidateQueries({ queryKey: keys.systemStatus });
 			queryClient.invalidateQueries({ queryKey: keys.activity });
 		},
+	});
+}
+
+export function useUpdateApp() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (appName: string) => updateApp({ data: { appName } }),
+		onSuccess: (_data, appName) => {
+			queryClient.invalidateQueries({ queryKey: keys.apps });
+			queryClient.invalidateQueries({ queryKey: keys.appDetail(appName) });
+			queryClient.invalidateQueries({ queryKey: keys.systemStatus });
+			queryClient.invalidateQueries({ queryKey: keys.activity });
+		},
+	});
+}
+
+export function useAppLogs(
+	appName: string,
+	options: { tail: number; since: string; enabled: boolean },
+) {
+	return useQuery({
+		queryKey: keys.appLogs(appName, options.tail, options.since),
+		queryFn: () =>
+			fetchAppLogs({
+				data: {
+					appName,
+					tail: options.tail,
+					since: options.since || undefined,
+				},
+			}),
+		enabled: options.enabled,
+		refetchInterval: false,
 	});
 }
 

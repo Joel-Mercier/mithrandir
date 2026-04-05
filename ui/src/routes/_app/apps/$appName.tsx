@@ -4,12 +4,14 @@ import {
 	AlertTriangle,
 	ArrowDownToLine,
 	ExternalLink,
+	Loader2,
 	Play,
+	RefreshCw,
 	RotateCcw,
 	Square,
 	Trash2,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { AvailableDetailPage } from "#/components/apps/AvailableDetailPage";
 import { ExternalLinks } from "#/components/apps/ExternalLinks";
@@ -39,12 +41,14 @@ import { Skeleton } from "#/components/ui/skeleton";
 import { Switch } from "#/components/ui/switch";
 import {
 	useAppDetail,
+	useAppLogs,
 	useApps,
 	useConfig,
 	useRestartApp,
 	useStartApp,
 	useStopApp,
 	useUninstallApp,
+	useUpdateApp,
 } from "#/hooks/homelab";
 import type { AppStatus } from "#/lib/types";
 import { m } from "#/paraglide/messages.js";
@@ -125,17 +129,71 @@ function AppDetailPage() {
 	const stopAppMutation = useStopApp();
 	const restartAppMutation = useRestartApp();
 	const uninstallMutation = useUninstallApp();
+	const updateAppMutation = useUpdateApp();
 
 	const [uninstallOpen, setUninstallOpen] = useState(false);
 	const [eraseData, setEraseData] = useState(false);
 	const logAreaRef = useRef<HTMLDivElement>(null);
 
+	// Log viewer state
+	const [logTail, setLogTail] = useState(100);
+	const [logSince, setLogSince] = useState("1h");
+	const [logFollow, setLogFollow] = useState(false);
+	const [sseLogs, setSseLogs] = useState<string[]>([]);
+	const eventSourceRef = useRef<EventSource | null>(null);
+
+	// Fetch logs via query (non-follow mode)
+	const logsQuery = useAppLogs(appName, {
+		tail: logTail,
+		since: logSince,
+		enabled: !logFollow,
+	});
+
+	// SSE follow mode
 	useEffect(() => {
+		if (!logFollow) {
+			if (eventSourceRef.current) {
+				eventSourceRef.current.close();
+				eventSourceRef.current = null;
+			}
+			return;
+		}
+
+		setSseLogs([]);
+		const es = new EventSource(`/api/homelab/logs/${appName}`);
+		eventSourceRef.current = es;
+
+		es.onmessage = (event) => {
+			setSseLogs((prev) => [...prev, event.data]);
+		};
+
+		es.onerror = () => {
+			es.close();
+			eventSourceRef.current = null;
+			setLogFollow(false);
+		};
+
+		return () => {
+			es.close();
+			eventSourceRef.current = null;
+		};
+	}, [logFollow, appName]);
+
+	// Derive displayed logs: SSE logs in follow mode, query logs otherwise, fall back to detail logs
+	const displayedLogs = logFollow
+		? sseLogs
+		: (logsQuery.data ?? detailQuery.data?.logs ?? []);
+
+	const scrollToBottom = useCallback(() => {
 		const vp = logAreaRef.current?.querySelector<HTMLDivElement>(
 			"[data-slot=scroll-area-viewport]",
 		);
 		if (vp) vp.scrollTop = vp.scrollHeight;
-	}, [detailQuery.data?.logs]);
+	}, []);
+
+	useEffect(() => {
+		scrollToBottom();
+	}, [displayedLogs, scrollToBottom]);
 
 	if (detailQuery.isPending || appsQuery.isPending) {
 		return <DetailSkeleton />;
@@ -172,7 +230,8 @@ function AppDetailPage() {
 		startAppMutation.isPending ||
 		stopAppMutation.isPending ||
 		restartAppMutation.isPending ||
-		uninstallMutation.isPending;
+		uninstallMutation.isPending ||
+		updateAppMutation.isPending;
 
 	const config = configQuery.data;
 	const appUrl =
@@ -249,13 +308,36 @@ function AppDetailPage() {
 								variant="outline"
 								size="sm"
 								className="cursor-pointer gap-1.5"
-								onClick={() =>
+								disabled={isMutating}
+								onClick={() => {
 									toast.info(
 										m.appDetail_checkingUpdates({ appName: app.displayName }),
-									)
-								}
+									);
+									updateAppMutation.mutate(appName, {
+										onSuccess: (result) =>
+											result.alreadyUpToDate
+												? toast.success(
+														m.appDetail_alreadyUpToDate({
+															appName: app.displayName,
+														}),
+													)
+												: toast.success(
+														m.appDetail_updated({
+															appName: app.displayName,
+														}),
+													),
+										onError: (err) =>
+											toast.error(
+												m.appDetail_failedToUpdate({ error: err.message }),
+											),
+									});
+								}}
 							>
-								<ArrowDownToLine className="h-3.5 w-3.5" />
+								{updateAppMutation.isPending ? (
+									<Loader2 className="h-3.5 w-3.5 animate-spin" />
+								) : (
+									<ArrowDownToLine className="h-3.5 w-3.5" />
+								)}
 								{m.common_update()}
 							</Button>
 							<Button
@@ -297,13 +379,36 @@ function AppDetailPage() {
 								variant="outline"
 								size="sm"
 								className="cursor-pointer gap-1.5"
-								onClick={() =>
+								disabled={isMutating}
+								onClick={() => {
 									toast.info(
 										m.appDetail_checkingUpdates({ appName: app.displayName }),
-									)
-								}
+									);
+									updateAppMutation.mutate(appName, {
+										onSuccess: (result) =>
+											result.alreadyUpToDate
+												? toast.success(
+														m.appDetail_alreadyUpToDate({
+															appName: app.displayName,
+														}),
+													)
+												: toast.success(
+														m.appDetail_updated({
+															appName: app.displayName,
+														}),
+													),
+										onError: (err) =>
+											toast.error(
+												m.appDetail_failedToUpdate({ error: err.message }),
+											),
+									});
+								}}
 							>
-								<ArrowDownToLine className="h-3.5 w-3.5" />
+								{updateAppMutation.isPending ? (
+									<Loader2 className="h-3.5 w-3.5 animate-spin" />
+								) : (
+									<ArrowDownToLine className="h-3.5 w-3.5" />
+								)}
 								{m.common_update()}
 							</Button>
 						</>
@@ -491,7 +596,12 @@ function AppDetailPage() {
 										id="log-tail"
 										type="number"
 										min={1}
-										defaultValue="100"
+										value={logTail}
+										onChange={(e) => {
+											const val = Number.parseInt(e.target.value, 10);
+											if (val > 0) setLogTail(val);
+										}}
+										disabled={logFollow}
 										className="h-7 w-20 font-mono-data text-xs"
 									/>
 								</div>
@@ -504,11 +614,25 @@ function AppDetailPage() {
 									</Label>
 									<Input
 										id="log-since"
-										defaultValue="1h"
+										value={logSince}
+										onChange={(e) => setLogSince(e.target.value)}
+										disabled={logFollow}
 										placeholder="e.g. 1h, 30m"
 										className="h-7 w-28 font-mono-data text-xs"
 									/>
 								</div>
+								<Button
+									variant="ghost"
+									size="sm"
+									className="h-7 gap-1 px-2"
+									disabled={logFollow || logsQuery.isFetching}
+									onClick={() => logsQuery.refetch()}
+								>
+									<RefreshCw
+										className={`h-3.5 w-3.5 ${logsQuery.isFetching ? "animate-spin" : ""}`}
+									/>
+									{m.appDetail_refreshLogs()}
+								</Button>
 								<div className="flex items-center justify-between rounded-lg border border-border/50 px-2.5 py-1 transition-colors hover:bg-muted/50">
 									<Label
 										htmlFor="log-follow"
@@ -516,7 +640,11 @@ function AppDetailPage() {
 									>
 										{m.appDetail_follow()}
 									</Label>
-									<Switch id="log-follow" />
+									<Switch
+										id="log-follow"
+										checked={logFollow}
+										onCheckedChange={setLogFollow}
+									/>
 								</div>
 							</div>
 						</CardHeader>
@@ -526,7 +654,7 @@ function AppDetailPage() {
 								className="h-64 rounded-md border border-border/50 bg-muted/30 p-3"
 							>
 								<pre className="font-mono-data text-xs leading-relaxed">
-									{detail.logs.join("\n")}
+									{displayedLogs.join("\n")}
 								</pre>
 							</ScrollArea>
 						</CardContent>

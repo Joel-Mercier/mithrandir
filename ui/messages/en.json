@@ -220,6 +220,10 @@
   "appDetail_details": "Details",
   "appDetail_defaultPort": "Default port",
   "appDetail_category": "Category",
+  "appDetail_alreadyUpToDate": "{appName} is already up to date.",
+  "appDetail_updated": "{appName} updated successfully.",
+  "appDetail_failedToUpdate": "Failed to update: {error}",
+  "appDetail_refreshLogs": "Refresh",
 
   "graph_title": "Dependency Graph",
   "graph_subtitle": "How services connect to each other",

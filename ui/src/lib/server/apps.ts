@@ -11,7 +11,9 @@ import { loadEnvConfig } from "@mithrandir/cli/lib/config";
 import {
 	composeDown,
 	composeUp,
+	getRunningImageId,
 	isContainerRunning,
+	pullImage,
 } from "@mithrandir/cli/lib/docker";
 import { regenerateGatusConfig } from "@mithrandir/cli/lib/gatus";
 import { shell } from "@mithrandir/cli/lib/shell";
@@ -369,4 +371,73 @@ export const uninstallApp = createServerFn({ method: "POST" })
 
 		await logActivity("uninstalled", "app", appName, "/apps");
 		return { success: true, output: `${app.displayName} uninstalled` };
+	});
+
+export const updateApp = createServerFn({ method: "POST" })
+	.inputValidator((d: { appName: string }) => d)
+	.handler(
+		async ({
+			data,
+		}): Promise<{ updated: boolean; alreadyUpToDate: boolean }> => {
+			await ensureSession();
+			const { appName } = data;
+			const projectRoot = getProjectRoot();
+			const envConfig = await loadEnvConfig(projectRoot);
+			const baseDir = envConfig.BASE_DIR;
+
+			const app = APP_REGISTRY.find((a) => a.name === appName);
+			if (!app) throw new Error(`App not found: ${appName}`);
+
+			const composePath = getComposePath(app, baseDir);
+			if (!existsSync(composePath)) {
+				throw new Error(`App not installed: ${appName}`);
+			}
+
+			const containerName = getContainerName(app);
+			const oldImageId = await getRunningImageId(containerName);
+			const newImageId = await pullImage(app.image);
+
+			if (oldImageId && oldImageId === newImageId) {
+				return { updated: false, alreadyUpToDate: true };
+			}
+
+			await composeDown(composePath);
+			await composeUp(composePath);
+			await logActivity("updated", "app", appName, `/apps/${appName}`);
+			return { updated: true, alreadyUpToDate: false };
+		},
+	);
+
+export const fetchAppLogs = createServerFn({ method: "GET" })
+	.inputValidator(
+		(d: { appName: string; tail?: number; since?: string }) => d,
+	)
+	.handler(async ({ data }): Promise<string[]> => {
+		await ensureSession();
+		const { appName, tail = 100, since } = data;
+
+		const app = APP_REGISTRY.find((a) => a.name === appName);
+		if (!app) return [];
+
+		const containerName = getContainerName(app);
+		const args = [
+			"logs",
+			"--tail",
+			String(tail),
+			"--timestamps",
+			containerName,
+		];
+		if (since) {
+			args.splice(1, 0, "--since", since);
+		}
+
+		const result = await shell("docker", args, {
+			sudo: true,
+			ignoreError: true,
+			timeout: 10000,
+		});
+
+		return result.exitCode === 0
+			? result.stdout.trim().split("\n").filter(Boolean)
+			: (result.stderr?.trim().split("\n").filter(Boolean) ?? []);
 	});
