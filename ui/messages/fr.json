@@ -687,6 +687,7 @@
   "upload_clearCompleted": "Effacer les terminés",
   "upload_queued": "{count} fichier(s) en file d'attente",
   "upload_uploading": "Téléversement en cours...",
+  "upload_browseLibrary": "Parcourir la médiathèque",
 
   "common_mediaLibrary": "Médiathèque",
   "breadcrumbs_mediaLibrary": "Médiathèque",

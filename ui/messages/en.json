@@ -687,6 +687,7 @@
   "upload_clearCompleted": "Clear completed",
   "upload_queued": "{count} file(s) queued",
   "upload_uploading": "Uploading...",
+  "upload_browseLibrary": "Browse Library",
 
   "common_mediaLibrary": "Media Library",
   "breadcrumbs_mediaLibrary": "Media Library",
