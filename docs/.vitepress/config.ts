@@ -50,6 +50,13 @@ function guideSidebar(prefix = ""): DefaultTheme.SidebarItem[] {
               ],
             },
             {
+              text: prefix ? "Multimédia : Jeux" : "Media: Games",
+              collapsed: true,
+              items: [
+                { text: "RetroAssembly", link: `${prefix}/guide/apps/retroassembly` },
+              ],
+            },
+            {
               text: "Automation",
               collapsed: true,
               items: [

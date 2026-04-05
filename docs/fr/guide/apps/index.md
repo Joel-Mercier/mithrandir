@@ -44,6 +44,12 @@ mithrandir log <app> [service] # Voir les logs
 | --- | --- | --- |
 | [Immich](./immich) | 2283 | Gestion auto-hébergée de photos et vidéos |
 
+### Média : Jeux
+
+| Application | Port | Description |
+| --- | --- | --- |
+| [RetroAssembly](./retroassembly) | 8001 | Collection personnelle de jeux rétro dans votre navigateur |
+
 ### Automatisation
 
 | Application | Port | Description |

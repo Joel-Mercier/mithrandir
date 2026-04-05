@@ -282,7 +282,7 @@ mithrandir install <stack>
 ```
 Installs a predefined group of apps in one command. Already-installed apps are skipped. Companion apps are included automatically.
 
-Available stacks: `media`, `media-movies-tv`, `media-audio`, `media-pictures`, `security`
+Available stacks: `media`, `media-movies-tv`, `media-audio`, `media-pictures`, `media-games`, `security`
 
 Examples:
 ```bash
@@ -435,6 +435,7 @@ Checks configuration correctness across three categories: System (.env file, Doc
 | Prowlarr       | 9696      | Indexer manager for the *Arr stack (also installs Flaresolverr)                         |
 | qBittorrent    | 8080      | BitTorrent client with web UI                                                           |
 | Radarr         | 7878      | Movie collection manager                                                                |
+| RetroAssembly  | 8001      | Personal retro game collection cabinet in your browser                                   |
 | Seerr          | 5055      | Media request manager for Jellyfin                                                      |
 | Sonarr         | 8989      | TV series collection manager                                                            |
 | Stirling PDF   | 8084      | All-in-one PDF manipulation tool                                                        |

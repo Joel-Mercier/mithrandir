@@ -34,6 +34,7 @@ Vous pouvez sélectionner les applications par catégorie ou individuellement :
 | **Média : Films et séries** | qBittorrent, Prowlarr, Radarr, Sonarr, Bazarr, Seerr, Jellyfin, Profilarr |
 | **Média : Audio** | Navidrome, Lidarr, Audiobookshelf |
 | **Média : Photos** | Immich |
+| **Média : Jeux** | RetroAssembly |
 | **Automatisation** | Home Assistant, n8n |
 | **Surveillance** | Gatus |
 | **Productivité** | AFFiNE, Excalidraw, Omni Tools, Paperless-ngx, Penpot, Stirling PDF |

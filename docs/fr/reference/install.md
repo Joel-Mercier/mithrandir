@@ -35,6 +35,7 @@ Installer un groupe prédéfini d'applications en une seule commande. Les applic
 | `media-movies-tv` | qBittorrent, Prowlarr, Radarr, Sonarr, Bazarr, Seerr, Jellyfin |
 | `media-audio` | Navidrome, Lidarr, Audiobookshelf, qBittorrent |
 | `media-pictures` | Immich |
+| `media-games` | RetroAssembly |
 | `security` | Caddy (reverse proxy HTTPS), Pi-hole (DNS) |
 
 Exemples :
@@ -47,7 +48,7 @@ mithrandir install security           # Installer Caddy et Pi-hole
 
 Tout nom d'application du registre peut être utilisé comme cible. Applications disponibles :
 
-`actualbudget`, `sure`, `homarr`, `pihole`, `homeassistant`, `jellyfin`, `jellyseerr`, `sonarr`, `radarr`, `lidarr`, `prowlarr`, `qbittorrent`, `navidrome`, `duckdns`, `wireguard`, `vaultwarden`, `flaresolverr`, `omni-tools`, `excalidraw`, `openwebui`, `immich`, `gatus`, `bazarr`, `seerr`, `trip`
+`actualbudget`, `sure`, `homarr`, `pihole`, `homeassistant`, `jellyfin`, `jellyseerr`, `sonarr`, `radarr`, `lidarr`, `prowlarr`, `qbittorrent`, `navidrome`, `duckdns`, `wireguard`, `vaultwarden`, `flaresolverr`, `omni-tools`, `excalidraw`, `openwebui`, `immich`, `gatus`, `bazarr`, `seerr`, `trip`, `retroassembly`
 
 ## Remarques
 

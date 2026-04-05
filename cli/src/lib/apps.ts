@@ -1212,6 +1212,18 @@ export const APP_REGISTRY: AppDefinition[] = [
       },
     ],
   },
+  {
+    name: "retroassembly",
+    displayName: "RetroAssembly",
+    description: "Personal retro game collection cabinet in your browser",
+    image: "arianrhodsandlot/retroassembly:latest",
+    icon: "https://cdn.jsdelivr.net/gh/selfhst/icons/png/retroassembly.png",
+    port: 8001,
+    containerPort: 8000,
+    configSubdir: "data",
+    needsDataDir: false,
+    capacity: { performance: "low", storage: "medium", note: "Retro game emulation in the browser, stores ROMs and save states" },
+  },
 ];
 
 /** Get an app definition by name */
@@ -1321,6 +1333,12 @@ export const APP_STACKS: AppStack[] = [
     apps: ["immich"],
   },
   {
+    label: "Media: Games",
+    value: "media-games",
+    description: "RetroAssembly",
+    apps: ["retroassembly"],
+  },
+  {
     label: "Security",
     value: "security",
     description: "Caddy (HTTPS reverse proxy), Pi-hole (DNS)",
@@ -1362,6 +1380,12 @@ export const APP_CATEGORIES: AppCategory[] = [
     value: "media-pictures",
     description: "Immich",
     apps: ["immich"],
+  },
+  {
+    label: "Media: Games",
+    value: "media-games",
+    description: "RetroAssembly",
+    apps: ["retroassembly"],
   },
   {
     label: "Automation",
