@@ -11,6 +11,7 @@ import {
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Row } from "#/components/Row";
+import { PathInput } from "#/components/settings/PathInput";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -893,6 +894,11 @@ export function BackupTab() {
 	const configQuery = useConfig();
 	const config = configQuery.data;
 	const updateConfigMutation = useUpdateConfig();
+	const [backupDir, setBackupDir] = useState("");
+
+	useEffect(() => {
+		if (config?.backupDir) setBackupDir(config.backupDir);
+	}, [config?.backupDir]);
 
 	if (configQuery.isPending) {
 		return (
@@ -923,10 +929,10 @@ export function BackupTab() {
 				<CardContent className="space-y-4">
 					<div className="space-y-2">
 						<Label htmlFor="backupDir">{m.settings_backupDir()}</Label>
-						<Input
+						<PathInput
 							id="backupDir"
-							defaultValue={config.backupDir}
-							className="font-mono-data"
+							value={backupDir}
+							onChange={setBackupDir}
 						/>
 					</div>
 					<div className="space-y-2">
@@ -972,9 +978,6 @@ export function BackupTab() {
 						className="gap-2"
 						disabled={updateConfigMutation.isPending}
 						onClick={() => {
-							const backupDir = (
-								document.getElementById("backupDir") as HTMLInputElement
-							)?.value;
 							const backupHour = parseInt(
 								(document.getElementById("backupHour") as HTMLInputElement)
 									?.value ?? "2",

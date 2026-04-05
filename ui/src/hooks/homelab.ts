@@ -19,6 +19,7 @@ import {
 	verifyBackup,
 } from "#/lib/server/backup";
 import { fetchCapacity } from "#/lib/server/capacity";
+import { browseDirectory } from "#/lib/server/filesystem";
 import { fetchMediaCategory, fetchMediaLibrary } from "#/lib/server/media";
 import {
 	autoSetupApp,
@@ -98,6 +99,7 @@ const keys = {
 	mediaLibrary: ["homelab", "media-library"],
 	mediaCategory: (category: string, search?: string, sortBy?: string, sortDirection?: string) =>
 		["homelab", "media-category", category, search ?? "", sortBy ?? "", sortDirection ?? ""],
+	browseDirectory: (path: string) => ["homelab", "browse-directory", path],
 	setupStatus: ["homelab", "setup-status"],
 	systemRequirements: ["homelab", "setup", "system-requirements"],
 	appRegistry: ["homelab", "setup", "app-registry"],
@@ -218,6 +220,14 @@ export function useMediaCategory(
 			}),
 		enabled: !!category,
 		staleTime: 60_000,
+	});
+}
+
+export function useBrowseDirectory(path: string) {
+	return useQuery({
+		queryKey: keys.browseDirectory(path),
+		queryFn: () => browseDirectory({ data: { path } }),
+		staleTime: 30_000,
 	});
 }
 

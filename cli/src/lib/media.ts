@@ -1,5 +1,8 @@
-import { readdir, stat } from "fs/promises";
 import { join, resolve } from "path";
+import { scanDirectory } from "./filesystem";
+
+// Re-export FileNode so existing imports from "@mithrandir/cli/lib/media" still work
+export type { FileNode } from "./filesystem";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -14,18 +17,11 @@ export const MEDIA_CATEGORIES = [
 
 export type MediaCategory = (typeof MEDIA_CATEGORIES)[number];
 
-export interface FileNode {
-  name: string;
-  type: "file" | "directory";
-  size: number;
-  children?: FileNode[];
-}
-
 export interface MediaCategoryInfo {
   category: MediaCategory;
   totalSize: number;
   fileCount: number;
-  tree: FileNode[];
+  tree: import("./filesystem").FileNode[];
 }
 
 export interface DiskUsageInfo {
@@ -43,113 +39,6 @@ export interface MediaLibraryData {
 
 export type MediaSortField = "name" | "size";
 export type MediaSortDirection = "asc" | "desc";
-
-// ─── Helpers ────────────────────────────────────────────────────────
-
-const IGNORED = new Set([".uploads", "@eaDir", ".DS_Store", "Thumbs.db"]);
-
-async function scanDirectory(
-  dirPath: string,
-  maxDepth: number,
-  currentDepth = 0,
-): Promise<{ nodes: FileNode[]; totalSize: number; fileCount: number }> {
-  let totalSize = 0;
-  let fileCount = 0;
-  const nodes: FileNode[] = [];
-
-  let rawEntries: import("fs").Dirent[];
-  try {
-    rawEntries = await readdir(dirPath, { withFileTypes: true, encoding: "utf-8" }) as import("fs").Dirent[];
-  } catch {
-    return { nodes, totalSize, fileCount };
-  }
-
-  // Sort: directories first, then alphabetically
-  const entries = [...rawEntries].sort((a, b) => {
-    if (a.isDirectory() !== b.isDirectory()) return a.isDirectory() ? -1 : 1;
-    return String(a.name).localeCompare(String(b.name));
-  });
-
-  for (const entry of entries) {
-    const name = String(entry.name);
-    if (IGNORED.has(name) || name.startsWith(".")) continue;
-
-    const fullPath = join(dirPath, name);
-
-    if (entry.isDirectory()) {
-      if (currentDepth < maxDepth) {
-        const sub = await scanDirectory(fullPath, maxDepth, currentDepth + 1);
-        nodes.push({
-          name,
-          type: "directory",
-          size: sub.totalSize,
-          children: sub.nodes,
-        });
-        totalSize += sub.totalSize;
-        fileCount += sub.fileCount;
-      } else {
-        // At max depth, just get directory size summary
-        const sub = await getDirectorySize(fullPath);
-        nodes.push({
-          name,
-          type: "directory",
-          size: sub.totalSize,
-          children: [],
-        });
-        totalSize += sub.totalSize;
-        fileCount += sub.fileCount;
-      }
-    } else if (entry.isFile()) {
-      try {
-        const info = await stat(fullPath);
-        nodes.push({
-          name,
-          type: "file",
-          size: info.size,
-        });
-        totalSize += info.size;
-        fileCount += 1;
-      } catch {
-        // Skip files we can't stat
-      }
-    }
-  }
-
-  return { nodes, totalSize, fileCount };
-}
-
-async function getDirectorySize(
-  dirPath: string,
-): Promise<{ totalSize: number; fileCount: number }> {
-  let totalSize = 0;
-  let fileCount = 0;
-
-  try {
-    const entries = await readdir(dirPath, { withFileTypes: true, encoding: "utf-8" }) as import("fs").Dirent[];
-    for (const entry of entries) {
-      const name = String(entry.name);
-      if (IGNORED.has(name) || name.startsWith(".")) continue;
-      const fullPath = join(dirPath, name);
-      if (entry.isDirectory()) {
-        const sub = await getDirectorySize(fullPath);
-        totalSize += sub.totalSize;
-        fileCount += sub.fileCount;
-      } else if (entry.isFile()) {
-        try {
-          const info = await stat(fullPath);
-          totalSize += info.size;
-          fileCount += 1;
-        } catch {
-          // Skip
-        }
-      }
-    }
-  } catch {
-    // Directory unreadable
-  }
-
-  return { totalSize, fileCount };
-}
 
 // ─── Public API ─────────────────────────────────────────────────────
 
