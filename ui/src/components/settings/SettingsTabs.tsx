@@ -53,6 +53,7 @@ import { Separator } from "#/components/ui/separator";
 import { Skeleton } from "#/components/ui/skeleton";
 import { Spinner } from "#/components/ui/spinner";
 import { Switch } from "#/components/ui/switch";
+import { TimezoneSelect } from "#/components/settings/TimezoneSelect";
 import {
 	useAddBackupRemote,
 	useCheckForUpdates,
@@ -92,6 +93,11 @@ export function GeneralTab() {
 	const configQuery = useConfig();
 	const config = configQuery.data;
 	const updateConfigMutation = useUpdateConfig();
+	const [timezone, setTimezone] = useState("");
+
+	useEffect(() => {
+		if (config?.timezone) setTimezone(config.timezone);
+	}, [config?.timezone]);
 
 	if (configQuery.isPending) {
 		return (
@@ -133,11 +139,10 @@ export function GeneralTab() {
 						</p>
 					</div>
 					<div className="space-y-2">
-						<Label htmlFor="timezone">{m.settings_timezone()}</Label>
-						<Input
-							id="timezone"
-							defaultValue={config.timezone}
-							className="font-mono-data"
+						<Label>{m.settings_timezone()}</Label>
+						<TimezoneSelect
+							value={timezone}
+							onValueChange={setTimezone}
 						/>
 					</div>
 					<Separator />
@@ -163,9 +168,6 @@ export function GeneralTab() {
 						className="gap-2"
 						disabled={updateConfigMutation.isPending}
 						onClick={() => {
-							const tz = (
-								document.getElementById("timezone") as HTMLInputElement
-							)?.value;
 							const puid = parseInt(
 								(document.getElementById("puid") as HTMLInputElement)?.value ??
 									"1000",
@@ -177,7 +179,7 @@ export function GeneralTab() {
 								10,
 							);
 							updateConfigMutation.mutate(
-								{ timezone: tz, puid, pgid },
+								{ timezone, puid, pgid },
 								{
 									onSuccess: () => toast.success(m.settings_saved()),
 									onError: (err) =>
