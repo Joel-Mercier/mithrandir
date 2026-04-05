@@ -37,7 +37,6 @@ import {
 } from "#/components/ui/dropdown-menu";
 import { Input } from "#/components/ui/input";
 import { Progress } from "#/components/ui/progress";
-import { ScrollArea } from "#/components/ui/scroll-area";
 import { Skeleton } from "#/components/ui/skeleton";
 import { useMediaCategory, useMediaLibrary } from "#/hooks/homelab";
 import { cn, formatFileSize } from "#/lib/utils";
@@ -344,9 +343,7 @@ export default function MediaLibraryContent() {
 										<Loader2 className="size-5 animate-spin text-muted-foreground" />
 									</div>
 								)}
-								<ScrollArea className="max-h-[500px]">
-									<FileTree nodes={categoryDetail?.tree ?? []} />
-								</ScrollArea>
+								<FileTree nodes={categoryDetail?.tree ?? []} />
 							</div>
 						)}
 					</CardContent>
