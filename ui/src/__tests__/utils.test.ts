@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { formatUptime, parseMemoryMB } from "../lib/utils";
+import { formatUptime, parseMemoryMB, formatFileSize } from "../lib/utils";
 
 describe("formatUptime", () => {
 	beforeEach(() => {
@@ -75,5 +75,43 @@ describe("parseMemoryMB", () => {
 
 	it("returns raw number for unknown unit", () => {
 		expect(parseMemoryMB("100B")).toBe(100);
+	});
+});
+
+describe("formatFileSize", () => {
+	it("formats bytes in GB range", () => {
+		expect(formatFileSize(1_073_741_824)).toBe("1.0 GB");
+		expect(formatFileSize(2_684_354_560)).toBe("2.5 GB");
+	});
+
+	it("formats bytes in MB range", () => {
+		expect(formatFileSize(1_048_576)).toBe("1.0 MB");
+		expect(formatFileSize(524_288_000)).toBe("500.0 MB");
+	});
+
+	it("formats bytes in KB range", () => {
+		expect(formatFileSize(1024)).toBe("1.0 KB");
+		expect(formatFileSize(512_000)).toBe("500.0 KB");
+	});
+
+	it("formats raw bytes for small values", () => {
+		expect(formatFileSize(0)).toBe("0 B");
+		expect(formatFileSize(512)).toBe("512 B");
+		expect(formatFileSize(1023)).toBe("1023 B");
+	});
+
+	it("uses correct thresholds at boundaries", () => {
+		// Just below 1 KB
+		expect(formatFileSize(1023)).toBe("1023 B");
+		// Exactly 1 KB
+		expect(formatFileSize(1024)).toBe("1.0 KB");
+		// Just below 1 MB
+		expect(formatFileSize(1_048_575)).toBe("1024.0 KB");
+		// Exactly 1 MB
+		expect(formatFileSize(1_048_576)).toBe("1.0 MB");
+		// Just below 1 GB
+		expect(formatFileSize(1_073_741_823)).toBe("1024.0 MB");
+		// Exactly 1 GB
+		expect(formatFileSize(1_073_741_824)).toBe("1.0 GB");
 	});
 });

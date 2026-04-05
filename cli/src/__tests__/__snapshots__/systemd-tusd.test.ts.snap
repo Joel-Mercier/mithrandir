@@ -1,0 +1,28 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`generateTusdServiceUnit snapshot 1`] = `
+"[Unit]
+Description=Mithrandir tusd Upload Server
+After=network.target
+Before=mithrandir-ui.service
+
+[Service]
+Type=simple
+ExecStart=/home/user/homelab/ui/.tusd/tusd \\
+  -upload-dir /data/uploads \\
+  -port 1080 \\
+  -base-path /api/media/upload/tus \\
+  -hooks-http http://localhost:4180/api/media/upload/hooks \\
+  -hooks-http-forward-headers Cookie,Authorization \\
+  -hooks-enabled-events pre-create,post-finish \\
+  -behind-proxy \\
+  -network-timeout 0s
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+"
+`;
