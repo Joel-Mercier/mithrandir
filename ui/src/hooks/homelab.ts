@@ -19,7 +19,7 @@ import {
 	verifyBackup,
 } from "#/lib/server/backup";
 import { fetchCapacity } from "#/lib/server/capacity";
-import { browseDirectory } from "#/lib/server/filesystem";
+import { browseDirectory, createDirectory } from "#/lib/server/filesystem";
 import { fetchMediaCategory, fetchMediaLibrary } from "#/lib/server/media";
 import {
 	autoSetupApp,
@@ -228,6 +228,19 @@ export function useBrowseDirectory(path: string) {
 		queryKey: keys.browseDirectory(path),
 		queryFn: () => browseDirectory({ data: { path } }),
 		staleTime: 30_000,
+	});
+}
+
+export function useCreateDirectory() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (data: { parentPath: string; name: string }) =>
+			createDirectory({ data }),
+		onSuccess: (_result, variables) => {
+			queryClient.invalidateQueries({
+				queryKey: keys.browseDirectory(variables.parentPath),
+			});
+		},
 	});
 }
 

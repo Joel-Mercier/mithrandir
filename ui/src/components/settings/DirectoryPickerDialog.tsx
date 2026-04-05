@@ -1,6 +1,12 @@
 import type { DirEntry } from "@mithrandir/cli/lib/filesystem";
-import { ChevronRight, Folder, FolderOpen, HardDrive } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import {
+	ChevronRight,
+	Folder,
+	FolderOpen,
+	FolderPlus,
+	HardDrive,
+} from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -18,9 +24,10 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "#/components/ui/dialog";
+import { Input } from "#/components/ui/input";
 import { ScrollArea } from "#/components/ui/scroll-area";
 import { Spinner } from "#/components/ui/spinner";
-import { useBrowseDirectory } from "#/hooks/homelab";
+import { useBrowseDirectory, useCreateDirectory } from "#/hooks/homelab";
 
 interface DirectoryPickerDialogProps {
 	open: boolean;
@@ -91,7 +98,7 @@ function DirectoryRow({
 	return (
 		<button
 			type="button"
-			className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-accent/50 focus-visible:bg-accent/50 focus-visible:outline-none"
+			className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm transition-colors cursor-pointer hover:bg-accent/50 focus-visible:bg-accent/50 focus-visible:outline-none"
 			onClick={onClick}
 		>
 			<Folder className="size-4 shrink-0 text-primary/70" />
@@ -108,27 +115,58 @@ export function DirectoryPickerDialog({
 	onSelect,
 }: DirectoryPickerDialogProps) {
 	const [currentPath, setCurrentPath] = useState(initialPath || "/");
+	const [creating, setCreating] = useState(false);
+	const [newDirName, setNewDirName] = useState("");
+	const newDirInputRef = useRef<HTMLInputElement>(null);
 	const { data, isLoading } = useBrowseDirectory(currentPath);
+	const createDirMutation = useCreateDirectory();
 
 	useEffect(() => {
 		if (open) {
 			setCurrentPath(initialPath || "/");
+			setCreating(false);
+			setNewDirName("");
 		}
 	}, [open, initialPath]);
 
+	useEffect(() => {
+		if (creating) {
+			newDirInputRef.current?.focus();
+		}
+	}, [creating]);
+
 	const navigateTo = useCallback((path: string) => {
 		setCurrentPath(path);
+		setCreating(false);
+		setNewDirName("");
 	}, []);
 
 	const navigateUp = useCallback(() => {
 		const parent = currentPath.replace(/\/[^/]+\/?$/, "") || "/";
 		setCurrentPath(parent);
+		setCreating(false);
+		setNewDirName("");
 	}, [currentPath]);
 
 	const handleSelect = useCallback(() => {
 		onSelect(data?.path ?? currentPath);
 		onOpenChange(false);
 	}, [data?.path, currentPath, onSelect, onOpenChange]);
+
+	const handleCreateDir = useCallback(() => {
+		const name = newDirName.trim();
+		if (!name) return;
+		createDirMutation.mutate(
+			{ parentPath: currentPath, name },
+			{
+				onSuccess: ({ path }) => {
+					setCreating(false);
+					setNewDirName("");
+					setCurrentPath(path);
+				},
+			},
+		);
+	}, [currentPath, newDirName, createDirMutation]);
 
 	const isRoot = currentPath === "/";
 
@@ -142,11 +180,11 @@ export function DirectoryPickerDialog({
 					</DialogDescription>
 				</DialogHeader>
 
-				<div className="rounded-md border bg-muted/30 px-3 py-2">
+				<div className="rounded-md border border-border/50 bg-muted/30 px-3 py-2">
 					<PathBreadcrumb path={currentPath} onNavigate={navigateTo} />
 				</div>
 
-				<ScrollArea className="h-[340px] rounded-md border">
+				<ScrollArea className="h-[340px] rounded-md border border-border/50">
 					{isLoading ? (
 						<div className="flex items-center justify-center py-12">
 							<Spinner />
@@ -156,7 +194,7 @@ export function DirectoryPickerDialog({
 							{!isRoot && (
 								<button
 									type="button"
-									className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-accent/50 focus-visible:bg-accent/50 focus-visible:outline-none"
+									className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm text-muted-foreground transition-colors cursor-pointer hover:bg-accent/50 focus-visible:bg-accent/50 focus-visible:outline-none"
 									onClick={navigateUp}
 								>
 									<FolderOpen className="size-4 shrink-0" />
@@ -184,6 +222,52 @@ export function DirectoryPickerDialog({
 						</div>
 					)}
 				</ScrollArea>
+
+				{creating ? (
+					<div className="flex gap-2">
+						<Input
+							ref={newDirInputRef}
+							placeholder="New folder name"
+							value={newDirName}
+							onChange={(e) => setNewDirName(e.target.value)}
+							onKeyDown={(e) => {
+								if (e.key === "Enter") handleCreateDir();
+								if (e.key === "Escape") {
+									setCreating(false);
+									setNewDirName("");
+								}
+							}}
+							className="h-8 text-sm"
+						/>
+						<Button
+							size="sm"
+							disabled={!newDirName.trim() || createDirMutation.isPending}
+							onClick={handleCreateDir}
+						>
+							{createDirMutation.isPending ? <Spinner size="sm" /> : "Create"}
+						</Button>
+						<Button
+							size="sm"
+							variant="ghost"
+							onClick={() => {
+								setCreating(false);
+								setNewDirName("");
+							}}
+						>
+							Cancel
+						</Button>
+					</div>
+				) : (
+					<Button
+						variant="outline"
+						size="sm"
+						className="w-full gap-2"
+						onClick={() => setCreating(true)}
+					>
+						<FolderPlus className="size-4" />
+						New Folder
+					</Button>
+				)}
 
 				<div className="truncate rounded-md bg-muted/50 px-3 py-1.5 font-mono-data text-xs text-muted-foreground">
 					{data?.path ?? currentPath}
