@@ -61,6 +61,10 @@
   "signIn_signUpLink": "S'inscrire",
   "signIn_emailValidation": "Veuillez entrer une adresse e-mail valide",
   "signIn_passwordValidation": "Le mot de passe est requis",
+  "signIn_sso": "Se connecter avec SSO",
+  "signIn_ssoSigning": "Redirection...",
+  "signIn_ssoFailed": "Échec de la connexion SSO.",
+  "signIn_orDivider": "ou",
 
   "signUp_title": "Créer un compte",
   "signUp_description": "Configurez votre compte administrateur pour le tableau de bord",

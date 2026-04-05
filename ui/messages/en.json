@@ -61,6 +61,10 @@
   "signIn_signUpLink": "Sign up",
   "signIn_emailValidation": "Please enter a valid email address",
   "signIn_passwordValidation": "Password is required",
+  "signIn_sso": "Sign in with SSO",
+  "signIn_ssoSigning": "Redirecting...",
+  "signIn_ssoFailed": "SSO sign in failed.",
+  "signIn_orDivider": "or",
 
   "signUp_title": "Create account",
   "signUp_description": "Set up your admin account for the dashboard",

@@ -14,7 +14,7 @@ Mithrandir inclut un tableau de bord web pour gérer votre homelab depuis un nav
 | [TanStack Router](https://tanstack.com/router) | Routage basé sur les fichiers avec SSR |
 | [TanStack Query](https://tanstack.com/query) | Gestion d'état serveur et récupération de données |
 | [TanStack Form](https://tanstack.com/form) | Gestion de formulaires avec validation Zod |
-| [Better-Auth](https://www.better-auth.com/) | Authentification (email/mot de passe + TOTP 2FA) |
+| [Better-Auth](https://www.better-auth.com/) | Authentification (email/mot de passe + TOTP 2FA + SSO OIDC optionnel) |
 | [Drizzle ORM](https://orm.drizzle.team/) | Accès à la base de données SQLite |
 | [Paraglide](https://inlang.com/m/gerre34r/library-inlang-paraglideJs) | Internationalisation (anglais, français) |
 | [Biome](https://biomejs.dev/) | Linting et formatage |
@@ -157,6 +157,30 @@ BETTER_AUTH_SECRET=  # Générer avec : openssl rand -base64 32
 - `BETTER_AUTH_SECRET` — Un secret de 32 caractères utilisé pour signer les tokens d'authentification. Générez-en un avec `openssl rand -base64 32`.
 
 Lorsque l'interface est démarrée via `mithrandir ui`, ce fichier est généré automatiquement s'il est absent (avec un secret aléatoire et des valeurs par défaut).
+
+#### Authentification unique OIDC (Optionnel)
+
+Le tableau de bord prend en charge la connexion via un fournisseur OpenID Connect externe (Authentik, Keycloak, Authelia, etc.). Pour activer le SSO OIDC, ajoutez ces variables à `ui/.env.local` :
+
+```env
+OIDC_CLIENT_ID=votre-client-id
+OIDC_CLIENT_SECRET=votre-client-secret
+OIDC_ISSUER_URL=https://auth.example.com
+```
+
+- `OIDC_CLIENT_ID` — L'identifiant client OAuth enregistré dans votre fournisseur d'identité
+- `OIDC_CLIENT_SECRET` — Le secret client OAuth de votre fournisseur d'identité
+- `OIDC_ISSUER_URL` — L'URL de base de votre fournisseur OIDC (doit exposer un endpoint `/.well-known/openid-configuration`)
+
+Les trois variables doivent être définies pour que le SSO apparaisse sur la page de connexion. Lorsqu'il est configuré, un bouton « Se connecter avec SSO » s'affiche au-dessus du formulaire email/mot de passe. La connexion par email/mot de passe reste disponible en alternative.
+
+**Configuration de votre fournisseur d'identité :**
+
+1. Créez une nouvelle application OAuth/OIDC dans votre IdP (Authentik, Keycloak, Authelia, etc.)
+2. Définissez l'URI de redirection : `{BETTER_AUTH_URL}/api/auth/oauth2/callback/oidc`
+3. Assurez-vous que l'application demande les scopes `openid`, `profile` et `email`
+4. Copiez l'identifiant client, le secret client et l'URL de l'émetteur dans `ui/.env.local`
+5. Redémarrez le service UI : `sudo systemctl restart mithrandir-ui`
 
 ::: tip Développement
 Pour la configuration de développement local, le serveur de dev et les commandes de test, consultez la page [Développement local](/fr/guide/development#tableau-de-bord-ui).

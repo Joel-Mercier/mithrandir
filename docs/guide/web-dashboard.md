@@ -14,7 +14,7 @@ Mithrandir includes a web-based dashboard for managing your homelab from a brows
 | [TanStack Router](https://tanstack.com/router) | File-based routing with SSR |
 | [TanStack Query](https://tanstack.com/query) | Server state management and data fetching |
 | [TanStack Form](https://tanstack.com/form) | Form handling with Zod validation |
-| [Better-Auth](https://www.better-auth.com/) | Authentication (email/password + TOTP 2FA) |
+| [Better-Auth](https://www.better-auth.com/) | Authentication (email/password + TOTP 2FA + optional OIDC SSO) |
 | [Drizzle ORM](https://orm.drizzle.team/) | SQLite database access |
 | [Paraglide](https://inlang.com/m/gerre34r/library-inlang-paraglideJs) | Internationalization (English, French) |
 | [Biome](https://biomejs.dev/) | Linting and formatting |
@@ -157,6 +157,30 @@ BETTER_AUTH_SECRET=  # Generate with: openssl rand -base64 32
 - `BETTER_AUTH_SECRET` — A 32-character secret used to sign authentication tokens. Generate one with `openssl rand -base64 32`.
 
 When started via `mithrandir ui`, this file is auto-generated if missing (with a random secret and default values).
+
+#### OIDC Single Sign-On (Optional)
+
+The dashboard supports logging in via an external OpenID Connect provider (Authentik, Keycloak, Authelia, etc.). To enable OIDC SSO, add these variables to `ui/.env.local`:
+
+```env
+OIDC_CLIENT_ID=your-client-id
+OIDC_CLIENT_SECRET=your-client-secret
+OIDC_ISSUER_URL=https://auth.example.com
+```
+
+- `OIDC_CLIENT_ID` — The OAuth client ID registered in your identity provider
+- `OIDC_CLIENT_SECRET` — The OAuth client secret from your identity provider
+- `OIDC_ISSUER_URL` — The base URL of your OIDC provider (must expose a `/.well-known/openid-configuration` endpoint)
+
+All three variables must be set for SSO to appear on the sign-in page. When configured, a "Sign in with SSO" button is shown above the email/password form. Email/password login remains available as a fallback.
+
+**Setting up your identity provider:**
+
+1. Create a new OAuth/OIDC application in your IdP (Authentik, Keycloak, Authelia, etc.)
+2. Set the redirect URI to: `{BETTER_AUTH_URL}/api/auth/oauth2/callback/oidc`
+3. Ensure the application requests the `openid`, `profile`, and `email` scopes
+4. Copy the client ID, client secret, and issuer URL into `ui/.env.local`
+5. Restart the UI service: `sudo systemctl restart mithrandir-ui`
 
 ::: tip Development
 For local development setup, dev server, and testing commands, see the [Local Development](/guide/development#ui-dashboard) page.

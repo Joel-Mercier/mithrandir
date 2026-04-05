@@ -450,7 +450,7 @@ Checks configuration correctness across three categories: System (.env file, Doc
 
 Mithrandir includes a web-based dashboard for managing your homelab from a browser. It provides the same capabilities as the CLI in a visual interface.
 
-**Tech stack:** TanStack Start (SSR) + React 19 + Vite, styled with Tailwind CSS v4 and shadcn/ui components. Authentication via Better-Auth with email/password and optional two-factor (TOTP). Data is stored in a local SQLite database via Drizzle ORM. Internationalized with Paraglide (English and French).
+**Tech stack:** TanStack Start (SSR) + React 19 + Vite, styled with Tailwind CSS v4 and shadcn/ui components. Authentication via Better-Auth with email/password, optional two-factor (TOTP), and optional OIDC SSO (Authentik, Keycloak, Authelia, etc.). Data is stored in a local SQLite database via Drizzle ORM. Internationalized with Paraglide (English and French).
 
 **Features:**
 
@@ -490,6 +490,8 @@ bun run ui:preview          # Preview the production build
 ```
 
 The UI requires a `.env.local` file in the `ui/` directory with `BETTER_AUTH_URL` and `BETTER_AUTH_SECRET` (a 32-character secret, generate with `openssl rand -base64 32`) for authentication. When started via `mithrandir ui`, this file is auto-generated if missing.
+
+**OIDC SSO (optional):** To enable single sign-on via an external identity provider, add `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, and `OIDC_ISSUER_URL` to `ui/.env.local`. Supports any OIDC-compliant provider (Authentik, Keycloak, Authelia, etc.). Set the redirect URI in your IdP to `{BETTER_AUTH_URL}/api/auth/oauth2/callback/oidc`.
 
 ## Local Development
 

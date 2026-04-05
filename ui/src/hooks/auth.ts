@@ -26,6 +26,19 @@ export function useSignIn() {
 	});
 }
 
+export function useSignInSSO() {
+	return useMutation({
+		mutationFn: async () => {
+			const { data, error } = await authClient.signIn.oauth2({
+				providerId: "oidc",
+				callbackURL: "/",
+			});
+			if (error) throw error;
+			return data;
+		},
+	});
+}
+
 export function useSignUp() {
 	const queryClient = useQueryClient();
 	const router = useRouter();

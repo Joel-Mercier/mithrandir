@@ -3,7 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeaders } from "@tanstack/react-start/server";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { haveIBeenPwned, twoFactor } from "better-auth/plugins";
+import { genericOAuth, haveIBeenPwned, twoFactor } from "better-auth/plugins";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
 import * as schema from "#/db/schema";
 import db from "#/lib/db";
@@ -17,6 +17,12 @@ if (process.env.DUCKDNS_SUBDOMAINS) {
 	const domain = process.env.DUCKDNS_SUBDOMAINS.split(",")[0]?.trim();
 	if (domain) trustedOrigins.push(`https://mithrandir.${domain}.duckdns.org`);
 }
+
+// OIDC client configuration (optional — enabled when all 3 env vars are set)
+const oidcEnabled =
+	process.env.OIDC_CLIENT_ID &&
+	process.env.OIDC_CLIENT_SECRET &&
+	process.env.OIDC_ISSUER_URL;
 
 export const auth = betterAuth({
 	appName: "Mithrandir",
@@ -55,8 +61,30 @@ export const auth = betterAuth({
 				},
 			},
 		}),
+		...(oidcEnabled
+			? [
+					genericOAuth({
+						config: [
+							{
+								providerId: "oidc",
+								clientId: process.env.OIDC_CLIENT_ID!,
+								clientSecret: process.env.OIDC_CLIENT_SECRET!,
+								discoveryUrl: `${process.env.OIDC_ISSUER_URL!}/.well-known/openid-configuration`,
+								scopes: ["openid", "profile", "email"],
+								pkce: true,
+							},
+						],
+					}),
+				]
+			: []),
 	],
 });
+
+export const getOidcEnabled = createServerFn({ method: "GET" }).handler(
+	async () => {
+		return !!oidcEnabled;
+	},
+);
 
 export const getSession = createServerFn({ method: "GET" }).handler(
 	async () => {

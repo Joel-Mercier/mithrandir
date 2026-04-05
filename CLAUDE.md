@@ -117,7 +117,7 @@ TanStack Start app with SSR, file-based routing, and Vite. Created via `create-t
 - **Styling**: Tailwind CSS v4 (CSS-based config in `src/styles.css`, no `tailwind.config.js`) + shadcn/ui (New York style, zinc base, lucide icons)
 - **Data fetching**: TanStack Query (singleton `QueryClient` in `src/lib/tanstack-query/root-provider.tsx`, injected into router context)
 - **Forms**: TanStack Form (`createFormHook()` in `src/hooks/`) with Zod validation
-- **Auth**: Better-Auth with email/password, TanStack Start cookies plugin. Server config in `src/lib/auth.ts`, client in `src/lib/auth-client.ts`. API handler at `src/routes/api/auth/$.ts` (catch-all). Env vars: `BETTER_AUTH_URL`, `BETTER_AUTH_SECRET` in `ui/.env.local`.
+- **Auth**: Better-Auth with email/password, TanStack Start cookies plugin, optional OIDC SSO via `genericOAuth` plugin (conditionally enabled when `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, `OIDC_ISSUER_URL` are set). Server config in `src/lib/auth.ts`, client in `src/lib/auth-client.ts`. API handler at `src/routes/api/auth/$.ts` (catch-all). Env vars: `BETTER_AUTH_URL`, `BETTER_AUTH_SECRET` in `ui/.env.local`.
 - **Linting/formatting**: Biome (tab indentation). Config in `biome.json`.
 - **Testing**: Vitest + Testing Library
 
