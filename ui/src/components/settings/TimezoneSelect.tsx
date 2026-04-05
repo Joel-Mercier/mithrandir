@@ -1,5 +1,5 @@
 import { Check, ChevronsUpDown } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Button } from "#/components/ui/button";
 import {
 	Command,
@@ -15,23 +15,7 @@ import {
 	PopoverTrigger,
 } from "#/components/ui/popover";
 import { cn } from "#/lib/utils";
-
-const TIMEZONES = Intl.supportedValuesOf("timeZone");
-
-function groupTimezones(timezones: string[]) {
-	const groups = new Map<string, string[]>();
-	for (const tz of timezones) {
-		const slash = tz.indexOf("/");
-		const region = slash === -1 ? "Other" : tz.slice(0, slash);
-		const existing = groups.get(region);
-		if (existing) {
-			existing.push(tz);
-		} else {
-			groups.set(region, [tz]);
-		}
-	}
-	return groups;
-}
+import { TIMEZONES } from "#/lib/timezones";
 
 export function TimezoneSelect({
 	value,
@@ -41,7 +25,6 @@ export function TimezoneSelect({
 	onValueChange: (value: string) => void;
 }) {
 	const [open, setOpen] = useState(false);
-	const grouped = useMemo(() => groupTimezones(TIMEZONES), []);
 
 	return (
 		<Popover open={open} onOpenChange={setOpen}>
@@ -61,14 +44,14 @@ export function TimezoneSelect({
 					<CommandInput placeholder="Search timezone…" />
 					<CommandList>
 						<CommandEmpty>No timezone found.</CommandEmpty>
-						{[...grouped.entries()].map(([region, tzs]) => (
+						{Object.entries(TIMEZONES).map(([region, tzs]) => (
 							<CommandGroup key={region} heading={region}>
 								{tzs.map((tz) => (
 									<CommandItem
 										key={tz}
 										value={tz}
-										onSelect={(v) => {
-											onValueChange(v);
+										onSelect={() => {
+											onValueChange(tz);
 											setOpen(false);
 										}}
 										className="font-mono-data"
