@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Fingerprint, KeyRound, LogIn } from "lucide-react";
+import { KeyRound, LogIn } from "lucide-react";
 import { z } from "zod";
 import { Button } from "#/components/ui/button";
 import {
@@ -11,7 +11,7 @@ import {
 } from "#/components/ui/card";
 import { Separator } from "#/components/ui/separator";
 import { Spinner } from "#/components/ui/spinner";
-import { useSignIn, useSignInPasskey, useSignInSSO } from "#/hooks/auth";
+import { useSignIn, useSignInSSO } from "#/hooks/auth";
 import { useAppForm } from "#/hooks/form";
 import { getOidcEnabled } from "#/lib/auth";
 import { m } from "#/paraglide/messages.js";
@@ -29,7 +29,6 @@ const signInSchema = z.object({
 function SignInPage() {
 	const oidcEnabled = Route.useLoaderData();
 	const signIn = useSignIn();
-	const signInPasskey = useSignInPasskey();
 	const signInSSO = useSignInSSO();
 
 	const form = useAppForm({
@@ -139,33 +138,6 @@ function SignInPage() {
 							{signIn.isPending ? m.signIn_submitting() : m.signIn_submit()}
 						</Button>
 					</form>
-
-					<div className="relative my-4">
-						<Separator />
-					</div>
-
-					<Button
-						type="button"
-						variant="outline"
-						className="w-full gap-2"
-						disabled={signInPasskey.isPending}
-						onClick={() => signInPasskey.mutate()}
-					>
-						{signInPasskey.isPending ? (
-							<Spinner size="sm" />
-						) : (
-							<Fingerprint className="h-4 w-4" />
-						)}
-						{signInPasskey.isPending
-							? m.signIn_passkeySigningIn()
-							: m.signIn_passkey()}
-					</Button>
-
-					{signInPasskey.error && (
-						<p className="mt-2 text-sm text-status-critical">
-							{signInPasskey.error.message ?? m.signIn_passkeyFailed()}
-						</p>
-					)}
 
 					<div className="mt-4 text-center text-sm text-muted-foreground">
 						{m.signIn_noAccount()}{" "}

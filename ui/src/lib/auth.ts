@@ -1,5 +1,4 @@
 import { i18n } from "@better-auth/i18n";
-import { passkey } from "@better-auth/passkey";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeaders } from "@tanstack/react-start/server";
 import { betterAuth } from "better-auth";
@@ -51,9 +50,6 @@ export const auth = betterAuth({
 	},
 	plugins: [
 		tanstackStartCookies(),
-		passkey({
-			rpName: "Mithrandir",
-		}),
 		twoFactor({ issuer: "Mithrandir" }),
 		haveIBeenPwned(),
 		i18n({
