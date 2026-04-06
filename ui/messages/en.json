@@ -713,5 +713,27 @@
   "mediaLibrary_emptyCategory": "This category is empty",
   "mediaLibrary_loadingCategory": "Loading files…",
   "mediaLibrary_file": "file",
-  "mediaLibrary_files": "files"
+  "mediaLibrary_files": "files",
+
+  "signIn_passkey": "Sign in with Passkey",
+  "signIn_passkeySigningIn": "Verifying...",
+  "signIn_passkeyFailed": "Passkey sign in failed.",
+  "passkeyCard_title": "Passkeys",
+  "passkeyCard_description": "Sign in without a password using biometrics or a security key",
+  "passkeyCard_noPasskeys": "No passkeys registered yet. Add one to enable passwordless sign-in.",
+  "passkeyCard_addPasskey": "Add Passkey",
+  "passkeyCard_adding": "Registering...",
+  "passkeyCard_addFailed": "Failed to add passkey.",
+  "passkeyCard_added": "Passkey added successfully.",
+  "passkeyCard_deleteTitle": "Delete Passkey",
+  "passkeyCard_deleteDescription": "Are you sure you want to remove this passkey? You won't be able to sign in with it anymore.",
+  "passkeyCard_deleteFailed": "Failed to delete passkey.",
+  "passkeyCard_deleted": "Passkey deleted.",
+  "passkeyCard_nameLabel": "Passkey Name",
+  "passkeyCard_namePlaceholder": "e.g. MacBook Touch ID",
+  "passkeyCard_addTitle": "Add a Passkey",
+  "passkeyCard_addDescription": "Give your passkey a name to identify it later, then follow your browser's prompt.",
+  "passkeyCard_createdAt": "Added",
+  "passkeyCard_singleDevice": "Single device",
+  "passkeyCard_multiDevice": "Multi-device"
 }

@@ -154,6 +154,69 @@ export function useRevokeSession() {
 	});
 }
 
+export function useSignInPasskey() {
+	const queryClient = useQueryClient();
+	const router = useRouter();
+
+	return useMutation({
+		mutationFn: async () => {
+			const { data, error } = await authClient.signIn.passkey();
+			if (error) throw error;
+			return data;
+		},
+		onSuccess: async () => {
+			await queryClient.invalidateQueries({ queryKey: sessionQueryKey });
+			await router.navigate({ to: "/" });
+		},
+	});
+}
+
+export function useAddPasskey() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async (params?: { name?: string }) => {
+			const { data, error } = await authClient.passkey.addPasskey({
+				name: params?.name,
+			});
+			if (error) throw error;
+			return data;
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: passkeysQueryKey });
+		},
+	});
+}
+
+const passkeysQueryKey = ["auth", "passkeys"];
+
+export function useListPasskeys() {
+	return useQuery({
+		queryKey: passkeysQueryKey,
+		queryFn: async () => {
+			const { data, error } = await authClient.passkey.listUserPasskeys();
+			if (error) throw error;
+			return data;
+		},
+	});
+}
+
+export function useDeletePasskey() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async (params: { id: string }) => {
+			const { error } = await authClient.passkey.deletePasskey({
+				id: params.id,
+			});
+			if (error) throw error;
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: passkeysQueryKey });
+		},
+	});
+}
+
 export function useSignOut() {
 	const queryClient = useQueryClient();
 	const router = useRouter();

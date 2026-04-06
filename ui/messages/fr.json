@@ -713,5 +713,27 @@
   "mediaLibrary_emptyCategory": "Cette catégorie est vide",
   "mediaLibrary_loadingCategory": "Chargement des fichiers…",
   "mediaLibrary_file": "fichier",
-  "mediaLibrary_files": "fichiers"
+  "mediaLibrary_files": "fichiers",
+
+  "signIn_passkey": "Se connecter avec un Passkey",
+  "signIn_passkeySigningIn": "Vérification...",
+  "signIn_passkeyFailed": "Échec de la connexion par passkey.",
+  "passkeyCard_title": "Passkeys",
+  "passkeyCard_description": "Connectez-vous sans mot de passe avec la biométrie ou une clé de sécurité",
+  "passkeyCard_noPasskeys": "Aucun passkey enregistré. Ajoutez-en un pour activer la connexion sans mot de passe.",
+  "passkeyCard_addPasskey": "Ajouter un Passkey",
+  "passkeyCard_adding": "Enregistrement...",
+  "passkeyCard_addFailed": "Échec de l'ajout du passkey.",
+  "passkeyCard_added": "Passkey ajouté avec succès.",
+  "passkeyCard_deleteTitle": "Supprimer le Passkey",
+  "passkeyCard_deleteDescription": "Êtes-vous sûr de vouloir supprimer ce passkey ? Vous ne pourrez plus l'utiliser pour vous connecter.",
+  "passkeyCard_deleteFailed": "Échec de la suppression du passkey.",
+  "passkeyCard_deleted": "Passkey supprimé.",
+  "passkeyCard_nameLabel": "Nom du Passkey",
+  "passkeyCard_namePlaceholder": "ex. MacBook Touch ID",
+  "passkeyCard_addTitle": "Ajouter un Passkey",
+  "passkeyCard_addDescription": "Donnez un nom à votre passkey pour l'identifier plus tard, puis suivez les instructions de votre navigateur.",
+  "passkeyCard_createdAt": "Ajouté",
+  "passkeyCard_singleDevice": "Appareil unique",
+  "passkeyCard_multiDevice": "Multi-appareils"
 }

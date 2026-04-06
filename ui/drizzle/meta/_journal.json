@@ -29,6 +29,13 @@
       "when": 1774549257797,
       "tag": "0003_wooden_callisto",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1775494039830,
+      "tag": "0004_add-passkey-table",
+      "breakpoints": true
     }
   ]
 }

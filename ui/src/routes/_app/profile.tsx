@@ -3,6 +3,7 @@ import { KeyRound, Shield, ShieldCheck, User } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 import Breadcrumbs from "#/components/Breadcrumbs";
+import { PasskeyCard } from "#/components/profile/PasskeyCard";
 import { SessionsCard } from "#/components/profile/SessionsCard";
 import { TwoFactorCard } from "#/components/profile/TwoFactorCard";
 import { Avatar, AvatarFallback } from "#/components/ui/avatar";
@@ -330,6 +331,8 @@ function ProfilePage() {
 					</Card>
 
 					<TwoFactorCard />
+
+					<PasskeyCard />
 
 					<SessionsCard />
 				</div>
