@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "bunx --bun vite dev --port 3000",
     "prebuild": "sh ./prebuild.sh",
-    "build": "bunx --bun vite build",
+    "build": "bunx --bun vite build && sh ./postbuild.sh",
     "preview": "bunx --bun vite preview",
     "test": "vitest run",
     "format": "biome format",
