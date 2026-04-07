@@ -1,0 +1,12 @@
+export function stopAllApps(baseDir: string): Promise<string[]>;
+export function removeAllSystemdUnits(): Promise<void>;
+export function deleteBackups(backupDir: string): Promise<boolean>;
+export function removeRclone(): Promise<boolean>;
+export function getAppDataDirs(baseDir: string): string[];
+export function resolveBaseDir(): Promise<string>;
+export function removeAppDataDirs(baseDir: string, dirs: string[]): Promise<void>;
+export function stopDocker(): Promise<void>;
+export function removeDocker(): Promise<void>;
+export function removeLogs(): Promise<void>;
+export function removeCliArtifacts(): Promise<void>;
+export function removeEnvFile(projectRoot: string): Promise<boolean>;

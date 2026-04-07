@@ -14,6 +14,7 @@ import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as UpdateSelfUpdateRouteImport } from './routes/_update/self-update'
+import { Route as UpdateRemoveRouteImport } from './routes/_update/remove'
 import { Route as AuthTwoFactorRouteImport } from './routes/_auth/two-factor'
 import { Route as AuthSignUpRouteImport } from './routes/_auth/sign-up'
 import { Route as AuthSignInRouteImport } from './routes/_auth/sign-in'
@@ -51,6 +52,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
 const UpdateSelfUpdateRoute = UpdateSelfUpdateRouteImport.update({
   id: '/self-update',
   path: '/self-update',
+  getParentRoute: () => UpdateRoute,
+} as any)
+const UpdateRemoveRoute = UpdateRemoveRouteImport.update({
+  id: '/remove',
+  path: '/remove',
   getParentRoute: () => UpdateRoute,
 } as any)
 const AuthTwoFactorRoute = AuthTwoFactorRouteImport.update({
@@ -145,6 +151,7 @@ export interface FileRoutesByFullPath {
   '/sign-in': typeof AuthSignInRoute
   '/sign-up': typeof AuthSignUpRoute
   '/two-factor': typeof AuthTwoFactorRoute
+  '/remove': typeof UpdateRemoveRoute
   '/self-update': typeof UpdateSelfUpdateRoute
   '/apps/$appName': typeof AppAppsAppNameRoute
   '/apps/capacity': typeof AppAppsCapacityRoute
@@ -165,6 +172,7 @@ export interface FileRoutesByTo {
   '/sign-in': typeof AuthSignInRoute
   '/sign-up': typeof AuthSignUpRoute
   '/two-factor': typeof AuthTwoFactorRoute
+  '/remove': typeof UpdateRemoveRoute
   '/self-update': typeof UpdateSelfUpdateRoute
   '/apps/$appName': typeof AppAppsAppNameRoute
   '/apps/capacity': typeof AppAppsCapacityRoute
@@ -188,6 +196,7 @@ export interface FileRoutesById {
   '/_auth/sign-in': typeof AuthSignInRoute
   '/_auth/sign-up': typeof AuthSignUpRoute
   '/_auth/two-factor': typeof AuthTwoFactorRoute
+  '/_update/remove': typeof UpdateRemoveRoute
   '/_update/self-update': typeof UpdateSelfUpdateRoute
   '/_app/': typeof AppIndexRoute
   '/_app/apps/$appName': typeof AppAppsAppNameRoute
@@ -211,6 +220,7 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/two-factor'
+    | '/remove'
     | '/self-update'
     | '/apps/$appName'
     | '/apps/capacity'
@@ -231,6 +241,7 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/two-factor'
+    | '/remove'
     | '/self-update'
     | '/apps/$appName'
     | '/apps/capacity'
@@ -253,6 +264,7 @@ export interface FileRouteTypes {
     | '/_auth/sign-in'
     | '/_auth/sign-up'
     | '/_auth/two-factor'
+    | '/_update/remove'
     | '/_update/self-update'
     | '/_app/'
     | '/_app/apps/$appName'
@@ -308,6 +320,13 @@ declare module '@tanstack/react-router' {
       path: '/self-update'
       fullPath: '/self-update'
       preLoaderRoute: typeof UpdateSelfUpdateRouteImport
+      parentRoute: typeof UpdateRoute
+    }
+    '/_update/remove': {
+      id: '/_update/remove'
+      path: '/remove'
+      fullPath: '/remove'
+      preLoaderRoute: typeof UpdateRemoveRouteImport
       parentRoute: typeof UpdateRoute
     }
     '/_auth/two-factor': {
@@ -470,10 +489,12 @@ const AuthRouteChildren: AuthRouteChildren = {
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
 interface UpdateRouteChildren {
+  UpdateRemoveRoute: typeof UpdateRemoveRoute
   UpdateSelfUpdateRoute: typeof UpdateSelfUpdateRoute
 }
 
 const UpdateRouteChildren: UpdateRouteChildren = {
+  UpdateRemoveRoute: UpdateRemoveRoute,
   UpdateSelfUpdateRoute: UpdateSelfUpdateRoute,
 }
 

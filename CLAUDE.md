@@ -77,7 +77,8 @@ mithrandir install backup                   # Install rclone + backup systemd ti
 mithrandir install https                    # Install Caddy HTTPS reverse proxy
 mithrandir install firewall                 # Install UFW firewall with ufw-docker
 mithrandir reinstall <app> [--yes]        # Reinstall an app from scratch
-mithrandir uninstall <app>
+mithrandir uninstall <app>                 # Uninstall a single app
+mithrandir uninstall [--yes]               # Full system removal (per-step prompts)
 mithrandir status                      # Check system status
 mithrandir health                      # Check system health
 mithrandir doctor                     # Diagnose setup issues

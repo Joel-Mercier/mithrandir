@@ -71,8 +71,20 @@ import {
 	pingHealth,
 	pullLatestChanges,
 } from "#/lib/server/update";
+import {
+	fetchRemoveInfo,
+	removeStopApps,
+	removeSystemdServices,
+	removeBackups as removeBackupsServer,
+	removeRcloneServer,
+	removeAppData,
+	removeDockerServer,
+	removeCleanup,
+	removeConfig,
+} from "#/lib/server/remove";
 
 export type { SetupStatus } from "#/lib/server/setup";
+export type { RemoveInfo } from "#/lib/server/remove";
 
 import type { SystemConfig } from "#/lib/types";
 
@@ -753,5 +765,62 @@ export function useFinalizeUpdate() {
 export function usePingHealth() {
 	return useMutation({
 		mutationFn: () => pingHealth(),
+	});
+}
+
+// ─── Remove ──────────────────────────────────────────────────────────────────
+
+export function useRemoveInfo() {
+	return useQuery({
+		queryKey: ["homelab", "remove-info"],
+		queryFn: () => fetchRemoveInfo(),
+	});
+}
+
+export function useRemoveStopApps() {
+	return useMutation({
+		mutationFn: () => removeStopApps(),
+	});
+}
+
+export function useRemoveSystemdServices() {
+	return useMutation({
+		mutationFn: () => removeSystemdServices(),
+	});
+}
+
+export function useRemoveBackups() {
+	return useMutation({
+		mutationFn: () => removeBackupsServer(),
+	});
+}
+
+export function useRemoveRclone() {
+	return useMutation({
+		mutationFn: () => removeRcloneServer(),
+	});
+}
+
+export function useRemoveAppData() {
+	return useMutation({
+		mutationFn: () => removeAppData(),
+	});
+}
+
+export function useRemoveDocker() {
+	return useMutation({
+		mutationFn: () => removeDockerServer(),
+	});
+}
+
+export function useRemoveCleanup() {
+	return useMutation({
+		mutationFn: () => removeCleanup(),
+	});
+}
+
+export function useRemoveConfig() {
+	return useMutation({
+		mutationFn: () => removeConfig(),
 	});
 }

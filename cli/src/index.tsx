@@ -55,7 +55,7 @@ const cli = meow(
     install https                      Install Caddy HTTPS reverse proxy
     install firewall                   Install UFW firewall with ufw-docker
     reinstall <app>                    Reinstall an app (stop, remove, recreate)
-    uninstall [app]                    Uninstall an app, or full system uninstall
+    uninstall [app]                    Uninstall an app, or guided system removal
     ui                                 Build and serve the UI dashboard
     ui stop                            Stop the UI dashboard
     docs                               Build and serve docs website

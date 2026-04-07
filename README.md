@@ -217,13 +217,13 @@ mithrandir recover --yes            # Automated recovery with defaults
 ```bash
 mithrandir uninstall <app>
 ```
-Stops and removes the container. Prompts whether to also delete the app's data and configuration.
+Stops and removes the container and companion apps. Prompts whether to also delete the app's data and configuration.
 
-**Full system uninstall:**
+**Full system removal:**
 ```bash
 mithrandir uninstall
 ```
-Removes all Homelab components: Docker, backup systemd timer, rclone, local backups, and app data directories.
+Guided 9-step removal with per-step prompts. Each destructive step (backups, rclone, app data, Docker, .env config) can be individually accepted or skipped, allowing you to keep Docker and apps running independently. Removes all Mithrandir systemd services (backup, UI, tusd), log files, CLI symlink, and cache. Also available from the web dashboard under Settings > General > Danger Zone.
 
 **Update containers:**
 ```bash
@@ -464,7 +464,7 @@ Mithrandir includes a web-based dashboard for managing your homelab from a brows
 - **Setup wizard** — Step-by-step guided setup with the same workflow as the CLI wizard.
 - **Media library** — Browse media files on the server with a file tree viewer.
 - **File upload** — Upload files to the server via resumable uploads (tus protocol with Uppy).
-- **Settings** — Configure general, backup, and network settings. View system information.
+- **Settings** — Configure general, backup, and network settings. View system information. Includes a Danger Zone for complete system removal with per-step prompts.
 - **User profile** — Manage account, active sessions, and two-factor authentication.
 - **Self-update** — Update Mithrandir from git directly in the browser with a step-by-step progress view.
 - **Dark mode** — Light, dark, and auto themes with a toggle in the header.

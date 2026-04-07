@@ -21,6 +21,7 @@ import {
 	AlertDialogFooter,
 	AlertDialogHeader,
 	AlertDialogTitle,
+	AlertDialogTrigger,
 } from "#/components/ui/alert-dialog";
 import { Alert, AlertDescription } from "#/components/ui/alert";
 import { Badge } from "#/components/ui/badge";
@@ -95,6 +96,8 @@ export function GeneralTab() {
 	const config = configQuery.data;
 	const updateConfigMutation = useUpdateConfig();
 	const [timezone, setTimezone] = useState("");
+	const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
+	const navigate = useNavigate();
 
 	useEffect(() => {
 		if (config?.timezone) setTimezone(config.timezone);
@@ -118,107 +121,156 @@ export function GeneralTab() {
 	}
 
 	return (
-		<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-			<Card>
-				<CardHeader>
-					<CardTitle className="text-sm font-medium">
-						{m.settings_systemConfig()}
-					</CardTitle>
-					<CardDescription>{m.settings_systemConfigDesc()}</CardDescription>
-				</CardHeader>
-				<CardContent className="space-y-4">
-					<div className="space-y-2">
-						<Label htmlFor="baseDir">{m.settings_baseDir()}</Label>
-						<Input
-							id="baseDir"
-							defaultValue={config.baseDir}
-							className="font-mono-data"
-							readOnly
-						/>
-						<p className="text-xs text-muted-foreground">
-							{m.settings_baseDirDesc()}
-						</p>
-					</div>
-					<div className="space-y-2">
-						<Label>{m.settings_timezone()}</Label>
-						<TimezoneSelect
-							value={timezone}
-							onValueChange={setTimezone}
-						/>
-					</div>
-					<Separator />
-					<div className="grid grid-cols-2 gap-4">
+		<>
+			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+				<Card>
+					<CardHeader>
+						<CardTitle className="text-sm font-medium">
+							{m.settings_systemConfig()}
+						</CardTitle>
+						<CardDescription>{m.settings_systemConfigDesc()}</CardDescription>
+					</CardHeader>
+					<CardContent className="space-y-4">
 						<div className="space-y-2">
-							<Label htmlFor="puid">{m.settings_puid()}</Label>
+							<Label htmlFor="baseDir">{m.settings_baseDir()}</Label>
 							<Input
-								id="puid"
-								defaultValue={String(config.puid)}
+								id="baseDir"
+								defaultValue={config.baseDir}
 								className="font-mono-data"
+								readOnly
 							/>
+							<p className="text-xs text-muted-foreground">
+								{m.settings_baseDirDesc()}
+							</p>
 						</div>
 						<div className="space-y-2">
-							<Label htmlFor="pgid">{m.settings_pgid()}</Label>
-							<Input
-								id="pgid"
-								defaultValue={String(config.pgid)}
-								className="font-mono-data"
+							<Label>{m.settings_timezone()}</Label>
+							<TimezoneSelect
+								value={timezone}
+								onValueChange={setTimezone}
 							/>
 						</div>
-					</div>
-					<Button
-						className="gap-2"
-						disabled={updateConfigMutation.isPending}
-						onClick={() => {
-							const puid = parseInt(
-								(document.getElementById("puid") as HTMLInputElement)?.value ??
-									"1000",
-								10,
-							);
-							const pgid = parseInt(
-								(document.getElementById("pgid") as HTMLInputElement)?.value ??
-									"1000",
-								10,
-							);
-							updateConfigMutation.mutate(
-								{ timezone, puid, pgid },
-								{
-									onSuccess: () => toast.success(m.settings_saved()),
-									onError: (err) =>
-										toast.error(`Failed to save: ${err.message}`),
-								},
-							);
-						}}
-					>
-						<Save className="h-4 w-4" />
-						{m.common_save()}
-					</Button>
-				</CardContent>
-			</Card>
+						<Separator />
+						<div className="grid grid-cols-2 gap-4">
+							<div className="space-y-2">
+								<Label htmlFor="puid">{m.settings_puid()}</Label>
+								<Input
+									id="puid"
+									defaultValue={String(config.puid)}
+									className="font-mono-data"
+								/>
+							</div>
+							<div className="space-y-2">
+								<Label htmlFor="pgid">{m.settings_pgid()}</Label>
+								<Input
+									id="pgid"
+									defaultValue={String(config.pgid)}
+									className="font-mono-data"
+								/>
+							</div>
+						</div>
+						<Button
+							className="gap-2"
+							disabled={updateConfigMutation.isPending}
+							onClick={() => {
+								const puid = parseInt(
+									(document.getElementById("puid") as HTMLInputElement)?.value ??
+										"1000",
+									10,
+								);
+								const pgid = parseInt(
+									(document.getElementById("pgid") as HTMLInputElement)?.value ??
+										"1000",
+									10,
+								);
+								updateConfigMutation.mutate(
+									{ timezone, puid, pgid },
+									{
+										onSuccess: () => toast.success(m.settings_saved()),
+										onError: (err) =>
+											toast.error(`Failed to save: ${err.message}`),
+									},
+								);
+							}}
+						>
+							<Save className="h-4 w-4" />
+							{m.common_save()}
+						</Button>
+					</CardContent>
+				</Card>
 
-			<Card>
-				<CardHeader>
-					<CardTitle className="text-sm font-medium">
-						{m.settings_dockerEngine()}
-					</CardTitle>
-					<CardDescription>{m.settings_dockerDesc()}</CardDescription>
-				</CardHeader>
-				<CardContent className="space-y-3">
-					<div className="flex items-center justify-between">
-						<span className="text-sm text-muted-foreground">
-							{m.settings_dockerStatus()}
-						</span>
-						<div className="flex items-center gap-2">
-							<span className="inline-block h-2 w-2 rounded-full bg-status-healthy" />
-							<span className="font-mono-data text-xs">running</span>
+				<Card>
+					<CardHeader>
+						<CardTitle className="text-sm font-medium">
+							{m.settings_dockerEngine()}
+						</CardTitle>
+						<CardDescription>{m.settings_dockerDesc()}</CardDescription>
+					</CardHeader>
+					<CardContent className="space-y-3">
+						<div className="flex items-center justify-between">
+							<span className="text-sm text-muted-foreground">
+								{m.settings_dockerStatus()}
+							</span>
+							<div className="flex items-center gap-2">
+								<span className="inline-block h-2 w-2 rounded-full bg-status-healthy" />
+								<span className="font-mono-data text-xs">running</span>
+							</div>
 						</div>
+						<Row label={m.settings_dockerVersion()}>27.5.1</Row>
+						<Row label={m.settings_dockerStorageDriver()}>overlay2</Row>
+						<Row label={m.settings_dockerContainers()}>8 (7 running)</Row>
+						<Row label={m.settings_dockerImages()}>12</Row>
+					</CardContent>
+				</Card>
+			</div>
+
+			{/* Danger Zone */}
+			<Card className="mt-4 border-destructive/30">
+				<CardHeader>
+					<CardTitle className="text-sm font-medium text-destructive">
+						{m.remove_dangerZone()}
+					</CardTitle>
+					<CardDescription>{m.remove_dangerZoneDesc()}</CardDescription>
+				</CardHeader>
+				<CardContent>
+					<div className="flex items-center justify-between gap-4">
+						<div className="min-w-0">
+							<p className="text-sm font-medium">{m.remove_dangerZoneButton()}</p>
+							<p className="mt-0.5 text-xs text-muted-foreground">
+								{m.remove_dangerZoneDescription()}
+							</p>
+						</div>
+						<AlertDialog open={removeDialogOpen} onOpenChange={setRemoveDialogOpen}>
+							<AlertDialogTrigger asChild>
+								<Button variant="destructive" size="sm" className="shrink-0 gap-1.5">
+									<Trash2 className="h-3.5 w-3.5" />
+									{m.remove_dangerZoneButton()}
+								</Button>
+							</AlertDialogTrigger>
+							<AlertDialogContent>
+								<AlertDialogHeader>
+									<AlertDialogTitle>{m.remove_confirmTitle()}</AlertDialogTitle>
+									<AlertDialogDescription>
+										{m.remove_confirmDescription()}
+									</AlertDialogDescription>
+								</AlertDialogHeader>
+								<AlertDialogFooter>
+									<AlertDialogCancel>{m.common_cancel()}</AlertDialogCancel>
+									<AlertDialogAction
+										className="bg-status-critical text-white hover:bg-status-critical/90"
+										onClick={() => {
+											navigate({ to: "/remove" });
+										}}
+									>
+										{m.remove_confirmAction()}
+									</AlertDialogAction>
+								</AlertDialogFooter>
+							</AlertDialogContent>
+						</AlertDialog>
 					</div>
-					<Row label={m.settings_dockerVersion()}>27.5.1</Row>
-					<Row label={m.settings_dockerStorageDriver()}>overlay2</Row>
-					<Row label={m.settings_dockerContainers()}>8 (7 running)</Row>
-					<Row label={m.settings_dockerImages()}>12</Row>
 				</CardContent>
 			</Card>
-		</div>
+		</>
 	);
 }
 
