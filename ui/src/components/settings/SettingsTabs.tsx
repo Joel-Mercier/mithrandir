@@ -247,7 +247,7 @@ export function GeneralTab() {
 									{m.remove_dangerZoneButton()}
 								</Button>
 							</AlertDialogTrigger>
-							<AlertDialogContent>
+							<AlertDialogContent className="bg-background/95 backdrop-blur">
 								<AlertDialogHeader>
 									<AlertDialogTitle>{m.remove_confirmTitle()}</AlertDialogTitle>
 									<AlertDialogDescription>
