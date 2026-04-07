@@ -140,7 +140,7 @@ export async function isContainerRunning(
 }
 
 /** Check if a container exists (running or stopped) */
-export async function containerExists(
+async function containerExists(
   containerName: string,
 ): Promise<boolean> {
   const result = await shell(
@@ -317,7 +317,7 @@ export async function stopContainer(containerName: string): Promise<void> {
 }
 
 /** Start a container from an app definition */
-export async function startApp(
+async function startApp(
   app: AppDefinition,
   baseDir: string,
 ): Promise<void> {
@@ -326,7 +326,7 @@ export async function startApp(
 }
 
 /** Stop a container from an app definition */
-export async function stopApp(
+async function stopApp(
   app: AppDefinition,
 ): Promise<void> {
   const containerName = getContainerName(app);

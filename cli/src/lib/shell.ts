@@ -128,7 +128,7 @@ export async function commandExists(cmd: string): Promise<boolean> {
 }
 
 /** Check if we have sudo access without a password prompt */
-export async function hasSudoAccess(): Promise<boolean> {
+async function hasSudoAccess(): Promise<boolean> {
   const result = await shell("sudo", ["-n", "true"], { ignoreError: true });
   return result.exitCode === 0;
 }

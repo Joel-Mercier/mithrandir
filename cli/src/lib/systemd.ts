@@ -77,7 +77,7 @@ export async function installSystemdUnits(hour: number = 2): Promise<void> {
 }
 
 /** Remove the systemd service and timer */
-export async function removeSystemdUnits(): Promise<void> {
+async function removeSystemdUnits(): Promise<void> {
   const paths = getPaths();
 
   await shell("systemctl", ["disable", "--now", `${SERVICE_NAME}.timer`], {

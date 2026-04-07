@@ -39,7 +39,7 @@ export interface SystemInfo {
 // ─── Data gathering ──────────────────────────────────────────────────────────
 
 /** Find installed apps by checking for docker-compose.yml */
-export function detectInstalledApps(baseDir: string): AppDefinition[] {
+function detectInstalledApps(baseDir: string): AppDefinition[] {
   const installed: AppDefinition[] = [];
   for (const app of APP_REGISTRY) {
     const composePath = getComposePath(app, baseDir);
@@ -63,7 +63,7 @@ export async function getContainerStatus(app: AppDefinition): Promise<string> {
 }
 
 /** Get most recent backup date for an app */
-export async function getLastBackupDate(
+async function getLastBackupDate(
   app: AppDefinition,
   backupDir: string,
 ): Promise<string | null> {
@@ -86,7 +86,7 @@ export async function getLastBackupDate(
 }
 
 /** Get disk usage for an app directory */
-export async function getDiskUsage(app: AppDefinition, baseDir: string): Promise<string> {
+async function getDiskUsage(app: AppDefinition, baseDir: string): Promise<string> {
   const appDir = getAppDir(app, baseDir);
   if (!existsSync(appDir)) return "—";
   const result = await shell("du", ["-sh", appDir], {
@@ -99,7 +99,7 @@ export async function getDiskUsage(app: AppDefinition, baseDir: string): Promise
 }
 
 /** Get next timer run time */
-export async function getTimerNextRun(): Promise<string | null> {
+async function getTimerNextRun(): Promise<string | null> {
   const result = await shell(
     "systemctl",
     ["show", "homelab-backup.timer", "--property=NextElapseUSecRealtime"],

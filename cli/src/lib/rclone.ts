@@ -363,7 +363,7 @@ export async function rotateRemote(
 // ─── Multi-remote helpers ────────────────────────────────────────────────────
 
 /** Upload to all remotes sequentially, continue on failure */
-export async function uploadToAllRemotes(
+async function uploadToAllRemotes(
   localPath: string,
   remotes: string[],
   remotePath: string,
@@ -390,7 +390,7 @@ export async function uploadToAllRemotes(
 }
 
 /** Rotate on all remotes */
-export async function rotateAllRemotes(
+async function rotateAllRemotes(
   remotes: string[],
   basePath: string,
   retention: number,
@@ -410,7 +410,7 @@ export async function rotateAllRemotes(
 }
 
 /** Find backup file across remotes (first match wins) */
-export async function findBackupOnRemotes(
+async function findBackupOnRemotes(
   remotes: string[],
   remotePath: string,
 ): Promise<{ remote: string; found: true } | { found: false }> {
@@ -427,7 +427,7 @@ export async function findBackupOnRemotes(
 }
 
 /** List backup dates across all remotes */
-export async function listDirsAllRemotes(
+async function listDirsAllRemotes(
   remotes: string[],
   remotePath: string,
 ): Promise<{ remote: string; dirs: string[] }[]> {
@@ -446,7 +446,7 @@ export async function listDirsAllRemotes(
 }
 
 /** Check all remotes configured */
-export async function checkAllRemotesConfigured(
+async function checkAllRemotesConfigured(
   remotes: string[],
   env?: EnvConfig,
 ): Promise<{ remote: string; configured: boolean; reason?: string }[]> {

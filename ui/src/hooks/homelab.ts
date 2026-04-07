@@ -28,13 +28,11 @@ import {
 	checkSystemRequirements,
 	completeSetup,
 	fetchAppRegistry,
-	fetchServiceUrls,
 	fetchSetupStatus,
 	generateSecret,
 	installSetupApp,
 	installSystemDep,
 	resolveAppDependencies,
-	resumeSetup,
 	saveSetupSecrets,
 	setupBackupTimer,
 	setupBaseDir,
@@ -53,8 +51,6 @@ import {
 	enableHttps,
 	fetchConfig,
 	fetchFirewallRules,
-	fetchHealthChecks,
-	fetchRemoteDetails,
 	fetchResources,
 	fetchSystemStatus,
 	fetchVersion,
@@ -85,7 +81,6 @@ import {
 	removeConfig,
 } from "#/lib/server/remove";
 
-export type { SetupStatus } from "#/lib/server/setup";
 export type { RemoveInfo } from "#/lib/server/remove";
 
 import type { SystemConfig } from "#/lib/types";
@@ -160,13 +155,6 @@ export function useSystemStatus() {
 		queryKey: keys.systemStatus,
 		queryFn: () => fetchSystemStatus(),
 		refetchInterval: 30_000,
-	});
-}
-
-export function useHealthChecks() {
-	return useQuery({
-		queryKey: keys.health,
-		queryFn: () => fetchHealthChecks(),
 	});
 }
 
@@ -516,13 +504,6 @@ export function useRcloneInstalled() {
 	});
 }
 
-export function useRemoteDetails() {
-	return useQuery({
-		queryKey: ["homelab", "remote-details"],
-		queryFn: () => fetchRemoteDetails(),
-	});
-}
-
 export function useAddBackupRemote() {
 	const queryClient = useQueryClient();
 	return useMutation({
@@ -703,27 +684,6 @@ export function useSkipSetup() {
 			queryClient.invalidateQueries({ queryKey: keys.setupStatus });
 			queryClient.invalidateQueries({ queryKey: keys.activity });
 		},
-	});
-}
-
-export function useResumeSetup() {
-	const queryClient = useQueryClient();
-	return useMutation({
-		mutationFn: () => resumeSetup(),
-		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: keys.setupStatus });
-			queryClient.invalidateQueries({ queryKey: keys.activity });
-		},
-	});
-}
-
-export function useFetchServiceUrls() {
-	return useMutation({
-		mutationFn: (params: {
-			appNames: string[];
-			httpsEnabled: boolean;
-			localIp: string;
-		}) => fetchServiceUrls({ data: params }),
 	});
 }
 

@@ -67,7 +67,7 @@ export async function deployUiBuild(uiDir: string): Promise<void> {
  * Used during first install or migration from the old layout.
  * No-op if `.deployments/current` already points to a valid build.
  */
-export async function bootstrapDeployment(uiDir: string): Promise<void> {
+async function bootstrapDeployment(uiDir: string): Promise<void> {
   const deploymentsDir = join(uiDir, DEPLOYMENTS_DIR);
   const currentLink = join(deploymentsDir, "current");
   const outputDir = join(uiDir, ".output");

@@ -9,7 +9,7 @@ import { useInstallApp } from "#/hooks/homelab";
 import type { AppStatus, DashboardApp } from "#/lib/types";
 import { m } from "#/paraglide/messages.js";
 
-export const statusDot: Record<AppStatus, string> = {
+const statusDot: Record<AppStatus, string> = {
 	running: "bg-status-healthy",
 	stopped: "bg-muted-foreground",
 	error: "bg-status-critical",

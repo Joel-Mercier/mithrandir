@@ -145,7 +145,7 @@ export async function syncAllAppPorts(apps: AppDefinition[]): Promise<void> {
 }
 
 /** Get a human-readable UFW status summary */
-export async function getUfwStatus(): Promise<string> {
+async function getUfwStatus(): Promise<string> {
   const result = await shell("ufw", ["status", "verbose"], {
     sudo: true,
     ignoreError: true,

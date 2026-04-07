@@ -1,6 +1,55 @@
 {
   "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
   "rules": {
+    "duplicate-exports": "off",
+    "circular-dependencies": "warn",
+    "unused-class-members": "off"
   },
-  "ignorePatterns": ["cli/src/__tests__/**/*", "ui/src/components/ui/**/*"]
+  "ignorePatterns": ["**/components/ui/**"],
+  "dynamicallyLoaded": ["cli/build.ts", "cli/src/__tests__/**/*"],
+  "ignoreDependencies": [
+    "@libsql/client",
+    "@tailwindcss/typography",
+    "class-variance-authority",
+    "cmdk",
+    "input-otp",
+    "radix-ui",
+    "@tanstack/react-router-ssr-query",
+    "@tanstack/router-plugin"
+  ],
+  "ignoreExports": [
+    { "file": "**/types/cli/**", "exports": ["*"] },
+    { "file": "cli/src/lib/docker.ts", "exports": ["pullImage"] },
+    { "file": "cli/src/lib/rclone.ts", "exports": ["listRemotes"] },
+    { "file": "cli/src/lib/status.ts", "exports": ["getContainerStatus"] },
+    { "file": "ui/src/lib/server/setup.ts", "exports": ["resumeSetup", "fetchServiceUrls"] },
+    { "file": "ui/src/lib/server/system.ts", "exports": ["fetchHealthChecks", "fetchRemoteDetails"] }
+  ],
+  "overrides": [
+    {
+      "files": [
+        "cli/src/lib/jellyfin.ts",
+        "cli/src/lib/seerr.ts",
+        "cli/src/lib/prowlarr.ts",
+        "cli/src/lib/radarr.ts",
+        "cli/src/lib/sonarr.ts",
+        "cli/src/lib/lidarr.ts",
+        "cli/src/lib/qbittorrent.ts",
+        "cli/src/lib/filesystem.ts",
+        "cli/src/lib/apps.ts",
+        "cli/src/lib/capacity.ts",
+        "cli/src/lib/distro.ts",
+        "cli/src/lib/shell.ts",
+        "cli/src/lib/status.ts",
+        "cli/src/lib/swap.ts",
+        "cli/src/types.ts",
+        "ui/src/lib/types.ts",
+        "ui/src/lib/server/update.ts",
+        "ui/src/lib/server/capacity.ts",
+        "ui/src/lib/server/setup.ts",
+        "ui/src/components/setup/SetupWizard.tsx"
+      ],
+      "rules": { "unused-types": "off" }
+    }
+  ]
 }
