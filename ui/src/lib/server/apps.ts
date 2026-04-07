@@ -19,7 +19,7 @@ import { regenerateGatusConfig } from "@mithrandir/cli/lib/gatus";
 import { shell } from "@mithrandir/cli/lib/shell";
 import { getContainerStatus } from "@mithrandir/cli/lib/status";
 import { createServerFn } from "@tanstack/react-start";
-import { existsSync } from "fs";
+import { existsSync, readdirSync, readFileSync } from "fs";
 import { ensureSession } from "#/lib/auth";
 import type { AppCategory, AppDetail, DashboardApp } from "#/lib/types";
 import { formatUptime, parseMemoryMB } from "../utils";
@@ -440,4 +440,46 @@ export const fetchAppLogs = createServerFn({ method: "GET" })
 		return result.exitCode === 0
 			? result.stdout.trim().split("\n").filter(Boolean)
 			: (result.stderr?.trim().split("\n").filter(Boolean) ?? []);
+	});
+
+export const fetchWireguardPeers = createServerFn({ method: "GET" }).handler(
+	async (): Promise<string[]> => {
+		await ensureSession();
+		const projectRoot = getProjectRoot();
+		const envConfig = await loadEnvConfig(projectRoot);
+		const baseDir = envConfig.BASE_DIR;
+
+		const configDir = `${baseDir}/wireguard/config`;
+		if (!existsSync(configDir)) return [];
+
+		const entries = readdirSync(configDir, { withFileTypes: true });
+		return entries
+			.filter((e) => e.isDirectory() && /^peer\d+$/.test(e.name))
+			.map((e) => e.name)
+			.sort((a, b) => {
+				const numA = Number.parseInt(a.replace("peer", ""), 10);
+				const numB = Number.parseInt(b.replace("peer", ""), 10);
+				return numA - numB;
+			});
+	},
+);
+
+export const fetchWireguardPeerQR = createServerFn({ method: "GET" })
+	.inputValidator((d: { peer: string }) => d)
+	.handler(async ({ data }): Promise<string | null> => {
+		await ensureSession();
+		const { peer } = data;
+
+		// Validate peer name to prevent path traversal
+		if (!/^peer\d+$/.test(peer)) return null;
+
+		const projectRoot = getProjectRoot();
+		const envConfig = await loadEnvConfig(projectRoot);
+		const baseDir = envConfig.BASE_DIR;
+
+		const pngPath = `${baseDir}/wireguard/config/${peer}/${peer}.png`;
+		if (!existsSync(pngPath)) return null;
+
+		const buf = readFileSync(pngPath);
+		return `data:image/png;base64,${buf.toString("base64")}`;
 	});

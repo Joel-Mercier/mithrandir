@@ -11,7 +11,7 @@ import {
 	Square,
 	Trash2,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { AvailableDetailPage } from "#/components/apps/AvailableDetailPage";
 import { ExternalLinks } from "#/components/apps/ExternalLinks";
@@ -34,6 +34,13 @@ import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
 import { Input } from "#/components/ui/input";
 import { Label } from "#/components/ui/label";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "#/components/ui/select";
 import { Progress } from "#/components/ui/progress";
 import { ScrollArea } from "#/components/ui/scroll-area";
 import { Separator } from "#/components/ui/separator";
@@ -49,6 +56,8 @@ import {
 	useStopApp,
 	useUninstallApp,
 	useUpdateApp,
+	useWireguardPeerQR,
+	useWireguardPeers,
 } from "#/hooks/homelab";
 import type { AppStatus } from "#/lib/types";
 import { m } from "#/paraglide/messages.js";
@@ -134,6 +143,7 @@ function AppDetailPage() {
 	const [uninstallOpen, setUninstallOpen] = useState(false);
 	const [eraseData, setEraseData] = useState(false);
 	const logAreaRef = useRef<HTMLDivElement>(null);
+	const [selectedPeer, setSelectedPeer] = useState<string | null>(null);
 
 	// Log viewer state
 	const [logTail, setLogTail] = useState(100);
@@ -178,6 +188,12 @@ function AppDetailPage() {
 			eventSourceRef.current = null;
 		};
 	}, [logFollow, appName]);
+
+	// WireGuard peers
+	const isWireguard = appName === "wireguard";
+	const peersQuery = useWireguardPeers(isWireguard);
+	const peerQRQuery = useWireguardPeerQR(selectedPeer);
+	const peers = useMemo(() => peersQuery.data ?? [], [peersQuery.data]);
 
 	// Derive displayed logs: SSE logs in follow mode, query logs otherwise, fall back to detail logs
 	const displayedLogs = logFollow
@@ -572,6 +588,68 @@ function AppDetailPage() {
 										{summary.capacityNote}
 									</p>
 								</>
+							)}
+						</CardContent>
+					</Card>
+				)}
+
+				{/* WireGuard Peers */}
+				{isWireguard && detail && app.status === "running" && (
+					<Card className="col-span-full">
+						<CardHeader className="pb-2">
+							<CardTitle className="text-sm font-medium">
+								{m.appDetail_wireguardPeers()}
+							</CardTitle>
+						</CardHeader>
+						<CardContent>
+							{peers.length === 0 ? (
+								<p className="text-sm text-muted-foreground">
+									{m.appDetail_wireguardNoPeers()}
+								</p>
+							) : (
+								<div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
+									<Select
+										value={selectedPeer ?? undefined}
+										onValueChange={setSelectedPeer}
+									>
+										<SelectTrigger className="w-48">
+											<SelectValue
+												placeholder={m.appDetail_wireguardSelectPeer()}
+											/>
+										</SelectTrigger>
+										<SelectContent>
+											{peers.map((peer) => (
+												<SelectItem key={peer} value={peer}>
+													{peer}
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+									{selectedPeer && (
+										<div className="flex flex-col items-center gap-2">
+											{peerQRQuery.isPending ? (
+												<Skeleton className="h-48 w-48 rounded-md" />
+											) : peerQRQuery.data ? (
+												<>
+													<img
+														src={peerQRQuery.data}
+														alt={m.appDetail_wireguardQrCode({
+															peer: selectedPeer,
+														})}
+														className="h-48 w-48 rounded-md border border-border/50"
+													/>
+													<p className="text-xs text-muted-foreground">
+														{m.appDetail_wireguardScanQr()}
+													</p>
+												</>
+											) : (
+												<p className="text-sm text-muted-foreground">
+													{m.appDetail_wireguardNoPeers()}
+												</p>
+											)}
+										</div>
+									)}
+								</div>
 							)}
 						</CardContent>
 					</Card>

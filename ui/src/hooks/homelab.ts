@@ -4,6 +4,8 @@ import {
 	fetchAppDetail,
 	fetchAppLogs,
 	fetchApps,
+	fetchWireguardPeerQR,
+	fetchWireguardPeers,
 	installApp,
 	restartApp,
 	startApp,
@@ -115,6 +117,8 @@ const keys = {
 	setupStatus: ["homelab", "setup-status"],
 	systemRequirements: ["homelab", "setup", "system-requirements"],
 	appRegistry: ["homelab", "setup", "app-registry"],
+	wireguardPeers: ["homelab", "wireguard", "peers"],
+	wireguardPeerQR: (peer: string) => ["homelab", "wireguard", "peer-qr", peer],
 };
 
 // ─── Query hooks ─────────────────────────────────────────────────────────────
@@ -132,6 +136,22 @@ export function useAppDetail(appName: string) {
 		queryKey: keys.appDetail(appName),
 		queryFn: () => fetchAppDetail({ data: { appName } }),
 		refetchInterval: 10_000,
+	});
+}
+
+export function useWireguardPeers(enabled: boolean) {
+	return useQuery({
+		queryKey: keys.wireguardPeers,
+		queryFn: () => fetchWireguardPeers(),
+		enabled,
+	});
+}
+
+export function useWireguardPeerQR(peer: string | null) {
+	return useQuery({
+		queryKey: keys.wireguardPeerQR(peer ?? ""),
+		queryFn: () => fetchWireguardPeerQR({ data: { peer: peer! } }),
+		enabled: !!peer,
 	});
 }
 

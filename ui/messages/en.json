@@ -228,6 +228,11 @@
   "appDetail_updated": "{appName} updated successfully.",
   "appDetail_failedToUpdate": "Failed to update: {error}",
   "appDetail_refreshLogs": "Refresh",
+  "appDetail_wireguardPeers": "VPN Peers",
+  "appDetail_wireguardSelectPeer": "Select a peer",
+  "appDetail_wireguardNoPeers": "No peers found. Check your WireGuard configuration.",
+  "appDetail_wireguardQrCode": "QR Code for {peer}",
+  "appDetail_wireguardScanQr": "Scan this QR code with the WireGuard mobile app to connect.",
 
   "graph_title": "Dependency Graph",
   "graph_subtitle": "How services connect to each other",

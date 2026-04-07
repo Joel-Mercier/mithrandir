@@ -228,6 +228,11 @@
   "appDetail_updated": "{appName} mis à jour avec succès.",
   "appDetail_failedToUpdate": "Échec de la mise à jour : {error}",
   "appDetail_refreshLogs": "Actualiser",
+  "appDetail_wireguardPeers": "Pairs VPN",
+  "appDetail_wireguardSelectPeer": "Sélectionner un pair",
+  "appDetail_wireguardNoPeers": "Aucun pair trouvé. Vérifiez votre configuration WireGuard.",
+  "appDetail_wireguardQrCode": "QR Code pour {peer}",
+  "appDetail_wireguardScanQr": "Scannez ce QR code avec l'application mobile WireGuard pour vous connecter.",
 
   "graph_title": "Graphe de dépendances",
   "graph_subtitle": "Comment les services sont connectés entre eux",
