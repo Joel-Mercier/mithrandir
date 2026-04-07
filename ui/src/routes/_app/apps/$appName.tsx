@@ -147,7 +147,7 @@ function AppDetailPage() {
 
 	// Log viewer state
 	const [logTail, setLogTail] = useState(100);
-	const [logSince, setLogSince] = useState("1h");
+	const [logSince, setLogSince] = useState("");
 	const [logFollow, setLogFollow] = useState(false);
 	const [sseLogs, setSseLogs] = useState<string[]>([]);
 	const eventSourceRef = useRef<EventSource | null>(null);
