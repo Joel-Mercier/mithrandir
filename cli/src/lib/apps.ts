@@ -913,6 +913,83 @@ export const APP_REGISTRY: AppDefinition[] = [
     ],
   },
   {
+    name: "mealie",
+    displayName: "Mealie",
+    description: "Self-hosted recipe manager and meal planner",
+    image: "ghcr.io/mealie-recipes/mealie:latest",
+    icon: "https://cdn.jsdelivr.net/gh/selfhst/icons/png/mealie.png",
+    containerName: "mealie",
+    capacity: { performance: "low", storage: "low", note: "Recipe manager with PostgreSQL database" },
+    additionalContainers: ["mealie_postgres"],
+    port: 9925,
+    configSubdir: "data",
+    needsDataDir: false,
+    rawCompose: (envConfig: EnvConfig) => {
+      const baseDir = envConfig.BASE_DIR;
+      const dbPassword = envConfig.MEALIE_DB_PASSWORD ?? "mealie";
+      const localIp = envConfig.LOCAL_IP ?? "localhost";
+      const duckdnsPrimary = envConfig.DUCKDNS_SUBDOMAINS?.split(",")[0].trim();
+      const baseUrl = envConfig.ENABLE_HTTPS === "true" && duckdnsPrimary
+        ? `https://mealie.${duckdnsPrimary}.duckdns.org`
+        : `http://${localIp}:9925`;
+      const lines = [
+        `services:`,
+        `  mealie:`,
+        `    image: ghcr.io/mealie-recipes/mealie:latest`,
+        `    container_name: mealie`,
+        `    environment:`,
+        `      - ALLOW_SIGNUP=false`,
+        `      - PUID=${envConfig.PUID}`,
+        `      - PGID=${envConfig.PGID}`,
+        `      - TZ=${envConfig.TZ}`,
+        `      - BASE_URL=${baseUrl}`,
+        `      - DB_ENGINE=postgres`,
+        `      - POSTGRES_USER=mealie`,
+        `      - POSTGRES_PASSWORD=${dbPassword}`,
+        `      - POSTGRES_SERVER=mealie-postgres`,
+        `      - POSTGRES_PORT=5432`,
+        `      - POSTGRES_DB=mealie`,
+        `    ports:`,
+        `      - 9925:9000`,
+        `    deploy:`,
+        `      resources:`,
+        `        limits:`,
+        `          memory: 1000M`,
+        `    volumes:`,
+        `      - ${baseDir}/mealie/data:/app/data/`,
+        `    depends_on:`,
+        `      mealie-postgres:`,
+        `        condition: service_healthy`,
+        `    restart: unless-stopped`,
+        ``,
+        `  mealie-postgres:`,
+        `    image: postgres:17`,
+        `    container_name: mealie_postgres`,
+        `    environment:`,
+        `      - POSTGRES_PASSWORD=${dbPassword}`,
+        `      - POSTGRES_USER=mealie`,
+        `      - PGUSER=mealie`,
+        `      - POSTGRES_DB=mealie`,
+        `    volumes:`,
+        `      - ${baseDir}/mealie/postgres:/var/lib/postgresql/data`,
+        `    healthcheck:`,
+        `      test: ["CMD", "pg_isready"]`,
+        `      interval: 30s`,
+        `      timeout: 20s`,
+        `      retries: 3`,
+        `    restart: unless-stopped`,
+      ];
+      return lines.join("\n") + "\n";
+    },
+    secrets: [
+      {
+        envVar: "MEALIE_DB_PASSWORD",
+        prompt: "Mealie database password",
+        sensitive: true,
+      },
+    ],
+  },
+  {
     name: "adventurelog",
     displayName: "AdventureLog",
     description: "Travel planning and adventure journal",
@@ -1438,8 +1515,8 @@ export const APP_CATEGORIES: AppCategory[] = [
   {
     label: "Household",
     value: "household",
-    description: "CookCLI",
-    apps: ["cookcli"],
+    description: "CookCLI, Mealie",
+    apps: ["cookcli", "mealie"],
   },
   {
     label: "Utilities",

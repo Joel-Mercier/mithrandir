@@ -128,6 +128,7 @@ function guideSidebar(prefix = ""): DefaultTheme.SidebarItem[] {
               collapsed: true,
               items: [
                 { text: "CookCLI", link: `${prefix}/guide/apps/cookcli` },
+                { text: "Mealie", link: `${prefix}/guide/apps/mealie` },
               ],
             },
             {

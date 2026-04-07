@@ -114,6 +114,7 @@ mithrandir log <app> [service] # View logs
 | App | Port | Description |
 | --- | --- | --- |
 | [CookCLI](./cookcli) | 9080 | Recipe manager using the Cooklang markup language |
+| [Mealie](./mealie) | 9925 | Self-hosted recipe manager and meal planner |
 
 ### Utilities
 

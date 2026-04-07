@@ -43,7 +43,7 @@ You can select apps by category or pick individually:
 | **Network & Security** | Pi-hole, WireGuard, DuckDNS, Vaultwarden |
 | **Travel** | AdventureLog, TRIP |
 | **Statistics** | Your Spotify |
-| **Household** | CookCLI |
+| **Household** | CookCLI, Mealie |
 | **Utilities** | Homarr |
 
 Some apps have dependencies that are automatically included. For example, selecting Vaultwarden also installs Caddy, DuckDNS, and Pi-hole.

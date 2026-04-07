@@ -79,6 +79,7 @@ All configuration lives in a single `.env` file at the project root.
 - `PIHOLE_PASSWORD`: Optional web interface password for Pi-hole
 - `YOURSPOTIFY_CLIENT_ID`: Required Spotify Client ID for Your Spotify
 - `YOURSPOTIFY_CLIENT_SECRET`: Required Spotify Client Secret for Your Spotify
+- `MEALIE_DB_PASSWORD`: Optional database password for Mealie
 - `GATUS_DISCORD_WEBHOOK_URL`: Optional Discord webhook URL for Gatus alerts
 
 ### Rclone configuration
@@ -416,6 +417,7 @@ Checks configuration correctness across three categories: System (.env file, Doc
 | Bazarr         | 6767      | Subtitle manager for Sonarr and Radarr                                                  |
 | Caddy          | —         | HTTPS reverse proxy with automatic certificates (hidden, installed via `install https`) |
 | CookCLI        | 9080      | Recipe manager using the Cooklang markup language                                       |
+| Mealie         | 9925      | Self-hosted recipe manager and meal planner                                             |
 | DuckDNS        | —         | Free dynamic DNS service                                                                |
 | Excalidraw     | 5000      | Virtual whiteboard for sketching                                                        |
 | Gatus          | 3001      | Automated service health monitoring                                                     |
