@@ -275,7 +275,7 @@ export async function pullImageWithProgress(
 }
 
 /** Parse Docker size strings like "1.23MB", "456kB", "789B" to bytes */
-function parseSize(s: string): number {
+export function parseSize(s: string): number {
   const match = s.match(/^([0-9.]+)\s*([a-zA-Z]*)/);
   if (!match) return 0;
   const num = parseFloat(match[1]);

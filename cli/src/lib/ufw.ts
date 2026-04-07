@@ -58,7 +58,7 @@ export async function enableUfw(): Promise<void> {
  * Collect the ports an app exposes.
  * Returns an array of { port, protocol, isHostNetwork } tuples.
  */
-function getAppPorts(
+export function getAppPorts(
   app: AppDefinition,
 ): Array<{ port: number; protocol: string; isHostNetwork: boolean }> {
   const isHostNetwork = app.networkMode === "host";
