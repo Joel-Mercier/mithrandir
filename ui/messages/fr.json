@@ -512,6 +512,9 @@
   "activity_setup_completed": "Configuration initiale terminée",
   "activity_setup_skipped": "Configuration initiale ignorée",
   "activity_setup_resumed": "Configuration reprise",
+  "activity_uploaded": "{name} téléversé",
+  "activity_backup_verified": "Sauvegarde vérifiée {name}",
+  "activity_directory_created": "Répertoire {name} créé",
   "activity_unknown": "Activité inconnue",
 
   "breadcrumbs_dashboard": "Tableau de bord",

@@ -512,6 +512,9 @@
   "activity_setup_completed": "Completed initial setup",
   "activity_setup_skipped": "Skipped initial setup",
   "activity_setup_resumed": "Resumed setup",
+  "activity_uploaded": "Uploaded {name}",
+  "activity_backup_verified": "Verified backup {name}",
+  "activity_directory_created": "Created directory {name}",
   "activity_unknown": "Unknown activity",
 
   "breadcrumbs_dashboard": "Dashboard",

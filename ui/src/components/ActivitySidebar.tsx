@@ -1,13 +1,16 @@
 import { useNavigate } from "@tanstack/react-router";
 import {
 	Archive,
+	CheckCircle,
 	Download,
+	FolderPlus,
 	History,
 	Play,
 	RefreshCw,
 	Settings,
 	Square,
 	Trash2,
+	Upload,
 } from "lucide-react";
 import { Button } from "#/components/ui/button";
 import { ScrollArea } from "#/components/ui/scroll-area";
@@ -50,6 +53,9 @@ const activityMessages: Record<string, (params?: any) => string> = {
 	setup_completed: m.activity_setup_completed,
 	setup_skipped: m.activity_setup_skipped,
 	setup_resumed: m.activity_setup_resumed,
+	uploaded: m.activity_uploaded,
+	backup_verified: m.activity_backup_verified,
+	created: m.activity_directory_created,
 };
 
 function getActivityTitle(action: string, targetName: string | null): string {
@@ -67,6 +73,9 @@ const actionIcons: Record<string, typeof Play> = {
 	backup_triggered: Archive,
 	backup_deleted: Trash2,
 	config_updated: Settings,
+	uploaded: Upload,
+	backup_verified: CheckCircle,
+	created: FolderPlus,
 };
 
 export default function ActivitySidebar({

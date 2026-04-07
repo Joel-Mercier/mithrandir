@@ -194,8 +194,15 @@ export const verifyBackup = createServerFn({ method: "POST" })
 			timeout: 120000,
 		});
 
+		const success = result.exitCode === 0;
+		await logActivity(
+			"backup_verified",
+			"backup",
+			`${dateStr}${remote ? " (remote)" : ""}`,
+			"/backup-restore",
+		);
 		return {
-			success: result.exitCode === 0,
+			success,
 			output: (result.stdout + result.stderr).trim(),
 		};
 	});

@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { copyFile, mkdir, stat, unlink } from "fs/promises";
 import { basename, join, resolve } from "path";
 import { auth } from "#/lib/auth";
+import { logActivity } from "#/lib/server/activity";
 import { getProjectRoot } from "#/lib/server/utils";
 
 const MEDIA_TYPES = new Set([
@@ -118,6 +119,7 @@ async function handlePostFinish(upload: TusdHookBody["Event"]["Upload"]) {
 		}
 
 		console.log(`[upload] Complete: ${safeName} → ${mediaType}/`);
+		await logActivity("uploaded", "media", safeName, `/media/${mediaType}`);
 	} catch (err) {
 		console.error("[upload] Failed to move file:", err);
 	}

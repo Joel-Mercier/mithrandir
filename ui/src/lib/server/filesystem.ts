@@ -3,6 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { mkdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { ensureSession } from "#/lib/auth";
+import { logActivity } from "#/lib/server/activity";
 
 export const browseDirectory = createServerFn({ method: "GET" })
 	.inputValidator((d: { path: string }) => d)
@@ -18,5 +19,6 @@ export const createDirectory = createServerFn({ method: "POST" })
 		await ensureSession();
 		const dirPath = join(resolve(data.parentPath), data.name);
 		await mkdir(dirPath, { recursive: true });
+		await logActivity("created", "directory", data.name, "/settings");
 		return { path: dirPath };
 	});
