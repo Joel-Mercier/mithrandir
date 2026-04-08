@@ -39,8 +39,8 @@ export default function LanguageSwitch() {
 							"font-medium text-foreground": locale === l.code,
 						})}
 					>
-						{locale === l.code ? <Check className="mr-1 h-4 w-4" /> : null}
 						{l.label}
+            {locale === l.code ? <Check className="mr-1 h-4 w-4" /> : null}
 					</DropdownMenuItem>
 				))}
 			</DropdownMenuContent>

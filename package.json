@@ -22,9 +22,10 @@
     "build": "bun run --filter '*' build",
     "typecheck": "bun run --filter '*' typecheck",
     "test": "bun run --filter '*' test",
-    "release": "bash scripts/release.sh"
+    "release": "bash scripts/release.sh",
+    "analyze": "bunx --bun fallow"
   },
   "devDependencies": {
-    "fallow": "^2.13.0"
+    "fallow": "^2.19.2"
   }
 }
