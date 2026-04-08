@@ -7,7 +7,7 @@ Tableau de bord auto-hébergé avec divers widgets — météo, signets, flux RS
 | **Image** | `glanceapp/glance:latest` |
 | **Interface web** | `http://your-server:8082` |
 | **Chemin de configuration** | `{BASE_DIR}/glance/config` |
-| **Site web** | [glanceapp.github.io/glance](https://glanceapp.github.io/glance/) |
+| **Site web** | [GitHub Docs](https://github.com/glanceapp/glance/tree/main/docs) |
 | **Code source** | [GitHub](https://github.com/glanceapp/glance) |
 
 ## Impact sur les ressources
@@ -25,4 +25,4 @@ mithrandir install glance
 
 ## Configuration
 
-Créez un fichier de configuration `glance.yml` dans `{BASE_DIR}/glance/config/` pour définir vos pages et widgets. Consultez la [documentation Glance](https://glanceapp.github.io/glance/) pour les options de configuration.
+Créez un fichier de configuration `glance.yml` dans `{BASE_DIR}/glance/config/` pour définir vos pages et widgets. Consultez la [documentation Glance](https://github.com/glanceapp/glance/tree/main/docs) pour les options de configuration.

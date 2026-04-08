@@ -7,7 +7,7 @@ Self-hosted dashboard with various widgets — weather, bookmarks, RSS feeds, ca
 | **Image** | `glanceapp/glance:latest` |
 | **Web UI** | `http://your-server:8082` |
 | **Config path** | `{BASE_DIR}/glance/config` |
-| **Website** | [glanceapp.github.io/glance](https://glanceapp.github.io/glance/) |
+| **Website** | [GitHub Docs](https://github.com/glanceapp/glance/tree/main/docs) |
 | **Source code** | [GitHub](https://github.com/glanceapp/glance) |
 
 ## Resource Impact
@@ -25,4 +25,4 @@ mithrandir install glance
 
 ## Setup
 
-Create a `glance.yml` configuration file in `{BASE_DIR}/glance/config/` to define your dashboard pages and widgets. See the [Glance documentation](https://glanceapp.github.io/glance/) for configuration options.
+Create a `glance.yml` configuration file in `{BASE_DIR}/glance/config/` to define your dashboard pages and widgets. See the [Glance documentation](https://github.com/glanceapp/glance/tree/main/docs) for configuration options.
