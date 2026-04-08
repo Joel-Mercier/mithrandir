@@ -69,6 +69,7 @@ mithrandir log <app> [service] # View logs
 | --- | --- | --- |
 | [AFFiNE](./affine) | 3010 | Privacy-focused knowledge base and workspace |
 | [Excalidraw](./excalidraw) | 5000 | Virtual whiteboard for sketching |
+| [Memos](./memos) | 5230 | Lightweight self-hosted memo hub and knowledge management |
 | [Omni Tools](./omni-tools) | 8079 | Collection of useful productivity tools |
 | [Paperless-ngx](./paperless-ngx) | 8000 | Document management system with OCR |
 | [Penpot](./penpot) | 9001 | Open-source design and prototyping platform |

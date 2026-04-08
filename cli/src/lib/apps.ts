@@ -990,6 +990,42 @@ export const APP_REGISTRY: AppDefinition[] = [
     ],
   },
   {
+    name: "memos",
+    displayName: "Memos",
+    description: "Lightweight self-hosted memo hub and knowledge management",
+    image: "neosmemo/memos:stable",
+    icon: "https://cdn.jsdelivr.net/gh/selfhst/icons/png/memos.png",
+    containerName: "memos",
+    port: 5230,
+    configSubdir: "data",
+    needsDataDir: false,
+    capacity: { performance: "low", storage: "low", note: "Lightweight memo server with SQLite" },
+    rawCompose: (envConfig: EnvConfig) => {
+      const baseDir = envConfig.BASE_DIR;
+      const localIp = envConfig.LOCAL_IP ?? "localhost";
+      const duckdnsPrimary = envConfig.DUCKDNS_SUBDOMAINS?.split(",")[0].trim();
+      const instanceUrl = envConfig.ENABLE_HTTPS === "true" && duckdnsPrimary
+        ? `https://memos.${duckdnsPrimary}.duckdns.org`
+        : `http://${localIp}:5230`;
+      const lines = [
+        `services:`,
+        `  memos:`,
+        `    image: neosmemo/memos:stable`,
+        `    container_name: memos`,
+        `    environment:`,
+        `      - MEMOS_PORT=5230`,
+        `      - MEMOS_DRIVER=sqlite`,
+        `      - MEMOS_INSTANCE_URL=${instanceUrl}`,
+        `    ports:`,
+        `      - 5230:5230`,
+        `    volumes:`,
+        `      - ${baseDir}/memos/data:/var/opt/memos`,
+        `    restart: unless-stopped`,
+      ];
+      return lines.join("\n") + "\n";
+    },
+  },
+  {
     name: "adventurelog",
     displayName: "AdventureLog",
     description: "Travel planning and adventure journal",
@@ -1479,8 +1515,8 @@ export const APP_CATEGORIES: AppCategory[] = [
   {
     label: "Productivity",
     value: "productivity",
-    description: "AFFiNE, Excalidraw, Omni Tools, Paperless-ngx, Penpot, Stirling PDF",
-    apps: ["affine", "excalidraw", "omnitools", "paperlessngx", "penpot", "stirlingpdf"],
+    description: "AFFiNE, Excalidraw, Memos, Omni Tools, Paperless-ngx, Penpot, Stirling PDF",
+    apps: ["affine", "excalidraw", "memos", "omnitools", "paperlessngx", "penpot", "stirlingpdf"],
   },
   {
     label: "AI",

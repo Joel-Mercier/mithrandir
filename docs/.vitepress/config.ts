@@ -77,6 +77,7 @@ function guideSidebar(prefix = ""): DefaultTheme.SidebarItem[] {
               items: [
                 { text: "AFFiNE", link: `${prefix}/guide/apps/affine` },
                 { text: "Excalidraw", link: `${prefix}/guide/apps/excalidraw` },
+                { text: "Memos", link: `${prefix}/guide/apps/memos` },
                 { text: "Omni Tools", link: `${prefix}/guide/apps/omni-tools` },
                 { text: "Paperless-ngx", link: `${prefix}/guide/apps/paperless-ngx` },
                 { text: "Penpot", link: `${prefix}/guide/apps/penpot` },

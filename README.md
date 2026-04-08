@@ -418,6 +418,7 @@ Checks configuration correctness across three categories: System (.env file, Doc
 | Caddy          | —         | HTTPS reverse proxy with automatic certificates (hidden, installed via `install https`) |
 | CookCLI        | 9080      | Recipe manager using the Cooklang markup language                                       |
 | Mealie         | 9925      | Self-hosted recipe manager and meal planner                                             |
+| Memos          | 5230      | Lightweight self-hosted memo hub and knowledge management                               |
 | DuckDNS        | —         | Free dynamic DNS service                                                                |
 | Excalidraw     | 5000      | Virtual whiteboard for sketching                                                        |
 | Gatus          | 3001      | Automated service health monitoring                                                     |
