@@ -31,7 +31,6 @@ Wants=docker.service
 [Service]
 Type=simple
 WorkingDirectory=${repoRoot}/ui
-ExecStartPre=/usr/local/bin/bun run scripts/migrate.ts
 ExecStart=/usr/local/bin/bun run .deployments/current/server/index.mjs
 Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin"
 Environment="NODE_ENV=production"

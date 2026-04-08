@@ -18,10 +18,6 @@ describe("generateUiServiceUnit", () => {
     expect(unit).toContain("Type=simple");
   });
 
-  test("runs migrations before start", () => {
-    expect(unit).toContain("ExecStartPre=/usr/local/bin/bun run scripts/migrate.ts");
-  });
-
   test("starts Nitro server", () => {
     expect(unit).toContain("ExecStart=/usr/local/bin/bun run .deployments/current/server/index.mjs");
   });
