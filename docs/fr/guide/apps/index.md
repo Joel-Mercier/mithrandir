@@ -122,6 +122,7 @@ mithrandir log <app> [service] # Voir les logs
 
 | Application | Port | Description |
 | --- | --- | --- |
+| [Glance](./glance) | 8082 | Tableau de bord auto-hébergé avec divers widgets |
 | [Homarr](./homarr) | 7575 | Tableau de bord serveur personnalisable |
 | [FlareSolverr](./flaresolverr) | 8191 | Serveur proxy pour contourner la protection Cloudflare |
 

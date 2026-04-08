@@ -136,6 +136,7 @@ function guideSidebar(prefix = ""): DefaultTheme.SidebarItem[] {
               text: prefix ? "Utilitaires" : "Utilities",
               collapsed: true,
               items: [
+                { text: "Glance", link: `${prefix}/guide/apps/glance` },
                 { text: "Homarr", link: `${prefix}/guide/apps/homarr` },
                 { text: "FlareSolverr", link: `${prefix}/guide/apps/flaresolverr` },
               ],

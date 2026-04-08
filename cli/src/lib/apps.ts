@@ -874,6 +874,18 @@ export const APP_REGISTRY: AppDefinition[] = [
     ],
   },
   {
+    name: "glance",
+    displayName: "Glance",
+    description: "Self-hosted dashboard with various widgets",
+    image: "glanceapp/glance:latest",
+    icon: "https://cdn.jsdelivr.net/gh/selfhst/icons/png/glance.png",
+    port: 8082,
+    containerPort: 8080,
+    configSubdir: "config",
+    needsDataDir: false,
+    capacity: { performance: "low", storage: "low", note: "Lightweight dashboard" },
+  },
+  {
     name: "profilarr",
     displayName: "Profilarr",
     description: "Import, sync, and manage quality profiles for Radarr and Sonarr",
@@ -1557,7 +1569,7 @@ export const APP_CATEGORIES: AppCategory[] = [
   {
     label: "Utilities",
     value: "utilities",
-    description: "Homarr",
-    apps: ["homarr"],
+    description: "Homarr, Glance",
+    apps: ["homarr", "glance"],
   },
 ];

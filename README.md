@@ -422,6 +422,7 @@ Checks configuration correctness across three categories: System (.env file, Doc
 | DuckDNS        | —         | Free dynamic DNS service                                                                |
 | Excalidraw     | 5000      | Virtual whiteboard for sketching                                                        |
 | Gatus          | 3001      | Automated service health monitoring                                                     |
+| Glance         | 8082      | Self-hosted dashboard with various widgets                                              |
 | Home Assistant | 8123      | Open-source home automation platform                                                    |
 | Homarr         | 7575      | Customizable dashboard for your server                                                  |
 | Immich         | 2283      | Self-hosted photo and video management                                                  |
