@@ -21,7 +21,12 @@ import { getContainerStatus } from "@mithrandir/cli/lib/status";
 import { createServerFn } from "@tanstack/react-start";
 import { existsSync, readdirSync, readFileSync } from "fs";
 import { ensureSession } from "#/lib/auth";
-import type { AppCategory, AppDetail, DashboardApp } from "#/lib/types";
+import type {
+	AppCategory,
+	AppDetail,
+	ContainerInfo,
+	DashboardApp,
+} from "#/lib/types";
 import { formatUptime, parseMemoryMB } from "../utils";
 import { logActivity } from "./activity";
 import { getProjectRoot } from "./utils";
@@ -203,6 +208,47 @@ export const fetchAppDetail = createServerFn({ method: "GET" })
 			volumes.push(`${baseDir}/data:/data${app.dataDirReadOnly ? ":ro" : ""}`);
 		}
 
+		// Fetch additional container statuses for multi-container apps
+		let additionalContainers: ContainerInfo[] | undefined;
+		if (app.additionalContainers?.length) {
+			additionalContainers = await Promise.all(
+				app.additionalContainers.map(async (containerName) => {
+					const result = await shell(
+						"docker",
+						[
+							"inspect",
+							"--format",
+							"{{.State.Status}}",
+							containerName,
+						],
+						{ sudo: true, ignoreError: true, timeout: 5000 },
+					);
+					const stateStr =
+						result.exitCode === 0 ? result.stdout.trim() : "not found";
+					const containerStatus: ContainerInfo["status"] =
+						stateStr === "running"
+							? "running"
+							: stateStr === "exited" || stateStr === "created"
+								? "stopped"
+								: stateStr === "not found"
+									? "not found"
+									: "error";
+
+					// Derive a display name from the container name (strip app prefix, replace underscores)
+					const prefix = `${app.name}_`;
+					const displayName = containerName.startsWith(prefix)
+						? containerName.slice(prefix.length).replace(/_/g, " ")
+						: containerName.replace(/_/g, " ");
+
+					return {
+						name: containerName,
+						displayName,
+						status: containerStatus,
+					};
+				}),
+			);
+		}
+
 		return {
 			name: app.name,
 			displayName: app.displayName,
@@ -223,6 +269,7 @@ export const fetchAppDetail = createServerFn({ method: "GET" })
 			restarts,
 			createdAt,
 			logs,
+			additionalContainers,
 		};
 	});
 

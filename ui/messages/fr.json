@@ -783,5 +783,11 @@
   "remove_successMessage": "Mithrandir a été supprimé de cette machine.",
   "remove_closePage": "Vous pouvez fermer cette page.",
   "remove_backToSettings": "Retour aux paramètres",
-  "remove_error": "Échec de la suppression"
+  "remove_error": "Échec de la suppression",
+  "appDetail_additionalContainers": "Services",
+  "appDetail_additionalContainersCount": "{count} conteneurs",
+  "appDetail_containerStatusRunning": "En cours",
+  "appDetail_containerStatusStopped": "Arrêté",
+  "appDetail_containerStatusError": "Erreur",
+  "appDetail_containerStatusNotFound": "Introuvable"
 }

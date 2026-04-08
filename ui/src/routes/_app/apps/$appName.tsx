@@ -3,6 +3,10 @@ import {
 	AlertCircle,
 	AlertTriangle,
 	ArrowDownToLine,
+	Box,
+	CircleCheck,
+	CircleMinus,
+	CircleX,
 	ExternalLink,
 	Loader2,
 	Play,
@@ -59,7 +63,7 @@ import {
 	useWireguardPeerQR,
 	useWireguardPeers,
 } from "#/hooks/homelab";
-import type { AppStatus } from "#/lib/types";
+import type { AppStatus, ContainerInfo } from "#/lib/types";
 import { m } from "#/paraglide/messages.js";
 
 export const Route = createFileRoute("/_app/apps/$appName")({
@@ -124,6 +128,49 @@ function DetailSkeleton() {
 						</CardContent>
 					</Card>
 				))}
+			</div>
+		</div>
+	);
+}
+
+const containerStatusConfig: Record<
+	ContainerInfo["status"],
+	{ icon: typeof CircleCheck; label: () => string; className: string }
+> = {
+	running: {
+		icon: CircleCheck,
+		label: () => m.appDetail_containerStatusRunning(),
+		className: "text-status-healthy",
+	},
+	stopped: {
+		icon: CircleMinus,
+		label: () => m.appDetail_containerStatusStopped(),
+		className: "text-muted-foreground",
+	},
+	error: {
+		icon: CircleX,
+		label: () => m.appDetail_containerStatusError(),
+		className: "text-status-critical",
+	},
+	"not found": {
+		icon: CircleX,
+		label: () => m.appDetail_containerStatusNotFound(),
+		className: "text-muted-foreground",
+	},
+};
+
+function ContainerRow({ container }: { container: ContainerInfo }) {
+	const config = containerStatusConfig[container.status];
+	const Icon = config.icon;
+	return (
+		<div className="flex items-center justify-between rounded-md border border-border/50 px-3 py-2">
+			<div className="flex items-center gap-2">
+				<Box className="h-3.5 w-3.5 text-muted-foreground" />
+				<span className="text-sm capitalize">{container.displayName}</span>
+			</div>
+			<div className={`flex items-center gap-1.5 ${config.className}`}>
+				<Icon className="h-3.5 w-3.5" />
+				<span className="text-xs font-medium">{config.label()}</span>
 			</div>
 		</div>
 	);
@@ -555,6 +602,27 @@ function AppDetailPage() {
 								<div key={vol} className="font-mono-data text-xs break-all">
 									{vol}
 								</div>
+							))}
+						</CardContent>
+					</Card>
+				)}
+
+				{/* Additional Containers */}
+				{detail?.additionalContainers && detail.additionalContainers.length > 0 && (
+					<Card>
+						<CardHeader className="pb-2">
+							<div className="flex items-center justify-between">
+								<CardTitle className="text-sm font-medium">
+									{m.appDetail_additionalContainers()}
+								</CardTitle>
+								<span className="text-xs text-muted-foreground">
+									{m.appDetail_additionalContainersCount({ count: detail.additionalContainers.length + 1 })}
+								</span>
+							</div>
+						</CardHeader>
+						<CardContent className="space-y-1.5">
+							{detail.additionalContainers.map((container) => (
+								<ContainerRow key={container.name} container={container} />
 							))}
 						</CardContent>
 					</Card>

@@ -783,5 +783,11 @@
   "remove_successMessage": "Mithrandir has been removed from this machine.",
   "remove_closePage": "You can close this page.",
   "remove_backToSettings": "Back to Settings",
-  "remove_error": "Removal Failed"
+  "remove_error": "Removal Failed",
+  "appDetail_additionalContainers": "Services",
+  "appDetail_additionalContainersCount": "{count} containers",
+  "appDetail_containerStatusRunning": "Running",
+  "appDetail_containerStatusStopped": "Stopped",
+  "appDetail_containerStatusError": "Error",
+  "appDetail_containerStatusNotFound": "Not Found"
 }

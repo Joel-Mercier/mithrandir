@@ -33,6 +33,12 @@ export interface DashboardApp {
 	capacityNote?: string;
 }
 
+export interface ContainerInfo {
+	name: string;
+	displayName: string;
+	status: "running" | "stopped" | "error" | "not found";
+}
+
 export interface AppDetail extends DashboardApp {
 	image: string;
 	version: string;
@@ -45,6 +51,7 @@ export interface AppDetail extends DashboardApp {
 	restarts: number;
 	createdAt: string;
 	logs: string[];
+	additionalContainers?: ContainerInfo[];
 }
 
 export interface StorageMount {
