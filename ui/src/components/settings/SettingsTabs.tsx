@@ -62,11 +62,14 @@ import {
 	useConfig,
 	useDisableFirewall,
 	useDisableHttps,
+	useDisableSso,
 	useEnableFirewall,
 	useEnableHttps,
+	useEnableSso,
 	useFirewallPrerequisites,
 	useFirewallRules,
 	useHttpsPrerequisites,
+	useSsoClients,
 	useRcloneInstalled,
 	useRemoveBackupRemote,
 	useUpdateConfig,
@@ -437,7 +440,104 @@ export function NetworkTab() {
 			</Card>
 
 			<FirewallCard config={config} />
+			<SsoCard config={config} />
 		</div>
+	);
+}
+
+function SsoCard({ config }: { config: SystemConfig }) {
+	const enableSsoMutation = useEnableSso();
+	const disableSsoMutation = useDisableSso();
+	const ssoClientsQuery = useSsoClients();
+
+	const isSsoBusy =
+		enableSsoMutation.isPending || disableSsoMutation.isPending;
+
+	const handleSsoToggle = async (checked: boolean) => {
+		if (checked) {
+			enableSsoMutation.mutate(undefined, {
+				onSuccess: () => toast.success("SSO enabled"),
+				onError: (err) =>
+					toast.error(`Failed to enable SSO: ${err.message}`),
+			});
+		} else {
+			disableSsoMutation.mutate(undefined, {
+				onSuccess: () => toast.success("SSO disabled"),
+				onError: (err) =>
+					toast.error(`Failed to disable SSO: ${err.message}`),
+			});
+		}
+	};
+
+	const clients = ssoClientsQuery.data ?? [];
+
+	return (
+		<Card>
+			<CardHeader>
+				<CardTitle className="text-sm font-medium">
+					Single Sign-On (SSO)
+				</CardTitle>
+				<CardDescription>
+					Use Mithrandir as an OAuth/OIDC provider for your homelab apps
+				</CardDescription>
+			</CardHeader>
+			<CardContent className="space-y-4">
+				<Alert className="border-blue-500/30 bg-blue-500/5 text-blue-600 dark:text-blue-400">
+					<AlertDescription>
+						When enabled, apps like Immich and Paperless-ngx can use
+						Mithrandir for login. Requires a UI restart after toggling.
+					</AlertDescription>
+				</Alert>
+
+				<div className="flex items-center justify-between rounded-lg border border-border/50 p-3 transition-colors hover:bg-muted/50">
+					<div className="space-y-0.5">
+						<Label>Enable SSO Provider</Label>
+						<p className="text-xs text-muted-foreground">
+							Expose OAuth 2.1 / OIDC endpoints for homelab apps
+						</p>
+					</div>
+					<div className="flex items-center gap-2">
+						{isSsoBusy && <Spinner size="sm" />}
+						<Switch
+							checked={config.ssoEnabled}
+							disabled={isSsoBusy}
+							onCheckedChange={handleSsoToggle}
+						/>
+					</div>
+				</div>
+
+				{config.ssoEnabled && clients.length > 0 && (
+					<>
+						<Separator />
+						<div className="space-y-2 text-sm">
+							<p className="font-medium">Registered Clients</p>
+							<div className="space-y-0 overflow-hidden rounded-lg border border-border/50">
+								{clients.map((client, i) => (
+									<div
+										key={client.clientId}
+										className={`flex items-center justify-between px-3 py-2 font-mono-data text-xs transition-colors hover:bg-muted/50 ${i > 0 ? "border-t border-border/50" : ""}`}
+									>
+										<span>{client.name ?? client.clientId}</span>
+										<Badge
+											variant={client.disabled ? "outline" : "secondary"}
+										>
+											{client.disabled ? "disabled" : "active"}
+										</Badge>
+									</div>
+								))}
+							</div>
+						</div>
+					</>
+				)}
+
+				{config.ssoEnabled && clients.length === 0 && (
+					<p className="text-xs text-muted-foreground">
+						No OAuth clients registered yet. Install an SSO-compatible app to
+						get started.
+					</p>
+				)}
+			</CardContent>
+		</Card>
 	);
 }
 

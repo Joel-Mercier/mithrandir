@@ -25,10 +25,12 @@ import { Route as AppProfileRouteImport } from './routes/_app/profile'
 import { Route as AppMediaLibraryRouteImport } from './routes/_app/media-library'
 import { Route as AppBackupRestoreRouteImport } from './routes/_app/backup-restore'
 import { Route as AppAppsIndexRouteImport } from './routes/_app/apps/index'
+import { Route as ApiSsoClientsRouteImport } from './routes/api/sso/clients'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as AppAppsGraphRouteImport } from './routes/_app/apps/graph'
 import { Route as AppAppsCapacityRouteImport } from './routes/_app/apps/capacity'
 import { Route as AppAppsAppNameRouteImport } from './routes/_app/apps/$appName'
+import { Route as ApiSsoClientsClientIdRouteImport } from './routes/api/sso/clients.$clientId'
 import { Route as ApiMediaUploadHooksRouteImport } from './routes/api/media/upload/hooks'
 import { Route as ApiHomelabLogsAppNameRouteImport } from './routes/api/homelab/logs.$appName'
 
@@ -109,6 +111,11 @@ const AppAppsIndexRoute = AppAppsIndexRouteImport.update({
   path: '/apps/',
   getParentRoute: () => AppRoute,
 } as any)
+const ApiSsoClientsRoute = ApiSsoClientsRouteImport.update({
+  id: '/api/sso/clients',
+  path: '/api/sso/clients',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -128,6 +135,11 @@ const AppAppsAppNameRoute = AppAppsAppNameRouteImport.update({
   id: '/apps/$appName',
   path: '/apps/$appName',
   getParentRoute: () => AppRoute,
+} as any)
+const ApiSsoClientsClientIdRoute = ApiSsoClientsClientIdRouteImport.update({
+  id: '/$clientId',
+  path: '/$clientId',
+  getParentRoute: () => ApiSsoClientsRoute,
 } as any)
 const ApiMediaUploadHooksRoute = ApiMediaUploadHooksRouteImport.update({
   id: '/api/media/upload/hooks',
@@ -157,9 +169,11 @@ export interface FileRoutesByFullPath {
   '/apps/capacity': typeof AppAppsCapacityRoute
   '/apps/graph': typeof AppAppsGraphRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/sso/clients': typeof ApiSsoClientsRouteWithChildren
   '/apps/': typeof AppAppsIndexRoute
   '/api/homelab/logs/$appName': typeof ApiHomelabLogsAppNameRoute
   '/api/media/upload/hooks': typeof ApiMediaUploadHooksRoute
+  '/api/sso/clients/$clientId': typeof ApiSsoClientsClientIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof AppIndexRoute
@@ -178,9 +192,11 @@ export interface FileRoutesByTo {
   '/apps/capacity': typeof AppAppsCapacityRoute
   '/apps/graph': typeof AppAppsGraphRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/sso/clients': typeof ApiSsoClientsRouteWithChildren
   '/apps': typeof AppAppsIndexRoute
   '/api/homelab/logs/$appName': typeof ApiHomelabLogsAppNameRoute
   '/api/media/upload/hooks': typeof ApiMediaUploadHooksRoute
+  '/api/sso/clients/$clientId': typeof ApiSsoClientsClientIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -203,9 +219,11 @@ export interface FileRoutesById {
   '/_app/apps/capacity': typeof AppAppsCapacityRoute
   '/_app/apps/graph': typeof AppAppsGraphRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/sso/clients': typeof ApiSsoClientsRouteWithChildren
   '/_app/apps/': typeof AppAppsIndexRoute
   '/api/homelab/logs/$appName': typeof ApiHomelabLogsAppNameRoute
   '/api/media/upload/hooks': typeof ApiMediaUploadHooksRoute
+  '/api/sso/clients/$clientId': typeof ApiSsoClientsClientIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -226,9 +244,11 @@ export interface FileRouteTypes {
     | '/apps/capacity'
     | '/apps/graph'
     | '/api/auth/$'
+    | '/api/sso/clients'
     | '/apps/'
     | '/api/homelab/logs/$appName'
     | '/api/media/upload/hooks'
+    | '/api/sso/clients/$clientId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -247,9 +267,11 @@ export interface FileRouteTypes {
     | '/apps/capacity'
     | '/apps/graph'
     | '/api/auth/$'
+    | '/api/sso/clients'
     | '/apps'
     | '/api/homelab/logs/$appName'
     | '/api/media/upload/hooks'
+    | '/api/sso/clients/$clientId'
   id:
     | '__root__'
     | '/_app'
@@ -271,9 +293,11 @@ export interface FileRouteTypes {
     | '/_app/apps/capacity'
     | '/_app/apps/graph'
     | '/api/auth/$'
+    | '/api/sso/clients'
     | '/_app/apps/'
     | '/api/homelab/logs/$appName'
     | '/api/media/upload/hooks'
+    | '/api/sso/clients/$clientId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -281,6 +305,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRouteWithChildren
   UpdateRoute: typeof UpdateRouteWithChildren
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiSsoClientsRoute: typeof ApiSsoClientsRouteWithChildren
   ApiHomelabLogsAppNameRoute: typeof ApiHomelabLogsAppNameRoute
   ApiMediaUploadHooksRoute: typeof ApiMediaUploadHooksRoute
 }
@@ -399,6 +424,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAppsIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/api/sso/clients': {
+      id: '/api/sso/clients'
+      path: '/api/sso/clients'
+      fullPath: '/api/sso/clients'
+      preLoaderRoute: typeof ApiSsoClientsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -426,6 +458,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/apps/$appName'
       preLoaderRoute: typeof AppAppsAppNameRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/api/sso/clients/$clientId': {
+      id: '/api/sso/clients/$clientId'
+      path: '/$clientId'
+      fullPath: '/api/sso/clients/$clientId'
+      preLoaderRoute: typeof ApiSsoClientsClientIdRouteImport
+      parentRoute: typeof ApiSsoClientsRoute
     }
     '/api/media/upload/hooks': {
       id: '/api/media/upload/hooks'
@@ -501,11 +540,24 @@ const UpdateRouteChildren: UpdateRouteChildren = {
 const UpdateRouteWithChildren =
   UpdateRoute._addFileChildren(UpdateRouteChildren)
 
+interface ApiSsoClientsRouteChildren {
+  ApiSsoClientsClientIdRoute: typeof ApiSsoClientsClientIdRoute
+}
+
+const ApiSsoClientsRouteChildren: ApiSsoClientsRouteChildren = {
+  ApiSsoClientsClientIdRoute: ApiSsoClientsClientIdRoute,
+}
+
+const ApiSsoClientsRouteWithChildren = ApiSsoClientsRoute._addFileChildren(
+  ApiSsoClientsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRouteWithChildren,
   UpdateRoute: UpdateRouteWithChildren,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiSsoClientsRoute: ApiSsoClientsRouteWithChildren,
   ApiHomelabLogsAppNameRoute: ApiHomelabLogsAppNameRoute,
   ApiMediaUploadHooksRoute: ApiMediaUploadHooksRoute,
 }

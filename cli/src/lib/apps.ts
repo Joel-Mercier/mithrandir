@@ -259,6 +259,23 @@ export const APP_REGISTRY: AppDefinition[] = [
     rawCompose: (envConfig: EnvConfig) => {
       const baseDir = envConfig.BASE_DIR;
       const dbPassword = envConfig.IMMICH_DB_PASSWORD ?? "postgres";
+      const oauthEnv: string[] = [];
+      if (envConfig.ENABLE_SSO === "true") {
+        const clientSecret = envConfig.IMMICH_OAUTH_CLIENT_SECRET;
+        const domain = envConfig.DUCKDNS_SUBDOMAINS?.split(",")[0]?.trim();
+        if (clientSecret && domain) {
+          const issuerUrl = `https://mithrandir.${domain}.duckdns.org/api/auth`;
+          oauthEnv.push(
+            `      - OAUTH_ENABLED=true`,
+            `      - OAUTH_ISSUER_URL=${issuerUrl}/.well-known/openid-configuration`,
+            `      - OAUTH_CLIENT_ID=immich`,
+            `      - OAUTH_CLIENT_SECRET=${clientSecret}`,
+            `      - OAUTH_SCOPE=openid profile email`,
+            `      - OAUTH_AUTO_LAUNCH=false`,
+            `      - OAUTH_BUTTON_TEXT=Login with Mithrandir`,
+          );
+        }
+      }
       const lines = [
         `services:`,
         `  immich-server:`,
@@ -271,6 +288,7 @@ export const APP_REGISTRY: AppDefinition[] = [
         `      - DB_HOSTNAME=immich-postgres`,
         `      - REDIS_HOSTNAME=immich-redis`,
         `      - TZ=${envConfig.TZ}`,
+        ...oauthEnv,
         `    ports:`,
         `      - 2283:2283`,
         `    volumes:`,
@@ -332,6 +350,26 @@ export const APP_REGISTRY: AppDefinition[] = [
         sensitive: true,
       },
     ],
+    oauth: {
+      clientId: "immich",
+      displayName: "Immich",
+      envMapping: {
+        enabled: "OAUTH_ENABLED",
+        issuerUrl: "OAUTH_ISSUER_URL",
+        clientId: "OAUTH_CLIENT_ID",
+        clientSecret: "OAUTH_CLIENT_SECRET",
+        scope: "OAUTH_SCOPE",
+        extra: {
+          OAUTH_AUTO_LAUNCH: "false",
+          OAUTH_BUTTON_TEXT: "Login with Mithrandir",
+        },
+      },
+      redirectUris: (domain: string) => [
+        `https://immich.${domain}/auth/login`,
+        `https://immich.${domain}/user-settings`,
+        "app.immich:///oauth-callback",
+      ],
+    },
   },
   {
     name: "excalidraw",
@@ -1267,6 +1305,32 @@ export const APP_REGISTRY: AppDefinition[] = [
         : "";
       const ocrLanguage = envConfig.PAPERLESS_OCR_LANGUAGE ?? "eng";
       const urlEnv = paperlessUrl ? [`      - PAPERLESS_URL=${paperlessUrl}`] : [];
+      const oauthEnv: string[] = [];
+      if (envConfig.ENABLE_SSO === "true") {
+        const clientSecret = envConfig.PAPERLESSNGX_OAUTH_CLIENT_SECRET;
+        if (clientSecret && duckdnsPrimary) {
+          const issuerUrl = `https://mithrandir.${duckdnsPrimary}.duckdns.org/api/auth`;
+          const providersJson = JSON.stringify({
+            openid_connect: {
+              OAUTH_PKCE_ENABLED: true,
+              APPS: [{
+                provider_id: "mithrandir",
+                name: "Mithrandir",
+                client_id: "paperlessngx",
+                secret: clientSecret,
+                settings: {
+                  server_url: issuerUrl,
+                  token_auth_method: "client_secret_basic",
+                },
+              }],
+            },
+          });
+          oauthEnv.push(
+            `      - PAPERLESS_APPS=allauth.socialaccount.providers.openid_connect`,
+            `      - PAPERLESS_SOCIALACCOUNT_PROVIDERS=${providersJson}`,
+          );
+        }
+      }
       const lines = [
         `services:`,
         `  paperlessngx-broker:`,
@@ -1295,6 +1359,7 @@ export const APP_REGISTRY: AppDefinition[] = [
         `      - USERMAP_UID=${envConfig.PUID}`,
         `      - USERMAP_GID=${envConfig.PGID}`,
         ...urlEnv,
+        ...oauthEnv,
         `    restart: unless-stopped`,
       ];
       return lines.join("\n") + "\n";
@@ -1305,6 +1370,38 @@ export const APP_REGISTRY: AppDefinition[] = [
         prompt: "OCR language (see https://tesseract-ocr.github.io/tessdoc/Data-Files-in-different-versions.html)",
       },
     ],
+    oauth: {
+      clientId: "paperlessngx",
+      displayName: "Paperless-ngx",
+      envMapping: {
+        issuerUrl: "_CUSTOM_",
+        clientId: "_CUSTOM_",
+        clientSecret: "_CUSTOM_",
+        customBuilder: ({ issuerUrl, clientId, clientSecret }) => ({
+          PAPERLESS_APPS: "allauth.socialaccount.providers.openid_connect",
+          PAPERLESS_SOCIALACCOUNT_PROVIDERS: JSON.stringify({
+            openid_connect: {
+              OAUTH_PKCE_ENABLED: true,
+              APPS: [
+                {
+                  provider_id: "mithrandir",
+                  name: "Mithrandir",
+                  client_id: clientId,
+                  secret: clientSecret,
+                  settings: {
+                    server_url: issuerUrl,
+                    token_auth_method: "client_secret_basic",
+                  },
+                },
+              ],
+            },
+          }),
+        }),
+      },
+      redirectUris: (domain: string) => [
+        `https://paperlessngx.${domain}/accounts/oidc/mithrandir/login/callback/`,
+      ],
+    },
   },
   {
     name: "pihole",

@@ -47,9 +47,12 @@ import {
 	checkRcloneInstalled,
 	disableFirewall,
 	disableHttps,
+	disableSso,
 	enableFirewall,
 	enableHttps,
+	enableSso,
 	fetchConfig,
+	fetchSsoClients,
 	fetchFirewallRules,
 	fetchResources,
 	fetchSystemStatus,
@@ -490,6 +493,37 @@ export function useDisableFirewall() {
 			queryClient.invalidateQueries({
 				queryKey: ["homelab", "firewall-rules"],
 			});
+			queryClient.invalidateQueries({ queryKey: keys.activity });
+		},
+	});
+}
+
+// ─── SSO hooks ───────────────────────────────────────────────────────────────
+
+export function useSsoClients() {
+	return useQuery({
+		queryKey: ["homelab", "sso-clients"],
+		queryFn: () => fetchSsoClients(),
+	});
+}
+
+export function useEnableSso() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: () => enableSso(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: keys.config });
+			queryClient.invalidateQueries({ queryKey: keys.activity });
+		},
+	});
+}
+
+export function useDisableSso() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: () => disableSso(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: keys.config });
 			queryClient.invalidateQueries({ queryKey: keys.activity });
 		},
 	});

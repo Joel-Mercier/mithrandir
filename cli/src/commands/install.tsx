@@ -28,6 +28,7 @@ import { generateCompose } from "@/lib/compose.js";
 import { generate404Page, generateCaddyfile, generateCaddyDockerfile, getDuckDnsDomain, regenerateCaddyfile } from "@/lib/caddy.js";
 import { isUiServiceActive } from "@/lib/systemd-ui.js";
 import { regenerateGatusConfig } from "@/lib/gatus.js";
+import { registerSsoClient } from "@/lib/sso.js";
 import { getLocalIp } from "@/lib/distro.js";
 import {
   isUfwInstalled,
@@ -863,6 +864,26 @@ function InstallApp({ appName }: { appName: string }) {
       }
     }
 
+    // Register OAuth clients if SSO is enabled
+    if (env.ENABLE_SSO === "true") {
+      for (const installApp of appsToInstall) {
+        if (installApp.oauth) {
+          try {
+            const result = await registerSsoClient(installApp, env);
+            if (result) {
+              env[`${installApp.oauth.clientId.toUpperCase()}_OAUTH_CLIENT_SECRET`] = result.clientSecret;
+              await saveEnvConfig(env);
+              setAppResults((prev) => [...prev, { name: "SSO", status: "done", message: `OAuth client registered for ${installApp.displayName}` }]);
+            } else {
+              setAppResults((prev) => [...prev, { name: "SSO", status: "skipped", message: "UI not reachable — will reconcile on next UI start" }]);
+            }
+          } catch {
+            setAppResults((prev) => [...prev, { name: "SSO", status: "skipped", message: "Failed to register OAuth client" }]);
+          }
+        }
+      }
+    }
+
     // Add UFW rules if firewall is enabled
     if (env.ENABLE_FIREWALL === "true" && await isUfwActive()) {
       try {
@@ -1054,6 +1075,26 @@ function InstallStack({ stackName }: { stackName: string }) {
         setAppResults((prev) => [...prev, { name: "HTTPS", status: "done", message: "Caddyfile updated" }]);
       } catch {
         setAppResults((prev) => [...prev, { name: "HTTPS", status: "skipped", message: "Failed to update Caddyfile" }]);
+      }
+    }
+
+    // Register OAuth clients if SSO is enabled
+    if (env.ENABLE_SSO === "true") {
+      for (const { app } of appsToInstall) {
+        if (app.oauth) {
+          try {
+            const result = await registerSsoClient(app, env);
+            if (result) {
+              env[`${app.oauth.clientId.toUpperCase()}_OAUTH_CLIENT_SECRET`] = result.clientSecret;
+              await saveEnvConfig(env);
+              setAppResults((prev) => [...prev, { name: "SSO", status: "done", message: `OAuth client registered for ${app.displayName}` }]);
+            } else {
+              setAppResults((prev) => [...prev, { name: "SSO", status: "skipped", message: "UI not reachable — will reconcile on next UI start" }]);
+            }
+          } catch {
+            setAppResults((prev) => [...prev, { name: "SSO", status: "skipped", message: "Failed to register OAuth client" }]);
+          }
+        }
       }
     }
 

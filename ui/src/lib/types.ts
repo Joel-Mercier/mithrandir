@@ -93,6 +93,7 @@ export interface SystemConfig {
 	timezone: string;
 	httpsEnabled: boolean;
 	firewallEnabled: boolean;
+	ssoEnabled: boolean;
 	acmeEmail: string;
 	duckdnsDomain: string;
 	backupDir: string;

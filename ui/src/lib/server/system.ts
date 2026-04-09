@@ -110,6 +110,7 @@ export const fetchConfig = createServerFn({ method: "GET" }).handler(
 			timezone: envConfig.TZ ?? "Etc/UTC",
 			httpsEnabled: envConfig.ENABLE_HTTPS === "true",
 			firewallEnabled: envConfig.ENABLE_FIREWALL === "true",
+			ssoEnabled: envConfig.ENABLE_SSO === "true",
 			acmeEmail: envConfig.ACME_EMAIL ?? "",
 			duckdnsDomain: domain ?? "",
 			backupDir: backupConfig.BACKUP_DIR,
@@ -287,6 +288,8 @@ export const updateConfig = createServerFn({ method: "POST" })
 			envConfig.ENABLE_HTTPS = String(changes.httpsEnabled);
 		if (changes.firewallEnabled !== undefined)
 			envConfig.ENABLE_FIREWALL = String(changes.firewallEnabled);
+		if (changes.ssoEnabled !== undefined)
+			envConfig.ENABLE_SSO = String(changes.ssoEnabled);
 		if (changes.acmeEmail !== undefined)
 			envConfig.ACME_EMAIL = changes.acmeEmail;
 		if (changes.backupDir !== undefined)
@@ -638,6 +641,49 @@ export const disableFirewall = createServerFn({ method: "POST" }).handler(
 		await saveEnvConfig(envConfig, projectRoot);
 
 		await logActivity("firewall_disabled", "system", null, "/settings");
+	},
+);
+
+// ─── SSO ──────────────────────────────────────────────────────────────────────
+
+export const enableSso = createServerFn({ method: "POST" }).handler(
+	async () => {
+		await ensureSession();
+		const projectRoot = getProjectRoot();
+		const envConfig = await loadEnvConfig(projectRoot);
+
+		envConfig.ENABLE_SSO = "true";
+		await saveEnvConfig(envConfig, projectRoot);
+
+		await logActivity("sso_enabled", "system", null, "/settings");
+	},
+);
+
+export const disableSso = createServerFn({ method: "POST" }).handler(
+	async () => {
+		await ensureSession();
+		const projectRoot = getProjectRoot();
+		const envConfig = await loadEnvConfig(projectRoot);
+
+		envConfig.ENABLE_SSO = "false";
+		await saveEnvConfig(envConfig, projectRoot);
+
+		await logActivity("sso_disabled", "system", null, "/settings");
+	},
+);
+
+export const fetchSsoClients = createServerFn({ method: "GET" }).handler(
+	async () => {
+		await ensureSession();
+		const { oauthClient } = await import("#/db/schema");
+		const dbModule = await import("#/lib/db");
+		const clients = await dbModule.default.select().from(oauthClient);
+		return clients.map((c) => ({
+			clientId: c.clientId,
+			name: c.name,
+			disabled: c.disabled,
+			createdAt: c.createdAt,
+		}));
 	},
 );
 

@@ -1,9 +1,15 @@
 import { i18n } from "@better-auth/i18n";
+import { oauthProvider } from "@better-auth/oauth-provider";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeaders } from "@tanstack/react-start/server";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { genericOAuth, haveIBeenPwned, twoFactor } from "better-auth/plugins";
+import {
+	genericOAuth,
+	haveIBeenPwned,
+	jwt,
+	twoFactor,
+} from "better-auth/plugins";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
 import * as schema from "#/db/schema";
 import db from "#/lib/db";
@@ -23,6 +29,9 @@ const oidcEnabled =
 	process.env.OIDC_CLIENT_ID &&
 	process.env.OIDC_CLIENT_SECRET &&
 	process.env.OIDC_ISSUER_URL;
+
+// SSO provider configuration (optional — makes this UI an OAuth/OIDC provider for homelab apps)
+const ssoEnabled = process.env.ENABLE_SSO === "true";
 
 export const auth = betterAuth({
 	appName: "Mithrandir",
@@ -77,6 +86,15 @@ export const auth = betterAuth({
 					}),
 				]
 			: []),
+		...(ssoEnabled
+			? [
+					jwt(),
+					oauthProvider({
+						loginPage: "/sign-in",
+						consentPage: "/consent",
+					}),
+				]
+			: []),
 	],
 });
 
@@ -85,6 +103,7 @@ export const getOidcEnabled = createServerFn({ method: "GET" }).handler(
 		return !!oidcEnabled;
 	},
 );
+
 
 export const getSession = createServerFn({ method: "GET" }).handler(
 	async () => {

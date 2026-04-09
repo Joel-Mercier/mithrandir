@@ -8,6 +8,7 @@ import { shell } from "@/lib/shell.js";
 import { loadEnvConfig, getProjectRoot } from "@/lib/config.js";
 import { regenerateCaddyfile } from "@/lib/caddy.js";
 import { regenerateGatusConfig } from "@/lib/gatus.js";
+import { deregisterSsoClient } from "@/lib/sso.js";
 import { isUfwActive, removeAppPorts } from "@/lib/ufw.js";
 import {
   stopAllApps,
@@ -160,6 +161,17 @@ function AppUninstallInteractive({
         addStep({ name: "HTTPS", status: "done", message: "Caddyfile updated" });
       } catch {
         addStep({ name: "HTTPS", status: "skipped", message: "Failed to update Caddyfile" });
+      }
+    }
+
+    // Deregister OAuth client if SSO is enabled
+    const appDef = getApp(appName);
+    if (env.ENABLE_SSO === "true" && appDef?.oauth) {
+      try {
+        await deregisterSsoClient(appDef);
+        addStep({ name: "SSO", status: "done", message: "OAuth client removed" });
+      } catch {
+        addStep({ name: "SSO", status: "skipped", message: "Failed to remove OAuth client" });
       }
     }
 

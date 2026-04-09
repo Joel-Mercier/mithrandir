@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@better-auth/i18n": "1.5.6",
+    "@better-auth/oauth-provider": "^1.6.2",
     "@leeoniya/ufuzzy": "^1.0.19",
     "@libsql/client": "^0.17.2",
     "@mithrandir/cli": "workspace:*",

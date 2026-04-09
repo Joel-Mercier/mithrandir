@@ -86,6 +86,40 @@ export interface AppDefinition {
     /** Human-readable note about resource usage */
     note?: string;
   };
+  /** OAuth/OIDC client configuration — enables SSO login via Mithrandir when ENABLE_SSO=true */
+  oauth?: OAuthAppConfig;
+}
+
+export interface OAuthAppConfig {
+  /** OAuth client ID registered with the provider, e.g. "immich" */
+  clientId: string;
+  /** Display name shown in the provider, e.g. "Immich" */
+  displayName: string;
+  /** How to map OAuth credentials into compose environment variables */
+  envMapping: OAuthEnvMapping;
+  /** Generate redirect URIs given the DuckDNS domain (e.g. "subdomain.duckdns.org") */
+  redirectUris: (domain: string) => string[];
+}
+
+export interface OAuthEnvMapping {
+  /** Env var to set to "true" to enable OAuth in the app (e.g. "OAUTH_ENABLED") */
+  enabled?: string;
+  /** Env var for the OIDC issuer/discovery URL */
+  issuerUrl: string;
+  /** Env var for the OAuth client ID */
+  clientId: string;
+  /** Env var for the OAuth client secret */
+  clientSecret: string;
+  /** Env var for scopes */
+  scope?: string;
+  /** Additional static env vars to set */
+  extra?: Record<string, string>;
+  /** Custom builder for apps that need special env var formats (e.g. Paperless-ngx JSON blob) */
+  customBuilder?: (opts: {
+    issuerUrl: string;
+    clientId: string;
+    clientSecret: string;
+  }) => Record<string, string>;
 }
 
 export interface SecretDefinition {
@@ -119,6 +153,8 @@ export interface EnvConfig {
   BACKUP_PASSWORD?: string;
   BACKUP_HOUR?: string;
   ENABLE_HTTPS?: string;
+  ENABLE_FIREWALL?: string;
+  ENABLE_SSO?: string;
   ACME_EMAIL?: string;
   [key: string]: string | undefined;
 }

@@ -154,6 +154,119 @@ export const twoFactorRelations = relations(twoFactor, ({ one }) => ({
 	}),
 }));
 
+// OAuth Provider tables (used when ENABLE_SSO=true)
+export const oauthClient = sqliteTable(
+	"oauth_client",
+	{
+		id: text("id").primaryKey(),
+		clientId: text("client_id").notNull().unique(),
+		clientSecret: text("client_secret"),
+		disabled: integer("disabled", { mode: "boolean" }).default(false),
+		skipConsent: integer("skip_consent", { mode: "boolean" }),
+		enableEndSession: integer("enable_end_session", { mode: "boolean" }),
+		subjectType: text("subject_type"),
+		scopes: text("scopes"),
+		userId: text("user_id").references(() => user.id),
+		createdAt: integer("created_at", { mode: "timestamp_ms" })
+			.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+			.notNull(),
+		updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+			.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+			.$onUpdate(() => /* @__PURE__ */ new Date())
+			.notNull(),
+		name: text("name"),
+		uri: text("uri"),
+		icon: text("icon"),
+		contacts: text("contacts"),
+		tos: text("tos"),
+		policy: text("policy"),
+		softwareId: text("software_id"),
+		softwareVersion: text("software_version"),
+		softwareStatement: text("software_statement"),
+		redirectUris: text("redirect_uris").notNull(),
+		postLogoutRedirectUris: text("post_logout_redirect_uris"),
+		tokenEndpointAuthMethod: text("token_endpoint_auth_method"),
+		grantTypes: text("grant_types"),
+		responseTypes: text("response_types"),
+		public: integer("public", { mode: "boolean" }),
+		type: text("type"),
+		requirePKCE: integer("require_pkce", { mode: "boolean" }),
+		referenceId: text("reference_id"),
+		metadata: text("metadata"),
+	},
+	(table) => [index("oauthClient_clientId_idx").on(table.clientId)],
+);
+
+export const oauthAccessToken = sqliteTable(
+	"oauth_access_token",
+	{
+		id: text("id").primaryKey(),
+		token: text("token").notNull().unique(),
+		clientId: text("client_id")
+			.notNull()
+			.references(() => oauthClient.id),
+		sessionId: text("session_id").references(() => session.id, {
+			onDelete: "set null",
+		}),
+		userId: text("user_id").references(() => user.id),
+		referenceId: text("reference_id"),
+		refreshId: text("refresh_id"),
+		expiresAt: integer("expires_at", { mode: "timestamp_ms" }).notNull(),
+		createdAt: integer("created_at", { mode: "timestamp_ms" })
+			.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+			.notNull(),
+		scopes: text("scopes").notNull(),
+	},
+	(table) => [index("oauthAccessToken_token_idx").on(table.token)],
+);
+
+export const oauthRefreshToken = sqliteTable(
+	"oauth_refresh_token",
+	{
+		id: text("id").primaryKey(),
+		token: text("token").notNull(),
+		clientId: text("client_id")
+			.notNull()
+			.references(() => oauthClient.id),
+		sessionId: text("session_id").references(() => session.id, {
+			onDelete: "set null",
+		}),
+		userId: text("user_id")
+			.notNull()
+			.references(() => user.id),
+		referenceId: text("reference_id"),
+		expiresAt: integer("expires_at", { mode: "timestamp_ms" }).notNull(),
+		createdAt: integer("created_at", { mode: "timestamp_ms" })
+			.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+			.notNull(),
+		revoked: integer("revoked", { mode: "timestamp_ms" }),
+		authTime: integer("auth_time", { mode: "timestamp_ms" }),
+		scopes: text("scopes").notNull(),
+	},
+	(table) => [index("oauthRefreshToken_token_idx").on(table.token)],
+);
+
+export const oauthConsent = sqliteTable(
+	"oauth_consent",
+	{
+		id: text("id").primaryKey(),
+		clientId: text("client_id")
+			.notNull()
+			.references(() => oauthClient.id),
+		userId: text("user_id").references(() => user.id),
+		referenceId: text("reference_id"),
+		scopes: text("scopes").notNull(),
+		createdAt: integer("created_at", { mode: "timestamp_ms" })
+			.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+			.notNull(),
+		updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+			.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+			.$onUpdate(() => /* @__PURE__ */ new Date())
+			.notNull(),
+	},
+	(table) => [index("oauthConsent_clientId_idx").on(table.clientId)],
+);
+
 export const systemSettings = sqliteTable("system_settings", {
 	key: text("key").primaryKey(),
 	value: text("value").notNull(),
