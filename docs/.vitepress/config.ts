@@ -130,6 +130,7 @@ function guideSidebar(prefix = ""): DefaultTheme.SidebarItem[] {
               items: [
                 { text: "CookCLI", link: `${prefix}/guide/apps/cookcli` },
                 { text: "Mealie", link: `${prefix}/guide/apps/mealie` },
+                { text: "Tandoor", link: `${prefix}/guide/apps/tandoor` },
               ],
             },
             {

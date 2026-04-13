@@ -1040,6 +1040,84 @@ export const APP_REGISTRY: AppDefinition[] = [
     ],
   },
   {
+    name: "tandoor",
+    displayName: "Tandoor",
+    description: "Recipe manager and meal planner with shopping lists",
+    image: "vabene1111/recipes:latest",
+    icon: "https://cdn.jsdelivr.net/gh/selfhst/icons/png/tandoor-recipes.png",
+    containerName: "tandoor",
+    capacity: { performance: "low", storage: "low", note: "Recipe manager with PostgreSQL database" },
+    additionalContainers: ["tandoor_postgres"],
+    port: 9010,
+    configSubdir: "mediafiles",
+    needsDataDir: false,
+    rawCompose: (envConfig: EnvConfig) => {
+      const baseDir = envConfig.BASE_DIR;
+      const dbPassword = envConfig.TANDOOR_DB_PASSWORD ?? "tandoor";
+      const secretKey = envConfig.TANDOOR_SECRET_KEY ?? "changeme";
+      const duckdnsPrimary = envConfig.DUCKDNS_SUBDOMAINS?.split(",")[0].trim();
+      const allowedHosts = envConfig.ENABLE_HTTPS === "true" && duckdnsPrimary
+        ? `tandoor.${duckdnsPrimary}.duckdns.org`
+        : "*";
+      const lines = [
+        `services:`,
+        `  tandoor:`,
+        `    image: vabene1111/recipes:latest`,
+        `    container_name: tandoor`,
+        `    environment:`,
+        `      - SECRET_KEY=${secretKey}`,
+        `      - DB_ENGINE=django.db.backends.postgresql`,
+        `      - POSTGRES_HOST=tandoor-postgres`,
+        `      - POSTGRES_PORT=5432`,
+        `      - POSTGRES_USER=tandoor`,
+        `      - POSTGRES_PASSWORD=${dbPassword}`,
+        `      - POSTGRES_DB=tandoor`,
+        `      - ALLOWED_HOSTS=${allowedHosts}`,
+        `      - TZ=${envConfig.TZ}`,
+        `    ports:`,
+        `      - 9010:8080`,
+        `    volumes:`,
+        `      - ${baseDir}/tandoor/staticfiles:/opt/recipes/staticfiles`,
+        `      - ${baseDir}/tandoor/mediafiles:/opt/recipes/mediafiles`,
+        `    depends_on:`,
+        `      tandoor-postgres:`,
+        `        condition: service_healthy`,
+        `    restart: unless-stopped`,
+        ``,
+        `  tandoor-postgres:`,
+        `    image: postgres:16-alpine`,
+        `    container_name: tandoor_postgres`,
+        `    environment:`,
+        `      - POSTGRES_PASSWORD=${dbPassword}`,
+        `      - POSTGRES_USER=tandoor`,
+        `      - PGUSER=tandoor`,
+        `      - POSTGRES_DB=tandoor`,
+        `    volumes:`,
+        `      - ${baseDir}/tandoor/postgres:/var/lib/postgresql/data`,
+        `    healthcheck:`,
+        `      test: ["CMD", "pg_isready"]`,
+        `      interval: 30s`,
+        `      timeout: 20s`,
+        `      retries: 3`,
+        `    restart: unless-stopped`,
+      ];
+      return lines.join("\n") + "\n";
+    },
+    secrets: [
+      {
+        envVar: "TANDOOR_SECRET_KEY",
+        prompt: "Tandoor secret key",
+        sensitive: true,
+        generate: "openssl rand -hex 32",
+      },
+      {
+        envVar: "TANDOOR_DB_PASSWORD",
+        prompt: "Tandoor database password",
+        sensitive: true,
+      },
+    ],
+  },
+  {
     name: "memos",
     displayName: "Memos",
     description: "Lightweight self-hosted memo hub and knowledge management",
@@ -1660,8 +1738,8 @@ export const APP_CATEGORIES: AppCategory[] = [
   {
     label: "Household",
     value: "household",
-    description: "CookCLI, Mealie",
-    apps: ["cookcli", "mealie"],
+    description: "CookCLI, Mealie, Tandoor",
+    apps: ["cookcli", "mealie", "tandoor"],
   },
   {
     label: "Utilities",

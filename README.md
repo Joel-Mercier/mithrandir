@@ -444,6 +444,7 @@ Checks configuration correctness across three categories: System (.env file, Doc
 | Sonarr         | 8989      | TV series collection manager                                                            |
 | Stirling PDF   | 8084      | All-in-one PDF manipulation tool                                                        |
 | Sure           | 3005      | Privacy-focused personal finance tracker                                                |
+| Tandoor        | 9010      | Recipe manager and meal planner with shopping lists                                     |
 | TRIP           | 8085      | Travel planning and trip journal                                                        |
 | Vaultwarden    | 8222      | Lightweight Bitwarden-compatible password manager (requires HTTPS)                      |
 | WireGuard      | 51820/udp | Fast, modern VPN tunnel                                                                 |

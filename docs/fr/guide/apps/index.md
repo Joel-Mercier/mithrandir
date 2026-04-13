@@ -117,6 +117,7 @@ mithrandir log <app> [service] # Voir les logs
 | --- | --- | --- |
 | [CookCLI](./cookcli) | 9080 | Gestionnaire de recettes utilisant le langage de balisage Cooklang |
 | [Mealie](./mealie) | 9925 | Gestionnaire de recettes et planificateur de repas auto-hébergé |
+| [Tandoor](./tandoor) | 9010 | Gestionnaire de recettes et planificateur de repas avec listes de courses |
 
 ### Utilitaires
 
