@@ -31,8 +31,8 @@ Install a predefined group of apps in one command. Already-installed apps are sk
 
 | Stack | Apps |
 | --- | --- |
-| `media` | qBittorrent, Prowlarr, Radarr, Sonarr, Bazarr, Seerr, Jellyfin, Navidrome, Lidarr, Audiobookshelf, Immich |
-| `media-movies-tv` | qBittorrent, Prowlarr, Radarr, Sonarr, Bazarr, Seerr, Jellyfin |
+| `media` | qBittorrent, Prowlarr, Radarr, Sonarr, Bazarr, Seerr, Jellyfin, Navidrome, Lidarr, Audiobookshelf, Immich, Profilarr |
+| `media-movies-tv` | qBittorrent, Prowlarr, Radarr, Sonarr, Bazarr, Seerr, Jellyfin, Profilarr |
 | `media-audio` | Navidrome, Lidarr, Audiobookshelf, qBittorrent |
 | `media-pictures` | Immich |
 | `media-games` | RetroAssembly |
@@ -48,7 +48,7 @@ mithrandir install security           # Install Caddy and Pi-hole
 
 Any app name from the registry can be used as a target. Available apps:
 
-`actualbudget`, `sure`, `homarr`, `pihole`, `homeassistant`, `jellyfin`, `jellyseerr`, `sonarr`, `radarr`, `lidarr`, `prowlarr`, `qbittorrent`, `navidrome`, `duckdns`, `wireguard`, `vaultwarden`, `flaresolverr`, `omni-tools`, `excalidraw`, `openwebui`, `immich`, `gatus`, `bazarr`, `seerr`, `trip`, `retroassembly`, `mealie`, `memos`
+`actualbudget`, `adventurelog`, `affine`, `audiobookshelf`, `bazarr`, `cookcli`, `duckdns`, `excalidraw`, `flaresolverr`, `gatus`, `glance`, `homarr`, `homeassistant`, `immich`, `jellyfin`, `jellyseerr`, `lidarr`, `mealie`, `memos`, `n8n`, `navidrome`, `omni-tools`, `openwebui`, `paperlessngx`, `penpot`, `pihole`, `profilarr`, `prowlarr`, `qbittorrent`, `radarr`, `retroassembly`, `seerr`, `sonarr`, `stirlingpdf`, `sure`, `tandoor`, `trip`, `vaultwarden`, `wireguard`, `yourspotify`
 
 ## Notes
 
