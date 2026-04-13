@@ -47,12 +47,32 @@ esac
 BUN_INSTALL="$REAL_HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
 
+# Read pinned version from .bun-version
+BUN_VERSION=""
+if [[ -f "$SCRIPT_DIR/.bun-version" ]]; then
+  BUN_VERSION="$(tr -d '[:space:]' < "$SCRIPT_DIR/.bun-version")"
+fi
+
+install_bun() {
+  if [[ -n "$BUN_VERSION" ]]; then
+    log "Installing Bun v$BUN_VERSION..."
+    curl -fsSL https://bun.com/install | sudo -u "$REAL_USER" BUN_INSTALL="$BUN_INSTALL" bash -s "bun-v$BUN_VERSION"
+  else
+    log "Installing Bun (latest)..."
+    curl -fsSL https://bun.com/install | sudo -u "$REAL_USER" BUN_INSTALL="$BUN_INSTALL" bash
+  fi
+}
+
 if command -v bun &>/dev/null; then
-  log "Bun already installed: $(bun --version)"
+  CURRENT_BUN="$(bun --version)"
+  if [[ -n "$BUN_VERSION" && "$CURRENT_BUN" != "$BUN_VERSION" ]]; then
+    log "Bun $CURRENT_BUN installed, but pinned version is $BUN_VERSION. Upgrading..."
+    install_bun
+  else
+    log "Bun already installed: $CURRENT_BUN"
+  fi
 else
-  log "Installing Bun..."
-  # Run the installer as the real user so it installs to ~realuser/.bun
-  curl -fsSL https://bun.com/install | sudo -u "$REAL_USER" BUN_INSTALL="$BUN_INSTALL" bash
+  install_bun
 
   # The installer targets ~/.bashrc by default. If the user's shell is
   # different, ensure their rc file also has the PATH entries.

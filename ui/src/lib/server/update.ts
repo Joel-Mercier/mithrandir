@@ -247,6 +247,30 @@ export const installDeps = createServerFn({ method: "POST" }).handler(
 		await ensureSession();
 		const root = getProjectRoot();
 
+		// Upgrade Bun if pinned version differs from current
+		const bunVersionFile = join(root, ".bun-version");
+		if (existsSync(bunVersionFile)) {
+			const pinnedVersion = readFileSync(bunVersionFile, "utf-8").trim();
+			const currentBunResult = await shell("bun", ["--version"], { ignoreError: true });
+			const currentVersion = currentBunResult.stdout.trim();
+
+			if (currentVersion && currentVersion !== pinnedVersion) {
+				logUpdate(`[bun] Upgrading ${currentVersion} → ${pinnedVersion}...`);
+				const upgrade = await shell(
+					"bash",
+					["-c", `curl -fsSL https://bun.com/install | bash -s "bun-v${pinnedVersion}"`],
+					{ ignoreError: true, timeout: 120000 },
+				);
+				if (upgrade.exitCode === 0) {
+					logUpdate(`[bun] Upgraded to ${pinnedVersion}`);
+				} else {
+					logUpdate(`[bun] Upgrade failed (exit ${upgrade.exitCode}): ${upgrade.stderr}`);
+				}
+			} else {
+				logUpdate(`[bun] Already at ${pinnedVersion}`);
+			}
+		}
+
 		logUpdate("[deps] Running bun install...");
 		const result = await shell("bun", ["install"], {
 			cwd: root,

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { render, Box, Text, useApp } from "ink";
 import Spinner from "ink-spinner";
 import { StatusMessage } from "@inkjs/ui";
-import { existsSync, mkdirSync } from "fs";
+import { existsSync, mkdirSync, readFileSync } from "fs";
 import { join } from "path";
 import { shell } from "@/lib/shell.js";
 import { getProjectRoot, loadEnvConfig } from "@/lib/config.js";
@@ -55,6 +55,7 @@ function SelfUpdateCommand() {
       // SSH keys and credentials are available
       const sudoUser = process.env.SUDO_USER;
       const currentUser = sudoUser || process.env.USER || process.env.LOGNAME;
+      const resolveUser = sudoUser || currentUser;
       const userOpts = sudoUser ? { user: sudoUser } : {};
 
       // Step 1: Check git is available
@@ -106,7 +107,49 @@ function SelfUpdateCommand() {
         addStep({ name: "Git pull", status: "done", message: `${branch}: ${before} → ${after}` });
       }
 
-      // Step 3: Install dependencies
+      // Step 3: Check and upgrade Bun if pinned version differs
+      const bunVersionFile = join(root, ".bun-version");
+      if (existsSync(bunVersionFile)) {
+        const pinnedVersion = readFileSync(bunVersionFile, "utf-8").trim();
+        const currentBunVersion = await shell("bun", ["--version"], { ignoreError: true });
+        const currentVersion = currentBunVersion.stdout.trim();
+
+        if (currentVersion && currentVersion !== pinnedVersion) {
+          setCurrentLabel(`Upgrading Bun ${currentVersion} → ${pinnedVersion}...`);
+
+          // Resolve the user's home directory for BUN_INSTALL
+          let bunInstallDir = "";
+          if (resolveUser) {
+            const passwd = await shell("getent", ["passwd", resolveUser], { ignoreError: true });
+            if (passwd.exitCode === 0 && passwd.stdout.trim()) {
+              const userHome = passwd.stdout.split(":")[5];
+              if (userHome) bunInstallDir = `${userHome}/.bun`;
+            }
+          }
+
+          const env = bunInstallDir ? { BUN_INSTALL: bunInstallDir } : undefined;
+          const upgrade = await shell("bash", ["-c", `curl -fsSL https://bun.com/install | bash -s "bun-v${pinnedVersion}"`], {
+            ignoreError: true,
+            env,
+            ...userOpts,
+          });
+
+          if (upgrade.exitCode === 0) {
+            // Fix /usr/local/bin symlinks after upgrade
+            if (bunInstallDir) {
+              await shell("ln", ["-sf", `${bunInstallDir}/bin/bun`, "/usr/local/bin/bun"], { sudo: true, ignoreError: true });
+              await shell("ln", ["-sf", `${bunInstallDir}/bin/bunx`, "/usr/local/bin/bunx"], { sudo: true, ignoreError: true });
+            }
+            addStep({ name: "Bun runtime", status: "done", message: `${currentVersion} → ${pinnedVersion}` });
+          } else {
+            addStep({ name: "Bun runtime", status: "error", message: `Failed to upgrade to ${pinnedVersion}` });
+          }
+        } else {
+          addStep({ name: "Bun runtime", status: "skipped", message: `Already at ${pinnedVersion}` });
+        }
+      }
+
+      // Step 4: Install dependencies
       // Ensure the project directory is writable by the original user
       // (files may be root-owned from a previous sudo install/build).
       // When running under sudo we can chown directly; otherwise use sudo
@@ -126,7 +169,6 @@ function SelfUpdateCommand() {
       // /root/.bun which is inaccessible, or the bun in PATH may be a
       // different version. Look up the real user's ~/.bun/bin/bun directly.
       let bunPath = "bun";
-      const resolveUser = sudoUser || currentUser;
       if (resolveUser) {
         const passwd = await shell("getent", ["passwd", resolveUser], { ignoreError: true });
         if (passwd.exitCode === 0 && passwd.stdout.trim()) {
