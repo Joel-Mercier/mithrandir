@@ -79,3 +79,23 @@ describe("TUSD_PORT", () => {
     expect(TUSD_PORT).toBe(1080);
   });
 });
+
+describe("generateTusdServiceUnit structure", () => {
+  const unit = generateTusdServiceUnit("/home/user/homelab", "/data/uploads");
+
+  test("has all three sections", () => {
+    expect(unit).toContain("[Unit]");
+    expect(unit).toContain("[Service]");
+    expect(unit).toContain("[Install]");
+  });
+
+  test("TUSD_PORT is used in service unit", () => {
+    expect(unit).toContain(`-port ${TUSD_PORT}`);
+  });
+
+  test("handles paths with special characters", () => {
+    const u = generateTusdServiceUnit("/opt/home lab", "/data/up loads");
+    expect(u).toContain("/opt/home lab/ui/.tusd/tusd");
+    expect(u).toContain("-upload-dir /data/up loads");
+  });
+});

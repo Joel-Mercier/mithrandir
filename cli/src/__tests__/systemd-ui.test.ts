@@ -55,4 +55,23 @@ describe("generateUiServiceUnit", () => {
   test("snapshot", () => {
     expect(unit).toMatchSnapshot();
   });
+
+  test("uses bun runtime", () => {
+    expect(unit).toContain("bun");
+  });
+
+  test("sets NODE_ENV to production", () => {
+    expect(unit).toContain("NODE_ENV=production");
+  });
+
+  test("different repo root changes working directory", () => {
+    const u = generateUiServiceUnit("/opt/homelab", "/opt/user");
+    expect(u).toContain("WorkingDirectory=/opt/homelab/ui");
+    expect(u).toContain('HOME=/opt/user"');
+  });
+
+  test("loads root .env file", () => {
+    const u = generateUiServiceUnit("/opt/hl", "/home/user");
+    expect(u).toContain("EnvironmentFile=-/opt/hl/.env");
+  });
 });

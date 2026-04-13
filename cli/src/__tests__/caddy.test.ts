@@ -5,7 +5,7 @@ import {
   generate404Page,
   generateCaddyDockerfile,
 } from "@/lib/caddy.js";
-import { getApp } from "@/lib/apps.js";
+import { getApp, APP_REGISTRY } from "@/lib/apps.js";
 import type { EnvConfig } from "@/types.js";
 
 const baseEnv: EnvConfig = {
@@ -102,5 +102,87 @@ describe("generateCaddyDockerfile", () => {
     expect(output).toMatchSnapshot();
     expect(output).toContain("xcaddy build");
     expect(output).toContain("caddy-dns/duckdns");
+  });
+
+  test("produces multi-stage Dockerfile", () => {
+    const output = generateCaddyDockerfile();
+    const fromCount = (output.match(/FROM/g) || []).length;
+    expect(fromCount).toBeGreaterThanOrEqual(2);
+  });
+});
+
+describe("getDuckDnsDomain edge cases", () => {
+  test("trims whitespace from subdomain", () => {
+    const env: EnvConfig = { ...baseEnv, DUCKDNS_SUBDOMAINS: "  mylab  " };
+    expect(getDuckDnsDomain(env)).toBe("mylab.duckdns.org");
+  });
+
+  test("handles whitespace-separated subdomains (takes first)", () => {
+    const env: EnvConfig = { ...baseEnv, DUCKDNS_SUBDOMAINS: "first,second" };
+    expect(getDuckDnsDomain(env)).toBe("first.duckdns.org");
+  });
+});
+
+describe("generateCaddyfile additional scenarios", () => {
+  test("generates entries for apps with caddyExtraSubdomains", () => {
+    const adventurelog = getApp("adventurelog")!;
+    const output = generateCaddyfile([adventurelog], baseEnv);
+    expect(output).toContain("adventurelog.mylab.duckdns.org");
+    if (adventurelog.caddyExtraSubdomains) {
+      for (const extra of adventurelog.caddyExtraSubdomains) {
+        expect(output).toContain(`${extra.subdomain}.mylab.duckdns.org`);
+      }
+    }
+  });
+
+  test("skips apps without ports", () => {
+    const duckdns = getApp("duckdns")!;
+    expect(duckdns.port).toBeNull();
+    const output = generateCaddyfile([duckdns], baseEnv);
+    expect(output).not.toContain("@duckdns");
+  });
+
+  test("handles empty app list", () => {
+    const output = generateCaddyfile([], baseEnv);
+    expect(output).toContain("mylab.duckdns.org");
+    expect(output).toContain("duckdns");
+  });
+
+  test("host-networked apps get correct proxy target", () => {
+    const homeassistant = getApp("homeassistant")!;
+    expect(homeassistant.networkMode).toBe("host");
+    const output = generateCaddyfile([homeassistant], baseEnv);
+    expect(output).toContain("homeassistant.mylab.duckdns.org");
+  });
+
+  test("all non-hidden apps with ports get Caddyfile entries", () => {
+    const appsWithPorts = APP_REGISTRY.filter(
+      (app) => app.port && !app.hidden && !app.companionOf,
+    );
+    const output = generateCaddyfile(appsWithPorts, baseEnv);
+    for (const app of appsWithPorts) {
+      expect(output).toContain(`${app.name}.mylab.duckdns.org`);
+    }
+  });
+});
+
+describe("generate404Page additional scenarios", () => {
+  test("generates valid HTML structure", () => {
+    const apps = [getApp("sonarr")!];
+    const output = generate404Page(apps, baseEnv);
+    expect(output).toContain("<!DOCTYPE html>");
+    expect(output).toContain("</html>");
+    expect(output).toContain("<title>");
+  });
+
+  test("empty app list produces valid page", () => {
+    const output = generate404Page([], baseEnv);
+    expect(output).toContain("<!DOCTYPE html>");
+  });
+
+  test("app links use HTTPS subdomain format", () => {
+    const apps = [getApp("sonarr")!];
+    const output = generate404Page(apps, baseEnv);
+    expect(output).toContain("sonarr.mylab.duckdns.org");
   });
 });

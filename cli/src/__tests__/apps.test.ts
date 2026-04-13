@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import {
   APP_REGISTRY,
   APP_STACKS,
+  APP_CATEGORIES,
   getApp,
   getAppNames,
   getContainerName,
@@ -206,5 +207,240 @@ describe("registry integrity", () => {
         expect(validNames.has(appName)).toBe(true);
       }
     }
+  });
+});
+
+describe("APP_CATEGORIES integrity", () => {
+  test("every category has required fields", () => {
+    for (const cat of APP_CATEGORIES) {
+      expect(cat.label).toBeTruthy();
+      expect(cat.value).toBeTruthy();
+      expect(cat.description).toBeTruthy();
+      expect(cat.apps.length).toBeGreaterThan(0);
+    }
+  });
+
+  test("no duplicate category values", () => {
+    const values = APP_CATEGORIES.map((c) => c.value);
+    const unique = new Set(values);
+    expect(unique.size).toBe(values.length);
+  });
+
+  test("all category apps reference valid app names", () => {
+    const validNames = new Set(getAppNames());
+    for (const cat of APP_CATEGORIES) {
+      for (const appName of cat.apps) {
+        expect(validNames.has(appName)).toBe(true);
+      }
+    }
+  });
+
+  test("every non-hidden non-companion app appears in at least one category", () => {
+    const categorized = new Set(APP_CATEGORIES.flatMap((c) => c.apps));
+    const nonHidden = APP_REGISTRY.filter(
+      (app) => !app.hidden && !app.companionOf,
+    );
+    for (const app of nonHidden) {
+      expect(categorized.has(app.name)).toBe(true);
+    }
+  });
+});
+
+describe("registry field constraints", () => {
+  test("apps with rawCompose and additionalContainers have containerName set", () => {
+    const rawComposeApps = APP_REGISTRY.filter((app) => app.rawCompose);
+    for (const app of rawComposeApps) {
+      if (app.additionalContainers) {
+        expect(app.containerName).toBeTruthy();
+      }
+    }
+  });
+
+  test("apps with requiresHttps have ports", () => {
+    const httpsApps = APP_REGISTRY.filter((app) => app.requiresHttps);
+    for (const app of httpsApps) {
+      expect(app.port).toBeTruthy();
+    }
+  });
+
+  test("hidden apps are caddy and companion apps", () => {
+    const hidden = APP_REGISTRY.filter((app) => app.hidden);
+    expect(hidden.length).toBeGreaterThanOrEqual(1);
+    const hiddenNames = hidden.map((a) => a.name);
+    expect(hiddenNames).toContain("caddy");
+    for (const app of hidden) {
+      expect(app.name === "caddy" || !!app.companionOf).toBe(true);
+    }
+  });
+
+  test("all conflictsWith references are valid app names", () => {
+    const validNames = new Set(getAppNames());
+    for (const app of APP_REGISTRY) {
+      if (app.conflictsWith) {
+        for (const conflict of app.conflictsWith) {
+          expect(validNames.has(conflict)).toBe(true);
+        }
+      }
+    }
+  });
+
+  test("all companionOf references are valid app names", () => {
+    const validNames = new Set(getAppNames());
+    const companions = APP_REGISTRY.filter((app) => app.companionOf);
+    for (const app of companions) {
+      expect(validNames.has(app.companionOf!)).toBe(true);
+    }
+  });
+
+  test("companion apps are not in any category", () => {
+    const categorized = new Set(APP_CATEGORIES.flatMap((c) => c.apps));
+    const companions = APP_REGISTRY.filter((app) => app.companionOf);
+    for (const app of companions) {
+      expect(categorized.has(app.name)).toBe(false);
+    }
+  });
+
+  test("no app has port 0", () => {
+    for (const app of APP_REGISTRY) {
+      if (app.port !== null) {
+        expect(app.port).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  test("no duplicate ports among non-conflicting apps", () => {
+    const portMap = new Map<number, string[]>();
+    for (const app of APP_REGISTRY) {
+      if (app.port === null || app.hidden || app.companionOf) continue;
+      const existing = portMap.get(app.port) || [];
+      existing.push(app.name);
+      portMap.set(app.port, existing);
+    }
+
+    for (const [port, apps] of portMap) {
+      if (apps.length > 1) {
+        const appDefs = apps.map((name) => getApp(name)!);
+        for (let i = 0; i < appDefs.length; i++) {
+          for (let j = i + 1; j < appDefs.length; j++) {
+            const a = appDefs[i];
+            const b = appDefs[j];
+            const conflicts =
+              a.conflictsWith?.includes(b.name) ||
+              b.conflictsWith?.includes(a.name);
+            expect(conflicts).toBe(true);
+          }
+        }
+      }
+    }
+  });
+
+  test("extraPorts have valid protocol values", () => {
+    for (const app of APP_REGISTRY) {
+      if (app.extraPorts) {
+        for (const port of app.extraPorts) {
+          if (port.protocol) {
+            expect(["tcp", "udp"]).toContain(port.protocol);
+          }
+          expect(port.host).toBeGreaterThan(0);
+          expect(port.container).toBeGreaterThan(0);
+        }
+      }
+    }
+  });
+});
+
+describe("getConfigPaths edge cases", () => {
+  test("handles apps with data subdirectory (uptime-kuma)", () => {
+    const uptimeKuma = getApp("uptimekuma");
+    if (uptimeKuma) {
+      const paths = getConfigPaths(uptimeKuma, "/home/user");
+      expect(paths[0]).toContain("data");
+    }
+  });
+
+  test("handles apps with app/config subdirectory (seerr)", () => {
+    const seerr = getApp("seerr")!;
+    const paths = getConfigPaths(seerr, "/home/user");
+    expect(paths).toEqual(["/home/user/seerr/app/config"]);
+  });
+});
+
+describe("getCompanionApps additional", () => {
+  test("returns companions for apps that have them", () => {
+    const appsWithCompanions = APP_REGISTRY.filter((app) => {
+      const companions = getCompanionApps(app.name);
+      return companions.length > 0;
+    });
+
+    for (const parent of appsWithCompanions) {
+      const companions = getCompanionApps(parent.name);
+      for (const companion of companions) {
+        expect(companion.companionOf).toBe(parent.name);
+      }
+    }
+  });
+});
+
+describe("APP_STACKS additional integrity", () => {
+  test("each stack apps list is non-empty", () => {
+    for (const stack of APP_STACKS) {
+      expect(stack.apps.length).toBeGreaterThan(0);
+    }
+  });
+
+  test("no duplicate stack values", () => {
+    const values = APP_STACKS.map((s) => s.value);
+    const unique = new Set(values);
+    expect(unique.size).toBe(values.length);
+  });
+
+  test("stack descriptions mention included apps", () => {
+    for (const stack of APP_STACKS) {
+      const appDisplayNames = stack.apps.map(
+        (name) => getApp(name)?.displayName ?? "",
+      );
+      const hasMatch = appDisplayNames.some((displayName) =>
+        stack.description.includes(displayName),
+      );
+      expect(hasMatch).toBe(true);
+    }
+  });
+});
+
+describe("OAuth configuration integrity", () => {
+  test("apps with oauth have valid clientId", () => {
+    const oauthApps = APP_REGISTRY.filter((app) => app.oauth);
+    for (const app of oauthApps) {
+      expect(app.oauth!.clientId).toBeTruthy();
+      expect(app.oauth!.displayName).toBeTruthy();
+    }
+  });
+
+  test("apps with oauth have envMapping with required fields", () => {
+    const oauthApps = APP_REGISTRY.filter((app) => app.oauth);
+    for (const app of oauthApps) {
+      const mapping = app.oauth!.envMapping;
+      expect(mapping.issuerUrl).toBeTruthy();
+      expect(mapping.clientId).toBeTruthy();
+      expect(mapping.clientSecret).toBeTruthy();
+    }
+  });
+
+  test("apps with oauth have redirectUris function", () => {
+    const oauthApps = APP_REGISTRY.filter((app) => app.oauth);
+    for (const app of oauthApps) {
+      const uris = app.oauth!.redirectUris("test.duckdns.org");
+      expect(Array.isArray(uris)).toBe(true);
+      expect(uris.length).toBeGreaterThan(0);
+      const hasDomainUri = uris.some((uri) => uri.includes("test.duckdns.org"));
+      expect(hasDomainUri).toBe(true);
+    }
+  });
+
+  test("no duplicate oauth clientIds", () => {
+    const oauthApps = APP_REGISTRY.filter((app) => app.oauth);
+    const clientIds = oauthApps.map((app) => app.oauth!.clientId);
+    const unique = new Set(clientIds);
+    expect(unique.size).toBe(clientIds.length);
   });
 });

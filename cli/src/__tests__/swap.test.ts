@@ -3,6 +3,7 @@ import { formatSwapSize } from "@/lib/swap.js";
 
 const GB = 1024 * 1024 * 1024;
 const MB = 1024 * 1024;
+const KB = 1024;
 
 describe("formatSwapSize", () => {
   test("formats gigabytes", () => {
@@ -34,5 +35,31 @@ describe("formatSwapSize", () => {
     expect(formatSwapSize(GB)).toBe("1.0 GB");
     // Just under 1 GB should use MB format
     expect(formatSwapSize(GB - 1)).toBe("1024 MB");
+  });
+
+  test("handles very large swap (16 GB)", () => {
+    expect(formatSwapSize(16 * GB)).toBe("16.0 GB");
+  });
+
+  test("handles very small values (1 KB)", () => {
+    expect(formatSwapSize(1 * KB)).toBe("0 MB");
+  });
+
+  test("handles fractional megabytes", () => {
+    const result = formatSwapSize(1.5 * MB);
+    expect(result).toMatch(/^\d+ MB$/);
+  });
+
+  test("precise GB formatting", () => {
+    expect(formatSwapSize(3.14 * GB)).toBe("3.1 GB");
+  });
+
+  test("negative value handled gracefully", () => {
+    const result = formatSwapSize(-1 * MB);
+    expect(typeof result).toBe("string");
+  });
+
+  test("just above 1 GB threshold", () => {
+    expect(formatSwapSize(GB + 1)).toBe("1.0 GB");
   });
 });

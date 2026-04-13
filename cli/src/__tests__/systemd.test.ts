@@ -38,6 +38,22 @@ describe("generateServiceUnit", () => {
   test("snapshot", () => {
     expect(unit).toMatchSnapshot();
   });
+
+  test("has [Unit] section", () => {
+    expect(unit).toContain("[Unit]");
+  });
+
+  test("has [Service] section", () => {
+    expect(unit).toContain("[Service]");
+  });
+
+  test("sections appear in correct order", () => {
+    const unitIdx = unit.indexOf("[Unit]");
+    const serviceIdx = unit.indexOf("[Service]");
+    const installIdx = unit.indexOf("[Install]");
+    expect(unitIdx).toBeLessThan(serviceIdx);
+    expect(serviceIdx).toBeLessThan(installIdx);
+  });
 });
 
 describe("generateTimerUnit", () => {
@@ -73,5 +89,24 @@ describe("generateTimerUnit", () => {
 
   test("snapshot", () => {
     expect(unit).toMatchSnapshot();
+  });
+
+  test("has [Unit] section", () => {
+    expect(unit).toContain("[Unit]");
+  });
+
+  test("has [Timer] section", () => {
+    expect(unit).toContain("[Timer]");
+  });
+
+  test("single-digit hours are zero-padded", () => {
+    expect(generateTimerUnit(5)).toContain("05:00:00");
+    expect(generateTimerUnit(0)).toContain("00:00:00");
+    expect(generateTimerUnit(9)).toContain("09:00:00");
+  });
+
+  test("double-digit hours are not padded", () => {
+    expect(generateTimerUnit(14)).toContain("14:00:00");
+    expect(generateTimerUnit(23)).toContain("23:00:00");
   });
 });
