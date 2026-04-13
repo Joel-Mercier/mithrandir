@@ -217,15 +217,15 @@ function AppDetailPage() {
 	const logSince = searchSince ?? "";
 	const logFollow = searchFollow ?? false;
 	const setLogTail = useCallback(
-		(val: number) => navigate({ from: Route.fullPath, search: (prev) => ({ ...prev, logTail: val }), replace: true }),
+		(val: number) => navigate({ from: Route.fullPath, search: (prev) => ({ ...prev, logTail: val }), replace: true, resetScroll: false }),
 		[navigate],
 	);
 	const setLogSince = useCallback(
-		(val: string) => navigate({ from: Route.fullPath, search: (prev) => ({ ...prev, logSince: val || undefined }), replace: true }),
+		(val: string) => navigate({ from: Route.fullPath, search: (prev) => ({ ...prev, logSince: val || undefined }), replace: true, resetScroll: false }),
 		[navigate],
 	);
 	const setLogFollow = useCallback(
-		(val: boolean) => navigate({ from: Route.fullPath, search: (prev) => ({ ...prev, logFollow: val || undefined }), replace: true }),
+		(val: boolean) => navigate({ from: Route.fullPath, search: (prev) => ({ ...prev, logFollow: val || undefined }), replace: true, resetScroll: false }),
 		[navigate],
 	);
 	const [sseLogs, setSseLogs] = useState<string[]>([]);
@@ -259,7 +259,6 @@ function AppDetailPage() {
 		es.onerror = () => {
 			es.close();
 			eventSourceRef.current = null;
-			setLogFollow(false);
 		};
 
 		return () => {
