@@ -178,7 +178,7 @@ function ContainerRow({ container }: { container: ContainerInfo }) {
 
 const LOG_SETTINGS_KEY = "homelab:log-settings";
 
-function readLogSettings(): { tail: number; since: string } {
+function readLogSettings(): { tail: number; since: string; follow: boolean } {
 	try {
 		const raw = localStorage.getItem(LOG_SETTINGS_KEY);
 		if (raw) {
@@ -186,13 +186,14 @@ function readLogSettings(): { tail: number; since: string } {
 			return {
 				tail: typeof parsed.tail === "number" && parsed.tail > 0 ? parsed.tail : 100,
 				since: typeof parsed.since === "string" ? parsed.since : "",
+				follow: typeof parsed.follow === "boolean" ? parsed.follow : false,
 			};
 		}
 	} catch {}
-	return { tail: 100, since: "" };
+	return { tail: 100, since: "", follow: false };
 }
 
-function writeLogSettings(settings: { tail: number; since: string }) {
+function writeLogSettings(settings: { tail: number; since: string; follow: boolean }) {
 	try {
 		localStorage.setItem(LOG_SETTINGS_KEY, JSON.stringify(settings));
 	} catch {}
@@ -217,15 +218,19 @@ function AppDetailPage() {
 	// Log viewer state — persisted in localStorage (shared across all app detail pages)
 	const [logTail, setLogTailState] = useState(() => readLogSettings().tail);
 	const [logSince, setLogSinceState] = useState(() => readLogSettings().since);
-	const [logFollow, setLogFollow] = useState(false);
+	const [logFollow, setLogFollowState] = useState(() => readLogSettings().follow);
 	const setLogTail = useCallback((val: number) => {
 		setLogTailState(val);
-		writeLogSettings({ tail: val, since: logSince });
-	}, [logSince]);
+		writeLogSettings({ tail: val, since: logSince, follow: logFollow });
+	}, [logSince, logFollow]);
 	const setLogSince = useCallback((val: string) => {
 		setLogSinceState(val);
-		writeLogSettings({ tail: logTail, since: val });
-	}, [logTail]);
+		writeLogSettings({ tail: logTail, since: val, follow: logFollow });
+	}, [logTail, logFollow]);
+	const setLogFollow = useCallback((val: boolean) => {
+		setLogFollowState(val);
+		writeLogSettings({ tail: logTail, since: logSince, follow: val });
+	}, [logTail, logSince]);
 	const [sseLogs, setSseLogs] = useState<string[]>([]);
 	const eventSourceRef = useRef<EventSource | null>(null);
 
