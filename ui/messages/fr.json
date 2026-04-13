@@ -233,6 +233,7 @@
   "appDetail_wireguardNoPeers": "Aucun pair trouvé. Vérifiez votre configuration WireGuard.",
   "appDetail_wireguardQrCode": "QR Code pour {peer}",
   "appDetail_wireguardScanQr": "Scannez ce QR code avec l'application mobile WireGuard pour vous connecter.",
+  "appDetail_logStreamDisconnected": "Le flux de logs s'est déconnecté après plusieurs tentatives.",
 
   "graph_title": "Graphe de dépendances",
   "graph_subtitle": "Comment les services sont connectés entre eux",

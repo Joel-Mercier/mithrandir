@@ -238,7 +238,7 @@ function AppDetailPage() {
 		enabled: !logFollow,
 	});
 
-	// SSE follow mode
+	// SSE follow mode with reconnect on transient errors
 	useEffect(() => {
 		if (!logFollow) {
 			if (eventSourceRef.current) {
@@ -248,24 +248,48 @@ function AppDetailPage() {
 			return;
 		}
 
+		let retries = 0;
+		const MAX_RETRIES = 5;
+		let retryTimer: ReturnType<typeof setTimeout> | null = null;
+
+		function connect() {
+			const es = new EventSource(`/api/homelab/logs/${appName}`);
+			eventSourceRef.current = es;
+
+			es.onopen = () => {
+				retries = 0;
+			};
+
+			es.onmessage = (event) => {
+				setSseLogs((prev) => [...prev, event.data]);
+			};
+
+			es.onerror = () => {
+				es.close();
+				eventSourceRef.current = null;
+
+				if (retries < MAX_RETRIES) {
+					const delay = Math.min(1000 * 2 ** retries, 10000);
+					retries++;
+					retryTimer = setTimeout(connect, delay);
+				} else {
+					setLogFollow(false);
+					toast.error(m.appDetail_logStreamDisconnected());
+				}
+			};
+		}
+
 		setSseLogs([]);
-		const es = new EventSource(`/api/homelab/logs/${appName}`);
-		eventSourceRef.current = es;
-
-		es.onmessage = (event) => {
-			setSseLogs((prev) => [...prev, event.data]);
-		};
-
-		es.onerror = () => {
-			es.close();
-			eventSourceRef.current = null;
-		};
+		connect();
 
 		return () => {
-			es.close();
-			eventSourceRef.current = null;
+			if (retryTimer) clearTimeout(retryTimer);
+			if (eventSourceRef.current) {
+				eventSourceRef.current.close();
+				eventSourceRef.current = null;
+			}
 		};
-	}, [logFollow, appName]);
+	}, [logFollow, appName, setLogFollow]);
 
 	// WireGuard peers
 	const isWireguard = appName === "wireguard";
