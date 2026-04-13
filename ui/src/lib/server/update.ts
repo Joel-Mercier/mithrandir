@@ -256,12 +256,34 @@ export const installDeps = createServerFn({ method: "POST" }).handler(
 
 			if (currentVersion && currentVersion !== pinnedVersion) {
 				logUpdate(`[bun] Upgrading ${currentVersion} → ${pinnedVersion}...`);
+
+				// The UI service runs as root, but bun is installed in the real
+				// user's home (~user/.bun). Detect the repo owner via stat and
+				// set BUN_INSTALL so the installer upgrades the right copy.
+				const { stdout: owner } = await shell("stat", ["-c", "%U", root], { ignoreError: true });
+				const repoOwner = owner.trim();
+				let bunInstallDir = "";
+				if (repoOwner && repoOwner !== "root") {
+					const passwd = await shell("getent", ["passwd", repoOwner], { ignoreError: true });
+					if (passwd.exitCode === 0 && passwd.stdout.trim()) {
+						const userHome = passwd.stdout.split(":")[5];
+						if (userHome) bunInstallDir = `${userHome}/.bun`;
+					}
+				}
+
+				const env = bunInstallDir ? { BUN_INSTALL: bunInstallDir } : undefined;
+				const user = repoOwner && repoOwner !== "root" ? repoOwner : undefined;
 				const upgrade = await shell(
 					"bash",
 					["-c", `curl -fsSL https://bun.com/install | bash -s "bun-v${pinnedVersion}"`],
-					{ ignoreError: true, timeout: 120000 },
+					{ ignoreError: true, timeout: 120000, env, user },
 				);
 				if (upgrade.exitCode === 0) {
+					// Fix /usr/local/bin symlinks to point to the upgraded bun
+					if (bunInstallDir) {
+						await shell("ln", ["-sf", `${bunInstallDir}/bin/bun`, "/usr/local/bin/bun"], { sudo: true, ignoreError: true });
+						await shell("ln", ["-sf", `${bunInstallDir}/bin/bunx`, "/usr/local/bin/bunx"], { sudo: true, ignoreError: true });
+					}
 					logUpdate(`[bun] Upgraded to ${pinnedVersion}`);
 				} else {
 					logUpdate(`[bun] Upgrade failed (exit ${upgrade.exitCode}): ${upgrade.stderr}`);

@@ -1,8 +1,14 @@
 interface ShellOptions {
 	sudo?: boolean;
-	ignoreError?: boolean;
-	timeout?: number;
+	/** Run command as a specific user via sudo -u */
+	user?: string;
 	cwd?: string;
+	/** If true, don't throw on non-zero exit */
+	ignoreError?: boolean;
+	/** Environment variables to pass */
+	env?: Record<string, string>;
+	/** Timeout in milliseconds */
+	timeout?: number;
 }
 
 interface ShellResult {
