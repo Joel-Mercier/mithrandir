@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
 	AlertCircle,
 	AlertTriangle,
@@ -66,8 +66,26 @@ import {
 import type { AppStatus, ContainerInfo } from "#/lib/types";
 import { m } from "#/paraglide/messages.js";
 
+type LogSearch = {
+	logTail?: number;
+	logSince?: string;
+	logFollow?: boolean;
+};
+
 export const Route = createFileRoute("/_app/apps/$appName")({
 	component: AppDetailPage,
+	validateSearch: (search: Record<string, unknown>): LogSearch => ({
+		logTail:
+			typeof search.logTail === "number" && search.logTail > 0
+				? search.logTail
+				: undefined,
+		logSince:
+			typeof search.logSince === "string" && search.logSince
+				? search.logSince
+				: undefined,
+		logFollow:
+			typeof search.logFollow === "boolean" ? search.logFollow : undefined,
+	}),
 });
 
 /**
@@ -178,6 +196,8 @@ function ContainerRow({ container }: { container: ContainerInfo }) {
 
 function AppDetailPage() {
 	const { appName } = Route.useParams();
+	const { logTail: searchTail, logSince: searchSince, logFollow: searchFollow } = Route.useSearch();
+	const navigate = useNavigate();
 	const detailQuery = useAppDetail(appName);
 	const appsQuery = useApps();
 	const configQuery = useConfig();
@@ -192,10 +212,22 @@ function AppDetailPage() {
 	const logAreaRef = useRef<HTMLDivElement>(null);
 	const [selectedPeer, setSelectedPeer] = useState<string | null>(null);
 
-	// Log viewer state
-	const [logTail, setLogTail] = useState(100);
-	const [logSince, setLogSince] = useState("");
-	const [logFollow, setLogFollow] = useState(false);
+	// Log viewer state — persisted in URL search params
+	const logTail = searchTail ?? 100;
+	const logSince = searchSince ?? "";
+	const logFollow = searchFollow ?? false;
+	const setLogTail = useCallback(
+		(val: number) => navigate({ from: Route.fullPath, search: (prev) => ({ ...prev, logTail: val }), replace: true }),
+		[navigate],
+	);
+	const setLogSince = useCallback(
+		(val: string) => navigate({ from: Route.fullPath, search: (prev) => ({ ...prev, logSince: val || undefined }), replace: true }),
+		[navigate],
+	);
+	const setLogFollow = useCallback(
+		(val: boolean) => navigate({ from: Route.fullPath, search: (prev) => ({ ...prev, logFollow: val || undefined }), replace: true }),
+		[navigate],
+	);
 	const [sseLogs, setSseLogs] = useState<string[]>([]);
 	const eventSourceRef = useRef<EventSource | null>(null);
 
