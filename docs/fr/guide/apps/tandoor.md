@@ -44,6 +44,10 @@ Tandoor fonctionne comme une stack multi-conteneurs :
 - Lorsque HTTPS est activé, `ALLOWED_HOSTS` est automatiquement défini sur `tandoor.{votre-domaine}.duckdns.org`
 - Sans HTTPS, tous les hôtes sont autorisés par défaut
 
+## Application mobile
+
+[Kitshn](https://kitshn.app/) est une application mobile tierce non officielle pour Tandoor. Elle se connecte à votre instance Tandoor et offre une expérience mobile native pour parcourir les recettes, planifier les repas et gérer les listes de courses.
+
 ## Configuration initiale
 
 - Ouvrez l'interface web à l'adresse `http://your-server:9010`
