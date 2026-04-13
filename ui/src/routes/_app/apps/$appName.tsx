@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import {
 	AlertCircle,
 	AlertTriangle,
@@ -66,26 +66,8 @@ import {
 import type { AppStatus, ContainerInfo } from "#/lib/types";
 import { m } from "#/paraglide/messages.js";
 
-type LogSearch = {
-	logTail?: number;
-	logSince?: string;
-	logFollow?: boolean;
-};
-
 export const Route = createFileRoute("/_app/apps/$appName")({
 	component: AppDetailPage,
-	validateSearch: (search: Record<string, unknown>): LogSearch => ({
-		logTail:
-			typeof search.logTail === "number" && search.logTail > 0
-				? search.logTail
-				: undefined,
-		logSince:
-			typeof search.logSince === "string" && search.logSince
-				? search.logSince
-				: undefined,
-		logFollow:
-			typeof search.logFollow === "boolean" ? search.logFollow : undefined,
-	}),
 });
 
 /**
@@ -194,10 +176,30 @@ function ContainerRow({ container }: { container: ContainerInfo }) {
 	);
 }
 
+const LOG_SETTINGS_KEY = "homelab:log-settings";
+
+function readLogSettings(): { tail: number; since: string } {
+	try {
+		const raw = localStorage.getItem(LOG_SETTINGS_KEY);
+		if (raw) {
+			const parsed = JSON.parse(raw);
+			return {
+				tail: typeof parsed.tail === "number" && parsed.tail > 0 ? parsed.tail : 100,
+				since: typeof parsed.since === "string" ? parsed.since : "",
+			};
+		}
+	} catch {}
+	return { tail: 100, since: "" };
+}
+
+function writeLogSettings(settings: { tail: number; since: string }) {
+	try {
+		localStorage.setItem(LOG_SETTINGS_KEY, JSON.stringify(settings));
+	} catch {}
+}
+
 function AppDetailPage() {
 	const { appName } = Route.useParams();
-	const { logTail: searchTail, logSince: searchSince, logFollow: searchFollow } = Route.useSearch();
-	const navigate = useNavigate();
 	const detailQuery = useAppDetail(appName);
 	const appsQuery = useApps();
 	const configQuery = useConfig();
@@ -212,22 +214,18 @@ function AppDetailPage() {
 	const logAreaRef = useRef<HTMLDivElement>(null);
 	const [selectedPeer, setSelectedPeer] = useState<string | null>(null);
 
-	// Log viewer state — persisted in URL search params
-	const logTail = searchTail ?? 100;
-	const logSince = searchSince ?? "";
-	const logFollow = searchFollow ?? false;
-	const setLogTail = useCallback(
-		(val: number) => navigate({ from: Route.fullPath, search: (prev) => ({ ...prev, logTail: val }), replace: true, resetScroll: false }),
-		[navigate],
-	);
-	const setLogSince = useCallback(
-		(val: string) => navigate({ from: Route.fullPath, search: (prev) => ({ ...prev, logSince: val || undefined }), replace: true, resetScroll: false }),
-		[navigate],
-	);
-	const setLogFollow = useCallback(
-		(val: boolean) => navigate({ from: Route.fullPath, search: (prev) => ({ ...prev, logFollow: val || undefined }), replace: true, resetScroll: false }),
-		[navigate],
-	);
+	// Log viewer state — persisted in localStorage (shared across all app detail pages)
+	const [logTail, setLogTailState] = useState(() => readLogSettings().tail);
+	const [logSince, setLogSinceState] = useState(() => readLogSettings().since);
+	const [logFollow, setLogFollow] = useState(false);
+	const setLogTail = useCallback((val: number) => {
+		setLogTailState(val);
+		writeLogSettings({ tail: val, since: logSince });
+	}, [logSince]);
+	const setLogSince = useCallback((val: string) => {
+		setLogSinceState(val);
+		writeLogSettings({ tail: logTail, since: val });
+	}, [logTail]);
 	const [sseLogs, setSseLogs] = useState<string[]>([]);
 	const eventSourceRef = useRef<EventSource | null>(null);
 
