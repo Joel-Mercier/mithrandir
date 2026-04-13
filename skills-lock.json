@@ -1,10 +1,15 @@
 {
   "version": 1,
   "skills": {
+    "react-best-practices": {
+      "source": "0xbigboss/claude-code",
+      "sourceType": "github",
+      "computedHash": "c73df933f4adb8d679a85b9814b85c56233e06a617c30c07001e47ee6522e8f2"
+    },
     "shadcn": {
       "source": "shadcn/ui",
       "sourceType": "github",
-      "computedHash": "1ec42c9b918b315d8e5c6c856b78c3c4725fc93dea30b9b7e9975c69848fcce6"
+      "computedHash": "873c67922d80775a9fdf596db7964b579f0408c30ec6e3d11989f6055bbec89f"
     }
   }
 }
