@@ -1049,7 +1049,8 @@ export const APP_REGISTRY: AppDefinition[] = [
     capacity: { performance: "low", storage: "low", note: "Recipe manager with PostgreSQL database" },
     additionalContainers: ["tandoor_postgres"],
     port: 9010,
-    configSubdir: "mediafiles",
+    configSubdir: "multiple",
+    multipleConfigDirs: ["staticfiles", "mediafiles", "postgres"],
     needsDataDir: false,
     rawCompose: (envConfig: EnvConfig) => {
       const baseDir = envConfig.BASE_DIR;
@@ -1075,7 +1076,7 @@ export const APP_REGISTRY: AppDefinition[] = [
         `      - ALLOWED_HOSTS=${allowedHosts}`,
         `      - TZ=${envConfig.TZ}`,
         `    ports:`,
-        `      - 9010:8080`,
+        `      - 9010:80`,
         `    volumes:`,
         `      - ${baseDir}/tandoor/staticfiles:/opt/recipes/staticfiles`,
         `      - ${baseDir}/tandoor/mediafiles:/opt/recipes/mediafiles`,

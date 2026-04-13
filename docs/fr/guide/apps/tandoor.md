@@ -6,7 +6,7 @@ Gestionnaire de recettes et planificateur de repas avec listes de courses — or
 | --- | --- |
 | **Image** | `vabene1111/recipes:latest` |
 | **Interface web** | `http://your-server:9010` |
-| **Chemin de configuration** | `{BASE_DIR}/tandoor/mediafiles` |
+| **Chemin de configuration** | `{BASE_DIR}/tandoor/{staticfiles,mediafiles,postgres}` |
 | **Site web** | [docs.tandoor.dev](https://docs.tandoor.dev/) |
 | **Code source** | [GitHub](https://github.com/TandoorRecipes/recipes) |
 

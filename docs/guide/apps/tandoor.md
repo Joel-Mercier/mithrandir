@@ -6,7 +6,7 @@ Recipe manager and meal planner with shopping lists — organize recipes, plan m
 | --- | --- |
 | **Image** | `vabene1111/recipes:latest` |
 | **Web UI** | `http://your-server:9010` |
-| **Config path** | `{BASE_DIR}/tandoor/mediafiles` |
+| **Config path** | `{BASE_DIR}/tandoor/{staticfiles,mediafiles,postgres}` |
 | **Website** | [docs.tandoor.dev](https://docs.tandoor.dev/) |
 | **Source code** | [GitHub](https://github.com/TandoorRecipes/recipes) |
 
