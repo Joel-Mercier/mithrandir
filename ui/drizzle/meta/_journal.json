@@ -43,6 +43,13 @@
       "when": 1775744768597,
       "tag": "0005_careless_ultron",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1776287882540,
+      "tag": "0006_youthful_forge",
+      "breakpoints": true
     }
   ]
 }

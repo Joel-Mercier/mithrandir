@@ -8,6 +8,7 @@
   "ignorePatterns": ["**/components/ui/**"],
   "dynamicallyLoaded": ["cli/build.ts", "cli/src/__tests__/**/*"],
   "ignoreDependencies": [
+    "@base-ui/react",
     "@libsql/client",
     "@tailwindcss/typography",
     "class-variance-authority",
