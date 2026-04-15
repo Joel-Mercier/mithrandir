@@ -1,3 +1,4 @@
+import type { QueryClient } from "@tanstack/react-query";
 import type { ClassValue } from "clsx";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -38,6 +39,20 @@ export function formatFileSize(bytes: number): string {
   if (bytes >= 1_048_576) return `${(bytes / 1_048_576).toFixed(1)} MB`;
   if (bytes >= 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${bytes} B`;
+}
+
+export function invalidateKeys(
+  queryClient: QueryClient,
+  queryKeys: readonly (readonly unknown[])[],
+) {
+  return queryClient.invalidateQueries({
+    predicate: (query) =>
+      queryKeys.some(
+        (key) =>
+          query.queryKey.length >= key.length &&
+          key.every((k, i) => query.queryKey[i] === k),
+      ),
+  });
 }
 
 export function formatRelativeTime(date: Date): string {

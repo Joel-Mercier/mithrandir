@@ -2,7 +2,10 @@
 
 export type AppStatus = "running" | "stopped" | "error" | "available";
 export type AppCategory =
-	| "media"
+	| "media-movies-tv"
+	| "media-audio"
+	| "media-pictures"
+	| "media-games"
 	| "automation"
 	| "monitoring"
 	| "productivity"

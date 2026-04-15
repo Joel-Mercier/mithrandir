@@ -18,19 +18,22 @@ import { m } from "#/paraglide/messages.js";
 
 export const Route = createFileRoute("/_app/apps/")({ component: AppsPage });
 
-const categories: Array<AppCategory | "all"> = [
-	"all",
-	"media",
-	"automation",
-	"monitoring",
-	"productivity",
-	"ai",
-	"finance",
-	"security",
-	"travel",
-	"statistics",
-	"household",
-	"utilities",
+const categories: Array<{ value: AppCategory | "all"; label: string }> = [
+	{ value: "all", label: "All" },
+	{ value: "media-movies-tv", label: "Movies & TV" },
+	{ value: "media-audio", label: "Audio" },
+	{ value: "media-pictures", label: "Pictures" },
+	{ value: "media-games", label: "Games" },
+	{ value: "automation", label: "Automation" },
+	{ value: "monitoring", label: "Monitoring" },
+	{ value: "productivity", label: "Productivity" },
+	{ value: "ai", label: "AI" },
+	{ value: "finance", label: "Finance" },
+	{ value: "security", label: "Security" },
+	{ value: "travel", label: "Travel" },
+	{ value: "statistics", label: "Statistics" },
+	{ value: "household", label: "Household" },
+	{ value: "utilities", label: "Utilities" },
 ];
 
 function AppCardSkeleton() {
@@ -156,7 +159,7 @@ function AppsPage() {
 
 			{/* Filters */}
 			<div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-				<div className="relative flex-1 sm:max-w-xs">
+				<div className="relative min-w-60 flex-1 sm:max-w-xs">
 					<Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 					<Input
 						placeholder={m.apps_searchPlaceholder()}
@@ -178,11 +181,10 @@ function AppsPage() {
 				>
 					{categories.map((cat) => (
 						<ToggleGroupItem
-							key={cat}
-							value={cat}
-							className="capitalize"
+							key={cat.value}
+							value={cat.value}
 						>
-							{cat}
+							{cat.label}
 						</ToggleGroupItem>
 					))}
 				</ToggleGroup>

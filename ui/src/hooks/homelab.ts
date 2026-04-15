@@ -93,6 +93,7 @@ import {
 export type { RemoveInfo } from "#/lib/server/remove";
 
 import type { SystemConfig } from "#/lib/types";
+import { invalidateKeys } from "#/lib/utils";
 
 const keys = {
 	apps: ["homelab", "apps"],
@@ -274,9 +275,7 @@ export function useCreateDirectory() {
 		mutationFn: (data: { parentPath: string; name: string }) =>
 			createDirectory({ data }),
 		onSuccess: (_result, variables) => {
-			queryClient.invalidateQueries({
-				queryKey: keys.browseDirectory(variables.parentPath),
-			});
+			invalidateKeys(queryClient, [keys.browseDirectory(variables.parentPath)]);
 		},
 	});
 }
@@ -288,10 +287,7 @@ export function useStartApp() {
 	return useMutation({
 		mutationFn: (appName: string) => startApp({ data: { appName } }),
 		onSuccess: (_data, appName) => {
-			queryClient.invalidateQueries({ queryKey: keys.apps });
-			queryClient.invalidateQueries({ queryKey: keys.appDetail(appName) });
-			queryClient.invalidateQueries({ queryKey: keys.systemStatus });
-			queryClient.invalidateQueries({ queryKey: keys.activity });
+			invalidateKeys(queryClient, [keys.apps, keys.appDetail(appName), keys.systemStatus, keys.activity]);
 		},
 	});
 }
@@ -301,10 +297,7 @@ export function useStopApp() {
 	return useMutation({
 		mutationFn: (appName: string) => stopApp({ data: { appName } }),
 		onSuccess: (_data, appName) => {
-			queryClient.invalidateQueries({ queryKey: keys.apps });
-			queryClient.invalidateQueries({ queryKey: keys.appDetail(appName) });
-			queryClient.invalidateQueries({ queryKey: keys.systemStatus });
-			queryClient.invalidateQueries({ queryKey: keys.activity });
+			invalidateKeys(queryClient, [keys.apps, keys.appDetail(appName), keys.systemStatus, keys.activity]);
 		},
 	});
 }
@@ -314,10 +307,7 @@ export function useRestartApp() {
 	return useMutation({
 		mutationFn: (appName: string) => restartApp({ data: { appName } }),
 		onSuccess: (_data, appName) => {
-			queryClient.invalidateQueries({ queryKey: keys.apps });
-			queryClient.invalidateQueries({ queryKey: keys.appDetail(appName) });
-			queryClient.invalidateQueries({ queryKey: keys.systemStatus });
-			queryClient.invalidateQueries({ queryKey: keys.activity });
+			invalidateKeys(queryClient, [keys.apps, keys.appDetail(appName), keys.systemStatus, keys.activity]);
 		},
 	});
 }
@@ -327,10 +317,7 @@ export function useInstallApp() {
 	return useMutation({
 		mutationFn: (appName: string) => installApp({ data: { appName } }),
 		onSuccess: (_data, appName) => {
-			queryClient.invalidateQueries({ queryKey: keys.apps });
-			queryClient.invalidateQueries({ queryKey: keys.appDetail(appName) });
-			queryClient.invalidateQueries({ queryKey: keys.systemStatus });
-			queryClient.invalidateQueries({ queryKey: keys.activity });
+			invalidateKeys(queryClient, [keys.apps, keys.appDetail(appName), keys.systemStatus, keys.activity]);
 		},
 	});
 }
@@ -341,12 +328,7 @@ export function useUninstallApp() {
 		mutationFn: (params: { appName: string; eraseData?: boolean }) =>
 			uninstallApp({ data: params }),
 		onSuccess: (_data, params) => {
-			queryClient.invalidateQueries({ queryKey: keys.apps });
-			queryClient.invalidateQueries({
-				queryKey: keys.appDetail(params.appName),
-			});
-			queryClient.invalidateQueries({ queryKey: keys.systemStatus });
-			queryClient.invalidateQueries({ queryKey: keys.activity });
+			invalidateKeys(queryClient, [keys.apps, keys.appDetail(params.appName), keys.systemStatus, keys.activity]);
 		},
 	});
 }
@@ -356,10 +338,7 @@ export function useUpdateApp() {
 	return useMutation({
 		mutationFn: (appName: string) => updateApp({ data: { appName } }),
 		onSuccess: (_data, appName) => {
-			queryClient.invalidateQueries({ queryKey: keys.apps });
-			queryClient.invalidateQueries({ queryKey: keys.appDetail(appName) });
-			queryClient.invalidateQueries({ queryKey: keys.systemStatus });
-			queryClient.invalidateQueries({ queryKey: keys.activity });
+			invalidateKeys(queryClient, [keys.apps, keys.appDetail(appName), keys.systemStatus, keys.activity]);
 		},
 	});
 }
@@ -388,9 +367,7 @@ export function useTriggerBackup() {
 	return useMutation({
 		mutationFn: () => triggerBackup(),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: keys.backupStatus });
-			queryClient.invalidateQueries({ queryKey: keys.backupHistory });
-			queryClient.invalidateQueries({ queryKey: keys.activity });
+			invalidateKeys(queryClient, [keys.backupStatus, keys.backupHistory, keys.activity]);
 		},
 	});
 }
@@ -401,7 +378,7 @@ export function useVerifyBackup() {
 		mutationFn: (params: { date: string; remote?: string }) =>
 			verifyBackup({ data: params }),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: keys.backupHistory });
+			invalidateKeys(queryClient, [keys.backupHistory]);
 		},
 	});
 }
@@ -412,9 +389,7 @@ export function useDeleteBackup() {
 		mutationFn: (params: { date: string; location: "local" | "remote" }) =>
 			deleteBackup({ data: params }),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: keys.backupStatus });
-			queryClient.invalidateQueries({ queryKey: keys.backupHistory });
-			queryClient.invalidateQueries({ queryKey: keys.activity });
+			invalidateKeys(queryClient, [keys.backupStatus, keys.backupHistory, keys.activity]);
 		},
 	});
 }
@@ -424,9 +399,7 @@ export function useSyncToRemote() {
 	return useMutation({
 		mutationFn: () => syncToRemote(),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: keys.backupStatus });
-			queryClient.invalidateQueries({ queryKey: keys.backupHistory });
-			queryClient.invalidateQueries({ queryKey: keys.activity });
+			invalidateKeys(queryClient, [keys.backupStatus, keys.backupHistory, keys.activity]);
 		},
 	});
 }
@@ -449,11 +422,7 @@ export function useRestoreBackup() {
 		mutationFn: (params: { date: string; appNames?: string[] }) =>
 			restoreFromBackup({ data: params }),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: keys.backupStatus });
-			queryClient.invalidateQueries({ queryKey: keys.backupHistory });
-			queryClient.invalidateQueries({ queryKey: keys.apps });
-			queryClient.invalidateQueries({ queryKey: keys.systemStatus });
-			queryClient.invalidateQueries({ queryKey: keys.activity });
+			invalidateKeys(queryClient, [keys.backupStatus, keys.backupHistory, keys.apps, keys.systemStatus, keys.activity]);
 		},
 	});
 }
@@ -463,12 +432,7 @@ export function useRecoverFromRemote() {
 	return useMutation({
 		mutationFn: () => recoverFromRemote(),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: keys.backupStatus });
-			queryClient.invalidateQueries({ queryKey: keys.backupHistory });
-			queryClient.invalidateQueries({ queryKey: keys.apps });
-			queryClient.invalidateQueries({ queryKey: keys.systemStatus });
-			queryClient.invalidateQueries({ queryKey: keys.config });
-			queryClient.invalidateQueries({ queryKey: keys.activity });
+			invalidateKeys(queryClient, [keys.backupStatus, keys.backupHistory, keys.apps, keys.systemStatus, keys.config, keys.activity]);
 		},
 	});
 }
@@ -479,8 +443,7 @@ export function useUpdateConfig() {
 		mutationFn: (changes: Partial<SystemConfig>) =>
 			updateConfig({ data: { changes } }),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: keys.config });
-			queryClient.invalidateQueries({ queryKey: keys.activity });
+			invalidateKeys(queryClient, [keys.config, keys.activity]);
 		},
 	});
 }
@@ -497,9 +460,7 @@ export function useEnableHttps() {
 	return useMutation({
 		mutationFn: (acmeEmail: string) => enableHttps({ data: { acmeEmail } }),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: keys.config });
-			queryClient.invalidateQueries({ queryKey: keys.apps });
-			queryClient.invalidateQueries({ queryKey: keys.activity });
+			invalidateKeys(queryClient, [keys.config, keys.apps, keys.activity]);
 		},
 	});
 }
@@ -509,9 +470,7 @@ export function useDisableHttps() {
 	return useMutation({
 		mutationFn: () => disableHttps(),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: keys.config });
-			queryClient.invalidateQueries({ queryKey: keys.apps });
-			queryClient.invalidateQueries({ queryKey: keys.activity });
+			invalidateKeys(queryClient, [keys.config, keys.apps, keys.activity]);
 		},
 	});
 }
@@ -537,14 +496,7 @@ export function useEnableFirewall() {
 	return useMutation({
 		mutationFn: () => enableFirewall(),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: keys.config });
-			queryClient.invalidateQueries({
-				queryKey: ["homelab", "firewall-prereqs"],
-			});
-			queryClient.invalidateQueries({
-				queryKey: ["homelab", "firewall-rules"],
-			});
-			queryClient.invalidateQueries({ queryKey: keys.activity });
+			invalidateKeys(queryClient, [keys.config, ["homelab", "firewall-prereqs"], ["homelab", "firewall-rules"], keys.activity]);
 		},
 	});
 }
@@ -554,14 +506,7 @@ export function useDisableFirewall() {
 	return useMutation({
 		mutationFn: () => disableFirewall(),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: keys.config });
-			queryClient.invalidateQueries({
-				queryKey: ["homelab", "firewall-prereqs"],
-			});
-			queryClient.invalidateQueries({
-				queryKey: ["homelab", "firewall-rules"],
-			});
-			queryClient.invalidateQueries({ queryKey: keys.activity });
+			invalidateKeys(queryClient, [keys.config, ["homelab", "firewall-prereqs"], ["homelab", "firewall-rules"], keys.activity]);
 		},
 	});
 }
@@ -580,8 +525,7 @@ export function useEnableSso() {
 	return useMutation({
 		mutationFn: () => enableSso(),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: keys.config });
-			queryClient.invalidateQueries({ queryKey: keys.activity });
+			invalidateKeys(queryClient, [keys.config, keys.activity]);
 		},
 	});
 }
@@ -591,8 +535,7 @@ export function useDisableSso() {
 	return useMutation({
 		mutationFn: () => disableSso(),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: keys.config });
-			queryClient.invalidateQueries({ queryKey: keys.activity });
+			invalidateKeys(queryClient, [keys.config, keys.activity]);
 		},
 	});
 }
@@ -615,11 +558,7 @@ export function useAddBackupRemote() {
 			params: Record<string, string>;
 		}) => addBackupRemote({ data: params }),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: keys.config });
-			queryClient.invalidateQueries({
-				queryKey: ["homelab", "remote-details"],
-			});
-			queryClient.invalidateQueries({ queryKey: keys.activity });
+			invalidateKeys(queryClient, [keys.config, ["homelab", "remote-details"], keys.activity]);
 		},
 	});
 }
@@ -630,11 +569,7 @@ export function useRemoveBackupRemote() {
 		mutationFn: (params: { name: string; deleteFromRclone: boolean }) =>
 			removeBackupRemote({ data: params }),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: keys.config });
-			queryClient.invalidateQueries({
-				queryKey: ["homelab", "remote-details"],
-			});
-			queryClient.invalidateQueries({ queryKey: keys.activity });
+			invalidateKeys(queryClient, [keys.config, ["homelab", "remote-details"], keys.activity]);
 		},
 	});
 }
@@ -677,7 +612,7 @@ export function useInstallSystemDep() {
 		mutationFn: (dep: "docker" | "swap" | "rclone") =>
 			installSystemDep({ data: { dep } }),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: keys.systemRequirements });
+			invalidateKeys(queryClient, [keys.systemRequirements]);
 		},
 	});
 }
@@ -687,7 +622,7 @@ export function useSetupBaseDir() {
 	return useMutation({
 		mutationFn: (baseDir: string) => setupBaseDir({ data: { baseDir } }),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: keys.config });
+			invalidateKeys(queryClient, [keys.config]);
 		},
 	});
 }
@@ -717,8 +652,7 @@ export function useInstallSetupApp() {
 	return useMutation({
 		mutationFn: (appName: string) => installSetupApp({ data: { appName } }),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: keys.apps });
-			queryClient.invalidateQueries({ queryKey: keys.systemStatus });
+			invalidateKeys(queryClient, [keys.apps, keys.systemStatus]);
 		},
 	});
 }
@@ -728,8 +662,7 @@ export function useSetupHttps() {
 	return useMutation({
 		mutationFn: (acmeEmail: string) => setupHttps({ data: { acmeEmail } }),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: keys.config });
-			queryClient.invalidateQueries({ queryKey: keys.activity });
+			invalidateKeys(queryClient, [keys.config, keys.activity]);
 		},
 	});
 }
@@ -750,8 +683,7 @@ export function useSetupFirewall() {
 	return useMutation({
 		mutationFn: (appNames: string[]) => setupFirewall({ data: { appNames } }),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: keys.config });
-			queryClient.invalidateQueries({ queryKey: keys.activity });
+			invalidateKeys(queryClient, [keys.config, keys.activity]);
 		},
 	});
 }
@@ -761,8 +693,7 @@ export function useSetupBackupTimer() {
 	return useMutation({
 		mutationFn: (hour: number) => setupBackupTimer({ data: { hour } }),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: keys.config });
-			queryClient.invalidateQueries({ queryKey: keys.activity });
+			invalidateKeys(queryClient, [keys.config, keys.activity]);
 		},
 	});
 }
@@ -772,8 +703,7 @@ export function useCompleteSetup() {
 	return useMutation({
 		mutationFn: () => completeSetup(),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: keys.setupStatus });
-			queryClient.invalidateQueries({ queryKey: keys.activity });
+			invalidateKeys(queryClient, [keys.setupStatus, keys.activity]);
 		},
 	});
 }
@@ -783,8 +713,7 @@ export function useSkipSetup() {
 	return useMutation({
 		mutationFn: () => skipSetup(),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: keys.setupStatus });
-			queryClient.invalidateQueries({ queryKey: keys.activity });
+			invalidateKeys(queryClient, [keys.setupStatus, keys.activity]);
 		},
 	});
 }
@@ -838,8 +767,7 @@ export function useFinalizeUpdate() {
 	return useMutation({
 		mutationFn: () => finalizeUpdate(),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: keys.version });
-			queryClient.invalidateQueries({ queryKey: keys.activity });
+			invalidateKeys(queryClient, [keys.version, keys.activity]);
 		},
 	});
 }

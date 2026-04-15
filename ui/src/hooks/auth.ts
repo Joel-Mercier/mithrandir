@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
 import { authClient } from "#/lib/auth-client";
+import { invalidateKeys } from "#/lib/utils";
 
 const sessionQueryKey = ["auth", "session"];
 const sessionsListQueryKey = ["auth", "sessions"];
@@ -20,7 +21,7 @@ export function useSignIn() {
 		},
 		onSuccess: async (data: Record<string, unknown>) => {
 			if (data?.twoFactorRedirect) return;
-			await queryClient.invalidateQueries({ queryKey: sessionQueryKey });
+			await invalidateKeys(queryClient, [sessionQueryKey]);
 			await router.navigate({ to: "/" });
 		},
 	});
@@ -58,7 +59,7 @@ export function useSignUp() {
 			return data;
 		},
 		onSuccess: async () => {
-			await queryClient.invalidateQueries({ queryKey: sessionQueryKey });
+			await invalidateKeys(queryClient, [sessionQueryKey]);
 			await router.navigate({ to: "/" });
 		},
 	});
@@ -76,7 +77,7 @@ export function useVerifyTwoFactor() {
 			if (error) throw error;
 		},
 		onSuccess: async () => {
-			await queryClient.invalidateQueries({ queryKey: sessionQueryKey });
+			await invalidateKeys(queryClient, [sessionQueryKey]);
 			await router.navigate({ to: "/" });
 		},
 	});
@@ -149,7 +150,7 @@ export function useRevokeSession() {
 			if (error) throw error;
 		},
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: sessionsListQueryKey });
+			invalidateKeys(queryClient, [sessionsListQueryKey]);
 		},
 	});
 }
