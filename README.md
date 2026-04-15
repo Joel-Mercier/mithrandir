@@ -45,6 +45,8 @@ All configuration lives in a single `.env` file at the project root.
 - `BASE_DIR`: Base directory where Docker app folders are located (e.g., `/opt/docker`)
 - `PUID`/`PGID`: User/group IDs for Docker containers (default: `1000`)
 - `TZ`: Timezone (default: `Etc/UTC`)
+- `LOCAL_IP`: Local IP address (auto-detected if not set)
+- `AUTO_YES`: Set to `true` to automatically accept all prompts (default: `false`)
 
 **Backup settings:**
 - `BACKUP_DIR`: Local backup storage directory (default: `/backups`)
@@ -59,12 +61,22 @@ All configuration lives in a single `.env` file at the project root.
 - `ENABLE_HTTPS`: Set to `true` when HTTPS is installed (managed by `install https`)
 - `ACME_EMAIL`: Email for Let's Encrypt certificate notifications
 
+**Firewall settings:**
+- `ENABLE_FIREWALL`: Set to `true` when UFW firewall is installed (managed by `install firewall`)
+
+**SSO settings:**
+- `ENABLE_SSO`: Set to `true` to enable the Mithrandir UI as an OAuth/OIDC provider for homelab apps (default: `false`)
+
 **Per-app secrets:**
 - `DUCKDNS_SUBDOMAINS`, `DUCKDNS_TOKEN`: Required for DuckDNS
 - `WG_SERVERURL`: Required for WireGuard
 - `WG_PEERS`: Number of WireGuard peers (default: `1`)
+- `IMMICH_DB_PASSWORD`: Optional database password for Immich (default: `postgres`)
 - `SURE_SECRET_KEY_BASE`: Required Rails secret for Sure
 - `SURE_DB_PASSWORD`: Optional database password for Sure
+- `SURE_OPENAI_ACCESS_TOKEN`: Optional OpenAI access token for Sure AI features
+- `SURE_OPENAI_URI_BASE`: Optional OpenAI API base URI for Sure
+- `SURE_OPENAI_MODEL`: Optional OpenAI model name for Sure
 - `AFFINE_DB_PASSWORD`: Optional database password for AFFiNE
 - `AFFINE_DB_USERNAME`: Optional database username for AFFiNE (default: `affine`)
 - `PAPERLESS_OCR_LANGUAGE`: OCR language for Paperless-ngx (default: `eng`)
@@ -79,7 +91,10 @@ All configuration lives in a single `.env` file at the project root.
 - `PIHOLE_PASSWORD`: Optional web interface password for Pi-hole
 - `YOURSPOTIFY_CLIENT_ID`: Required Spotify Client ID for Your Spotify
 - `YOURSPOTIFY_CLIENT_SECRET`: Required Spotify Client Secret for Your Spotify
+- `TANDOOR_SECRET_KEY`: Required secret key for Tandoor (auto-generated during install)
+- `TANDOOR_DB_PASSWORD`: Optional database password for Tandoor (default: `tandoor`)
 - `MEALIE_DB_PASSWORD`: Optional database password for Mealie
+- `YOUTARR_DB_PASSWORD`: Optional database password for Youtarr
 - `GATUS_DISCORD_WEBHOOK_URL`: Optional Discord webhook URL for Gatus alerts
 
 ### Rclone configuration
@@ -98,6 +113,12 @@ mithrandir backup remote remove     # Remove a remote
 ```
 
 Alternatively, run `rclone config` manually and ensure the remote name is listed in `RCLONE_REMOTES` in `.env`.
+
+**Google Drive auto-configuration:**
+Set all three values to auto-generate `rclone.conf` without running `rclone config` manually:
+- `RCLONE_GDRIVE_APP_ID`: Google Drive OAuth client ID ([create your own](https://rclone.org/drive/#making-your-own-client-id))
+- `RCLONE_GDRIVE_APP_SECRET`: Google Drive OAuth client secret
+- `RCLONE_GDRIVE_TOKEN`: Google Drive OAuth token
 
 > **Headless servers:** OAuth-based providers (Google Drive, Dropbox, OneDrive) require a browser for initial authorization. Run `rclone authorize "<provider>"` on a machine with a browser, then paste the resulting token during `mithrandir backup remote add`. This is a one-time setup — automated backups work without a browser afterward.
 
@@ -448,6 +469,7 @@ Checks configuration correctness across three categories: System (.env file, Doc
 | TRIP           | 8085      | Travel planning and trip journal                                                        |
 | Vaultwarden    | 8222      | Lightweight Bitwarden-compatible password manager (requires HTTPS)                      |
 | WireGuard      | 51820/udp | Fast, modern VPN tunnel                                                                 |
+| Youtarr        | 3087      | YouTube video downloader and manager                                                    |
 | Your Spotify   | 3456      | Spotify listening statistics and history tracker                                        |
 
 

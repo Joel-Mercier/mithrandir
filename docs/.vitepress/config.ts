@@ -31,6 +31,7 @@ function guideSidebar(prefix = ""): DefaultTheme.SidebarItem[] {
                 { text: "Prowlarr", link: `${prefix}/guide/apps/prowlarr` },
                 { text: "qBittorrent", link: `${prefix}/guide/apps/qbittorrent` },
                 { text: "Profilarr", link: `${prefix}/guide/apps/profilarr` },
+                { text: "Youtarr", link: `${prefix}/guide/apps/youtarr` },
               ],
             },
             {

@@ -29,6 +29,7 @@ mithrandir log <app> [service] # View logs
 | [Prowlarr](./prowlarr) | 9696 | Indexer manager for the *Arr stack |
 | [qBittorrent](./qbittorrent) | 8080 | BitTorrent client with web UI |
 | [Profilarr](./profilarr) | 6868 | Quality profile manager for Radarr and Sonarr |
+| [Youtarr](./youtarr) | 3087 | YouTube video downloader and manager |
 
 ### Media: Audio
 

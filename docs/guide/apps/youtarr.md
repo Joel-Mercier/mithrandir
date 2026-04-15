@@ -1,0 +1,49 @@
+# <img src="https://cdn.jsdelivr.net/gh/selfhst/icons/png/youtarr.png" width="32" height="32" style="display:inline;vertical-align:middle;margin-right:8px"> Youtarr
+
+YouTube video downloader and manager — automatically download videos from your favorite YouTube channels and playlists.
+
+| | |
+| --- | --- |
+| **Image** | `dialmaster/youtarr:latest` |
+| **Web UI** | `http://your-server:3087` |
+| **Config path** | `{BASE_DIR}/youtarr/config` |
+| **Website** | [GitHub](https://github.com/DialmasterOrg/Youtarr) |
+| **Source code** | [GitHub](https://github.com/DialmasterOrg/Youtarr) |
+
+## Resource Impact
+
+| | |
+| --- | --- |
+| **Performance** | Low — YouTube downloader and manager |
+| **Storage** | High — Stores downloaded video files |
+
+## Installation
+
+```sh
+mithrandir install youtarr
+```
+
+## Architecture
+
+Youtarr runs as a multi-container stack:
+
+| Container | Description |
+| --- | --- |
+| `youtarr` | Main Youtarr application server (port 3087) |
+| `youtarr_db` | MariaDB 10.3 database |
+
+## Secrets
+
+| Variable | Description |
+| --- | --- |
+| `YOUTARR_DB_PASSWORD` | MariaDB password (default: `youtarr`) |
+
+## Jellyfin Integration
+
+Youtarr is compatible with [Jellyfin](./jellyfin). Downloaded videos are stored in the shared data directory, so Jellyfin can automatically pick them up and add them to your media library.
+
+## Setup
+
+- Open the web UI at `http://your-server:3087`
+- Add YouTube channels or playlists to monitor
+- Downloaded videos are stored in the shared data directory (`{BASE_DIR}/data`)
