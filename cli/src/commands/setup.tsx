@@ -254,9 +254,9 @@ export function SetupCommand({ flags }: SetupCommandProps) {
     async function doConfigure() {
       setStatus("configuring");
       try {
-        await ensureSwap(2);
+        await ensureSwap(4);
         setStatus("done");
-        addCompletedStep({ name: "Swap", status: "done", message: "Configured 2 GB" });
+        addCompletedStep({ name: "Swap", status: "done", message: "Configured 4 GB" });
         setStep("rclone");
       } catch (err: any) {
         setError(`Swap configuration failed: ${err.message}`);
@@ -278,7 +278,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
         )}
         {status === "confirm" && (
           <Box flexDirection="column">
-            <Text>Current swap: {currentSize}. Configure 2 GB swap for running containers?</Text>
+            <Text>Current swap: {currentSize}. Configure 4 GB swap for running containers?</Text>
             <ConfirmInput
               onConfirm={async () => { await doConfigure(); }}
               onCancel={() => {
@@ -291,7 +291,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
         {status === "configuring" && (
           <Text>
             <Text color="yellow"><Spinner type="dots" /></Text>
-            {" "}Configuring 2 GB swap...
+            {" "}Configuring 4 GB swap...
           </Text>
         )}
       </Box>

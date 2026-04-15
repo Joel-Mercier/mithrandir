@@ -155,7 +155,7 @@ export const checkSystemRequirements = createServerFn({
 		]);
 
 	const GB = 1024 * 1024 * 1024;
-	const swapOk = swapInfo !== null && swapInfo.totalBytes >= 2 * GB;
+	const swapOk = swapInfo !== null && swapInfo.totalBytes >= 4 * GB;
 
 	return {
 		docker: dockerInstalled ? "installed" : "missing",
@@ -178,7 +178,7 @@ export const installSystemDep = createServerFn({ method: "POST" })
 				await waitForDocker(10, 2000);
 				break;
 			case "swap":
-				await ensureSwap(2);
+				await ensureSwap(4);
 				break;
 			case "rclone":
 				await installRclone();

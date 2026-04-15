@@ -72,8 +72,8 @@ function InstallDocker() {
       return;
     }
     try {
-      await ensureSwap(2);
-      addStep({ name: "Swap", status: "done", message: "Configured 2 GB" });
+      await ensureSwap(4);
+      addStep({ name: "Swap", status: "done", message: "Configured 4 GB" });
     } catch {
       addStep({ name: "Swap", status: "error", message: "Failed to configure (non-fatal)" });
     }

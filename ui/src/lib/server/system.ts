@@ -896,8 +896,8 @@ export const runDoctor = createServerFn({ method: "GET" }).handler(
 							category: "System",
 							name: "Swap",
 							status: "warn",
-							message: `${sizeStr} configured (recommend >= 2 GB)`,
-							hint: "Run `mithrandir install docker` to configure 2 GB swap",
+							message: `${sizeStr} configured (recommend >= 4 GB)`,
+							hint: "Run `mithrandir install docker` to configure 4 GB swap",
 						}
 					: {
 							category: "System",

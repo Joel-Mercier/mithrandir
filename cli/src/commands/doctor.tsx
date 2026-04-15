@@ -94,8 +94,8 @@ async function checkSwap(): Promise<CheckResult> {
       category: "System",
       name: "Swap",
       status: "warn",
-      message: `${sizeStr} configured (recommend >= 2 GB for running containers)`,
-      hint: "Run `mithrandir install docker` to automatically configure 2 GB swap",
+      message: `${sizeStr} configured (recommend >= 4 GB for running containers)`,
+      hint: "Run `mithrandir install docker` to automatically configure 4 GB swap",
     };
   }
   return {
