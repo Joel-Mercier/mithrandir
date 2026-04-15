@@ -36,6 +36,8 @@ Youtarr fonctionne comme une stack multi-conteneurs :
 
 | Variable | Description |
 | --- | --- |
+| `YOUTARR_AUTH_USERNAME` | Nom d'utilisateur administrateur (requis) |
+| `YOUTARR_AUTH_PASSWORD` | Mot de passe administrateur (requis) |
 | `YOUTARR_DB_PASSWORD` | Mot de passe MariaDB (defaut : `youtarr`) |
 
 ## Integration Jellyfin
@@ -45,5 +47,6 @@ Youtarr est compatible avec [Jellyfin](./jellyfin). Les videos telechargees sont
 ## Configuration
 
 - Ouvrez l'interface web a l'adresse `http://your-server:3087`
+- Connectez-vous avec le nom d'utilisateur et le mot de passe definis lors de l'installation
 - Ajoutez des chaines ou playlists YouTube a surveiller
 - Les videos telechargees sont stockees dans le repertoire de donnees partage (`{BASE_DIR}/data`)

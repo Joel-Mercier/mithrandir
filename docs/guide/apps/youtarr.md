@@ -36,6 +36,8 @@ Youtarr runs as a multi-container stack:
 
 | Variable | Description |
 | --- | --- |
+| `YOUTARR_AUTH_USERNAME` | Admin username (required) |
+| `YOUTARR_AUTH_PASSWORD` | Admin password (required) |
 | `YOUTARR_DB_PASSWORD` | MariaDB password (default: `youtarr`) |
 
 ## Jellyfin Integration
@@ -45,5 +47,6 @@ Youtarr is compatible with [Jellyfin](./jellyfin). Downloaded videos are stored 
 ## Setup
 
 - Open the web UI at `http://your-server:3087`
+- Log in with the username and password you set during installation
 - Add YouTube channels or playlists to monitor
 - Downloaded videos are stored in the shared data directory (`{BASE_DIR}/data`)

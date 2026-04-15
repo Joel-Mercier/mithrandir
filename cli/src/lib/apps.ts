@@ -1555,6 +1555,9 @@ export const APP_REGISTRY: AppDefinition[] = [
         `      - DB_PASSWORD=${dbPassword}`,
         `      - DB_NAME=youtarr`,
         `      - YOUTUBE_OUTPUT_DIR=/usr/src/app/data`,
+        `      - AUTH_ENABLED=true`,
+        `      - AUTH_PRESET_USERNAME=${envConfig.YOUTARR_AUTH_USERNAME ?? "admin"}`,
+        `      - AUTH_PRESET_PASSWORD=${envConfig.YOUTARR_AUTH_PASSWORD ?? "admin"}`,
         `    ports:`,
         `      - 3087:3011`,
         `    volumes:`,
@@ -1596,6 +1599,17 @@ export const APP_REGISTRY: AppDefinition[] = [
       return lines.join("\n") + "\n";
     },
     secrets: [
+      {
+        envVar: "YOUTARR_AUTH_USERNAME",
+        prompt: "Youtarr admin username",
+        required: true,
+      },
+      {
+        envVar: "YOUTARR_AUTH_PASSWORD",
+        prompt: "Youtarr admin password",
+        sensitive: true,
+        required: true,
+      },
       {
         envVar: "YOUTARR_DB_PASSWORD",
         prompt: "Youtarr database password",

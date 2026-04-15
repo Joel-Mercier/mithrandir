@@ -94,6 +94,8 @@ All configuration lives in a single `.env` file at the project root.
 - `TANDOOR_SECRET_KEY`: Required secret key for Tandoor (auto-generated during install)
 - `TANDOOR_DB_PASSWORD`: Optional database password for Tandoor (default: `tandoor`)
 - `MEALIE_DB_PASSWORD`: Optional database password for Mealie
+- `YOUTARR_AUTH_USERNAME`: Required admin username for Youtarr
+- `YOUTARR_AUTH_PASSWORD`: Required admin password for Youtarr
 - `YOUTARR_DB_PASSWORD`: Optional database password for Youtarr
 - `GATUS_DISCORD_WEBHOOK_URL`: Optional Discord webhook URL for Gatus alerts
 
