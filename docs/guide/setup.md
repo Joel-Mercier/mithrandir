@@ -12,7 +12,7 @@ The wizard runs through these steps in order:
 
 1. **System initialization** — Detects your OS, local IP, and loads any existing configuration
 2. **Docker** — Checks if Docker is installed, and installs it if needed
-3. **Swap** — Checks and configures 2 GB of swap space (important for Raspberry Pi and low-RAM systems)
+3. **Swap** — Checks and configures 4 GB of swap space (important for Raspberry Pi and low-RAM systems)
 4. **rclone** — Installs rclone for cloud backup support
 5. **Base directory** — Confirms the base directory for all app data (defaults to your home directory)
 6. **App selection** — Choose which apps to install (by category or individually)

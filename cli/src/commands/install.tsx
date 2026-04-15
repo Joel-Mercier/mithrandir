@@ -65,9 +65,9 @@ function InstallDocker() {
 
   async function configureSwap() {
     setPhase("swap");
-    const twoGB = 2 * 1024 * 1024 * 1024;
+    const fourGB = 4 * 1024 * 1024 * 1024;
     const info = await getSwapInfo();
-    if (info && info.totalBytes >= twoGB) {
+    if (info && info.totalBytes >= fourGB) {
       addStep({ name: "Swap", status: "done", message: `Already sufficient (${formatSwapSize(info.totalBytes)})` });
       return;
     }

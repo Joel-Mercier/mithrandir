@@ -84,7 +84,7 @@ async function checkSwap(): Promise<CheckResult> {
       name: "Swap",
       status: "fail",
       message: "No swap configured",
-      hint: "Run `mithrandir install docker` or `sudo fallocate -l 2G /var/swap && sudo mkswap /var/swap && sudo swapon /var/swap`",
+      hint: "Run `mithrandir install docker` or `sudo fallocate -l 4G /var/swap && sudo mkswap /var/swap && sudo swapon /var/swap`",
     };
   }
   const sizeStr = formatSwapSize(info.totalBytes);

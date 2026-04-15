@@ -12,7 +12,7 @@ L'assistant exécute les étapes suivantes dans l'ordre :
 
 1. **Initialisation du système** — Détecte votre OS, votre IP locale et charge toute configuration existante
 2. **Docker** — Vérifie si Docker est installé et l'installe si nécessaire
-3. **Swap** — Vérifie et configure 2 Go d'espace swap (important pour le Raspberry Pi et les systèmes avec peu de RAM)
+3. **Swap** — Vérifie et configure 4 Go d'espace swap (important pour le Raspberry Pi et les systèmes avec peu de RAM)
 4. **rclone** — Installe rclone pour la prise en charge des sauvegardes cloud
 5. **Répertoire de base** — Confirme le répertoire de base pour toutes les données d'applications (par défaut votre répertoire personnel)
 6. **Sélection des applications** — Choisissez les applications à installer (par catégorie ou individuellement)

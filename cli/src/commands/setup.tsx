@@ -236,8 +236,8 @@ export function SetupCommand({ flags }: SetupCommandProps) {
 
     async function checkSwap() {
       const info = await getSwapInfo();
-      const twoGB = 2 * 1024 * 1024 * 1024;
-      if (info && info.totalBytes >= twoGB) {
+      const fourGB = 4 * 1024 * 1024 * 1024;
+      if (info && info.totalBytes >= fourGB) {
         setStatus("done");
         addCompletedStep({ name: "Swap", status: "done", message: `${formatSwapSize(info.totalBytes)} configured` });
         setStep("rclone");
