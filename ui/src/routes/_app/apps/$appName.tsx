@@ -102,7 +102,7 @@ function DetailSkeleton() {
 	return (
 		<div className="mx-auto max-w-7xl px-4 py-8">
 			<Breadcrumbs />
-			<div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+			<div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
 				<div className="flex items-center gap-3">
 					<Skeleton className="h-8 w-40" />
 					<Skeleton className="h-5 w-16 rounded-full" />
@@ -365,8 +365,8 @@ function AppDetailPage() {
 			<Breadcrumbs />
 
 			{/* Header */}
-			<div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-				<div className="flex items-center gap-3">
+			<div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+				<div className="flex flex-wrap items-center gap-3">
 					{app.icon && (
 						<img src={app.icon} alt="" className="h-8 w-8 rounded" />
 					)}
@@ -376,7 +376,7 @@ function AppDetailPage() {
 					<Badge variant="outline" className={statusColor[app.status]}>
 						{app.status}
 					</Badge>
-					<Badge variant="outline" className="capitalize">
+					<Badge variant="outline" className="hidden capitalize sm:inline-flex">
 						{app.category}
 					</Badge>
 				</div>

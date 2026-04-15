@@ -13,6 +13,7 @@ import {
 	TabsList,
 	TabsTrigger,
 } from "#/components/ui/tabs";
+import { useMediaQuery } from "#/hooks/use-media-query";
 import { m } from "#/paraglide/messages.js";
 
 export const Route = createFileRoute("/_app/settings")({
@@ -27,6 +28,9 @@ const tabs = [
 ];
 
 function SettingsPage() {
+	const isDesktop = useMediaQuery("(min-width: 768px)");
+	const orientation = isDesktop ? "vertical" : "horizontal";
+
 	return (
 		<div className="mx-auto max-w-7xl px-4 py-8">
 			<Breadcrumbs />
@@ -39,14 +43,14 @@ function SettingsPage() {
 				</p>
 			</div>
 
-			<Tabs defaultValue="general" orientation="vertical">
-				<TabsList variant="line" className="shrink-0 md:w-48">
+			<Tabs defaultValue="general" orientation={orientation}>
+				<TabsList variant="line" className="w-full overflow-x-auto scrollbar-none md:w-48 md:shrink-0">
 					{tabs.map((tab) => {
 						const Icon = tab.icon;
 						return (
 							<TabsTrigger key={tab.id} value={tab.id}>
 								<Icon />
-								<span className="hidden md:inline">{tab.label}</span>
+								{tab.label}
 							</TabsTrigger>
 						);
 					})}

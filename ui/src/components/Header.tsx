@@ -68,7 +68,7 @@ export default function Header() {
 				</Link>
 
 				{/* Desktop nav */}
-				<nav className="hidden items-center gap-1 md:flex">
+				<nav className="hidden items-center gap-1 lg:flex">
 					{navLinks.map((link) => (
 						<Link
 							key={link.label}
@@ -93,24 +93,24 @@ export default function Header() {
 						variant="ghost"
 						size="icon"
 						asChild
-						className="hidden md:inline-flex"
+						className="hidden lg:inline-flex"
 					>
 						<Link to="/upload">
 							<Upload className="size-4" />
 							<span className="sr-only">{m.upload_title()}</span>
 						</Link>
 					</Button>
-					<div className="hidden md:block">
+					<div className="hidden lg:block">
 						<LanguageSwitch />
 					</div>
-					<div className="hidden md:block">
+					<div className="hidden lg:block">
 						<ThemeToggle />
 					</div>
 					<Button
 						variant="ghost"
 						size="icon"
 						onClick={() => setActivityOpen(true)}
-						className="hidden md:inline-flex"
+						className="hidden lg:inline-flex"
 					>
 						<History className="size-4" />
 						<span className="sr-only">{m.common_activity()}</span>
@@ -120,7 +120,7 @@ export default function Header() {
 							<Button
 								variant="ghost"
 								size="icon"
-								className="hidden rounded-full md:inline-flex"
+								className="hidden rounded-full lg:inline-flex"
 							>
 								<Avatar size="sm">
 									<AvatarFallback className="text-[10px]">
@@ -161,7 +161,7 @@ export default function Header() {
 						variant="ghost"
 						size="icon"
 						onClick={() => setActivityOpen(true)}
-						className="md:hidden"
+						className="lg:hidden"
 					>
 						<History className="size-4" />
 						<span className="sr-only">{m.common_activity()}</span>

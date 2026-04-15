@@ -26,6 +26,7 @@ import {
 	TabsList,
 	TabsTrigger,
 } from "#/components/ui/tabs";
+import { useMediaQuery } from "#/hooks/use-media-query";
 import {
 	useBackupHistory,
 	useBackupStatus,
@@ -64,6 +65,8 @@ function StatusCardSkeleton() {
 }
 
 function BackupRestorePage() {
+	const isDesktop = useMediaQuery("(min-width: 768px)");
+	const orientation = isDesktop ? "vertical" : "horizontal";
 	const backupStatusQuery = useBackupStatus();
 	const backupHistoryQuery = useBackupHistory();
 	const configQuery = useConfig();
@@ -289,14 +292,14 @@ function BackupRestorePage() {
 			</div>
 
 			{/* Backup history tabs */}
-			<Tabs value={activeTab} onValueChange={setActiveTab} orientation="vertical">
-				<TabsList variant="line" className="shrink-0 md:w-48">
+			<Tabs value={activeTab} onValueChange={setActiveTab} orientation={orientation}>
+				<TabsList variant="line" className="w-full overflow-x-auto scrollbar-none md:w-48 md:shrink-0">
 					{tabs.map((tab) => {
 						const Icon = tab.icon;
 						return (
 							<TabsTrigger key={tab.id} value={tab.id}>
 								<Icon />
-								<span className="hidden md:inline">{tab.label}</span>
+								{tab.label}
 							</TabsTrigger>
 						);
 					})}

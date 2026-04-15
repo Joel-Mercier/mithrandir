@@ -46,6 +46,7 @@ export function BackupTable({
 	return (
 		<Card>
 			<CardContent className="px-2 py-0">
+				<div className="overflow-x-auto">
 				<Table>
 					<TableHeader>
 						<TableRow>
@@ -187,6 +188,7 @@ export function BackupTable({
 						})}
 					</TableBody>
 				</Table>
+				</div>
 			</CardContent>
 		</Card>
 	);

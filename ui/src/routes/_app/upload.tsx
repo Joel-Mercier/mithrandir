@@ -13,7 +13,7 @@ function UploadPage() {
 	return (
 		<div className="mx-auto max-w-3xl px-4 py-6">
 			<Breadcrumbs />
-			<div className="mb-6 flex items-start justify-between gap-4">
+			<div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 				<div>
 					<h1 className="font-display text-2xl font-bold tracking-tight">
 						{m.upload_title()}
@@ -22,7 +22,7 @@ function UploadPage() {
 						{m.upload_subtitle()}
 					</p>
 				</div>
-				<Button variant="outline" size="sm" asChild>
+				<Button variant="outline" size="sm" className="self-start" asChild>
 					<Link to="/media-library">
 						<FolderOpen data-icon="inline-start" />
 						{m.upload_browseLibrary()}
