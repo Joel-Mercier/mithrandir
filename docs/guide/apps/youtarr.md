@@ -42,11 +42,11 @@ Youtarr runs as a multi-container stack:
 
 ## Jellyfin Integration
 
-Youtarr is compatible with [Jellyfin](./jellyfin). Downloaded videos are stored in the shared data directory, so Jellyfin can automatically pick them up and add them to your media library.
+Youtarr is compatible with [Jellyfin](./jellyfin). Downloaded videos are stored in `{BASE_DIR}/data/media/youtube`, so Jellyfin can automatically pick them up and add them to your media library.
 
 ## Setup
 
 - Open the web UI at `http://your-server:3087`
 - Log in with the username and password you set during installation
 - Add YouTube channels or playlists to monitor
-- Downloaded videos are stored in the shared data directory (`{BASE_DIR}/data`)
+- Downloaded videos are stored in `{BASE_DIR}/data/media/youtube`

@@ -42,11 +42,11 @@ Youtarr fonctionne comme une stack multi-conteneurs :
 
 ## Integration Jellyfin
 
-Youtarr est compatible avec [Jellyfin](./jellyfin). Les videos telechargees sont stockees dans le repertoire de donnees partage, ce qui permet a Jellyfin de les detecter automatiquement et de les ajouter a votre bibliotheque multimedia.
+Youtarr est compatible avec [Jellyfin](./jellyfin). Les videos telechargees sont stockees dans `{BASE_DIR}/data/media/youtube`, ce qui permet a Jellyfin de les detecter automatiquement et de les ajouter a votre bibliotheque multimedia.
 
 ## Configuration
 
 - Ouvrez l'interface web a l'adresse `http://your-server:3087`
 - Connectez-vous avec le nom d'utilisateur et le mot de passe definis lors de l'installation
 - Ajoutez des chaines ou playlists YouTube a surveiller
-- Les videos telechargees sont stockees dans le repertoire de donnees partage (`{BASE_DIR}/data`)
+- Les videos telechargees sont stockees dans `{BASE_DIR}/data/media/youtube`
