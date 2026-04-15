@@ -18,6 +18,7 @@
     "tusd:download": "bun run scripts/download-tusd.ts"
   },
   "dependencies": {
+    "@base-ui/react": "^1.4.0",
     "@better-auth/i18n": "1.5.6",
     "@better-auth/oauth-provider": "^1.6.2",
     "@leeoniya/ufuzzy": "^1.0.19",

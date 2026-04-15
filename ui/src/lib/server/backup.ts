@@ -8,6 +8,7 @@ import {
 	listDirs,
 	listFiles,
 	listRemotes,
+	upload,
 } from "@mithrandir/cli/lib/rclone";
 import { shell } from "@mithrandir/cli/lib/shell";
 import { createServerFn } from "@tanstack/react-start";
@@ -206,6 +207,89 @@ export const verifyBackup = createServerFn({ method: "POST" })
 			output: (result.stdout + result.stderr).trim(),
 		};
 	});
+
+export const syncToRemote = createServerFn({ method: "POST" }).handler(
+	async (): Promise<{ success: boolean; output: string }> => {
+		await ensureSession();
+		const projectRoot = getProjectRoot();
+		const envConfig = await loadEnvConfig(projectRoot);
+		const backupConfig = getBackupConfig(envConfig);
+
+		// Find the latest local backup date
+		const archiveDir = `${backupConfig.BACKUP_DIR}/archive`;
+		if (!existsSync(archiveDir)) {
+			return { success: false, output: "No local backups found." };
+		}
+
+		const result = await shell("ls", ["-1", archiveDir], {
+			ignoreError: true,
+		});
+		if (result.exitCode !== 0 || !result.stdout.trim()) {
+			return { success: false, output: "No local backups found." };
+		}
+
+		const dates = result.stdout
+			.trim()
+			.split("\n")
+			.filter((d: string) => /^\d{4}-\d{2}-\d{2}$/.test(d))
+			.sort()
+			.reverse();
+
+		if (dates.length === 0) {
+			return { success: false, output: "No local backups found." };
+		}
+
+		const latestDate = dates[0];
+		const localPath = `${archiveDir}/${latestDate}`;
+		const remotePath = `/backups/archive/${latestDate}`;
+
+		const remotes = backupConfig.RCLONE_REMOTES;
+		if (remotes.length === 0) {
+			return { success: false, output: "No rclone remotes configured." };
+		}
+
+		const succeeded: string[] = [];
+		const failed: string[] = [];
+
+		for (const remote of remotes) {
+			const check = await isRcloneRemoteConfigured(remote, envConfig);
+			if (!check.configured) {
+				failed.push(`${remote}: not configured`);
+				continue;
+			}
+			try {
+				await upload(localPath, remote, remotePath);
+				succeeded.push(remote);
+			} catch (err: any) {
+				failed.push(
+					`${remote}: ${err.stderr?.trim() || err.message}`,
+				);
+			}
+		}
+
+		const success = succeeded.length > 0;
+		const lines: string[] = [];
+		if (succeeded.length > 0) {
+			lines.push(
+				`Synced ${latestDate} to: ${succeeded.join(", ")}`,
+			);
+		}
+		if (failed.length > 0) {
+			lines.push(`Failed: ${failed.join("; ")}`);
+		}
+
+		if (success) {
+			await logActivity(
+				"backup_synced_remote",
+				"backup",
+				`${latestDate} → ${succeeded.join(", ")}`,
+				"/backup-restore",
+			);
+		}
+
+		return { success, output: lines.join("\n") };
+	},
+);
 
 export const deleteBackup = createServerFn({ method: "POST" })
 	.inputValidator((d: { date: string; location: "local" | "remote" }) => d)

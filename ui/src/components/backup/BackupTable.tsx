@@ -1,4 +1,3 @@
-import { useNavigate } from "@tanstack/react-router";
 import { CheckCircle2, Clock, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "#/components/ui/button";
@@ -24,8 +23,13 @@ export function formatDate(iso: string) {
 	});
 }
 
-export function BackupTable({ backups }: { backups: BackupEntry[] }) {
-	const navigate = useNavigate();
+export function BackupTable({
+	backups,
+	onRestore,
+}: {
+	backups: BackupEntry[];
+	onRestore: (backup: BackupEntry) => void;
+}) {
 	const verifyMutation = useVerifyBackup();
 	const deleteMutation = useDeleteBackup();
 
@@ -139,12 +143,7 @@ export function BackupTable({ backups }: { backups: BackupEntry[] }) {
 												variant="ghost"
 												size="sm"
 												className="h-7 text-xs"
-												onClick={() =>
-													navigate({
-														to: "/backup-restore",
-														search: { tab: "restore" } as any,
-													})
-												}
+												onClick={() => onRestore(backup)}
 											>
 												{m.common_restore()}
 											</Button>

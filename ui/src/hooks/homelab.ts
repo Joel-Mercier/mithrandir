@@ -17,9 +17,15 @@ import {
 	deleteBackup,
 	fetchBackupHistory,
 	fetchBackupStatus,
+	syncToRemote,
 	triggerBackup,
 	verifyBackup,
 } from "#/lib/server/backup";
+import {
+	fetchBackupApps,
+	recoverFromRemote,
+	restoreFromBackup,
+} from "#/lib/server/restore";
 import { fetchCapacity } from "#/lib/server/capacity";
 import { browseDirectory, createDirectory } from "#/lib/server/filesystem";
 import { fetchMediaCategory, fetchMediaLibrary } from "#/lib/server/media";
@@ -117,6 +123,14 @@ const keys = {
 	appRegistry: ["homelab", "setup", "app-registry"],
 	wireguardPeers: ["homelab", "wireguard", "peers"],
 	wireguardPeerQR: (peer: string) => ["homelab", "wireguard", "peer-qr", peer],
+	backupApps: (date: string, location: string, remote?: string) => [
+		"homelab",
+		"backup",
+		"apps",
+		date,
+		location,
+		remote ?? "",
+	],
 };
 
 // ─── Query hooks ─────────────────────────────────────────────────────────────
@@ -400,6 +414,60 @@ export function useDeleteBackup() {
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: keys.backupStatus });
 			queryClient.invalidateQueries({ queryKey: keys.backupHistory });
+			queryClient.invalidateQueries({ queryKey: keys.activity });
+		},
+	});
+}
+
+export function useSyncToRemote() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: () => syncToRemote(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: keys.backupStatus });
+			queryClient.invalidateQueries({ queryKey: keys.backupHistory });
+			queryClient.invalidateQueries({ queryKey: keys.activity });
+		},
+	});
+}
+
+export function useBackupApps(
+	date: string,
+	location: "local" | "remote",
+	remote?: string,
+) {
+	return useQuery({
+		queryKey: keys.backupApps(date, location, remote),
+		queryFn: () => fetchBackupApps({ data: { date, location, remote } }),
+		enabled: !!date,
+	});
+}
+
+export function useRestoreBackup() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (params: { date: string; appNames?: string[] }) =>
+			restoreFromBackup({ data: params }),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: keys.backupStatus });
+			queryClient.invalidateQueries({ queryKey: keys.backupHistory });
+			queryClient.invalidateQueries({ queryKey: keys.apps });
+			queryClient.invalidateQueries({ queryKey: keys.systemStatus });
+			queryClient.invalidateQueries({ queryKey: keys.activity });
+		},
+	});
+}
+
+export function useRecoverFromRemote() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: () => recoverFromRemote(),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: keys.backupStatus });
+			queryClient.invalidateQueries({ queryKey: keys.backupHistory });
+			queryClient.invalidateQueries({ queryKey: keys.apps });
+			queryClient.invalidateQueries({ queryKey: keys.systemStatus });
+			queryClient.invalidateQueries({ queryKey: keys.config });
 			queryClient.invalidateQueries({ queryKey: keys.activity });
 		},
 	});

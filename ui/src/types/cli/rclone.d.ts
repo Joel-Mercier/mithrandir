@@ -12,6 +12,11 @@ export function isRcloneRemoteConfigured(
 	remoteName: string,
 	env?: EnvConfig,
 ): Promise<{ configured: true } | { configured: false; reason: string }>;
+export function upload(
+	localPath: string,
+	remote: string,
+	remotePath: string,
+): Promise<void>;
 export function isRemoteReachable(remote: string): Promise<boolean>;
 export function createRemote(
 	name: string,

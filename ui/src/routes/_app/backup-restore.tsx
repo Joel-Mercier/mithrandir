@@ -9,6 +9,7 @@ import {
 	Shield,
 	Upload,
 } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 import Breadcrumbs from "#/components/Breadcrumbs";
 import { BackupTable, formatDate } from "#/components/backup/BackupTable";
@@ -29,8 +30,11 @@ import {
 	useBackupHistory,
 	useBackupStatus,
 	useConfig,
+	useSyncToRemote,
 	useTriggerBackup,
+	useVerifyBackup,
 } from "#/hooks/homelab";
+import type { BackupEntry } from "#/lib/types";
 import { m } from "#/paraglide/messages.js";
 
 export const Route = createFileRoute("/_app/backup-restore")({
@@ -64,6 +68,11 @@ function BackupRestorePage() {
 	const backupHistoryQuery = useBackupHistory();
 	const configQuery = useConfig();
 	const triggerBackupMutation = useTriggerBackup();
+	const verifyBackupMutation = useVerifyBackup();
+	const syncToRemoteMutation = useSyncToRemote();
+
+	const [activeTab, setActiveTab] = useState("local");
+	const [pendingRestore, setPendingRestore] = useState<BackupEntry | null>(null);
 
 	const backup = backupStatusQuery.data;
 	const history = backupHistoryQuery.data ?? [];
@@ -209,18 +218,69 @@ function BackupRestorePage() {
 								<Button
 									className="w-full justify-start gap-2"
 									variant="outline"
-									onClick={() => toast.success(m.backup_latestVerified())}
+									disabled={
+										verifyBackupMutation.isPending ||
+										!backup?.lastBackupDate
+									}
+									onClick={() => {
+										if (!backup?.lastBackupDate) return;
+										verifyBackupMutation.mutate(
+											{ date: backup.lastBackupDate },
+											{
+												onSuccess: (result) => {
+													if (result.success) {
+														toast.success(m.backup_latestVerified());
+													} else {
+														toast.error(m.backup_verifyFailed(), {
+															description: result.output,
+														});
+													}
+												},
+												onError: (err) =>
+													toast.error(
+														`${m.backup_verifyFailed()}: ${err.message}`,
+													),
+											},
+										);
+									}}
 								>
 									<CheckCircle2 className="h-4 w-4" />
-									{m.backup_verifyLatest()}
+									{verifyBackupMutation.isPending
+										? m.backup_verifying()
+										: m.backup_verifyLatest()}
 								</Button>
 								<Button
 									className="w-full justify-start gap-2"
 									variant="outline"
-									onClick={() => toast.info(m.backup_syncingRemote())}
+									disabled={
+										syncToRemoteMutation.isPending ||
+										localBackups.length === 0
+									}
+									onClick={() => {
+										toast.info(m.backup_syncingRemote());
+										syncToRemoteMutation.mutate(undefined, {
+											onSuccess: (result) => {
+												if (result.success) {
+													toast.success(m.backup_syncComplete(), {
+														description: result.output,
+													});
+												} else {
+													toast.error(m.backup_syncFailed(), {
+														description: result.output,
+													});
+												}
+											},
+											onError: (err) =>
+												toast.error(
+													`${m.backup_syncFailed()}: ${err.message}`,
+												),
+										});
+									}}
 								>
 									<Upload className="h-4 w-4" />
-									{m.backup_syncRemote()}
+									{syncToRemoteMutation.isPending
+										? m.backup_syncingRemote()
+										: m.backup_syncRemote()}
 								</Button>
 							</CardContent>
 						</Card>
@@ -229,7 +289,7 @@ function BackupRestorePage() {
 			</div>
 
 			{/* Backup history tabs */}
-			<Tabs defaultValue="local" orientation="vertical">
+			<Tabs value={activeTab} onValueChange={setActiveTab} orientation="vertical">
 				<TabsList variant="line" className="shrink-0 md:w-48">
 					{tabs.map((tab) => {
 						const Icon = tab.icon;
@@ -250,7 +310,13 @@ function BackupRestorePage() {
 							))}
 						</div>
 					) : (
-						<BackupTable backups={localBackups} />
+						<BackupTable
+							backups={localBackups}
+							onRestore={(entry) => {
+								setPendingRestore(entry);
+								setActiveTab("restore");
+							}}
+						/>
 					)}
 				</TabsContent>
 				<TabsContent value="remote">
@@ -261,11 +327,20 @@ function BackupRestorePage() {
 							))}
 						</div>
 					) : (
-						<BackupTable backups={remoteBackups} />
+						<BackupTable
+							backups={remoteBackups}
+							onRestore={(entry) => {
+								setPendingRestore(entry);
+								setActiveTab("restore");
+							}}
+						/>
 					)}
 				</TabsContent>
 				<TabsContent value="restore">
-					<RestorePanel />
+					<RestorePanel
+						initialBackup={pendingRestore}
+						onInitialBackupConsumed={() => setPendingRestore(null)}
+					/>
 				</TabsContent>
 			</Tabs>
 		</div>

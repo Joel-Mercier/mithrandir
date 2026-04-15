@@ -138,10 +138,10 @@ body,
 }
 
 /* Enhanced focus-visible outline for keyboard nav */
-*:focus-visible {
-  outline: 2px solid oklch(0.588 0.158 264.53);
-  outline-offset: 2px;
-}
+/* *:focus-visible {
+  outline: 1px solid oklch(0.588 0.158 264.53);
+  outline-offset: 1px;
+} */
 
 /* Button active press */
 [data-slot="button"]:active:not(:disabled) {

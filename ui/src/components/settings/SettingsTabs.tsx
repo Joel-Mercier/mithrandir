@@ -1018,7 +1018,7 @@ function EncryptionRemotesCard({ config }: { config: SystemConfig }) {
 				if (!open) setRemoveTarget(null);
 			}}
 		>
-			<AlertDialogContent>
+			<AlertDialogContent className="bg-background/95 backdrop-blur">
 				<AlertDialogHeader>
 					<AlertDialogTitle>{m.common_delete()}</AlertDialogTitle>
 					<AlertDialogDescription>
