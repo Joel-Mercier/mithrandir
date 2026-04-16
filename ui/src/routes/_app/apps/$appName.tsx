@@ -49,7 +49,14 @@ import { Progress } from "#/components/ui/progress";
 import { ScrollArea } from "#/components/ui/scroll-area";
 import { Separator } from "#/components/ui/separator";
 import { Skeleton } from "#/components/ui/skeleton";
+import { Spinner } from "#/components/ui/spinner";
 import { Switch } from "#/components/ui/switch";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from "#/components/ui/tooltip";
 import {
 	useAppDetail,
 	useAppLogs,
@@ -86,6 +93,8 @@ const APP_DEPENDENTS: Record<string, string[]> = {
 
 const statusColor: Record<AppStatus, string> = {
 	running: "bg-status-healthy/15 text-status-healthy border-status-healthy/30",
+	starting:
+		"bg-status-warning/15 text-status-warning border-status-warning/30",
 	stopped: "bg-muted/50 text-muted-foreground border-muted-foreground/30",
 	error: "bg-status-critical/15 text-status-critical border-status-critical/30",
 	available:
@@ -142,6 +151,11 @@ const containerStatusConfig: Record<
 		label: () => m.appDetail_containerStatusRunning(),
 		className: "text-status-healthy",
 	},
+	starting: {
+		icon: Loader2,
+		label: () => m.appDetail_containerStatusStarting(),
+		className: "text-status-warning",
+	},
 	stopped: {
 		icon: CircleMinus,
 		label: () => m.appDetail_containerStatusStopped(),
@@ -169,7 +183,9 @@ function ContainerRow({ container }: { container: ContainerInfo }) {
 				<span className="text-sm capitalize">{container.displayName}</span>
 			</div>
 			<div className={`flex items-center gap-1.5 ${config.className}`}>
-				<Icon className="h-3.5 w-3.5" />
+				<Icon
+					className={`h-3.5 w-3.5 ${container.status === "starting" ? "animate-spin" : ""}`}
+				/>
 				<span className="text-xs font-medium">{config.label()}</span>
 			</div>
 		</div>
@@ -373,7 +389,13 @@ function AppDetailPage() {
 					<h1 className="font-display text-2xl font-bold tracking-tight">
 						{app.displayName}
 					</h1>
-					<Badge variant="outline" className={statusColor[app.status]}>
+					<Badge
+						variant="outline"
+						className={`${statusColor[app.status]} ${app.status === "starting" ? "gap-1" : ""}`}
+					>
+						{app.status === "starting" && (
+							<Spinner size="sm" className="h-3 w-3 text-status-warning" />
+						)}
 						{app.status}
 					</Badge>
 					<Badge variant="outline" className="hidden capitalize sm:inline-flex">
@@ -381,7 +403,7 @@ function AppDetailPage() {
 					</Badge>
 				</div>
 				<div className="flex flex-wrap items-center gap-2">
-					{app.status === "running" ? (
+					{app.status === "running" || app.status === "starting" ? (
 						<>
 							<Button
 								variant="outline"
@@ -461,17 +483,40 @@ function AppDetailPage() {
 								)}
 								{m.common_update()}
 							</Button>
-							<Button
-								variant="outline"
-								size="sm"
-								className="cursor-pointer gap-1.5"
-								asChild
-							>
-								<a href={appUrl} target="_blank" rel="noopener noreferrer">
-									<ExternalLink className="h-3.5 w-3.5" />
-									{m.common_open()}
-								</a>
-							</Button>
+							{app.status === "starting" ? (
+								<TooltipProvider>
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<span>
+												<Button
+													variant="outline"
+													size="sm"
+													className="gap-1.5"
+													disabled
+												>
+													<ExternalLink className="h-3.5 w-3.5" />
+													{m.common_open()}
+												</Button>
+											</span>
+										</TooltipTrigger>
+										<TooltipContent>
+											{m.appDetail_openDisabledStarting()}
+										</TooltipContent>
+									</Tooltip>
+								</TooltipProvider>
+							) : (
+								<Button
+									variant="outline"
+									size="sm"
+									className="cursor-pointer gap-1.5"
+									asChild
+								>
+									<a href={appUrl} target="_blank" rel="noopener noreferrer">
+										<ExternalLink className="h-3.5 w-3.5" />
+										{m.common_open()}
+									</a>
+								</Button>
+							)}
 						</>
 					) : (
 						<>
@@ -554,6 +599,15 @@ function AppDetailPage() {
 			<div className="mb-6">
 				<ExternalLinks website={summary?.website} github={summary?.github} />
 			</div>
+
+			{app.status === "starting" && (
+				<Alert className="mb-6 border-status-warning/30 bg-status-warning/5 text-status-warning">
+					<Spinner size="sm" className="text-status-warning" />
+					<AlertDescription className="text-status-warning">
+						{m.appDetail_containerStarting({ appName: app.displayName })}
+					</AlertDescription>
+				</Alert>
+			)}
 
 			{app.status === "stopped" && (
 				<Alert className="mb-6 border-status-warning/30 text-status-warning">

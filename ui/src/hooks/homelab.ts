@@ -140,7 +140,8 @@ export function useApps() {
 	return useQuery({
 		queryKey: keys.apps,
 		queryFn: () => fetchApps(),
-		refetchInterval: 30_000,
+		refetchInterval: (query) =>
+			query.state.data?.some((a) => a.status === "starting") ? 2_000 : 30_000,
 	});
 }
 
@@ -148,7 +149,8 @@ export function useAppDetail(appName: string) {
 	return useQuery({
 		queryKey: keys.appDetail(appName),
 		queryFn: () => fetchAppDetail({ data: { appName } }),
-		refetchInterval: 10_000,
+		refetchInterval: (query) =>
+			query.state.data?.status === "starting" ? 2_000 : 10_000,
 	});
 }
 

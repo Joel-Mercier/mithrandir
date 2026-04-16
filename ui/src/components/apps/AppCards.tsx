@@ -11,6 +11,7 @@ import { m } from "#/paraglide/messages.js";
 
 const statusDot: Record<AppStatus, string> = {
 	running: "bg-status-healthy",
+	starting: "bg-status-warning animate-pulse",
 	stopped: "bg-muted-foreground",
 	error: "bg-status-critical",
 	available: "bg-transparent",

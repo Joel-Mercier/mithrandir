@@ -1,6 +1,11 @@
 // ─── UI-facing types ────────────────────────────────────────────
 
-export type AppStatus = "running" | "stopped" | "error" | "available";
+export type AppStatus =
+	| "running"
+	| "starting"
+	| "stopped"
+	| "error"
+	| "available";
 export type AppCategory =
 	| "media-movies-tv"
 	| "media-audio"
@@ -39,7 +44,7 @@ export interface DashboardApp {
 export interface ContainerInfo {
 	name: string;
 	displayName: string;
-	status: "running" | "stopped" | "error" | "not found";
+	status: "running" | "starting" | "stopped" | "error" | "not found";
 }
 
 export interface AppDetail extends DashboardApp {

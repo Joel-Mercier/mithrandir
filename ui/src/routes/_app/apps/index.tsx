@@ -82,6 +82,7 @@ function AppsPage() {
 	);
 
 	const running = allApps.filter((a) => a.status === "running").length;
+	const starting = allApps.filter((a) => a.status === "starting").length;
 	const stopped = allApps.filter((a) => a.status === "stopped").length;
 	const errored = allApps.filter((a) => a.status === "error").length;
 	const available = allApps.filter((a) => a.status === "available").length;
@@ -119,6 +120,15 @@ function AppsPage() {
 						<span className="font-mono-data">{running}</span>
 						<span className="text-muted-foreground">{m.common_running()}</span>
 					</div>
+					{starting > 0 && (
+						<div className="flex items-center gap-1.5">
+							<span className="inline-block h-2 w-2 animate-pulse rounded-full bg-status-warning" />
+							<span className="font-mono-data">{starting}</span>
+							<span className="text-muted-foreground">
+								{m.common_starting()}
+							</span>
+						</div>
+					)}
 					<div className="flex items-center gap-1.5">
 						<span className="inline-block h-2 w-2 rounded-full bg-muted-foreground" />
 						<span className="font-mono-data">{stopped}</span>

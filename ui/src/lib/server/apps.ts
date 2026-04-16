@@ -12,12 +12,10 @@ import {
 	composeDown,
 	composeUp,
 	getRunningImageId,
-	isContainerRunning,
 	pullImage,
 } from "@mithrandir/cli/lib/docker";
 import { regenerateGatusConfig } from "@mithrandir/cli/lib/gatus";
 import { shell } from "@mithrandir/cli/lib/shell";
-import { getContainerStatus } from "@mithrandir/cli/lib/status";
 import { createServerFn } from "@tanstack/react-start";
 import { existsSync, readdirSync, readFileSync } from "fs";
 import { ensureSession } from "#/lib/auth";
@@ -41,6 +39,55 @@ function mapCategory(app: AppDefinition): AppCategory {
 	return "utilities";
 }
 
+/**
+ * Containers without a declared healthcheck get a grace window after start
+ * during which the UI reports "starting" so users don't click "Open" on an
+ * app that hasn't finished initializing. Matches the typical `start_period`
+ * used by apps that do declare a healthcheck.
+ */
+const STARTUP_GRACE_MS = 20_000;
+
+/**
+ * Maps docker inspect `.State` into a UI-facing app status. `starting` wins
+ * over `running` whenever docker has a healthcheck still in its start phase,
+ * or the container came up inside the grace window.
+ */
+function deriveAppStatus(state: {
+	Status?: string;
+	Health?: { Status?: string };
+	StartedAt?: string;
+}): DashboardApp["status"] {
+	const s = state.Status;
+	if (s !== "running") {
+		return s === "exited" || s === "created" ? "stopped" : "error";
+	}
+	const health = state.Health?.Status;
+	if (health === "starting") return "starting";
+	if (health === "unhealthy") return "error";
+	if (health === "healthy") return "running";
+	// No healthcheck configured — use grace period based on StartedAt.
+	if (state.StartedAt) {
+		const startedMs = Date.parse(state.StartedAt);
+		if (
+			Number.isFinite(startedMs) &&
+			Date.now() - startedMs < STARTUP_GRACE_MS
+		) {
+			return "starting";
+		}
+	}
+	return "running";
+}
+
+function deriveContainerStatus(state: {
+	Status?: string;
+	Health?: { Status?: string };
+	StartedAt?: string;
+}): ContainerInfo["status"] {
+	const mapped = deriveAppStatus(state);
+	// ContainerInfo doesn't have "available" — that's only for the app registry.
+	return mapped as ContainerInfo["status"];
+}
+
 export const fetchApps = createServerFn({ method: "GET" }).handler(
 	async (): Promise<DashboardApp[]> => {
 		await ensureSession();
@@ -59,26 +106,26 @@ export const fetchApps = createServerFn({ method: "GET" }).handler(
 
 			if (installed) {
 				const containerName = getContainerName(app);
-				const running = await isContainerRunning(containerName);
-
-				if (running) {
-					status = "running";
-					const result = await shell(
-						"docker",
-						["inspect", "--format", "{{.State.StartedAt}}", containerName],
-						{ sudo: true, ignoreError: true, timeout: 5000 },
-					);
-					if (result.exitCode === 0 && result.stdout.trim()) {
-						uptime = formatUptime(result.stdout.trim());
+				const result = await shell(
+					"docker",
+					["inspect", "--format", "{{json .State}}", containerName],
+					{ sudo: true, ignoreError: true, timeout: 5000 },
+				);
+				if (result.exitCode === 0 && result.stdout.trim()) {
+					try {
+						const state = JSON.parse(result.stdout.trim());
+						status = deriveAppStatus(state);
+						if (
+							(status === "running" || status === "starting") &&
+							state.StartedAt
+						) {
+							uptime = formatUptime(state.StartedAt);
+						}
+					} catch {
+						status = "error";
 					}
 				} else {
-					const statusStr = await getContainerStatus(app);
-					status =
-						statusStr === "exited" ||
-						statusStr === "created" ||
-						statusStr === "not found"
-							? "stopped"
-							: "error";
+					status = "stopped";
 				}
 			}
 
@@ -141,19 +188,16 @@ export const fetchAppDetail = createServerFn({ method: "GET" })
 		if (inspectResult.exitCode === 0) {
 			try {
 				const info = JSON.parse(inspectResult.stdout.trim());
-				const stateStatus = info.State?.Status;
-				status =
-					stateStatus === "running"
-						? "running"
-						: stateStatus === "exited"
-							? "stopped"
-							: "error";
+				status = deriveAppStatus(info.State ?? {});
 				restarts = info.RestartCount ?? 0;
 				createdAt = info.Created ?? "";
 				image = info.Config?.Image ?? app.image;
 				version =
 					info.Config?.Labels?.["org.opencontainers.image.version"] ?? "";
-				if (stateStatus === "running" && info.State?.StartedAt) {
+				if (
+					(status === "running" || status === "starting") &&
+					info.State?.StartedAt
+				) {
 					uptime = formatUptime(info.State.StartedAt);
 				}
 			} catch {
@@ -215,24 +259,19 @@ export const fetchAppDetail = createServerFn({ method: "GET" })
 				app.additionalContainers.map(async (containerName) => {
 					const result = await shell(
 						"docker",
-						[
-							"inspect",
-							"--format",
-							"{{.State.Status}}",
-							containerName,
-						],
+						["inspect", "--format", "{{json .State}}", containerName],
 						{ sudo: true, ignoreError: true, timeout: 5000 },
 					);
-					const stateStr =
-						result.exitCode === 0 ? result.stdout.trim() : "not found";
-					const containerStatus: ContainerInfo["status"] =
-						stateStr === "running"
-							? "running"
-							: stateStr === "exited" || stateStr === "created"
-								? "stopped"
-								: stateStr === "not found"
-									? "not found"
-									: "error";
+					let containerStatus: ContainerInfo["status"] = "not found";
+					if (result.exitCode === 0 && result.stdout.trim()) {
+						try {
+							containerStatus = deriveContainerStatus(
+								JSON.parse(result.stdout.trim()),
+							);
+						} catch {
+							containerStatus = "error";
+						}
+					}
 
 					// Derive a display name from the container name (strip app prefix, replace underscores)
 					const prefix = `${app.name}_`;
