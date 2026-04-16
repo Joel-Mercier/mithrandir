@@ -173,6 +173,7 @@
   "apps_dependencyGraph": "Graphe de dépendances",
   "apps_capacity": "Capacité",
   "apps_searchPlaceholder": "Rechercher des applications...",
+  "apps_showHidden": "Afficher les masquées",
   "apps_installed": "Installées",
   "apps_availableToInstall": "Disponibles à l'installation",
   "apps_noMatch": "Aucune application ne correspond à vos filtres.",

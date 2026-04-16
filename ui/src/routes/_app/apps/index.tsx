@@ -6,7 +6,9 @@ import Breadcrumbs from "#/components/Breadcrumbs";
 import { Alert, AlertDescription } from "#/components/ui/alert";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardHeader } from "#/components/ui/card";
+import { Checkbox } from "#/components/ui/checkbox";
 import { Input } from "#/components/ui/input";
+import { Label } from "#/components/ui/label";
 import { Skeleton } from "#/components/ui/skeleton";
 import {
 	ToggleGroup,
@@ -63,6 +65,7 @@ function AppCardSkeleton() {
 function AppsPage() {
 	const [search, setSearch] = useState("");
 	const [category, setCategory] = useState<AppCategory | "all">("all");
+	const [showHidden, setShowHidden] = useState(false);
 	const appsQuery = useApps();
 
 	const applyFilters = (app: DashboardApp) => {
@@ -73,7 +76,7 @@ function AppsPage() {
 		return matchesSearch && matchesCategory;
 	};
 
-	const allApps = (appsQuery.data ?? []).filter((a) => !a.hidden);
+	const allApps = (appsQuery.data ?? []).filter((a) => showHidden || !a.hidden);
 	const installedApps = allApps.filter(
 		(app) => app.status !== "available" && applyFilters(app),
 	);
@@ -198,6 +201,16 @@ function AppsPage() {
 						</ToggleGroupItem>
 					))}
 				</ToggleGroup>
+				<div className="flex items-center gap-2">
+					<Checkbox
+						id="show-hidden"
+						checked={showHidden}
+						onCheckedChange={(value) => setShowHidden(value === true)}
+					/>
+					<Label htmlFor="show-hidden" className="text-sm font-normal">
+						{m.apps_showHidden()}
+					</Label>
+				</div>
 			</div>
 
 			{/* Loading state */}
