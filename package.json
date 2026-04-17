@@ -27,6 +27,6 @@
     "analyze": "bunx --bun fallow"
   },
   "devDependencies": {
-    "fallow": "^2.19.2"
+    "fallow": "^2.40.0"
   }
 }
