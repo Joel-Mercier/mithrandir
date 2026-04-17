@@ -5,6 +5,7 @@ import { invalidateKeys } from "#/lib/utils";
 
 const sessionQueryKey = ["auth", "session"];
 const sessionsListQueryKey = ["auth", "sessions"];
+const passkeysListQueryKey = ["auth", "passkeys"];
 
 export function useSignIn() {
 	const queryClient = useQueryClient();
@@ -151,6 +152,88 @@ export function useRevokeSession() {
 		},
 		onSuccess: () => {
 			invalidateKeys(queryClient, [sessionsListQueryKey]);
+		},
+	});
+}
+
+export function useSignInPasskey() {
+	const queryClient = useQueryClient();
+	const router = useRouter();
+
+	return useMutation({
+		mutationFn: async () => {
+			const { data, error } = await authClient.signIn.passkey();
+			if (error) throw error;
+			return data;
+		},
+		onSuccess: async () => {
+			await invalidateKeys(queryClient, [sessionQueryKey]);
+			await router.navigate({ to: "/" });
+		},
+	});
+}
+
+export function useListPasskeys() {
+	return useQuery({
+		queryKey: passkeysListQueryKey,
+		queryFn: async () => {
+			const { data, error } = await authClient.$fetch<unknown[]>(
+				"/passkey/list-user-passkeys",
+				{ method: "GET" },
+			);
+			if (error) throw error;
+			return data;
+		},
+	});
+}
+
+export function useAddPasskey() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async (params: { name: string }) => {
+			const { data, error } = await authClient.passkey.addPasskey({
+				name: params.name,
+			});
+			if (error) throw error;
+			return data;
+		},
+		onSuccess: () => {
+			invalidateKeys(queryClient, [passkeysListQueryKey]);
+		},
+	});
+}
+
+export function useDeletePasskey() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async (params: { id: string }) => {
+			const { error } = await authClient.$fetch("/passkey/delete-passkey", {
+				method: "POST",
+				body: { id: params.id },
+			});
+			if (error) throw error;
+		},
+		onSuccess: () => {
+			invalidateKeys(queryClient, [passkeysListQueryKey]);
+		},
+	});
+}
+
+export function useRenamePasskey() {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async (params: { id: string; name: string }) => {
+			const { error } = await authClient.$fetch("/passkey/update-passkey", {
+				method: "POST",
+				body: { id: params.id, name: params.name },
+			});
+			if (error) throw error;
+		},
+		onSuccess: () => {
+			invalidateKeys(queryClient, [passkeysListQueryKey]);
 		},
 	});
 }

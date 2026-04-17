@@ -1,5 +1,6 @@
 import { i18n } from "@better-auth/i18n";
 import { oauthProvider } from "@better-auth/oauth-provider";
+import { passkey } from "@better-auth/passkey";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeaders } from "@tanstack/react-start/server";
 import { betterAuth } from "better-auth";
@@ -61,6 +62,13 @@ export const auth = betterAuth({
 		tanstackStartCookies(),
 		twoFactor({ issuer: "Mithrandir" }),
 		haveIBeenPwned(),
+		passkey({
+			rpName: "Mithrandir",
+			rpID: process.env.BETTER_AUTH_URL
+				? new URL(process.env.BETTER_AUTH_URL).hostname
+				: "localhost",
+			origin: trustedOrigins.length > 0 ? trustedOrigins : undefined,
+		}),
 		i18n({
 			translations: {
 				fr: {

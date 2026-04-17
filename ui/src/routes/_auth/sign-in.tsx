@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { KeyRound, LogIn } from "lucide-react";
+import { Fingerprint, KeyRound, LogIn } from "lucide-react";
 import { z } from "zod";
 import { Button } from "#/components/ui/button";
 import {
@@ -11,7 +11,7 @@ import {
 } from "#/components/ui/card";
 import { Separator } from "#/components/ui/separator";
 import { Spinner } from "#/components/ui/spinner";
-import { useSignIn, useSignInSSO } from "#/hooks/auth";
+import { useSignIn, useSignInPasskey, useSignInSSO } from "#/hooks/auth";
 import { useAppForm } from "#/hooks/form";
 import { getOidcEnabled } from "#/lib/auth";
 import { m } from "#/paraglide/messages.js";
@@ -30,6 +30,7 @@ function SignInPage() {
 	const oidcEnabled = Route.useLoaderData();
 	const signIn = useSignIn();
 	const signInSSO = useSignInSSO();
+	const signInPasskey = useSignInPasskey();
 
 	const form = useAppForm({
 		defaultValues: {
@@ -55,8 +56,8 @@ function SignInPage() {
 					<CardDescription>{m.signIn_description()}</CardDescription>
 				</CardHeader>
 				<CardContent>
-					{oidcEnabled && (
-						<>
+					<div className="space-y-2">
+						{oidcEnabled && (
 							<Button
 								type="button"
 								variant="outline"
@@ -73,21 +74,42 @@ function SignInPage() {
 									? m.signIn_ssoSigning()
 									: m.signIn_sso()}
 							</Button>
-
-							{signInSSO.error && (
-								<p className="mt-2 text-sm text-status-critical">
-									{signInSSO.error.message ?? m.signIn_ssoFailed()}
-								</p>
+						)}
+						<Button
+							type="button"
+							variant="outline"
+							className="w-full gap-2"
+							disabled={signInPasskey.isPending}
+							onClick={() => signInPasskey.mutate()}
+						>
+							{signInPasskey.isPending ? (
+								<Spinner size="sm" />
+							) : (
+								<Fingerprint className="h-4 w-4" />
 							)}
+							{signInPasskey.isPending
+								? m.signIn_passkeySigning()
+								: m.signIn_passkey()}
+						</Button>
+					</div>
 
-							<div className="relative my-4">
-								<Separator />
-								<span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-xs text-muted-foreground">
-									{m.signIn_orDivider()}
-								</span>
-							</div>
-						</>
+					{signInSSO.error && (
+						<p className="mt-2 text-sm text-status-critical">
+							{signInSSO.error.message ?? m.signIn_ssoFailed()}
+						</p>
 					)}
+					{signInPasskey.error && (
+						<p className="mt-2 text-sm text-status-critical">
+							{signInPasskey.error.message ?? m.signIn_passkeyFailed()}
+						</p>
+					)}
+
+					<div className="relative my-4">
+						<Separator />
+						<span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-xs text-muted-foreground">
+							{m.signIn_orDivider()}
+						</span>
+					</div>
 
 					<form
 						onSubmit={(e) => {
