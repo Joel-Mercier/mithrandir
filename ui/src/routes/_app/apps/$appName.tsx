@@ -19,6 +19,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { AvailableDetailPage } from "#/components/apps/AvailableDetailPage";
 import { ExternalLinks } from "#/components/apps/ExternalLinks";
+import { GluetunSetupCard } from "#/components/apps/GluetunSetupCard";
 import Breadcrumbs from "#/components/Breadcrumbs";
 import { ScoreBadge } from "#/components/capacity/ScoreBadge";
 import { Row } from "#/components/Row";
@@ -312,6 +313,7 @@ function AppDetailPage() {
 
 	// WireGuard peers
 	const isWireguard = appName === "wireguard";
+	const isGluetun = appName === "gluetun";
 	const peersQuery = useWireguardPeers(isWireguard);
 	const peerQRQuery = useWireguardPeerQR(selectedPeer);
 	const peers = useMemo(() => peersQuery.data ?? [], [peersQuery.data]);
@@ -772,6 +774,9 @@ function AppDetailPage() {
 						</CardContent>
 					</Card>
 				)}
+
+				{/* Gluetun VPN setup */}
+				{isGluetun && detail && <GluetunSetupCard />}
 
 				{/* WireGuard Peers */}
 				{isWireguard && detail && app.status === "running" && (

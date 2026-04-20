@@ -26,6 +26,11 @@ import {
 	recoverFromRemote,
 	restoreFromBackup,
 } from "#/lib/server/restore";
+import {
+	fetchGluetunConfig,
+	previewWireguardConfig,
+	saveGluetunConfig,
+} from "#/lib/server/gluetun";
 import { fetchCapacity } from "#/lib/server/capacity";
 import { browseDirectory, createDirectory } from "#/lib/server/filesystem";
 import { fetchMediaCategory, fetchMediaLibrary } from "#/lib/server/media";
@@ -123,6 +128,7 @@ const keys = {
 	systemRequirements: ["homelab", "setup", "system-requirements"],
 	appRegistry: ["homelab", "setup", "app-registry"],
 	wireguardPeers: ["homelab", "wireguard", "peers"],
+	gluetunConfig: ["homelab", "gluetun", "config"],
 	wireguardPeerQR: (peer: string) => ["homelab", "wireguard", "peer-qr", peer],
 	backupApps: (date: string, location: string, remote?: string) => [
 		"homelab",
@@ -777,6 +783,39 @@ export function useFinalizeUpdate() {
 export function usePingHealth() {
 	return useMutation({
 		mutationFn: () => pingHealth(),
+	});
+}
+
+// ─── Gluetun hooks ───────────────────────────────────────────────────────────
+
+export function useGluetunConfig(enabled: boolean) {
+	return useQuery({
+		queryKey: keys.gluetunConfig,
+		queryFn: () => fetchGluetunConfig(),
+		enabled,
+	});
+}
+
+export function usePreviewWireguardConfig() {
+	return useMutation({
+		mutationFn: (content: string) => previewWireguardConfig({ data: { content } }),
+	});
+}
+
+export function useSaveGluetunConfig() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (data: {
+			provider?: string;
+			privateKey?: string;
+			addresses?: string;
+			presharedKey?: string;
+			serverCountries?: string;
+			qbittorrentUseVpn?: boolean;
+		}) => saveGluetunConfig({ data }),
+		onSuccess: () => {
+			invalidateKeys(queryClient, [keys.gluetunConfig, keys.apps, keys.activity]);
+		},
 	});
 }
 

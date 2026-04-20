@@ -21,8 +21,10 @@ export interface AppDefinition {
   configSubdir: string;
   /** For apps with multiple config dirs (homarr) */
   multipleConfigDirs?: string[];
-  /** Use host networking instead of port mapping */
-  networkMode?: "host";
+  /** Use host networking, or join another container's network namespace (e.g. "container:gluetun") */
+  networkMode?: "host" | `container:${string}`;
+  /** Devices to expose to the container (e.g. ["/dev/net/tun:/dev/net/tun"]) */
+  devices?: string[];
   /** Linux capabilities to add */
   capAdd?: string[];
   /** Sysctls to set */
@@ -156,6 +158,13 @@ export interface EnvConfig {
   ENABLE_FIREWALL?: string;
   ENABLE_SSO?: string;
   ACME_EMAIL?: string;
+  QBITTORRENT_USE_VPN?: string;
+  VPN_SERVICE_PROVIDER?: string;
+  VPN_TYPE?: string;
+  WIREGUARD_PRIVATE_KEY?: string;
+  WIREGUARD_ADDRESSES?: string;
+  WIREGUARD_PRESHARED_KEY?: string;
+  SERVER_COUNTRIES?: string;
   [key: string]: string | undefined;
 }
 

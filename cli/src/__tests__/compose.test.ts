@@ -118,6 +118,54 @@ describe("generateCompose", () => {
     const output = generateCompose(app, baseEnv);
     expect(output).toContain("init: true");
   });
+
+  test("Gluetun rawCompose (VPN routing off)", () => {
+    const app = getApp("gluetun")!;
+    const env: EnvConfig = {
+      ...baseEnv,
+      VPN_SERVICE_PROVIDER: "mullvad",
+      WIREGUARD_PRIVATE_KEY: "privkey",
+      WIREGUARD_ADDRESSES: "10.64.0.2/32",
+    };
+    const output = generateCompose(app, env);
+    expect(output).toMatchSnapshot();
+    expect(output).toContain("cap_add:");
+    expect(output).toContain("/dev/net/tun");
+    expect(output).not.toContain("8080:8080");
+  });
+
+  test("Gluetun publishes qBittorrent ports when QBITTORRENT_USE_VPN=true", () => {
+    const app = getApp("gluetun")!;
+    const env: EnvConfig = {
+      ...baseEnv,
+      VPN_SERVICE_PROVIDER: "mullvad",
+      WIREGUARD_PRIVATE_KEY: "privkey",
+      WIREGUARD_ADDRESSES: "10.64.0.2/32",
+      QBITTORRENT_USE_VPN: "true",
+    };
+    const output = generateCompose(app, env);
+    expect(output).toContain("8080:8080");
+    expect(output).toContain("6881:6881/tcp");
+    expect(output).toContain("6881:6881/udp");
+  });
+
+  test("qBittorrent with QBITTORRENT_USE_VPN=true routes through Gluetun", () => {
+    const app = getApp("qbittorrent")!;
+    const env: EnvConfig = { ...baseEnv, QBITTORRENT_USE_VPN: "true" };
+    const output = generateCompose(app, env);
+    expect(output).toMatchSnapshot();
+    expect(output).toContain("network_mode: container:gluetun");
+    expect(output).not.toContain("ports:");
+    expect(output).not.toContain("8080:8080");
+  });
+
+  test("qBittorrent with QBITTORRENT_USE_VPN unset keeps its own ports", () => {
+    const app = getApp("qbittorrent")!;
+    const output = generateCompose(app, baseEnv);
+    expect(output).not.toContain("network_mode");
+    expect(output).toContain("8080:8080");
+    expect(output).toContain("6881:6881/tcp");
+  });
 });
 
 describe("PIHOLE_HTTPS_PORT", () => {

@@ -25,6 +25,7 @@ import {
 } from "@/lib/systemd.js";
 import { shell } from "@/lib/shell.js";
 import { generateCompose } from "@/lib/compose.js";
+import { parseWireguardConfig } from "@/lib/wireguard-config.js";
 import { generate404Page, generateCaddyfile, generateCaddyDockerfile, getDuckDnsDomain, regenerateCaddyfile } from "@/lib/caddy.js";
 import { isUiServiceActive } from "@/lib/systemd-ui.js";
 import { regenerateGatusConfig } from "@/lib/gatus.js";
@@ -728,7 +729,9 @@ function InstallApp({ appName }: { appName: string }) {
   const [appResults, setAppResults] = useState<
     Array<{ name: string; status: "done" | "error" | "skipped"; message?: string }>
   >([]);
-  const [phase, setPhase] = useState<"init" | "secrets" | "pulling" | "composing" | "caddy" | "gatus" | "done">("init");
+  const [phase, setPhase] = useState<"init" | "wg-conf" | "secrets" | "pulling" | "composing" | "caddy" | "gatus" | "done">("init");
+  const [wgConfResolver, setWgConfResolver] = useState<{ resolve: () => void } | null>(null);
+  const [wgConfMessage, setWgConfMessage] = useState<string | null>(null);
   const [currentAppName, setCurrentAppName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pullProgress, setPullProgress] = useState(0);
@@ -740,6 +743,34 @@ function InstallApp({ appName }: { appName: string }) {
   useEffect(() => {
     run();
   }, []);
+
+  async function handleWgConfSubmit(value: string) {
+    const path = value.trim();
+    if (!path) {
+      setWgConfMessage("Skipped — you'll be prompted for fields individually.");
+      wgConfResolver?.resolve();
+      return;
+    }
+    const expanded = path.startsWith("~") ? path.replace(/^~/, process.env.HOME ?? "") : path;
+    try {
+      const content = await Bun.file(expanded).text();
+      const parsed = parseWireguardConfig(content);
+      if (!parsed || !parsed.privateKey || !parsed.addresses) {
+        setWgConfMessage("Could not find PrivateKey/Address in that file — continuing manually.");
+        wgConfResolver?.resolve();
+        return;
+      }
+      envRef!.WIREGUARD_PRIVATE_KEY = parsed.privateKey;
+      envRef!.WIREGUARD_ADDRESSES = parsed.addresses;
+      if (parsed.presharedKey) envRef!.WIREGUARD_PRESHARED_KEY = parsed.presharedKey;
+      await saveEnvConfig(envRef!);
+      setWgConfMessage(`Loaded PrivateKey and Address from ${path}`);
+      wgConfResolver?.resolve();
+    } catch (err: any) {
+      setWgConfMessage(`Could not read ${path}: ${err.message} — continuing manually.`);
+      wgConfResolver?.resolve();
+    }
+  }
 
   function handleSecretSubmit(value: string) {
     const trimmed = value.trim();
@@ -774,6 +805,29 @@ function InstallApp({ appName }: { appName: string }) {
     if (app.requiresHttps && env.ENABLE_HTTPS !== "true") {
       setError(`${app.displayName} requires HTTPS.\nInstall it first: mithrandir install https`);
       return;
+    }
+
+    // qBittorrent VPN routing: requires gluetun installed
+    if (appName === "qbittorrent" && env.QBITTORRENT_USE_VPN === "true") {
+      const gluetun = getApp("gluetun")!;
+      const gluetunCompose = getComposePath(gluetun, env.BASE_DIR);
+      if (!existsSync(gluetunCompose)) {
+        setError(
+          "QBITTORRENT_USE_VPN=true but Gluetun is not installed.\nInstall it first: mithrandir install gluetun",
+        );
+        return;
+      }
+    }
+
+    // Gluetun: optionally seed WireGuard fields from a provider-issued .conf file
+    if (
+      appName === "gluetun" &&
+      (!env.WIREGUARD_PRIVATE_KEY || !env.WIREGUARD_ADDRESSES)
+    ) {
+      setPhase("wg-conf");
+      await new Promise<void>((resolve) => {
+        setWgConfResolver({ resolve });
+      });
     }
 
     // Auto-generate secrets if needed
@@ -838,6 +892,22 @@ function InstallApp({ appName }: { appName: string }) {
       await writeComposeAndStart(installApp, env);
       results.push({ name: installApp.displayName, status: "done" });
       setAppResults((prev) => [...prev, { name: installApp.displayName, status: "done" }]);
+    }
+
+    // After installing Gluetun, if qBittorrent is already installed with VPN routing
+    // enabled, regenerate its compose so it joins Gluetun's network namespace.
+    if (appName === "gluetun" && env.QBITTORRENT_USE_VPN === "true") {
+      const qb = getApp("qbittorrent")!;
+      const qbCompose = getComposePath(qb, env.BASE_DIR);
+      if (existsSync(qbCompose)) {
+        try {
+          await composeDown(qbCompose).catch(() => {});
+          await writeComposeAndStart(qb, env);
+          setAppResults((prev) => [...prev, { name: "qBittorrent", status: "done", message: "Rerouted through Gluetun" }]);
+        } catch {
+          setAppResults((prev) => [...prev, { name: "qBittorrent", status: "skipped", message: "Failed to reroute — restart manually" }]);
+        }
+      }
     }
 
     // Regenerate Caddyfile if HTTPS is enabled
@@ -933,6 +1003,24 @@ function InstallApp({ appName }: { appName: string }) {
           message={r.message}
         />
       ))}
+
+      {phase === "wg-conf" && (
+        <Box flexDirection="column" marginTop={1}>
+          <Text bold>WireGuard config file (optional)</Text>
+          <Text dimColor>  Paste a path to a .conf file from your VPN provider to auto-fill</Text>
+          <Text dimColor>  WIREGUARD_PRIVATE_KEY and WIREGUARD_ADDRESSES.</Text>
+          <Text dimColor>  Leave empty to enter the fields individually.</Text>
+          <Box marginTop={1}>
+            <Text color="cyan">{"  Path: "}</Text>
+            <TextInput onSubmit={handleWgConfSubmit} />
+          </Box>
+          {wgConfMessage && (
+            <Box marginTop={1}>
+              <Text dimColor>  {wgConfMessage}</Text>
+            </Box>
+          )}
+        </Box>
+      )}
 
       {phase === "secrets" && missingSecrets.length > 0 && (
         <Box flexDirection="column">

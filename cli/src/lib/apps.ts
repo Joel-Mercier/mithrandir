@@ -35,6 +35,80 @@ export const APP_REGISTRY: AppDefinition[] = [
     environment: { WEBUI_PORT: "8080" },
   },
   {
+    name: "gluetun",
+    displayName: "Gluetun",
+    description: "VPN client container that other apps can tunnel through",
+    image: "qmcgaw/gluetun:latest",
+    icon: "https://cdn.jsdelivr.net/gh/selfhst/icons/png/gluetun.png",
+    port: null,
+    configSubdir: "config",
+    needsDataDir: false,
+    hidden: true,
+    capacity: { performance: "low", storage: "low", note: "VPN tunnel for anonymized outbound traffic" },
+    secrets: [
+      {
+        envVar: "VPN_SERVICE_PROVIDER",
+        prompt: "VPN provider (e.g. mullvad, protonvpn, airvpn, custom)",
+        required: true,
+      },
+      {
+        envVar: "WIREGUARD_PRIVATE_KEY",
+        prompt: "WireGuard private key (from your VPN provider)",
+        sensitive: true,
+        required: true,
+      },
+      {
+        envVar: "WIREGUARD_ADDRESSES",
+        prompt: "WireGuard addresses (e.g. 10.64.0.2/32)",
+        required: true,
+      },
+      {
+        envVar: "SERVER_COUNTRIES",
+        prompt: "Server countries (comma-separated, optional)",
+      },
+    ],
+    rawCompose: (envConfig: EnvConfig) => {
+      const baseDir = envConfig.BASE_DIR;
+      const routeQbittorrent = envConfig.QBITTORRENT_USE_VPN === "true";
+      const vpnType = envConfig.VPN_TYPE ?? "wireguard";
+      const lines: string[] = [];
+      lines.push("services:");
+      lines.push("  gluetun:");
+      lines.push("    image: qmcgaw/gluetun:latest");
+      lines.push("    container_name: gluetun");
+      lines.push("    cap_add:");
+      lines.push("      - NET_ADMIN");
+      lines.push("    devices:");
+      lines.push("      - /dev/net/tun:/dev/net/tun");
+      lines.push("    environment:");
+      lines.push(`      - TZ=${envConfig.TZ}`);
+      lines.push(`      - VPN_SERVICE_PROVIDER=${envConfig.VPN_SERVICE_PROVIDER ?? ""}`);
+      lines.push(`      - VPN_TYPE=${vpnType}`);
+      if (envConfig.WIREGUARD_PRIVATE_KEY) {
+        lines.push(`      - WIREGUARD_PRIVATE_KEY=${envConfig.WIREGUARD_PRIVATE_KEY}`);
+      }
+      if (envConfig.WIREGUARD_ADDRESSES) {
+        lines.push(`      - WIREGUARD_ADDRESSES=${envConfig.WIREGUARD_ADDRESSES}`);
+      }
+      if (envConfig.WIREGUARD_PRESHARED_KEY) {
+        lines.push(`      - WIREGUARD_PRESHARED_KEY=${envConfig.WIREGUARD_PRESHARED_KEY}`);
+      }
+      if (envConfig.SERVER_COUNTRIES) {
+        lines.push(`      - SERVER_COUNTRIES=${envConfig.SERVER_COUNTRIES}`);
+      }
+      if (routeQbittorrent) {
+        lines.push("    ports:");
+        lines.push("      - 8080:8080");
+        lines.push("      - 6881:6881/tcp");
+        lines.push("      - 6881:6881/udp");
+      }
+      lines.push("    volumes:");
+      lines.push(`      - ${baseDir}/gluetun/config:/gluetun`);
+      lines.push("    restart: unless-stopped");
+      return lines.join("\n") + "\n";
+    },
+  },
+  {
     name: "prowlarr",
     displayName: "Prowlarr",
     description: "Indexer manager for the *Arr stack",

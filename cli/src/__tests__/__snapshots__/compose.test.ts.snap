@@ -295,3 +295,42 @@ exports[`generateCompose app with containerPort mapping (Excalidraw) 1`] = `
     restart: unless-stopped
 "
 `;
+
+exports[`generateCompose Gluetun rawCompose (VPN routing off) 1`] = `
+"services:
+  gluetun:
+    image: qmcgaw/gluetun:latest
+    container_name: gluetun
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      - TZ=Etc/UTC
+      - VPN_SERVICE_PROVIDER=mullvad
+      - VPN_TYPE=wireguard
+      - WIREGUARD_PRIVATE_KEY=privkey
+      - WIREGUARD_ADDRESSES=10.64.0.2/32
+    volumes:
+      - /home/test/gluetun/config:/gluetun
+    restart: unless-stopped
+"
+`;
+
+exports[`generateCompose qBittorrent with QBITTORRENT_USE_VPN=true routes through Gluetun 1`] = `
+"services:
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    network_mode: container:gluetun
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+      - WEBUI_PORT=8080
+    volumes:
+      - /home/test/qbittorrent/config:/config
+      - /home/test/data:/data
+    restart: unless-stopped
+"
+`;

@@ -263,13 +263,14 @@ describe("registry field constraints", () => {
     }
   });
 
-  test("hidden apps are caddy and companion apps", () => {
+  test("hidden apps are infrastructure (caddy, gluetun) or companion apps", () => {
     const hidden = APP_REGISTRY.filter((app) => app.hidden);
     expect(hidden.length).toBeGreaterThanOrEqual(1);
     const hiddenNames = hidden.map((a) => a.name);
     expect(hiddenNames).toContain("caddy");
+    const infrastructureHidden = new Set(["caddy", "gluetun"]);
     for (const app of hidden) {
-      expect(app.name === "caddy" || !!app.companionOf).toBe(true);
+      expect(infrastructureHidden.has(app.name) || !!app.companionOf).toBe(true);
     }
   });
 

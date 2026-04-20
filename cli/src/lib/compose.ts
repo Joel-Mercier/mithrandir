@@ -39,9 +39,22 @@ export function generateCompose(
     lines.push(`    user: "${envConfig.PUID}:${envConfig.PGID}"`);
   }
 
-  // Network mode
-  if (app.networkMode === "host") {
+  // Network mode — either host, or joining another container's network namespace.
+  // qBittorrent opts into container-networking via QBITTORRENT_USE_VPN (routes through gluetun).
+  const vpnRoutedApp = app.name === "qbittorrent" && envConfig.QBITTORRENT_USE_VPN === "true";
+  const networkMode = vpnRoutedApp ? "container:gluetun" : app.networkMode;
+  if (networkMode === "host") {
     lines.push("    network_mode: host");
+  } else if (networkMode?.startsWith("container:")) {
+    lines.push(`    network_mode: ${networkMode}`);
+  }
+
+  // Devices
+  if (app.devices && app.devices.length > 0) {
+    lines.push("    devices:");
+    for (const dev of app.devices) {
+      lines.push(`      - ${dev}`);
+    }
   }
 
   // Capabilities
@@ -117,8 +130,9 @@ export function generateCompose(
     }
   }
 
-  // Ports (skip if host networking)
-  if (app.networkMode !== "host") {
+  // Ports (skip if host networking or joining another container's namespace)
+  const sharesNetwork = networkMode === "host" || networkMode?.startsWith("container:");
+  if (!sharesNetwork) {
     const ports: string[] = [];
     if (app.port) {
       const cPort = app.containerPort ?? app.port;
