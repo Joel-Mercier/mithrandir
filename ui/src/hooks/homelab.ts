@@ -33,7 +33,7 @@ import {
 } from "#/lib/server/gluetun";
 import { fetchCapacity } from "#/lib/server/capacity";
 import { browseDirectory, createDirectory } from "#/lib/server/filesystem";
-import { fetchMediaCategory, fetchMediaLibrary } from "#/lib/server/media";
+import { deleteMediaFiles, fetchMediaCategory, fetchMediaLibrary } from "#/lib/server/media";
 import {
 	autoSetupApp,
 	checkSystemRequirements,
@@ -266,6 +266,16 @@ export function useMediaCategory(
 			}),
 		enabled: !!category,
 		staleTime: 60_000,
+	});
+}
+
+export function useDeleteMediaFiles() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (paths: string[]) => deleteMediaFiles({ data: { paths } }),
+		onSuccess: () => {
+			invalidateKeys(queryClient, [keys.mediaLibrary, ["homelab", "media-category"], keys.activity]);
+		},
 	});
 }
 

@@ -36,3 +36,13 @@ export function scanDirectory(
 export function getDirectorySize(
 	dirPath: string,
 ): Promise<{ totalSize: number; fileCount: number }>;
+
+export interface DeletePathsResult {
+	deleted: string[];
+	failed: { path: string; error: string }[];
+}
+
+export function deletePaths(
+	paths: string[],
+	sandboxRoot: string,
+): Promise<DeletePathsResult>;

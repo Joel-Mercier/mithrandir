@@ -9,11 +9,13 @@ import type {
 	MediaSortField,
 } from "@mithrandir/cli/lib/media";
 import { MEDIA_CATEGORIES, scanMediaCategory, scanMediaLibrary } from "@mithrandir/cli/lib/media";
+import { deletePaths } from "@mithrandir/cli/lib/filesystem";
 import { shell } from "@mithrandir/cli/lib/shell";
 import { createServerFn } from "@tanstack/react-start";
 import { existsSync } from "fs";
 import { resolve } from "path";
 import { ensureSession } from "#/lib/auth";
+import { logActivity } from "#/lib/server/activity";
 import { getProjectRoot } from "./utils";
 
 // ─── Helpers ────────────────────────────────────────────────────────
@@ -98,6 +100,31 @@ export const fetchMediaCategory = createServerFn({ method: "GET" })
 			disk,
 			mediaDir,
 		};
+	});
+
+export const deleteMediaFiles = createServerFn({ method: "POST" })
+	.inputValidator((d: { paths: string[] }) => d)
+	.handler(async ({ data }) => {
+		await ensureSession();
+		const projectRoot = getProjectRoot();
+		const envConfig = await loadEnvConfig(projectRoot);
+		const mediaDir = resolve(envConfig.BASE_DIR, "data/media");
+
+		const result = await deletePaths(data.paths, mediaDir);
+
+		if (result.deleted.length > 0) {
+			const label =
+				result.deleted.length === 1
+					? result.deleted[0].replace(`${mediaDir}/`, "")
+					: `${result.deleted.length} items`;
+			try {
+				await logActivity("media_deleted", "media", label, "/media-library");
+			} catch (err) {
+				console.error("Failed to log media deletion activity:", err);
+			}
+		}
+
+		return result;
 	});
 
 // ─── Search & Sort helpers ─────────────────────────────────────────

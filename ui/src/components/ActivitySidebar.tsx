@@ -54,6 +54,7 @@ const activityMessages: Record<string, (params?: any) => string> = {
 	setup_skipped: m.activity_setup_skipped,
 	setup_resumed: m.activity_setup_resumed,
 	uploaded: m.activity_uploaded,
+	media_deleted: m.activity_media_deleted,
 	backup_verified: m.activity_backup_verified,
 	created: m.activity_directory_created,
 };
@@ -74,6 +75,7 @@ const actionIcons: Record<string, typeof Play> = {
 	backup_deleted: Trash2,
 	config_updated: Settings,
 	uploaded: Upload,
+	media_deleted: Trash2,
 	backup_verified: CheckCircle,
 	created: FolderPlus,
 };

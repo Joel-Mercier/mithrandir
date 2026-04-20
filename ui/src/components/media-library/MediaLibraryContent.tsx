@@ -1,10 +1,11 @@
-import type { MediaCategoryInfo } from "@mithrandir/cli/lib/media";
+import type { FileNode, MediaCategoryInfo } from "@mithrandir/cli/lib/media";
 import type { MediaSortDirection, MediaSortField } from "@mithrandir/cli/lib/media";
 import { Link } from "@tanstack/react-router";
 import {
 	ArrowDownAZ,
 	ArrowDownZA,
 	ArrowUpDown,
+	ChevronDown,
 	Film,
 	FolderOpen,
 	HardDrive,
@@ -14,12 +15,25 @@ import {
 	Music,
 	Podcast,
 	Search,
+	Trash2,
 	Tv,
 	Upload,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from "#/components/ui/alert-dialog";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
+import { Checkbox } from "#/components/ui/checkbox";
 import {
 	Card,
 	CardContent,
@@ -30,6 +44,7 @@ import {
 import {
 	DropdownMenu,
 	DropdownMenuContent,
+	DropdownMenuItem,
 	DropdownMenuRadioGroup,
 	DropdownMenuRadioItem,
 	DropdownMenuSeparator,
@@ -38,7 +53,7 @@ import {
 import { Input } from "#/components/ui/input";
 import { Progress } from "#/components/ui/progress";
 import { Skeleton } from "#/components/ui/skeleton";
-import { useMediaCategory, useMediaLibrary } from "#/hooks/homelab";
+import { useDeleteMediaFiles, useMediaCategory, useMediaLibrary } from "#/hooks/homelab";
 import { cn, formatFileSize } from "#/lib/utils";
 import { m } from "#/paraglide/messages.js";
 import FileTree from "./FileTree";
@@ -176,6 +191,12 @@ export default function MediaLibraryContent() {
 	const [debouncedSearch, setDebouncedSearch] = useState("");
 	const [sortBy, setSortBy] = useState<MediaSortField>("name");
 	const [sortDirection, setSortDirection] = useState<MediaSortDirection>("asc");
+	const [selectedPaths, setSelectedPaths] = useState<Set<string>>(new Set());
+	const [pendingDelete, setPendingDelete] = useState<{
+		paths: string[];
+		label: string;
+	} | null>(null);
+	const deleteMutation = useDeleteMediaFiles();
 
 	// Debounce search input
 	useEffect(() => {
@@ -183,11 +204,12 @@ export default function MediaLibraryContent() {
 		return () => clearTimeout(timer);
 	}, [search]);
 
-	// Reset search when category changes
+	// Reset search & selection when category changes
 	// biome-ignore lint/correctness/useExhaustiveDependencies: intentional trigger on category change
 	useEffect(() => {
 		setSearch("");
 		setDebouncedSearch("");
+		setSelectedPaths(new Set());
 	}, [selectedCategory]);
 
 	const {
@@ -213,6 +235,89 @@ export default function MediaLibraryContent() {
 	}
 
 	const categoryDetail = categoryData?.categories[0];
+	const categoryBasePath =
+		selectedCategory && data.mediaDir
+			? `${data.mediaDir}/${selectedCategory}`
+			: "";
+
+	const handleToggleSelect = (paths: string[], checked: boolean) => {
+		setSelectedPaths((prev) => {
+			const next = new Set(prev);
+			for (const p of paths) {
+				if (checked) next.add(p);
+				else next.delete(p);
+			}
+			return next;
+		});
+	};
+
+	const handleRequestDelete = (path: string, name: string) => {
+		setPendingDelete({ paths: [path], label: name });
+	};
+
+	const handleRequestBulkDelete = () => {
+		if (selectedPaths.size === 0) return;
+		setPendingDelete({
+			paths: Array.from(selectedPaths),
+			label: m.mediaLibrary_bulkLabel({ count: selectedPaths.size }),
+		});
+	};
+
+	const handleConfirmDelete = () => {
+		if (!pendingDelete) return;
+		const paths = pendingDelete.paths;
+		deleteMutation.mutate(paths, {
+			onSuccess: (result) => {
+				if (result.failed.length === 0) {
+					toast.success(m.mediaLibrary_deleteSuccess({ count: result.deleted.length }));
+				} else {
+					toast.error(m.mediaLibrary_deleteFailed(), {
+						description: result.failed
+							.slice(0, 3)
+							.map((f) => f.error)
+							.join(", "),
+					});
+				}
+				setSelectedPaths((prev) => {
+					const next = new Set(prev);
+					for (const p of paths) next.delete(p);
+					return next;
+				});
+				setPendingDelete(null);
+			},
+			onError: (err) => {
+				toast.error(m.mediaLibrary_deleteError({ error: err.message }));
+				setPendingDelete(null);
+			},
+		});
+	};
+
+	const selectionCount = selectedPaths.size;
+
+	const collectAllPaths = (nodes: FileNode[], base: string): string[] => {
+		const out: string[] = [];
+		for (const n of nodes) {
+			const p = `${base}/${n.name}`;
+			out.push(p);
+			if (n.children) out.push(...collectAllPaths(n.children, p));
+		}
+		return out;
+	};
+	const allPaths =
+		categoryDetail && categoryBasePath
+			? collectAllPaths(categoryDetail.tree, categoryBasePath)
+			: [];
+	const allSelected = allPaths.length > 0 && allPaths.every((p) => selectedPaths.has(p));
+	const someSelected = allPaths.some((p) => selectedPaths.has(p));
+	const selectAllState: boolean | "indeterminate" = allSelected
+		? true
+		: someSelected
+			? "indeterminate"
+			: false;
+
+	const handleToggleSelectAll = (checked: boolean | "indeterminate") => {
+		handleToggleSelect(allPaths, checked === true);
+	};
 
 	const totalFiles = data.categories.reduce((sum, c) => sum + c.fileCount, 0);
 	const totalSize = data.categories.reduce((sum, c) => sum + c.totalSize, 0);
@@ -281,6 +386,14 @@ export default function MediaLibraryContent() {
 					<CardContent className="space-y-3">
 						{/* Search and sort controls */}
 						<div className="flex items-center gap-2">
+							<div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-input bg-background">
+								<Checkbox
+									checked={selectAllState}
+									onCheckedChange={handleToggleSelectAll}
+									disabled={allPaths.length === 0}
+									aria-label={m.mediaLibrary_selectAll()}
+								/>
+							</div>
 							<div className="relative flex-1">
 								<Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
 								<Input
@@ -290,6 +403,31 @@ export default function MediaLibraryContent() {
 									className="pl-9"
 								/>
 							</div>
+							<DropdownMenu>
+								<DropdownMenuTrigger asChild>
+									<Button
+										variant="outline"
+										size="sm"
+										className="shrink-0 gap-1.5"
+										disabled={selectionCount === 0 || deleteMutation.isPending}
+									>
+										<span>
+											{m.mediaLibrary_bulkActions()}
+											{selectionCount > 0 && ` (${selectionCount})`}
+										</span>
+										<ChevronDown className="size-3.5 text-muted-foreground" />
+									</Button>
+								</DropdownMenuTrigger>
+								<DropdownMenuContent align="end">
+									<DropdownMenuItem
+										className="text-status-critical focus:text-status-critical"
+										onSelect={handleRequestBulkDelete}
+									>
+										<Trash2 className="size-3.5" />
+										{m.common_delete()}
+									</DropdownMenuItem>
+								</DropdownMenuContent>
+							</DropdownMenu>
 							<DropdownMenu>
 								<DropdownMenuTrigger asChild>
 									<Button variant="outline" size="sm" className="shrink-0 gap-1.5">
@@ -343,7 +481,14 @@ export default function MediaLibraryContent() {
 										<Loader2 className="size-5 animate-spin text-muted-foreground" />
 									</div>
 								)}
-								<FileTree nodes={categoryDetail?.tree ?? []} />
+								<FileTree
+									nodes={categoryDetail?.tree ?? []}
+									basePath={categoryBasePath}
+									selectedPaths={selectedPaths}
+									onToggleSelect={handleToggleSelect}
+									onDelete={handleRequestDelete}
+									isDeleting={deleteMutation.isPending}
+								/>
 							</div>
 						)}
 					</CardContent>
@@ -360,6 +505,39 @@ export default function MediaLibraryContent() {
 					</CardContent>
 				</Card>
 			)}
+
+			<AlertDialog
+				open={!!pendingDelete}
+				onOpenChange={(open) => !open && setPendingDelete(null)}
+			>
+				<AlertDialogContent className="bg-background/95 backdrop-blur">
+					<AlertDialogHeader>
+						<AlertDialogTitle>
+							{m.mediaLibrary_deleteConfirmTitle()}
+						</AlertDialogTitle>
+						<AlertDialogDescription>
+							{m.mediaLibrary_deleteConfirmDescription({
+								target: pendingDelete?.label ?? "",
+							})}
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel disabled={deleteMutation.isPending}>
+							{m.common_cancel()}
+						</AlertDialogCancel>
+						<AlertDialogAction
+							onClick={handleConfirmDelete}
+							disabled={deleteMutation.isPending}
+							className="bg-status-critical text-white hover:bg-status-critical/90"
+						>
+							{deleteMutation.isPending ? (
+								<Loader2 className="size-4 animate-spin" />
+							) : null}
+							{m.common_delete()}
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 
 			{/* Disk usage */}
 			{data.disk && (

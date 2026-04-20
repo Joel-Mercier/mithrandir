@@ -1,5 +1,5 @@
-import { readdir, stat } from "fs/promises";
-import { join, resolve } from "path";
+import { readdir, rm, stat } from "fs/promises";
+import { join, relative, resolve } from "path";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -189,4 +189,45 @@ export async function getDirectorySize(
   }
 
   return { totalSize, fileCount };
+}
+
+// ─── Deletion ───────────────────────────────────────────────────────
+
+export interface DeletePathsResult {
+  deleted: string[];
+  failed: { path: string; error: string }[];
+}
+
+/**
+ * Delete a list of files or directories. Each path must resolve inside
+ * `sandboxRoot` — any path escaping it (via `..` or symlinks) is rejected.
+ * Directories are removed recursively.
+ */
+export async function deletePaths(
+  paths: string[],
+  sandboxRoot: string,
+): Promise<DeletePathsResult> {
+  const resolvedRoot = resolve(sandboxRoot);
+  const deleted: string[] = [];
+  const failed: { path: string; error: string }[] = [];
+
+  for (const p of paths) {
+    const target = resolve(p);
+    const rel = relative(resolvedRoot, target);
+    if (rel.startsWith("..") || rel === "" || rel.startsWith("/")) {
+      failed.push({ path: p, error: "path outside allowed root" });
+      continue;
+    }
+    try {
+      await rm(target, { recursive: true, force: true });
+      deleted.push(target);
+    } catch (err) {
+      failed.push({
+        path: p,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+
+  return { deleted, failed };
 }
