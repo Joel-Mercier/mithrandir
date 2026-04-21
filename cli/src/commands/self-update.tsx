@@ -211,7 +211,36 @@ function SelfUpdateCommand() {
       }
       addStep({ name: "Build CLI", status: "done", message: "cli/dist/mithrandir.js rebuilt" });
 
-      // Step 5: Rebuild UI
+      // Step 5: Apply database migrations (idempotent)
+      // Runs before the UI restart so the DB schema matches the new code
+      // when the service boots. The UI server also runs migrations on
+      // startup as a safety net, but doing it here surfaces failures early.
+      setCurrentLabel("Applying database migrations...");
+      const envLocalPath = join(root, "ui", ".env.local");
+      let dbFileName = "";
+      if (existsSync(envLocalPath)) {
+        const envContents = readFileSync(envLocalPath, "utf-8");
+        const match = envContents.match(/^DB_FILE_NAME=(.+)$/m);
+        if (match) dbFileName = match[1].trim();
+      }
+      if (dbFileName) {
+        const migrate = await shell(bunPath, ["x", "drizzle-kit", "migrate"], {
+          cwd: join(root, "ui"),
+          ignoreError: true,
+          env: { DB_FILE_NAME: dbFileName },
+          ...userOpts,
+        });
+        if (migrate.exitCode !== 0) {
+          const output = [migrate.stderr, migrate.stdout].filter(Boolean).join("\n");
+          addStep({ name: "Database migrations", status: "error", message: output.slice(0, 300) });
+        } else {
+          addStep({ name: "Database migrations", status: "done", message: "Schema up to date" });
+        }
+      } else {
+        addStep({ name: "Database migrations", status: "skipped", message: "ui/.env.local not configured" });
+      }
+
+      // Step 6: Rebuild UI
       setCurrentLabel("Building UI...");
       // Fix ownership of ui/ — the systemd service runs as root and creates
       // various dirs that the build process needs to overwrite.

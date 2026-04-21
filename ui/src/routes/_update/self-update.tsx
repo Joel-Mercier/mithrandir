@@ -30,6 +30,7 @@ import {
 	useInstallDeps,
 	usePingHealth,
 	usePullLatestChanges,
+	useRunMigrations,
 } from "#/hooks/homelab";
 import { m } from "#/paraglide/messages.js";
 
@@ -63,6 +64,11 @@ function SelfUpdatePage() {
 			status: "pending",
 		},
 		{
+			id: "migrate",
+			name: m.selfUpdate_stepMigrate(),
+			status: "pending",
+		},
+		{
 			id: "finalize",
 			name: m.selfUpdate_stepFinalize(),
 			status: "pending",
@@ -85,6 +91,7 @@ function SelfUpdatePage() {
 	const buildCliMutation = useBuildCli();
 	const buildUiMutation = useBuildUi();
 	const buildStatusMutation = useGetUiBuildStatus();
+	const migrateMutation = useRunMigrations();
 	const finalizeMutation = useFinalizeUpdate();
 	const pingMutation = usePingHealth();
 
@@ -95,6 +102,7 @@ function SelfUpdatePage() {
 	const buildCliRef = useRef(buildCliMutation);
 	const buildUiRef = useRef(buildUiMutation);
 	const buildStatusRef = useRef(buildStatusMutation);
+	const migrateRef = useRef(migrateMutation);
 	const finalizeRef = useRef(finalizeMutation);
 	const pingRef = useRef(pingMutation);
 
@@ -104,6 +112,7 @@ function SelfUpdatePage() {
 	buildCliRef.current = buildCliMutation;
 	buildUiRef.current = buildUiMutation;
 	buildStatusRef.current = buildStatusMutation;
+	migrateRef.current = migrateMutation;
 	finalizeRef.current = finalizeMutation;
 	pingRef.current = pingMutation;
 
@@ -223,7 +232,25 @@ function SelfUpdatePage() {
 				});
 			}
 
-			// Step 5: Finalize
+			// Step 5: Run database migrations (skipped if UI build failed —
+			// the new schema may not match the still-deployed old code)
+			if (buildFailed.current) {
+				updateStep("migrate", { status: "skipped" });
+			} else {
+				updateStep("migrate", { status: "running" });
+				try {
+					await migrateRef.current.mutateAsync(undefined);
+					updateStep("migrate", {
+						status: "done",
+						message: m.selfUpdate_migrateDone(),
+					});
+				} catch (err: unknown) {
+					const detail = err instanceof Error ? err.message : String(err);
+					throw new Error(detail);
+				}
+			}
+
+			// Step 6: Finalize
 			updateStep("finalize", { status: "running" });
 			const finalizeResult =
 				await finalizeRef.current.mutateAsync(undefined);
@@ -232,7 +259,7 @@ function SelfUpdatePage() {
 				message: m.selfUpdate_symlinkDone(),
 			});
 
-			// Step 6: Restart UI service (or skip if not running as a service)
+			// Step 7: Restart UI service (or skip if not running as a service)
 			if (finalizeResult.willRestart) {
 				updateStep("restart", {
 					status: "running",
@@ -509,6 +536,8 @@ function getRunningLabel(stepId: string): string {
 			return m.selfUpdate_buildingCli();
 		case "build-ui":
 			return m.selfUpdate_buildingUi();
+		case "migrate":
+			return m.selfUpdate_migrating();
 		case "finalize":
 			return m.selfUpdate_finalizing();
 		case "restart":

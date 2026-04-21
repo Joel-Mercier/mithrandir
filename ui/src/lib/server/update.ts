@@ -4,9 +4,11 @@ import { deployUiBuild, hasValidDeployment } from "@mithrandir/cli/lib/deploy-ui
 import { loadEnvConfig } from "@mithrandir/cli/lib/config";
 import { shell } from "@mithrandir/cli/lib/shell";
 import { createServerFn } from "@tanstack/react-start";
+import { migrate } from "drizzle-orm/libsql/migrator";
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ensureSession } from "#/lib/auth";
+import db from "#/lib/db";
 import { logActivity } from "./activity";
 import { getProjectRoot } from "./utils";
 
@@ -412,6 +414,24 @@ export const getUiBuildStatus = createServerFn({ method: "GET" }).handler(
 	async (): Promise<BuildStatus> => {
 		await ensureSession();
 		return readBuildStatus();
+	},
+);
+
+export const runMigrations = createServerFn({ method: "POST" }).handler(
+	async (): Promise<StepResult> => {
+		await ensureSession();
+		const migrationsFolder = join(getProjectRoot(), "ui", "drizzle");
+
+		logUpdate(`[migrate] Applying migrations from ${migrationsFolder}...`);
+		try {
+			await migrate(db, { migrationsFolder });
+			logUpdate("[migrate] OK");
+			return { success: true };
+		} catch (err) {
+			const msg = err instanceof Error ? err.message : String(err);
+			logUpdate(`[migrate] FAILED: ${msg}`);
+			throw new Error(`Database migration failed: ${msg}`);
+		}
 	},
 );
 

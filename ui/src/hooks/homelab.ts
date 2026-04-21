@@ -82,6 +82,7 @@ import {
 	installDeps,
 	pingHealth,
 	pullLatestChanges,
+	runMigrations,
 } from "#/lib/server/update";
 import {
 	fetchRemoveInfo,
@@ -777,6 +778,12 @@ export function useBuildUi() {
 export function useGetUiBuildStatus() {
 	return useMutation({
 		mutationFn: () => getUiBuildStatus(),
+	});
+}
+
+export function useRunMigrations() {
+	return useMutation({
+		mutationFn: () => runMigrations(),
 	});
 }
 

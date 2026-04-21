@@ -496,6 +496,7 @@
   "selfUpdate_installingDeps": "Installing dependencies...",
   "selfUpdate_buildingCli": "Building CLI...",
   "selfUpdate_buildingUi": "Building UI...",
+  "selfUpdate_migrating": "Applying database migrations...",
   "selfUpdate_finalizing": "Finalizing update...",
   "selfUpdate_restarting": "Restarting UI service...",
   "selfUpdate_reconnecting": "Reconnecting to server...",
@@ -504,6 +505,7 @@
   "selfUpdate_depsDone": "Dependencies installed",
   "selfUpdate_cliBuildDone": "CLI rebuilt",
   "selfUpdate_uiBuildDone": "UI rebuilt",
+  "selfUpdate_migrateDone": "Database migrations applied",
   "selfUpdate_symlinkDone": "CLI symlink updated",
   "selfUpdate_restartDone": "UI service restarted",
   "selfUpdate_success": "Mithrandir has been updated successfully",
@@ -514,6 +516,7 @@
   "selfUpdate_stepDeps": "Dependencies",
   "selfUpdate_stepBuildCli": "Build CLI",
   "selfUpdate_stepBuildUi": "Build UI",
+  "selfUpdate_stepMigrate": "Migrate Database",
   "selfUpdate_stepFinalize": "Finalize",
   "selfUpdate_stepRestart": "UI Service",
 
