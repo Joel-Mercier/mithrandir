@@ -1,5 +1,9 @@
 {
   "enabledPlugins": {
     "fallow@fallow-skills": true
-  }
+  },
+  "env": {
+    "CLAUDE_CODE_DISABLE_1M_CONTEXT": "1"
+  },
+  "effortLevel": "medium"
 }

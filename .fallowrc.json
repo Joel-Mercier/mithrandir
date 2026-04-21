@@ -48,6 +48,7 @@
         "ui/src/lib/server/update.ts",
         "ui/src/lib/server/capacity.ts",
         "ui/src/lib/server/setup.ts",
+        "ui/src/lib/server/gluetun.ts",
         "ui/src/components/setup/SetupWizard.tsx"
       ],
       "rules": { "unused-types": "off" }
