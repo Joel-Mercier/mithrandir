@@ -26,7 +26,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        test: [getting-started, docker-install, app-lifecycle, backup-restore, diagnostics, update]
+        test: [getting-started, docker-install, app-lifecycle, backup-restore, diagnostics, update, firewall]
     steps:
       - uses: actions/checkout@v5
       - name: Enable KVM

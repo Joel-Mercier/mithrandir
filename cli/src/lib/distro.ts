@@ -13,8 +13,7 @@ export interface DistroInfo {
  * Parse /etc/os-release into a key-value map.
  * Handles both quoted and unquoted values.
  */
-function parseOsRelease(): Record<string, string> {
-  const content = readFileSync("/etc/os-release", "utf-8");
+export function parseOsRelease(content: string): Record<string, string> {
   const result: Record<string, string> = {};
   for (const line of content.split("\n")) {
     const match = line.match(/^([A-Z_]+)=(.*)$/);
@@ -27,12 +26,12 @@ function parseOsRelease(): Record<string, string> {
 }
 
 /** Detect the Linux distribution. Throws if unsupported. */
-export async function detectDistro(): Promise<DistroInfo> {
-  if (!existsSync("/etc/os-release")) {
+export async function detectDistro(osReleasePath = "/etc/os-release"): Promise<DistroInfo> {
+  if (!existsSync(osReleasePath)) {
     throw new Error("Cannot detect distro: /etc/os-release not found");
   }
 
-  const osRelease = parseOsRelease();
+  const osRelease = parseOsRelease(readFileSync(osReleasePath, "utf-8"));
 
   const distroId = (osRelease.ID ?? "").toLowerCase();
   if (distroId !== "debian" && distroId !== "ubuntu") {
@@ -48,6 +47,13 @@ export async function detectDistro(): Promise<DistroInfo> {
   };
 }
 
+/** Extract the local IP address from `ip route get` output. */
+export function extractLocalIp(ipRouteOutput: string): string {
+  // Output looks like: "1.1.1.1 via 192.168.1.1 dev eth0 src 192.168.1.100 uid 1000"
+  const match = ipRouteOutput.match(/\bsrc\s+(\S+)/);
+  return match?.[1] ?? "localhost";
+}
+
 /** Get the local IP address */
 export async function getLocalIp(): Promise<string> {
   const result = await shell("ip", ["route", "get", "1.1.1.1"], {
@@ -56,8 +62,5 @@ export async function getLocalIp(): Promise<string> {
 
   if (result.exitCode !== 0 || !result.stdout) return "localhost";
 
-  // Output looks like: "1.1.1.1 via 192.168.1.1 dev eth0 src 192.168.1.100 uid 1000"
-  // Extract the IP after "src"
-  const match = result.stdout.match(/\bsrc\s+(\S+)/);
-  return match?.[1] ?? "localhost";
+  return extractLocalIp(result.stdout);
 }

@@ -263,6 +263,61 @@ ENVEOF"""))
         '';
       };
 
+      # ---------------------------------------------------------------
+      # Test: firewall — mithrandir install firewall (UFW + ufw-docker)
+      # Verifies UFW activation, ufw-docker install, and per-app rule
+      # sync on install/uninstall. Prowlarr is bridge-networked, so
+      # rules land in the DOCKER-USER chain via ufw-docker.
+      # ---------------------------------------------------------------
+      firewallTest = mkTest {
+        diskSize = "+6G";
+        testScript = ''
+          ${bootstrap}
+          ${installDocker}
+
+          # Install prowlarr BEFORE firewall so `install firewall` back-fills rules.
+          vm.succeed(as_user("mithrandir install prowlarr"), timeout=300)
+          vm.wait_for_open_port(9696)
+
+          # Install firewall
+          vm.succeed(as_user("mithrandir install firewall"), timeout=300)
+
+          # UFW is installed, active, and ufw-docker is present
+          vm.succeed("which ufw")
+          vm.succeed("test -x /usr/local/bin/ufw-docker")
+          status = vm.succeed("ufw status")
+          assert "Status: active" in status, f"Expected UFW active, got: {status}"
+
+          # SSH is always allowed to prevent lockouts
+          assert "22" in status, f"Expected SSH rule in UFW status, got: {status}"
+
+          # ENABLE_FIREWALL was persisted to .env
+          vm.succeed("grep -q '^ENABLE_FIREWALL=true' /home/testuser/homelab/.env")
+
+          # ufw-docker back-filled a rule for the already-installed prowlarr container
+          ufw_docker_status = vm.succeed("ufw-docker status")
+          assert "prowlarr" in ufw_docker_status, \
+            f"Expected prowlarr rule in ufw-docker status, got: {ufw_docker_status}"
+
+          # Installing a new app while firewall is active adds rules automatically.
+          # Sonarr is lighter to pull than most; we reuse prowlarr's uninstall/reinstall
+          # path to avoid another large image pull.
+          vm.succeed(as_user("mithrandir uninstall prowlarr --yes"), timeout=120)
+          after_uninstall = vm.succeed("ufw-docker status")
+          assert "prowlarr" not in after_uninstall, \
+            f"Expected prowlarr rule removed after uninstall, got: {after_uninstall}"
+
+          vm.succeed(as_user("mithrandir install prowlarr"), timeout=300)
+          after_reinstall = vm.succeed("ufw-docker status")
+          assert "prowlarr" in after_reinstall, \
+            f"Expected prowlarr rule restored after reinstall, got: {after_reinstall}"
+
+          # Idempotency: running install firewall again should succeed
+          vm.succeed(as_user("mithrandir install firewall"), timeout=180)
+          vm.succeed("ufw status | grep -q 'Status: active'")
+        '';
+      };
+
     in {
       packages.${system} = {
         default = gettingStartedTest.driver;
@@ -277,6 +332,8 @@ ENVEOF"""))
         diagnostics-interactive = diagnosticsTest.driverInteractive;
         update = updateTest.driver;
         update-interactive = updateTest.driverInteractive;
+        firewall = firewallTest.driver;
+        firewall-interactive = firewallTest.driverInteractive;
       };
 
       checks.${system} = {
@@ -286,6 +343,7 @@ ENVEOF"""))
         backup-restore = backupRestoreTest.driver;
         diagnostics = diagnosticsTest.driver;
         update = updateTest.driver;
+        firewall = firewallTest.driver;
       };
     };
 }
