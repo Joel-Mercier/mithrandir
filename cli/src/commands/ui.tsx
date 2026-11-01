@@ -10,6 +10,7 @@ import { getDuckDnsDomain, regenerateCaddyfile } from "@/lib/caddy.js";
 import { getLocalIp } from "@/lib/distro.js";
 import { shell } from "@/lib/shell.js";
 import { isUiServiceActive, installUiService } from "@/lib/systemd-ui.js";
+import { applyMediaDownloadSettings, isMediaStackInstalled } from "@/lib/media-downloads.js";
 import { installTusdService, isTusdServiceActive } from "@/lib/systemd-tusd.js";
 import { deployUiBuild, hasValidDeployment } from "@/lib/deploy-ui.js";
 import { Header } from "@/components/Header.js";
@@ -191,6 +192,17 @@ function UiStart() {
       await regenerateCaddyfile(envConfig);
     } catch {
       // Caddyfile regeneration is non-critical
+    }
+
+    // The *arr download cleanup webhook targets the UI service — (re)configure it now.
+    if (isMediaStackInstalled(envConfig.BASE_DIR)) {
+      try {
+        const res = await applyMediaDownloadSettings(envConfig);
+        const failed = res.steps.filter((s) => !s.ok).length + res.remaining.filter((i) => i.severity === "fail").length;
+        addStep(failed > 0 ? "Configure download cleanup webhook (see `mithrandir media`)" : "Configure download cleanup webhook", failed > 0 ? "error" : "done");
+      } catch {
+        addStep("Configure download cleanup webhook (see `mithrandir media`)", "error");
+      }
     }
 
     setPhase("done");

@@ -22,6 +22,7 @@ import {
   resolveTailscaleSettings,
 } from "@/lib/tailscale.js";
 import { getSwapInfo, formatSwapSize } from "@/lib/swap.js";
+import { getMediaDoctorChecks } from "@/lib/media-downloads.js";
 import { existsSync } from "fs";
 import type { EnvConfig } from "@/types.js";
 
@@ -481,6 +482,12 @@ async function runChecks(): Promise<CheckResult[]> {
   const configDirCheck = checkConfigDirs(baseDir);
   const secretChecks = checkSecrets(envConfig, baseDir);
   results.push(stoppedCheck, configDirCheck, ...secretChecks);
+
+  // Media download checks (qBittorrent + *arr apps)
+  const mediaChecks = await getMediaDoctorChecks(envConfig).catch((err): CheckResult[] => [
+    { category: "Media", name: "Download settings", status: "warn", message: `Could not check: ${err instanceof Error ? err.message : String(err)}` },
+  ]);
+  results.push(...mediaChecks.map((c) => ({ category: "Media", ...c })));
 
   // Backup checks (skip if no apps installed)
   if (hasInstalledApps) {

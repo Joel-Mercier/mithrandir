@@ -21,6 +21,9 @@ async function resolveRepoOwnerHome(repoRoot: string): Promise<string> {
   return "/root";
 }
 
+/** Port the production UI dashboard listens on */
+export const UI_PORT = 4180;
+
 /** Generate the systemd service unit content for the UI dashboard */
 export function generateUiServiceUnit(repoRoot: string, ownerHome: string): string {
   return `[Unit]
@@ -34,7 +37,7 @@ WorkingDirectory=${repoRoot}/ui
 ExecStart=/usr/local/bin/bun run .deployments/current/server/index.mjs
 Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin"
 Environment="NODE_ENV=production"
-Environment="PORT=4180"
+Environment="PORT=${UI_PORT}"
 Environment="HOME=${ownerHome}"
 EnvironmentFile=-${repoRoot}/.env
 EnvironmentFile=${repoRoot}/ui/.env.local

@@ -169,3 +169,28 @@ async function getUfwStatus(): Promise<string> {
   });
   return result.stdout;
 }
+
+/**
+ * Docker bridge networks (default pools live in 172.16.0.0/12). Containers on
+ * these networks reach host-side services through the host's LAN IP.
+ */
+export const DOCKER_BRIDGE_CIDR = "172.16.0.0/12";
+
+/**
+ * Let containers (Radarr/Sonarr/Lidarr webhooks) reach a host-side port, e.g.
+ * the UI dashboard, without exposing it to the LAN.
+ */
+export async function allowDockerToHostPort(port: number): Promise<void> {
+  await shell("ufw", ["allow", "from", DOCKER_BRIDGE_CIDR, "to", "any", "port", String(port), "proto", "tcp"], {
+    sudo: true,
+    ignoreError: true,
+  });
+}
+
+/** Remove the rule added by allowDockerToHostPort() */
+export async function removeDockerToHostPort(port: number): Promise<void> {
+  await shell("ufw", ["delete", "allow", "from", DOCKER_BRIDGE_CIDR, "to", "any", "port", String(port), "proto", "tcp"], {
+    sudo: true,
+    ignoreError: true,
+  });
+}

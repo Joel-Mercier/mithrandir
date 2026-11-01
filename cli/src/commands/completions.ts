@@ -3,7 +3,7 @@ import { getAppNames, getStackNames, getApp, getAllContainerNames } from "@/lib/
 const SUBCOMMANDS = [
   "setup", "backup", "restore", "recover", "start", "stop", "restart",
   "install", "reinstall", "uninstall", "status", "health", "capacity", "doctor",
-  "update", "log", "graph", "self-update", "config", "version", "completions", "docs",
+  "update", "log", "graph", "self-update", "config", "version", "completions", "docs", "media",
 ];
 
 const APP_COMMANDS = [
@@ -88,6 +88,9 @@ ${logServiceCases}
     docs)
       COMPREPLY=( $(compgen -W "stop" -- "$cur") )
       ;;
+    media)
+      COMPREPLY=( $(compgen -W "status fix prune" -- "$cur") )
+      ;;
   esac
 }
 complete -F _mithrandir mithrandir
@@ -151,6 +154,9 @@ ${[...logServiceMap.entries()].map(([app, services]) => `              ${app}) c
         docs)
           compadd -- stop
           ;;
+        media)
+          compadd -- status fix prune
+          ;;
       esac
       ;;
   esac
@@ -213,6 +219,9 @@ function generateFish(): string {
       `complete -c mithrandir -n '__fish_seen_subcommand_from log; and __fish_seen_subcommand_from ${app}' -a '${services.join(" ")}'`,
     );
   }
+
+  lines.push("", "# Media subcommands");
+  lines.push(`complete -c mithrandir -n '__fish_seen_subcommand_from media' -a 'status fix prune'`);
 
   lines.push("", "# Backup subcommands");
   for (const sub of BACKUP_SUBCOMMANDS) {

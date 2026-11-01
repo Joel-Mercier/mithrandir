@@ -72,6 +72,8 @@ Configuration guidée étape par étape avec le même flux que l'assistant CLI, 
 
 Parcourir les fichiers multimédia stockés sur le serveur avec un explorateur d'arborescence interactif.
 
+Quand qBittorrent et Radarr/Sonarr/Lidarr sont installés, un panneau **Téléchargements** affiche les mêmes informations que [`mithrandir media`](../reference/media) : les paramètres à corriger (avec un bouton **Appliquer les paramètres recommandés**, et un formulaire de connexion qBittorrent si besoin) et les téléchargements que la bibliothèque n'utilise plus, regroupés comme dans `media prune`. Vous choisissez quoi retirer et confirmez avant toute suppression.
+
 ### Téléversement de fichiers
 
 Téléverser des fichiers vers le serveur en utilisant des envois résumables via le [protocole tus](https://tus.io/), propulsé par [Uppy](https://uppy.io/). Les fichiers volumineux sont envoyés par morceaux, de sorte que les envois interrompus peuvent reprendre là où ils se sont arrêtés.

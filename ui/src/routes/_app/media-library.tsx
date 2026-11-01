@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import Breadcrumbs from "#/components/Breadcrumbs";
+import DownloadsPanel from "#/components/media-library/DownloadsPanel";
 import MediaLibraryContent from "#/components/media-library/MediaLibraryContent";
 import { m } from "#/paraglide/messages.js";
 
@@ -20,6 +21,7 @@ function MediaLibraryPage() {
 				</p>
 			</div>
 			<MediaLibraryContent />
+			<DownloadsPanel />
 		</div>
 	);
 }

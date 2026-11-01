@@ -30,6 +30,7 @@ Mithrandir s'invoque avec `mithrandir <commande> [options]`.
 | [`stop`](./stop) | Arrêter une application en cours d'exécution |
 | [`restart`](./restart) | Redémarrer une application en cours d'exécution |
 | [`update`](./update) | Mettre à jour les images de conteneurs |
+| [`media`](./media) | Vérifier les paramètres de téléchargement et nettoyer les téléchargements inutilisés |
 
 ### Sauvegarde et restauration
 

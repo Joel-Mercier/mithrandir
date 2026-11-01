@@ -170,6 +170,19 @@ export interface RootFolderResource {
   totalSpace?: number | null;
 }
 
+// Notification (Connect → Webhook, etc.). Event flags (`onGrab`, `on…Delete`, …)
+// and their `supportsOn…` counterparts vary per app, so they are left open.
+export interface NotificationResource {
+  id?: number;
+  name?: string | null;
+  fields?: Field[] | null;
+  implementation?: string | null;
+  implementationName?: string | null;
+  configContract?: string | null;
+  tags?: number[] | null;
+  [key: string]: unknown;
+}
+
 // ---------------------------------------------------------------------------
 // API key retrieval from config.xml
 // ---------------------------------------------------------------------------
@@ -327,6 +340,19 @@ export function createLidarrClient(options: LidarrClientOptions) {
       create: (resource: RootFolderResource) =>
         post<RootFolderResource>("/api/v1/rootfolder", resource),
       delete: (id: number) => del(`/api/v1/rootfolder/${id}`),
+    },
+
+    // -----------------------------------------------------------------------
+    // Notification  /api/v1/notification
+    // -----------------------------------------------------------------------
+    notification: {
+      getAll: () => get<NotificationResource[]>("/api/v1/notification"),
+      getSchema: () => get<NotificationResource[]>("/api/v1/notification/schema"),
+      create: (resource: NotificationResource, forceSave = false) =>
+        post<NotificationResource>(`/api/v1/notification?forceSave=${forceSave}`, resource),
+      update: (id: number, resource: NotificationResource, forceSave = false) =>
+        put<NotificationResource>(`/api/v1/notification/${id}?forceSave=${forceSave}`, resource),
+      delete: (id: number) => del(`/api/v1/notification/${id}`),
     },
   };
 }

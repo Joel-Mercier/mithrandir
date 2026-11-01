@@ -149,6 +149,28 @@ export interface RootFolderResource {
   unmappedFolders?: UnmappedFolder[] | null;
 }
 
+// MediaManagementConfig (subset — unknown keys are passed through untouched)
+export interface MediaManagementConfigResource {
+  id?: number;
+  copyUsingHardlinks?: boolean;
+  deleteEmptyFolders?: boolean;
+  recycleBin?: string | null;
+  [key: string]: unknown;
+}
+
+// Notification (Connect → Webhook, etc.). Event flags (`onGrab`, `on…Delete`, …)
+// and their `supportsOn…` counterparts vary per app, so they are left open.
+export interface NotificationResource {
+  id?: number;
+  name?: string | null;
+  fields?: Field[] | null;
+  implementation?: string | null;
+  implementationName?: string | null;
+  configContract?: string | null;
+  tags?: number[] | null;
+  [key: string]: unknown;
+}
+
 // ---------------------------------------------------------------------------
 // API key retrieval from config.xml
 // ---------------------------------------------------------------------------
@@ -297,6 +319,28 @@ export function createRadarrClient(options: RadarrClientOptions) {
       create: (resource: RootFolderResource) =>
         post<RootFolderResource>("/api/v3/rootfolder", resource),
       delete: (id: number) => del(`/api/v3/rootfolder/${id}`),
+    },
+
+    // -----------------------------------------------------------------------
+    // MediaManagementConfig  /api/v3/config/mediamanagement
+    // -----------------------------------------------------------------------
+    mediaManagement: {
+      get: () => get<MediaManagementConfigResource>("/api/v3/config/mediamanagement"),
+      update: (id: number, resource: MediaManagementConfigResource) =>
+        put<MediaManagementConfigResource>(`/api/v3/config/mediamanagement/${id}`, resource),
+    },
+
+    // -----------------------------------------------------------------------
+    // Notification  /api/v3/notification
+    // -----------------------------------------------------------------------
+    notification: {
+      getAll: () => get<NotificationResource[]>("/api/v3/notification"),
+      getSchema: () => get<NotificationResource[]>("/api/v3/notification/schema"),
+      create: (resource: NotificationResource, forceSave = false) =>
+        post<NotificationResource>(`/api/v3/notification?forceSave=${forceSave}`, resource),
+      update: (id: number, resource: NotificationResource, forceSave = false) =>
+        put<NotificationResource>(`/api/v3/notification/${id}?forceSave=${forceSave}`, resource),
+      delete: (id: number) => del(`/api/v3/notification/${id}`),
     },
   };
 }

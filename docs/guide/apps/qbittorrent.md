@@ -35,6 +35,12 @@ mithrandir install qbittorrent
 
 When installed via the setup wizard, qBittorrent is automatically configured with automatic torrent handling, downloads root path and adds authentication to the webUI.
 
+## Deleting Media
+
+Delete movies, series and music in Radarr, Sonarr or Lidarr (with **Delete files**), not in qBittorrent. Mithrandir then removes the seeding copy from qBittorrent automatically, so the space is actually freed. Nothing is removed based on time or ratio. See [`mithrandir media`](../../reference/media) for how this works and how to clean up leftovers.
+
+Each app downloads into its own folder through a qBittorrent category: `movies`, `tv` and `music` (moved to `movies-imported`, `tv-imported` and `music-imported` once imported).
+
 ## Setup
 
 - Go to the qBittorrent webUI settings (cog icon).

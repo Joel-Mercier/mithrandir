@@ -26,6 +26,7 @@ import { Route as AppMediaLibraryRouteImport } from './routes/_app/media-library
 import { Route as AppBackupRestoreRouteImport } from './routes/_app/backup-restore'
 import { Route as AppAppsIndexRouteImport } from './routes/_app/apps/index'
 import { Route as ApiSsoClientsRouteImport } from './routes/api/sso/clients'
+import { Route as ApiMediaArrWebhookRouteImport } from './routes/api/media/arr-webhook'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as AppAppsGraphRouteImport } from './routes/_app/apps/graph'
 import { Route as AppAppsCapacityRouteImport } from './routes/_app/apps/capacity'
@@ -116,6 +117,11 @@ const ApiSsoClientsRoute = ApiSsoClientsRouteImport.update({
   path: '/api/sso/clients',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiMediaArrWebhookRoute = ApiMediaArrWebhookRouteImport.update({
+  id: '/api/media/arr-webhook',
+  path: '/api/media/arr-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -169,6 +175,7 @@ export interface FileRoutesByFullPath {
   '/apps/capacity': typeof AppAppsCapacityRoute
   '/apps/graph': typeof AppAppsGraphRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/media/arr-webhook': typeof ApiMediaArrWebhookRoute
   '/api/sso/clients': typeof ApiSsoClientsRouteWithChildren
   '/apps/': typeof AppAppsIndexRoute
   '/api/homelab/logs/$appName': typeof ApiHomelabLogsAppNameRoute
@@ -192,6 +199,7 @@ export interface FileRoutesByTo {
   '/apps/capacity': typeof AppAppsCapacityRoute
   '/apps/graph': typeof AppAppsGraphRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/media/arr-webhook': typeof ApiMediaArrWebhookRoute
   '/api/sso/clients': typeof ApiSsoClientsRouteWithChildren
   '/apps': typeof AppAppsIndexRoute
   '/api/homelab/logs/$appName': typeof ApiHomelabLogsAppNameRoute
@@ -219,6 +227,7 @@ export interface FileRoutesById {
   '/_app/apps/capacity': typeof AppAppsCapacityRoute
   '/_app/apps/graph': typeof AppAppsGraphRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/media/arr-webhook': typeof ApiMediaArrWebhookRoute
   '/api/sso/clients': typeof ApiSsoClientsRouteWithChildren
   '/_app/apps/': typeof AppAppsIndexRoute
   '/api/homelab/logs/$appName': typeof ApiHomelabLogsAppNameRoute
@@ -244,6 +253,7 @@ export interface FileRouteTypes {
     | '/apps/capacity'
     | '/apps/graph'
     | '/api/auth/$'
+    | '/api/media/arr-webhook'
     | '/api/sso/clients'
     | '/apps/'
     | '/api/homelab/logs/$appName'
@@ -267,6 +277,7 @@ export interface FileRouteTypes {
     | '/apps/capacity'
     | '/apps/graph'
     | '/api/auth/$'
+    | '/api/media/arr-webhook'
     | '/api/sso/clients'
     | '/apps'
     | '/api/homelab/logs/$appName'
@@ -293,6 +304,7 @@ export interface FileRouteTypes {
     | '/_app/apps/capacity'
     | '/_app/apps/graph'
     | '/api/auth/$'
+    | '/api/media/arr-webhook'
     | '/api/sso/clients'
     | '/_app/apps/'
     | '/api/homelab/logs/$appName'
@@ -305,6 +317,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRouteWithChildren
   UpdateRoute: typeof UpdateRouteWithChildren
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiMediaArrWebhookRoute: typeof ApiMediaArrWebhookRoute
   ApiSsoClientsRoute: typeof ApiSsoClientsRouteWithChildren
   ApiHomelabLogsAppNameRoute: typeof ApiHomelabLogsAppNameRoute
   ApiMediaUploadHooksRoute: typeof ApiMediaUploadHooksRoute
@@ -429,6 +442,13 @@ declare module '@tanstack/react-router' {
       path: '/api/sso/clients'
       fullPath: '/api/sso/clients'
       preLoaderRoute: typeof ApiSsoClientsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/media/arr-webhook': {
+      id: '/api/media/arr-webhook'
+      path: '/api/media/arr-webhook'
+      fullPath: '/api/media/arr-webhook'
+      preLoaderRoute: typeof ApiMediaArrWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/auth/$': {
@@ -557,6 +577,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRouteWithChildren,
   UpdateRoute: UpdateRouteWithChildren,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiMediaArrWebhookRoute: ApiMediaArrWebhookRoute,
   ApiSsoClientsRoute: ApiSsoClientsRouteWithChildren,
   ApiHomelabLogsAppNameRoute: ApiHomelabLogsAppNameRoute,
   ApiMediaUploadHooksRoute: ApiMediaUploadHooksRoute,

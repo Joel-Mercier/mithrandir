@@ -174,6 +174,11 @@ export interface EnvConfig {
   TAILSCALE_AUTH_KEY?: string;
   ACME_EMAIL?: string;
   QBITTORRENT_USE_VPN?: string;
+  /** qBittorrent WebUI login, used by `mithrandir media` and the download cleanup webhook */
+  QBITTORRENT_USERNAME?: string;
+  QBITTORRENT_PASSWORD?: string;
+  /** Shared secret the *arr cleanup webhook uses to authenticate against the UI */
+  MEDIA_WEBHOOK_SECRET?: string;
   VPN_SERVICE_PROVIDER?: string;
   VPN_TYPE?: string;
   WIREGUARD_PRIVATE_KEY?: string;

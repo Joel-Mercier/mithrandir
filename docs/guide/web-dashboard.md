@@ -72,6 +72,8 @@ Step-by-step guided setup with the same workflow as the CLI wizard, presented as
 
 Browse media files stored on the server with an interactive file tree viewer.
 
+When qBittorrent and Radarr/Sonarr/Lidarr are installed, a **Downloads** panel shows the same information as [`mithrandir media`](../reference/media): settings that need fixing (with an **Apply recommended settings** button, plus a qBittorrent login form if needed) and downloads the library no longer uses, grouped like `media prune`. You choose what to remove, and confirm before anything is deleted.
+
 ### File Upload
 
 Upload files to the server using resumable uploads via the [tus protocol](https://tus.io/), powered by [Uppy](https://uppy.io/). Large files are uploaded in chunks, so interrupted uploads can resume where they left off.

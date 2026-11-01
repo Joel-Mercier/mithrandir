@@ -40,6 +40,12 @@ import {
 	getLidarrApiKey,
 } from "@mithrandir/cli/lib/lidarr";
 import {
+	allowMediaWebhookTraffic,
+	applyMediaDownloadSettings,
+	downloadClientCategoryFields,
+	isMediaStackInstalled,
+} from "@mithrandir/cli/lib/media-downloads";
+import {
 	createProwlarrClient,
 	ensureByparrProxy,
 	getProwlarrApiKey,
@@ -630,6 +636,11 @@ export const autoSetupApp = createServerFn({ method: "POST" })
 						web_ui_username: username,
 						web_ui_password: password,
 					});
+
+					// Kept for `mithrandir media` and the download cleanup webhook
+					envConfig.QBITTORRENT_USERNAME = username;
+					envConfig.QBITTORRENT_PASSWORD = password;
+					await saveEnvConfig(envConfig, projectRoot);
 				}
 
 				// ── Prowlarr
@@ -754,7 +765,7 @@ export const autoSetupApp = createServerFn({ method: "POST" })
 								protocol: "torrent",
 								enable: true,
 								priority: 1,
-								removeCompletedDownloads: true,
+								removeCompletedDownloads: false,
 								removeFailedDownloads: true,
 								fields: [
 									{ order: 0, name: "host", label: "Host", value: localIp },
@@ -771,6 +782,7 @@ export const autoSetupApp = createServerFn({ method: "POST" })
 										label: "Password",
 										value: password,
 									},
+									...downloadClientCategoryFields("radarr"),
 								],
 							});
 						} catch (err: unknown) {
@@ -807,7 +819,7 @@ export const autoSetupApp = createServerFn({ method: "POST" })
 								protocol: "torrent",
 								enable: true,
 								priority: 1,
-								removeCompletedDownloads: true,
+								removeCompletedDownloads: false,
 								removeFailedDownloads: true,
 								fields: [
 									{ order: 0, name: "host", label: "Host", value: localIp },
@@ -824,6 +836,7 @@ export const autoSetupApp = createServerFn({ method: "POST" })
 										label: "Password",
 										value: password,
 									},
+									...downloadClientCategoryFields("sonarr"),
 								],
 							});
 						} catch (err: unknown) {
@@ -860,7 +873,7 @@ export const autoSetupApp = createServerFn({ method: "POST" })
 								protocol: "torrent",
 								enable: true,
 								priority: 1,
-								removeCompletedDownloads: true,
+								removeCompletedDownloads: false,
 								removeFailedDownloads: true,
 								fields: [
 									{ order: 0, name: "host", label: "Host", value: localIp },
@@ -877,6 +890,7 @@ export const autoSetupApp = createServerFn({ method: "POST" })
 										label: "Password",
 										value: password,
 									},
+									...downloadClientCategoryFields("lidarr"),
 								],
 							});
 						} catch (err: unknown) {
@@ -1141,6 +1155,25 @@ export const autoSetupApp = createServerFn({ method: "POST" })
 					}
 				}
 
+				// Download categories, hardlinks and the cleanup webhook (idempotent,
+				// re-applied after each media app so the last one completes it)
+				if (
+					["qbittorrent", "radarr", "sonarr", "lidarr"].includes(appName) &&
+					isMediaStackInstalled(baseDir)
+				) {
+					try {
+						const res = await applyMediaDownloadSettings(envConfig, {
+							projectRoot,
+						});
+						for (const step of res.steps) {
+							if (!step.ok)
+								warnings.push(`${step.app}: ${step.message} — ${step.error}`);
+						}
+					} catch (err: unknown) {
+						warnings.push(err instanceof Error ? err.message : String(err));
+					}
+				}
+
 				await logActivity("setup_autosetup", "app", appName, "/setup");
 
 				return { success: true, warnings };
@@ -1186,6 +1219,9 @@ export const setupFirewall = createServerFn({ method: "POST" })
 		if (envConfig.ENABLE_TAILSCALE === "true") {
 			await allowTailscaleTraffic();
 		}
+
+		// *arr containers call the UI's download cleanup webhook
+		await allowMediaWebhookTraffic(envConfig);
 
 		// Save to .env
 		envConfig.ENABLE_FIREWALL = "true";

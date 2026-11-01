@@ -26,6 +26,10 @@ import {
 	isDockerInstalled,
 } from "@mithrandir/cli/lib/docker";
 import { runHealthChecks } from "@mithrandir/cli/lib/health";
+import {
+	allowMediaWebhookTraffic,
+	getMediaDoctorChecks,
+} from "@mithrandir/cli/lib/media-downloads";
 import { shell } from "@mithrandir/cli/lib/shell";
 import { gatherSystemInfo } from "@mithrandir/cli/lib/status";
 import {
@@ -628,6 +632,9 @@ export const enableFirewall = createServerFn({ method: "POST" }).handler(
 		if (envConfig.ENABLE_TAILSCALE === "true") {
 			await allowTailscaleTraffic();
 		}
+
+		// *arr containers call the UI's download cleanup webhook
+		await allowMediaWebhookTraffic(envConfig);
 
 		// Save to .env
 		envConfig.ENABLE_FIREWALL = "true";
@@ -1277,6 +1284,19 @@ export const runDoctor = createServerFn({ method: "GET" }).handler(
 					);
 				}
 			}
+		}
+
+		// Media downloads (qBittorrent + *arr apps)
+		try {
+			const mediaChecks = await getMediaDoctorChecks(envConfig);
+			for (const check of mediaChecks) results.push({ category: "Media", ...check });
+		} catch (err: unknown) {
+			results.push({
+				category: "Media",
+				name: "Download settings",
+				status: "warn",
+				message: `Could not check: ${err instanceof Error ? err.message : String(err)}`,
+			});
 		}
 
 		const issueCount = results.filter(

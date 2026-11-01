@@ -200,6 +200,43 @@ export interface QBittorrentPreferences {
   [key: string]: unknown;
 }
 
+export interface QBittorrentTorrent {
+  hash: string;
+  name: string;
+  /** Empty string when the torrent has no category */
+  category: string;
+  save_path: string;
+  /** Absolute path of the torrent content (file for single-file torrents, root folder otherwise) */
+  content_path: string;
+  /** 0..1 */
+  progress: number;
+  state: string;
+  size: number;
+  total_size?: number;
+  amount_left?: number;
+  added_on?: number;
+  /** Unix timestamp, -1 / 0 when not completed */
+  completion_on?: number;
+  auto_tmm?: boolean;
+  tags?: string;
+  [key: string]: unknown;
+}
+
+export interface QBittorrentTorrentFile {
+  index?: number;
+  /** Path relative to the torrent's save path */
+  name: string;
+  size: number;
+  progress: number;
+  priority: number;
+  [key: string]: unknown;
+}
+
+export interface QBittorrentCategory {
+  name: string;
+  savePath: string;
+}
+
 export interface LoginResult {
   success: boolean;
   /** Session ID cookie value — store and pass to createQBittorrentClient */
@@ -419,6 +456,81 @@ export function createQBittorrentClient(options: QBittorrentClientOptions = {}) 
         post<string>(
           "/api/v2/app/setPreferences",
           new URLSearchParams({ json: JSON.stringify(prefs) }),
+        ),
+    },
+
+    // -----------------------------------------------------------------------
+    // Torrents  /api/v2/torrents
+    // -----------------------------------------------------------------------
+    torrents: {
+      /** List torrents, optionally filtered by category ("" = uncategorized). */
+      list: (filter: { category?: string; hashes?: string[] } = {}) => {
+        const params = new URLSearchParams();
+        if (filter.category !== undefined) params.set("category", filter.category);
+        if (filter.hashes?.length) params.set("hashes", filter.hashes.join("|"));
+        const qs = params.toString();
+        return get<QBittorrentTorrent[]>(`/api/v2/torrents/info${qs ? `?${qs}` : ""}`);
+      },
+
+      /** Files of a torrent, with names relative to its save path. */
+      files: (hash: string) =>
+        get<QBittorrentTorrentFile[]>(`/api/v2/torrents/files?hash=${encodeURIComponent(hash)}`),
+
+      /** Remove torrents; `deleteFiles` also deletes their downloaded data. */
+      delete: (hashes: string[], deleteFiles: boolean) =>
+        post<string>(
+          "/api/v2/torrents/delete",
+          new URLSearchParams({ hashes: hashes.join("|"), deleteFiles: String(deleteFiles) }),
+        ),
+
+      /** Assign a category (with automatic torrent management the data moves to the category path). */
+      setCategory: (hashes: string[], category: string) =>
+        post<string>(
+          "/api/v2/torrents/setCategory",
+          new URLSearchParams({ hashes: hashes.join("|"), category }),
+        ),
+
+      /** All categories, keyed by name. */
+      categories: () =>
+        get<Record<string, QBittorrentCategory>>("/api/v2/torrents/categories"),
+
+      createCategory: (category: string, savePath: string) =>
+        post<string>(
+          "/api/v2/torrents/createCategory",
+          new URLSearchParams({ category, savePath }),
+        ),
+
+      editCategory: (category: string, savePath: string) =>
+        post<string>(
+          "/api/v2/torrents/editCategory",
+          new URLSearchParams({ category, savePath }),
+        ),
+
+      /** Remove categories (torrents in them become uncategorized). */
+      removeCategories: (categories: string[]) =>
+        post<string>(
+          "/api/v2/torrents/removeCategories",
+          new URLSearchParams({ categories: categories.join("\n") }),
+        ),
+
+      /** Toggle automatic torrent management (category-driven save paths). */
+      setAutoManagement: (hashes: string[], enable: boolean) =>
+        post<string>(
+          "/api/v2/torrents/setAutoManagement",
+          new URLSearchParams({ hashes: hashes.join("|"), enable: String(enable) }),
+        ),
+
+      /** Add comma-separated tags to torrents (tags are created if missing). */
+      addTags: (hashes: string[], tags: string) =>
+        post<string>(
+          "/api/v2/torrents/addTags",
+          new URLSearchParams({ hashes: hashes.join("|"), tags }),
+        ),
+
+      removeTags: (hashes: string[], tags: string) =>
+        post<string>(
+          "/api/v2/torrents/removeTags",
+          new URLSearchParams({ hashes: hashes.join("|"), tags }),
         ),
     },
 

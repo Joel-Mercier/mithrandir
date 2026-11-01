@@ -35,6 +35,12 @@ mithrandir install qbittorrent
 
 Lorsqu'il est installé via l'assistant de configuration, qBittorrent est automatiquement configuré avec la gestion automatique des torrents, le chemin racine des téléchargements et l'ajout de l'authentification à l'interface web.
 
+## Supprimer des médias
+
+Supprimez films, séries et musique dans Radarr, Sonarr ou Lidarr (avec **Supprimer les fichiers**), pas dans qBittorrent. Mithrandir retire ensuite automatiquement la copie partagée de qBittorrent, pour que l'espace soit réellement libéré. Rien n'est retiré en fonction d'une durée ou d'un ratio. Voir [`mithrandir media`](../../reference/media) pour le fonctionnement et le nettoyage des restes.
+
+Chaque application télécharge dans son propre dossier via une catégorie qBittorrent : `movies`, `tv` et `music` (déplacées vers `movies-imported`, `tv-imported` et `music-imported` une fois importées).
+
 ## Configuration
 
 - Allez dans les paramètres de l'interface web de qBittorrent (icône engrenage).

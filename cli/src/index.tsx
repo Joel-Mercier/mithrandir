@@ -21,6 +21,7 @@ import { runVersion } from "@/commands/version.js";
 import { runConfig } from "@/commands/config.js";
 import { runCompletions } from "@/commands/completions.js";
 import { runGraph } from "@/commands/graph.js";
+import { runMedia } from "@/commands/media.js";
 import { runCapacity } from "@/commands/capacity.js";
 import { runRecover } from "@/commands/recover.js";
 import { runDocs, runDocsStop } from "@/commands/docs.js";
@@ -68,6 +69,9 @@ const cli = meow(
     log <app> [service]                View container logs
     capacity                           Show system capacity and resource scores
     graph                              Show inter-app dependency tree
+    media                              Check qBittorrent/*arr download settings and disk usage
+    media fix                          Apply recommended download settings (never deletes anything)
+    media prune                        Review and delete downloads no longer used by the library
     self-update                        Update the CLI itself from git
     version                            Show version and git commit
     config                             Show current configuration
@@ -115,6 +119,9 @@ const cli = meow(
     $ mithrandir install tailscale --yes --auth-key tskey-auth-xxxx
     $ mithrandir reinstall radarr
     $ mithrandir reinstall --yes radarr
+    $ mithrandir media
+    $ mithrandir media fix
+    $ mithrandir media prune
     $ mithrandir log --follow --tail 100 radarr
     $ mithrandir self-update
     $ mithrandir version
@@ -281,6 +288,10 @@ switch (command) {
 
   case "graph":
     runGraph();
+    break;
+
+  case "media":
+    runMedia(cli.input.slice(1), { yes: cli.flags.yes });
     break;
 
   case "completions":

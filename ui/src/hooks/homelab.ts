@@ -35,6 +35,12 @@ import { fetchCapacity } from "#/lib/server/capacity";
 import { browseDirectory, createDirectory } from "#/lib/server/filesystem";
 import { deleteMediaFiles, fetchMediaCategory, fetchMediaLibrary } from "#/lib/server/media";
 import {
+	fetchMediaDownloads,
+	fixMediaDownloads,
+	type MediaDownloadsFixInput,
+	pruneMediaDownloads,
+} from "#/lib/server/media-downloads";
+import {
 	autoSetupApp,
 	checkSystemRequirements,
 	completeSetup,
@@ -106,6 +112,7 @@ import {
 
 export type { RemoveInfo } from "#/lib/server/remove";
 export type { TailscaleOverview } from "#/lib/server/tailscale";
+export type { MediaDownloadsOverview } from "#/lib/server/media-downloads";
 
 import type { SystemConfig } from "#/lib/types";
 import { invalidateKeys } from "#/lib/utils";
@@ -131,6 +138,7 @@ const keys = {
 	capacity: ["homelab", "capacity"],
 	activity: ["homelab", "activity"],
 	mediaLibrary: ["homelab", "media-library"],
+	mediaDownloads: ["homelab", "media-downloads"],
 	mediaCategory: (category: string, search?: string, sortBy?: string, sortDirection?: string) =>
 		["homelab", "media-category", category, search ?? "", sortBy ?? "", sortDirection ?? ""],
 	browseDirectory: (path: string) => ["homelab", "browse-directory", path],
@@ -949,6 +957,44 @@ export function useDisconnectTailscale() {
 		mutationFn: () => disconnectTailscale(),
 		onSuccess: () => {
 			invalidateKeys(queryClient, [keys.tailscale, keys.config, keys.activity]);
+		},
+	});
+}
+
+// ─── Media downloads (qBittorrent ↔ *arr housekeeping) ───────────────────────
+
+export function useMediaDownloads(enabled = true) {
+	return useQuery({
+		queryKey: keys.mediaDownloads,
+		queryFn: () => fetchMediaDownloads(),
+		enabled,
+		staleTime: 30_000,
+	});
+}
+
+export function useFixMediaDownloads() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (input: MediaDownloadsFixInput) =>
+			fixMediaDownloads({ data: input }),
+		onSettled: () => {
+			invalidateKeys(queryClient, [keys.mediaDownloads, keys.config, keys.activity]);
+		},
+	});
+}
+
+export function usePruneMediaDownloads() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (selection: { hashes: string[]; orphanPaths: string[] }) =>
+			pruneMediaDownloads({ data: selection }),
+		onSettled: () => {
+			invalidateKeys(queryClient, [
+				keys.mediaDownloads,
+				keys.mediaLibrary,
+				keys.resources,
+				keys.activity,
+			]);
 		},
 	});
 }

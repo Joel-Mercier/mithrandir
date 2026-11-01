@@ -28,6 +28,7 @@ import { generateCompose } from "@/lib/compose.js";
 import { parseWireguardConfig } from "@/lib/wireguard-config.js";
 import { generate404Page, generateCaddyfile, generateCaddyDockerfile, getDuckDnsDomain, regenerateCaddyfile } from "@/lib/caddy.js";
 import { isUiServiceActive } from "@/lib/systemd-ui.js";
+import { allowMediaWebhookTraffic } from "@/lib/media-downloads.js";
 import { regenerateGatusConfig } from "@/lib/gatus.js";
 import { registerSsoClient } from "@/lib/sso.js";
 import { getLocalIp } from "@/lib/distro.js";
@@ -682,6 +683,10 @@ function InstallFirewall() {
       if (env.ENABLE_TAILSCALE === "true") {
         await allowTailscaleTraffic();
         addStep({ name: "Tailscale", status: "done", message: "Allowed tailscale0 and UDP 41641" });
+      }
+      if (env.MEDIA_WEBHOOK_SECRET) {
+        await allowMediaWebhookTraffic(env);
+        addStep({ name: "Download cleanup webhook", status: "done", message: "Allowed Docker containers to reach the UI" });
       }
     } catch {
       // Non-fatal

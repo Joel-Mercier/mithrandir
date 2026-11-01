@@ -178,6 +178,7 @@ function referenceSidebar(prefix = ""): DefaultTheme.SidebarItem[] {
             { text: "stop", link: `${prefix}/reference/stop` },
             { text: "restart", link: `${prefix}/reference/restart` },
             { text: "update", link: `${prefix}/reference/update` },
+            { text: "media", link: `${prefix}/reference/media` },
           ],
         },
         {

@@ -14,6 +14,7 @@ Exécute un ensemble complet de vérifications diagnostiques regroupées par cat
 
 - **Système** — le fichier `.env` existe, Docker est installé et en cours d'exécution, le swap est configuré, les règles du pare-feu, et Tailscale (si activé) : installé, `tailscaled` en cours d'exécution, connecté au tailnet, routes de sous-réseau / nœud de sortie en attente d'approbation, clé de l'appareil expirant dans moins de 14 jours
 - **Applications** — les conteneurs sont en cours d'exécution, les répertoires de configuration existent, les secrets requis sont présents
+- **Media** (quand qBittorrent et Radarr/Sonarr/Lidarr sont installés) — les catégories de téléchargement, les liens physiques et le webhook de nettoyage sont configurés, et l'espace occupé par les téléchargements inutilisés (voir [`media`](./media))
 - **Sauvegarde** — le répertoire de sauvegarde existe, le service et le timer systemd sont installés, rclone est configuré et le remote est accessible
 
 Chaque vérification échouée inclut un conseil pour corriger le problème.

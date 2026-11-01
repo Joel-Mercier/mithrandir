@@ -53,6 +53,7 @@ import {
   allowTailscaleTraffic,
 } from "@/lib/ufw.js";
 import { loadEnvConfig, saveEnvConfig } from "@/lib/config.js";
+import { allowMediaWebhookTraffic, applyMediaDownloadSettings, downloadClientCategoryFields } from "@/lib/media-downloads.js";
 import { getTailnetAppUrl, getTailscaleStatus, type TailscaleStatus } from "@/lib/tailscale.js";
 import { TailscaleSetup, TailscaleNotes, TAILSCALE_EXPLAINER, type TailscaleSetupResult } from "@/components/TailscaleSetup.js";
 import { shell } from "@/lib/shell.js";
@@ -756,6 +757,9 @@ export function SetupCommand({ flags }: SetupCommandProps) {
         if (envConfig.ENABLE_TAILSCALE === "true") {
           await allowTailscaleTraffic();
         }
+
+        // *arr containers call the UI's download cleanup webhook
+        await allowMediaWebhookTraffic(envConfig);
 
         // Save to .env
         envConfig.ENABLE_FIREWALL = "true";
@@ -1866,13 +1870,14 @@ function AutoSetupAppsStep({ selectedApps, envConfig, localIp, autoYes, onComple
                 protocol: "torrent",
                 enable: true,
                 priority: 1,
-                removeCompletedDownloads: true,
+                removeCompletedDownloads: false,
                 removeFailedDownloads: true,
                 fields: [
                   { order: 0, name: "host", label: "Host", value: localIp },
                   { order: 1, name: "port", label: "Port", value: 8080 },
                   { order: 2, name: "username", label: "Username", value: qbtUsername },
                   { order: 3, name: "password", label: "Password", value: qbtPassword },
+                  ...downloadClientCategoryFields("radarr"),
                 ],
               }));
             } catch (err: any) {
@@ -1908,13 +1913,14 @@ function AutoSetupAppsStep({ selectedApps, envConfig, localIp, autoYes, onComple
                 protocol: "torrent",
                 enable: true,
                 priority: 1,
-                removeCompletedDownloads: true,
+                removeCompletedDownloads: false,
                 removeFailedDownloads: true,
                 fields: [
                   { order: 0, name: "host", label: "Host", value: localIp },
                   { order: 1, name: "port", label: "Port", value: 8080 },
                   { order: 2, name: "username", label: "Username", value: qbtUsername },
                   { order: 3, name: "password", label: "Password", value: qbtPassword },
+                  ...downloadClientCategoryFields("sonarr"),
                 ],
               }));
             } catch (err: any) {
@@ -1950,13 +1956,14 @@ function AutoSetupAppsStep({ selectedApps, envConfig, localIp, autoYes, onComple
                 protocol: "torrent",
                 enable: true,
                 priority: 1,
-                removeCompletedDownloads: true,
+                removeCompletedDownloads: false,
                 removeFailedDownloads: true,
                 fields: [
                   { order: 0, name: "host", label: "Host", value: localIp },
                   { order: 1, name: "port", label: "Port", value: 8080 },
                   { order: 2, name: "username", label: "Username", value: qbtUsername },
                   { order: 3, name: "password", label: "Password", value: qbtPassword },
+                  ...downloadClientCategoryFields("lidarr"),
                 ],
               }));
             } catch (err: any) {
@@ -2183,6 +2190,24 @@ function AutoSetupAppsStep({ selectedApps, envConfig, localIp, autoYes, onComple
       }
 
       setAppResults([...results]);
+    }
+
+    // Download categories, cleanup webhook and qBittorrent credentials in .env
+    const hasArr = ["radarr", "sonarr", "lidarr"].some((name) => hasApp(name));
+    if (hasApp("qbittorrent") && hasArr) {
+      const warnings: string[] = [];
+      try {
+        const res = await applyMediaDownloadSettings(envConfig, {
+          credentials: qbtUsername ? { username: qbtUsername, password: qbtPassword } : null,
+        });
+        for (const step of res.steps) {
+          if (!step.ok) warnings.push(`${step.app}: ${step.message} — ${step.error}`);
+        }
+        for (const issue of res.remaining) warnings.push(`${issue.app}: ${issue.message}`);
+        results.push({ appName: "media-downloads", displayName: "Download cleanup", status: "done", warnings });
+      } catch (err: any) {
+        results.push({ appName: "media-downloads", displayName: "Download cleanup", status: "error", error: err.message, warnings });
+      }
     }
 
     setSetupPhase("done");

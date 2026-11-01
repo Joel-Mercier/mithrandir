@@ -58,6 +58,9 @@ const activityMessages: Record<string, (params?: any) => string> = {
 	setup_resumed: m.activity_setup_resumed,
 	uploaded: m.activity_uploaded,
 	media_deleted: m.activity_media_deleted,
+	media_downloads_fix: m.activity_media_downloads_fix,
+	media_downloads_prune: m.activity_media_downloads_prune,
+	media_download_cleanup: m.activity_media_download_cleanup,
 	backup_verified: m.activity_backup_verified,
 	created: m.activity_directory_created,
 };
@@ -79,6 +82,8 @@ const actionIcons: Record<string, typeof Play> = {
 	config_updated: Settings,
 	uploaded: Upload,
 	media_deleted: Trash2,
+	media_downloads_prune: Trash2,
+	media_download_cleanup: Trash2,
 	backup_verified: CheckCircle,
 	created: FolderPlus,
 };

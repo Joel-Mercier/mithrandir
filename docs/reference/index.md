@@ -30,6 +30,7 @@ Mithrandir is invoked as `mithrandir <command> [options]`.
 | [`stop`](./stop) | Stop a running app |
 | [`restart`](./restart) | Restart a running app |
 | [`update`](./update) | Update container images |
+| [`media`](./media) | Check download settings and clean up unused downloads |
 
 ### Backup & Restore
 
