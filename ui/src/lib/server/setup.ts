@@ -67,6 +67,7 @@ import {
 } from "@mithrandir/cli/lib/swap";
 import { hasSystemd, installSystemdUnits } from "@mithrandir/cli/lib/systemd";
 import {
+	allowTailscaleTraffic,
 	enableUfw,
 	installUfw,
 	installUfwDocker,
@@ -1180,6 +1181,11 @@ export const setupFirewall = createServerFn({ method: "POST" })
 			.map((name) => APP_REGISTRY.find((a) => a.name === name))
 			.filter((a): a is AppDefinition => a !== undefined);
 		await syncAllAppPorts(apps);
+
+		// Keep the tailnet reachable when Tailscale is set up
+		if (envConfig.ENABLE_TAILSCALE === "true") {
+			await allowTailscaleTraffic();
+		}
 
 		// Save to .env
 		envConfig.ENABLE_FIREWALL = "true";

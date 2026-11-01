@@ -164,6 +164,14 @@ export interface EnvConfig {
   ENABLE_HTTPS?: string;
   ENABLE_FIREWALL?: string;
   ENABLE_SSO?: string;
+  ENABLE_TAILSCALE?: string;
+  TAILSCALE_HOSTNAME?: string;
+  /** "auto" (detected LAN subnet), "none", or comma-separated CIDRs */
+  TAILSCALE_ADVERTISE_ROUTES?: string;
+  TAILSCALE_EXIT_NODE?: string;
+  TAILSCALE_SSH?: string;
+  /** Optional auth key for unattended login (read-only, never written by the CLI) */
+  TAILSCALE_AUTH_KEY?: string;
   ACME_EMAIL?: string;
   QBITTORRENT_USE_VPN?: string;
   VPN_SERVICE_PROVIDER?: string;

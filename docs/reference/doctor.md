@@ -12,7 +12,7 @@ mithrandir doctor
 
 Runs a comprehensive set of diagnostic checks grouped by category:
 
-- **System** — `.env` file exists, Docker installed and running, swap configured
+- **System** — `.env` file exists, Docker installed and running, swap configured, firewall rules, and Tailscale (when enabled): installed, `tailscaled` running, connected to the tailnet, subnet routes / exit node awaiting approval, device key expiring within 14 days
 - **Apps** — containers running, config directories exist, required secrets present
 - **Backup** — backup directory exists, systemd service and timer installed, rclone configured and remote reachable
 

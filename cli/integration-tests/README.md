@@ -25,6 +25,7 @@ LC_ALL=C.UTF-8 lscpu | grep Virtualization
 | `diagnostics` | version, config, health, doctor, capacity, status | +6G |
 | `update` | `mithrandir update prowlarr --yes` + backup verification | +8G |
 | `firewall` | `mithrandir install firewall` (UFW + ufw-docker), per-app rule sync | +6G |
+| `tailscale` | `mithrandir install tailscale` (apt install, tailscaled, IP forwarding), idempotency, doctor disconnected state. Login uses a bogus auth key | +4G |
 
 ## Running Tests
 
@@ -57,7 +58,7 @@ integration-test:
   strategy:
     fail-fast: false
     matrix:
-      test: [getting-started, docker-install, app-lifecycle, backup-restore, diagnostics, update, firewall]
+      test: [getting-started, docker-install, app-lifecycle, backup-restore, diagnostics, update, firewall, tailscale]
   steps:
     - uses: actions/checkout@v5
     - name: Enable KVM

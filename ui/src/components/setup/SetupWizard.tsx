@@ -17,6 +17,7 @@ import { HttpsStep } from "./steps/HttpsStep";
 import { InstallStep } from "./steps/InstallStep";
 import { SecretsStep } from "./steps/SecretsStep";
 import { SummaryStep } from "./steps/SummaryStep";
+import { TailscaleStep } from "./steps/TailscaleStep";
 import { WelcomeStep } from "./steps/WelcomeStep";
 
 // ─── Types ────────────────────────────────────────────────────────
@@ -65,6 +66,10 @@ export interface SetupState {
 	acmeEmail: string;
 	autoSetupCredentials: { username: string; password: string };
 	autoSetupResults: AppSetupResult[];
+	tailscaleEnabled: boolean;
+	tailscaleConnected: boolean;
+	tailscaleDnsName: string;
+	tailscalePending: boolean;
 	firewallEnabled: boolean;
 	backupHour: number;
 	serviceUrls: ServiceUrl[];
@@ -80,6 +85,7 @@ const STEPS: StepDefinition[] = [
 	{ label: m.installStep_stepTitle(), description: m.installStep_stepDesc() },
 	{ label: m.httpsStep_stepTitle(), description: m.httpsStep_stepDesc() },
 	{ label: m.autoSetup_stepTitle(), description: m.autoSetup_stepDesc() },
+	{ label: m.tailscaleStep_stepTitle(), description: m.tailscaleStep_stepDesc() },
 	{ label: m.firewallBackup_stepTitle(), description: m.firewallBackup_stepDesc() },
 	{ label: m.summary_stepTitle(), description: m.summary_stepDesc() },
 ];
@@ -102,6 +108,10 @@ function createInitialState(): SetupState {
 		acmeEmail: "",
 		autoSetupCredentials: { username: "", password: "" },
 		autoSetupResults: [],
+		tailscaleEnabled: false,
+		tailscaleConnected: false,
+		tailscaleDnsName: "",
+		tailscalePending: false,
 		firewallEnabled: false,
 		backupHour: 2,
 		serviceUrls: [],
@@ -229,14 +239,24 @@ export function SetupWizard() {
 				);
 			case 8:
 				return (
-					<FirewallBackupStep
+					<TailscaleStep
 						state={state}
 						updateState={updateState}
 						onComplete={() => completeStep(8)}
+						onSkip={() => skipStep(8)}
 						onBack={() => goToStep(7)}
 					/>
 				);
 			case 9:
+				return (
+					<FirewallBackupStep
+						state={state}
+						updateState={updateState}
+						onComplete={() => completeStep(9)}
+						onBack={() => goToStep(8)}
+					/>
+				);
+			case 10:
 				return <SummaryStep state={state} />;
 			default:
 				return null;
@@ -266,7 +286,7 @@ export function SetupWizard() {
 						{stepContent}
 					</div>
 
-					{state.currentStep < 9 && (
+					{state.currentStep < STEPS.length && (
 						<div className="mt-8 border-t border-border/50 pt-4">
 							<Button
 								variant="ghost"

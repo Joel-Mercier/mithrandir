@@ -11,6 +11,7 @@ function guideSidebar(prefix = ""): DefaultTheme.SidebarItem[] {
         { text: prefix ? "Sauvegarde & Restauration" : "Backup & Restore", link: `${prefix}/guide/backup` },
         { text: prefix ? "Configuration HTTPS" : "HTTPS Setup", link: `${prefix}/guide/https` },
         { text: prefix ? "Pare-feu" : "Firewall", link: `${prefix}/guide/firewall` },
+        { text: prefix ? "Accès à distance" : "Remote Access", link: `${prefix}/guide/remote-access` },
         { text: prefix ? "Planification de capacité" : "Capacity Planning", link: `${prefix}/guide/capacity` },
         { text: prefix ? "Tableau de bord web" : "Web Dashboard", link: `${prefix}/guide/web-dashboard` },
         { text: prefix ? "Développement local" : "Local Development", link: `${prefix}/guide/development` },

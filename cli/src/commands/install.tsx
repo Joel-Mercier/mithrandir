@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Box, render, Text, useApp } from "ink";
 import Spinner from "ink-spinner";
-import { StatusMessage, TextInput, PasswordInput } from "@inkjs/ui";
+import { StatusMessage, TextInput, PasswordInput, ConfirmInput } from "@inkjs/ui";
 import type { SecretDefinition, EnvConfig } from "@/types.js";
 import { existsSync } from "fs";
 import { getApp, getAppNames, getComposePath, getCompanionApps, getStack, getStackNames, APP_REGISTRY } from "@/lib/apps.js";
@@ -41,7 +41,9 @@ import {
   enableUfw,
   allowAppPorts,
   syncAllAppPorts,
+  allowTailscaleTraffic,
 } from "@/lib/ufw.js";
+import { TailscaleSetup, TailscaleNotes, TAILSCALE_EXPLAINER, type TailscaleSetupResult } from "@/components/TailscaleSetup.js";
 import { Header } from "@/components/Header.js";
 import { AppStatus } from "@/components/AppStatus.js";
 
@@ -672,6 +674,17 @@ function InstallFirewall() {
       }
     } catch {
       addStep({ name: "Firewall rules", status: "skipped", message: "Failed to sync rules (non-fatal)" });
+    }
+
+    // Keep the tailnet reachable when Tailscale is set up
+    try {
+      const env = await loadEnvConfig();
+      if (env.ENABLE_TAILSCALE === "true") {
+        await allowTailscaleTraffic();
+        addStep({ name: "Tailscale", status: "done", message: "Allowed tailscale0 and UDP 41641" });
+      }
+    } catch {
+      // Non-fatal
     }
 
     // Save ENABLE_FIREWALL to .env
@@ -1318,17 +1331,69 @@ function InstallStack({ stackName }: { stackName: string }) {
   );
 }
 
+// ─── Install Tailscale ───────────────────────────────────────────────────────
+
+function InstallTailscale({ autoYes, authKey }: { autoYes: boolean; authKey?: string }) {
+  const { exit } = useApp();
+  const [phase, setPhase] = useState<"intro" | "setup" | "done">(autoYes ? "setup" : "intro");
+  const [result, setResult] = useState<TailscaleSetupResult | null>(null);
+
+  function handleComplete(r: TailscaleSetupResult) {
+    setResult(r);
+    setPhase("done");
+    if (r.error) process.exitCode = 1;
+    setTimeout(() => exit(), 500);
+  }
+
+  return (
+    <Box flexDirection="column">
+      <Header title="Install: tailscale" />
+
+      <Box marginBottom={1} flexDirection="column">
+        {TAILSCALE_EXPLAINER.map((line, i) => (
+          <Text key={i} dimColor>  {line}</Text>
+        ))}
+      </Box>
+
+      {phase === "intro" && (
+        <Box>
+          <Text>Continue? </Text>
+          <ConfirmInput
+            defaultChoice="confirm"
+            onConfirm={() => setPhase("setup")}
+            onCancel={() => exit()}
+          />
+        </Box>
+      )}
+
+      {phase !== "intro" && (
+        <TailscaleSetup autoYes={autoYes} authKey={authKey} onComplete={handleComplete} />
+      )}
+
+      {phase === "done" && result && !result.error && result.status && (
+        <Box flexDirection="column" marginTop={1}>
+          <StatusMessage variant="success">Tailscale is connected — your homelab is reachable from your tailnet.</StatusMessage>
+          <TailscaleNotes status={result.status} pendingRoutes={result.pendingRoutes} />
+        </Box>
+      )}
+    </Box>
+  );
+}
+
 // ─── Entry point ─────────────────────────────────────────────────────────────
 
-const SPECIAL_TARGETS = ["docker", "backup", "https", "firewall"];
+const SPECIAL_TARGETS = ["docker", "backup", "https", "firewall", "tailscale"];
 
-export async function runInstall(args: string[]): Promise<void> {
+export async function runInstall(
+  args: string[],
+  flags: { yes?: boolean; authKey?: string } = {},
+): Promise<void> {
   const target = args[0];
   const stackNames = getStackNames();
 
   if (!target) {
     console.error(
-      `Usage: mithrandir install <target>\n\nTargets:\n  docker                Install Docker engine\n  backup                Install rclone and backup systemd timer\n  https                 Install Caddy HTTPS reverse proxy\n  firewall              Install UFW firewall with ufw-docker\n  <stack>               Install a predefined app stack\n  <app>                 Install a single app\n\nStacks: ${stackNames.join(", ")}\n\nAvailable apps: ${getAppNames().join(", ")}`,
+      `Usage: mithrandir install <target>\n\nTargets:\n  docker                Install Docker engine\n  backup                Install rclone and backup systemd timer\n  https                 Install Caddy HTTPS reverse proxy\n  firewall              Install UFW firewall with ufw-docker\n  tailscale             Install Tailscale for secure remote access\n  <stack>               Install a predefined app stack\n  <app>                 Install a single app\n\nStacks: ${stackNames.join(", ")}\n\nAvailable apps: ${getAppNames().join(", ")}`,
     );
     process.exit(1);
   }
@@ -1344,6 +1409,12 @@ export async function runInstall(args: string[]): Promise<void> {
     await waitUntilExit();
   } else if (target === "firewall") {
     const { waitUntilExit } = render(<InstallFirewall />);
+    await waitUntilExit();
+  } else if (target === "tailscale") {
+    const env = await loadEnvConfig();
+    const authKey = flags.authKey || env.TAILSCALE_AUTH_KEY || undefined;
+    const autoYes = Boolean(flags.yes) || !process.stdin.isTTY;
+    const { waitUntilExit } = render(<InstallTailscale autoYes={autoYes} authKey={authKey} />);
     await waitUntilExit();
   } else if (target === "caddy") {
     console.error("Caddy is installed via: mithrandir install https");

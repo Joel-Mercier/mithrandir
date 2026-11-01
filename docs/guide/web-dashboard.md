@@ -66,7 +66,7 @@ Manage backups without touching the terminal:
 
 ### Setup Wizard
 
-Step-by-step guided setup with the same workflow as the CLI wizard, presented as a visual stepper form.
+Step-by-step guided setup with the same workflow as the CLI wizard, presented as a visual stepper form. It includes an optional **Remote Access** step that connects the server to [Tailscale](./remote-access) and shows the sign-in link as a QR code you can scan with your phone.
 
 ### Media Library
 
@@ -82,7 +82,7 @@ Configure your homelab from tabbed settings panels:
 
 - **General** — Base directory, timezone, user/group IDs
 - **Backup** — Backup directory, retention, rclone remotes, encryption, schedule
-- **Network** — HTTPS, DuckDNS, firewall settings
+- **Network** — HTTPS, DuckDNS, firewall, and [Tailscale remote access](./remote-access) (connection status, sign-in, routes awaiting approval, settings, disconnect)
 - **About** — System information and version details
 
 ### User Profile

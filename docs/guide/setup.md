@@ -20,8 +20,9 @@ The wizard runs through these steps in order:
 8. **Install apps** — Pulls Docker images and starts all selected containers
 9. **HTTPS** — Offers to enable HTTPS via Caddy reverse proxy (requires DuckDNS). In `--yes` mode, auto-enables if `ACME_EMAIL` is already configured in `.env`
 10. **Firewall** — Offers to enable UFW firewall with ufw-docker to control access to container ports. SSH is always allowed. In `--yes` mode, the firewall is installed automatically
-11. **Backup service** — Sets up the systemd timer for daily automatic backups at 2:00 AM
-12. **Summary** — Shows all running services with their URLs
+11. **Remote access (Tailscale)** — *Optional, off by default.* Explains what Tailscale is and offers to connect the server to your tailnet so you can reach your apps from anywhere. See [Remote Access](./remote-access)
+12. **Backup service** — Sets up the systemd timer for daily automatic backups at 2:00 AM
+13. **Summary** — Shows all running services with their URLs, plus their tailnet URLs when Tailscale is connected
 
 ## App Selection
 
@@ -85,6 +86,7 @@ Key settings include:
 | `BACKUP_HOUR` | `2` | Hour (0-23) when the daily backup runs |
 | `ENABLE_HTTPS` | `false` | Enable Caddy HTTPS reverse proxy |
 | `ENABLE_FIREWALL` | *(not set)* | Enable UFW firewall with automatic rule management |
+| `ENABLE_TAILSCALE` | `false` | Tailscale remote access (see [Remote Access](./remote-access) for all `TAILSCALE_*` settings) |
 
 ## Non-Interactive Mode
 
@@ -104,6 +106,7 @@ In `--yes` mode, the wizard runs unattended with these defaults:
 | **Auto-configuration** | Proceeds automatically. Default credentials are `admin` / `admin` for services like qBittorrent, Prowlarr, Radarr, Sonarr, Lidarr, Jellyfin, and Seerr |
 | **HTTPS** | Enabled only if `DUCKDNS_TOKEN`, `DUCKDNS_SUBDOMAINS`, and `ACME_EMAIL` are all already set in `.env`. Otherwise skipped silently |
 | **Firewall** | Installed and enabled automatically |
+| **Tailscale** | Runs only if an auth key is provided (`--auth-key` or `TAILSCALE_AUTH_KEY`). Otherwise skipped, because browser sign-in needs you. Already-connected servers are left as-is |
 
 ::: tip
 For a fully unattended setup, pre-populate your `.env` file with all required secrets before running `--yes`. See `.env.example` for the full list of available variables.

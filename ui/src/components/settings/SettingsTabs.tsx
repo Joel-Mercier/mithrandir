@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Row } from "#/components/Row";
 import { PathInput } from "#/components/settings/PathInput";
+import { TailscalePanel } from "#/components/tailscale/TailscalePanel";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -440,6 +441,7 @@ export function NetworkTab() {
 			</Card>
 
 			<FirewallCard config={config} />
+			<TailscaleCard />
 			<SsoCard config={config} />
 		</div>
 	);
@@ -536,6 +538,22 @@ function SsoCard({ config }: { config: SystemConfig }) {
 						get started.
 					</p>
 				)}
+			</CardContent>
+		</Card>
+	);
+}
+
+function TailscaleCard() {
+	return (
+		<Card>
+			<CardHeader>
+				<CardTitle className="text-sm font-medium">
+					{m.settings_tailscale()}
+				</CardTitle>
+				<CardDescription>{m.settings_tailscaleDesc()}</CardDescription>
+			</CardHeader>
+			<CardContent>
+				<TailscalePanel route="/settings" allowDisconnect />
 			</CardContent>
 		</Card>
 	);

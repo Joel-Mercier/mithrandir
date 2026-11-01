@@ -29,7 +29,20 @@ Affiche une vue formatée de tous les paramètres du fichier `.env`, regroupés 
 | `APPS` | `auto` | Liste d'applications séparées par des virgules, ou `auto` pour toutes les applications installées |
 | `BACKUP_PASSWORD` | *(aucun)* | Mot de passe de chiffrement optionnel — chiffre les sauvegardes avec AES-256-CBC |
 
+### Accès à distance (Tailscale)
+
+| Variable | Défaut | Description |
+| --- | --- | --- |
+| `ENABLE_TAILSCALE` | `false` | Passé à `true` par `mithrandir install tailscale` |
+| `TAILSCALE_HOSTNAME` | `mithrandir` | Nom de l'appareil dans votre tailnet |
+| `TAILSCALE_ADVERTISE_ROUTES` | `auto` | Sous-réseaux partagés avec le tailnet : `auto` (réseau local détecté), `none`, ou CIDR séparés par des virgules |
+| `TAILSCALE_EXIT_NODE` | `false` | Proposer ce serveur comme nœud de sortie |
+| `TAILSCALE_SSH` | `false` | Activer Tailscale SSH |
+| `TAILSCALE_AUTH_KEY` | *(aucun)* | Clé d'authentification optionnelle pour une connexion sans intervention |
+
+Voir [Accès à distance](/fr/guide/remote-access) pour plus de détails.
+
 ## Remarques
 
 - Ne nécessite pas les privilèges root
-- Les valeurs secrètes (jetons, mots de passe) sont masquées dans la sortie
+- Les valeurs secrètes (jetons, mots de passe, secrets et variables `*_KEY`) sont masquées dans la sortie

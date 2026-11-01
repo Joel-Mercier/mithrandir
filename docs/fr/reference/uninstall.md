@@ -20,17 +20,18 @@ Lorsqu'elle est appelée avec un nom d'application, arrête et supprime le conte
 
 ## Suppression complète du système
 
-Lorsqu'elle est appelée sans argument, lance un processus de suppression guidé en 9 étapes avec des invites à chaque étape. Chaque étape destructive peut être individuellement acceptée ou ignorée, vous permettant de conserver Docker et vos applications fonctionnant indépendamment :
+Lorsqu'elle est appelée sans argument, lance un processus de suppression guidé en 10 étapes avec des invites à chaque étape. Chaque étape destructive peut être individuellement acceptée ou ignorée, vous permettant de conserver Docker et vos applications fonctionnant indépendamment :
 
 1. **Arrêter toutes les applications** — Arrête tous les conteneurs Docker gérés par Mithrandir
 2. **Supprimer les services systemd** — Désactive et supprime le timer/service `homelab-backup`, le service `mithrandir-ui` et le service `mithrandir-tusd`
 3. **Supprimer les sauvegardes locales** — Supprime le répertoire de sauvegarde (optionnel)
 4. **Désinstaller rclone** — Supprime le binaire rclone et sa configuration (optionnel)
-5. **Supprimer les données des applications** — Supprime les répertoires de données/configuration du répertoire de base (optionnel)
-6. **Supprimer Docker** — Purge Docker Engine, les conteneurs, images et volumes (optionnel — choisir « non » conserve Docker et les applications fonctionnant indépendamment)
-7. **Supprimer les fichiers journaux** — Nettoie `/var/log/homelab-backup.log`, le journal de restauration et le journal de mise à jour UI
-8. **Supprimer le CLI** — Supprime le lien symbolique `/usr/local/bin/mithrandir` et le cache de vérification des mises à jour
-9. **Supprimer la configuration** — Supprime le fichier `.env` (optionnel)
+5. **Supprimer Tailscale** — Déconnecte le serveur de votre tailnet, supprime les règles de pare-feu Tailscale et désinstalle le paquet (optionnel, affiché uniquement si Tailscale est installé). Si vous êtes connecté via Tailscale, votre session sera interrompue
+6. **Supprimer les données des applications** — Supprime les répertoires de données/configuration du répertoire de base (optionnel)
+7. **Supprimer Docker** — Purge Docker Engine, les conteneurs, images et volumes (optionnel — choisir « non » conserve Docker et les applications fonctionnant indépendamment)
+8. **Supprimer les fichiers journaux** — Nettoie `/var/log/homelab-backup.log`, le journal de restauration et le journal de mise à jour UI
+9. **Supprimer le CLI** — Supprime le lien symbolique `/usr/local/bin/mithrandir` et le cache de vérification des mises à jour
+10. **Supprimer la configuration** — Supprime le fichier `.env` (optionnel)
 
 ## Options
 

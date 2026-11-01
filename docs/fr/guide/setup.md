@@ -20,8 +20,9 @@ L'assistant exécute les étapes suivantes dans l'ordre :
 8. **Installation des applications** — Télécharge les images Docker et démarre tous les conteneurs sélectionnés
 9. **HTTPS** — Propose d'activer le HTTPS via le reverse proxy Caddy (nécessite DuckDNS). En mode `--yes`, s'active automatiquement si `ACME_EMAIL` est déjà configuré dans `.env`
 10. **Pare-feu** — Propose d'activer le pare-feu UFW avec ufw-docker pour contrôler l'accès aux ports des conteneurs. SSH est toujours autorisé. En mode `--yes`, le pare-feu est installé automatiquement
-11. **Service de sauvegarde** — Configure le timer systemd pour les sauvegardes automatiques quotidiennes à 2h00 du matin
-12. **Résumé** — Affiche tous les services en cours d'exécution avec leurs URLs
+11. **Accès à distance (Tailscale)** — *Optionnel, désactivé par défaut.* Explique ce qu'est Tailscale et propose de connecter le serveur à votre tailnet pour accéder à vos applications depuis n'importe où. Voir [Accès à distance](./remote-access)
+12. **Service de sauvegarde** — Configure le timer systemd pour les sauvegardes automatiques quotidiennes à 2h00 du matin
+13. **Résumé** — Affiche tous les services en cours d'exécution avec leurs URLs, ainsi que leurs URLs tailnet si Tailscale est connecté
 
 ## Sélection des applications
 
@@ -85,6 +86,7 @@ Les paramètres principaux incluent :
 | `BACKUP_HOUR` | `2` | Heure (0-23) d'exécution de la sauvegarde quotidienne |
 | `ENABLE_HTTPS` | `false` | Activer le reverse proxy HTTPS Caddy |
 | `ENABLE_FIREWALL` | *(non défini)* | Activer le pare-feu UFW avec gestion automatique des règles |
+| `ENABLE_TAILSCALE` | `false` | Accès à distance Tailscale (voir [Accès à distance](./remote-access) pour tous les paramètres `TAILSCALE_*`) |
 
 ## Mode non interactif
 
@@ -104,6 +106,7 @@ En mode `--yes`, l'assistant s'exécute sans intervention avec ces valeurs par d
 | **Configuration automatique** | S'exécute automatiquement. Les identifiants par défaut sont `admin` / `admin` pour des services comme qBittorrent, Prowlarr, Radarr, Sonarr, Lidarr, Jellyfin et Seerr |
 | **HTTPS** | Activé uniquement si `DUCKDNS_TOKEN`, `DUCKDNS_SUBDOMAINS` et `ACME_EMAIL` sont tous déjà définis dans `.env`. Sinon ignoré silencieusement |
 | **Pare-feu** | Installé et activé automatiquement |
+| **Tailscale** | Exécuté uniquement si une clé d'authentification est fournie (`--auth-key` ou `TAILSCALE_AUTH_KEY`). Sinon ignoré, car la connexion par navigateur nécessite votre intervention. Un serveur déjà connecté est laissé tel quel |
 
 ::: tip
 Pour une configuration entièrement automatisée, pré-remplissez votre fichier `.env` avec tous les secrets nécessaires avant de lancer `--yes`. Consultez `.env.example` pour la liste complète des variables disponibles.

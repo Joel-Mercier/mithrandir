@@ -6,6 +6,7 @@ import {
 	Info,
 	Loader2,
 	Shield,
+	Waypoints,
 } from "lucide-react";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
@@ -123,6 +124,12 @@ export function SummaryStep({ state }: SummaryStepProps) {
 							{m.summary_firewallEnabled()}
 						</Badge>
 					)}
+					{state.tailscaleConnected && (
+						<Badge variant="outline" className="gap-1">
+							<Waypoints className="h-3 w-3" />
+							{m.summary_tailscaleEnabled()}
+						</Badge>
+					)}
 					<Badge variant="outline">
 						{m.summary_backupAt({ hour: String(state.backupHour) })}
 					</Badge>
@@ -146,6 +153,14 @@ export function SummaryStep({ state }: SummaryStepProps) {
 						)}
 						{state.selectedApps.includes("jellyfin") && (
 							<li>{m.summary_jellyfinTip()}</li>
+						)}
+						{state.tailscaleConnected && state.tailscaleDnsName && (
+							<li>
+								{m.summary_tailscaleTip({ host: state.tailscaleDnsName })}
+							</li>
+						)}
+						{state.tailscaleConnected && state.tailscalePending && (
+							<li>{m.summary_tailscalePendingTip()}</li>
 						)}
 						<li>{m.summary_statusTip()}</li>
 						<li>{m.summary_backupTip()}</li>

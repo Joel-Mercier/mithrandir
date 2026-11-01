@@ -50,8 +50,11 @@ import {
   installUfwDocker,
   enableUfw,
   syncAllAppPorts,
+  allowTailscaleTraffic,
 } from "@/lib/ufw.js";
 import { loadEnvConfig, saveEnvConfig } from "@/lib/config.js";
+import { getTailnetAppUrl, getTailscaleStatus, type TailscaleStatus } from "@/lib/tailscale.js";
+import { TailscaleSetup, TailscaleNotes, TAILSCALE_EXPLAINER, type TailscaleSetupResult } from "@/components/TailscaleSetup.js";
 import { shell } from "@/lib/shell.js";
 import { getSwapInfo, ensureSwap, formatSwapSize } from "@/lib/swap.js";
 import { Header } from "@/components/Header.js";
@@ -72,7 +75,7 @@ import { createJellyfinClient, getJellyfinApiKey } from "@/lib/jellyfin.js";
 import { createSeerrClient, getSeerrApiKey } from "@/lib/seerr.js";
 
 interface SetupCommandProps {
-  flags: { yes?: boolean };
+  flags: { yes?: boolean; authKey?: string };
 }
 
 
@@ -94,6 +97,7 @@ type SetupStep =
   | "confirm-autosetup"
   | "autosetup-apps"
   | "setup-firewall"
+  | "setup-tailscale"
   | "backup-service"
   | "summary";
 
@@ -109,6 +113,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
     TZ: "Etc/UTC",
   });
   const [selectedApps, setSelectedApps] = useState<AppDefinition[]>([]);
+  const [tailscaleResult, setTailscaleResult] = useState<TailscaleSetupResult | null>(null);
   const [localIp, setLocalIp] = useState("localhost");
   const [error, setError] = useState<string | null>(null);
   const [completedSteps, setCompletedSteps] = useState<
@@ -190,7 +195,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
 
     return (
       <Box flexDirection="column">
-        <StepIndicator current={1} total={10} label="Docker" />
+        <StepIndicator current={1} total={13} label="Docker" />
         {status === "checking" && (
           <Text>
             <Text color="green"><Spinner type="dots" /></Text>
@@ -269,7 +274,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
 
     return (
       <Box flexDirection="column">
-        <StepIndicator current={2} total={10} label="Swap" />
+        <StepIndicator current={2} total={13} label="Swap" />
         {status === "checking" && (
           <Text>
             <Text color="green"><Spinner type="dots" /></Text>
@@ -361,7 +366,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
 
     return (
       <Box flexDirection="column">
-        <StepIndicator current={3} total={10} label="rclone" />
+        <StepIndicator current={3} total={13} label="rclone" />
         {status === "checking" && (
           <Text>
             <Text color="green"><Spinner type="dots" /></Text>
@@ -442,7 +447,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
 
     return (
       <Box flexDirection="column">
-        <StepIndicator current={4} total={10} label="Base Directory" />
+        <StepIndicator current={4} total={13} label="Base Directory" />
         <Text>Enter the base directory where all Docker app folders should be created:</Text>
         <Box>
           <Text color="blue">{">"} </Text>
@@ -549,7 +554,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
 
       return (
         <Box flexDirection="column">
-          <StepIndicator current={5} total={10} label="Select Apps" />
+          <StepIndicator current={5} total={13} label="Select Apps" />
           <Text>Choose app categories to install (space to toggle, enter to confirm):</Text>
           <MultiSelect options={options} onSubmit={handleCategorySubmit} />
         </Box>
@@ -574,7 +579,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
 
       return (
         <Box flexDirection="column">
-          <StepIndicator current={5} total={10} label="Select Apps" />
+          <StepIndicator current={5} total={13} label="Select Apps" />
           {categoryAppNames.size > 0 && (
             <Text dimColor>Apps from selected categories are pre-checked.</Text>
           )}
@@ -592,7 +597,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
 
       return (
         <Box flexDirection="column">
-          <StepIndicator current={5} total={10} label="Select Apps" />
+          <StepIndicator current={5} total={13} label="Select Apps" />
           <Text color="yellow">
             Auto-included dependencies:
           </Text>
@@ -683,7 +688,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
 
     return (
       <Box flexDirection="column">
-        <StepIndicator current={6} total={10} label="Required Secrets" />
+        <StepIndicator current={6} total={13} label="Required Secrets" />
         <Text>
           <Text bold>{current.app.displayName}</Text> requires{" "}
           <Text bold>{current.secret.envVar}</Text>
@@ -747,6 +752,11 @@ export function SetupCommand({ flags }: SetupCommandProps) {
         // Add rules for all selected apps
         await syncAllAppPorts(selectedApps);
 
+        // Keep the tailnet reachable if Tailscale was set up before
+        if (envConfig.ENABLE_TAILSCALE === "true") {
+          await allowTailscaleTraffic();
+        }
+
         // Save to .env
         envConfig.ENABLE_FIREWALL = "true";
         await saveEnvConfig(envConfig);
@@ -757,7 +767,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
         setStatus("done");
         addCompletedStep({ name: "Firewall", status: "skipped", message: `Failed: ${err.message}` });
       }
-      setStep("backup-service");
+      setStep("setup-tailscale");
     }
 
     function handleConfirm() {
@@ -767,12 +777,12 @@ export function SetupCommand({ flags }: SetupCommandProps) {
     function handleCancel() {
       setStatus("skipped");
       addCompletedStep({ name: "Firewall", status: "skipped", message: "Skipped" });
-      setStep("backup-service");
+      setStep("setup-tailscale");
     }
 
     return (
       <Box flexDirection="column">
-        <StepIndicator current={9} total={11} label="Firewall" />
+        <StepIndicator current={10} total={13} label="Firewall" />
         {status === "confirm" && (
           <Box flexDirection="column">
             <Text bold>Enable UFW firewall?</Text>
@@ -843,7 +853,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
 
     return (
       <Box flexDirection="column">
-        <StepIndicator current={10} total={11} label="Backup Service" />
+        <StepIndicator current={12} total={13} label="Backup Service" />
         {status === "checking" && (
           <Text>
             <Text color="green"><Spinner type="dots" /></Text>
@@ -882,7 +892,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
 
     return (
       <Box flexDirection="column">
-        <StepIndicator current={11} total={11} label="Setup Complete" />
+        <StepIndicator current={13} total={13} label="Setup Complete" />
         <Box marginBottom={1}>
           <Text bold color="green">All services are running!</Text>
         </Box>
@@ -954,6 +964,27 @@ export function SetupCommand({ flags }: SetupCommandProps) {
                 <Text>    *.{getDuckDnsDomain(envConfig)} → {localIp}</Text>
               </>
             )}
+          </Box>
+        )}
+        {tailscaleResult?.status && (
+          <Box flexDirection="column" marginBottom={1}>
+            <Text bold>Remote access (Tailscale):</Text>
+            {selectedApps
+              .filter((app) => app.port)
+              .slice(0, 5)
+              .map((app) => {
+                const url = getTailnetAppUrl(tailscaleResult.status as TailscaleStatus, app.port as number);
+                return url ? (
+                  <Text key={app.name}>
+                    {"  "}{app.displayName.padEnd(20)}
+                    <Link url={url}><Text color="cyan">{url}</Text></Link>
+                  </Text>
+                ) : null;
+              })}
+            {selectedApps.filter((app) => app.port).length > 5 && (
+              <Text dimColor>  …and every other app on the same host name and its usual port.</Text>
+            )}
+            <TailscaleNotes status={tailscaleResult.status} pendingRoutes={tailscaleResult.pendingRoutes} />
           </Box>
         )}
         <Box flexDirection="column" marginBottom={1}>
@@ -1065,6 +1096,20 @@ export function SetupCommand({ flags }: SetupCommandProps) {
         />
       )}
       {step === "setup-firewall" && <FirewallSetupStep />}
+      {step === "setup-tailscale" && (
+        <TailscaleSetupStep
+          autoYes={autoYes}
+          authKey={flags.authKey || envConfig.TAILSCALE_AUTH_KEY || undefined}
+          onComplete={(entry, result) => {
+            if (result) {
+              Object.assign(envConfig, result.envUpdates);
+              setTailscaleResult(result);
+            }
+            addCompletedStep(entry);
+            setStep("backup-service");
+          }}
+        />
+      )}
       {step === "backup-service" && <BackupServiceStep />}
       {step === "summary" && <SummaryStep />}
     </Box>
@@ -1072,6 +1117,108 @@ export function SetupCommand({ flags }: SetupCommandProps) {
 }
 
 // ─── Module-level components ─────────────────────────────────────────────────
+
+// ─── Step: Tailscale (remote access) ─────────────────────────────────────────
+
+type CompletedEntry = { name: string; status: "done" | "skipped"; message: string; notes?: string[] };
+
+interface TailscaleSetupStepProps {
+  autoYes: boolean;
+  authKey?: string;
+  onComplete: (entry: CompletedEntry, result: TailscaleSetupResult | null) => void;
+}
+
+function TailscaleSetupStep({ autoYes, authKey, onComplete }: TailscaleSetupStepProps) {
+  const [phase, setPhase] = useState<"checking" | "confirm" | "setup">("checking");
+  const [existing, setExisting] = useState<TailscaleStatus | null>(null);
+  const done = useRef(false);
+
+  function complete(entry: CompletedEntry, result: TailscaleSetupResult | null) {
+    if (done.current) return;
+    done.current = true;
+    onComplete(entry, result);
+  }
+
+  useEffect(() => {
+    (async () => {
+      const status = await getTailscaleStatus();
+      if (status.connected) setExisting(status);
+      if (autoYes) {
+        if (status.connected) {
+          complete({ name: "Remote Access", status: "done", message: `Tailscale already connected (${status.dnsName ?? status.ipv4})` }, null);
+        } else if (authKey) {
+          setPhase("setup");
+        } else {
+          complete({
+            name: "Remote Access",
+            status: "skipped",
+            message: "Skipped — run `mithrandir install tailscale` (or pass --auth-key) to enable",
+          }, null);
+        }
+        return;
+      }
+      setPhase("confirm");
+    })().catch(() => setPhase("confirm"));
+  }, []);
+
+  function handleResult(result: TailscaleSetupResult) {
+    if (result.error) {
+      complete({ name: "Remote Access", status: "skipped", message: `Tailscale failed: ${result.error}` }, null);
+      return;
+    }
+    const where = result.status?.dnsName ?? result.status?.ipv4 ?? "tailnet";
+    complete({
+      name: "Remote Access",
+      status: "done",
+      message: `Tailscale connected (${where})`,
+      notes: result.pendingRoutes.length > 0
+        ? [`  ⚠ Approve ${result.pendingRoutes.join(", ")} in the Tailscale admin console`]
+        : undefined,
+    }, result);
+  }
+
+  return (
+    <Box flexDirection="column">
+      <StepIndicator current={11} total={13} label="Remote Access (Tailscale)" />
+      {phase === "checking" && (
+        <Text>
+          <Text color="green"><Spinner type="dots" /></Text>
+          {" "}Checking Tailscale...
+        </Text>
+      )}
+      {phase === "confirm" && (
+        <Box flexDirection="column">
+          <Text bold>Set up secure remote access with Tailscale? <Text dimColor>(optional)</Text></Text>
+          {TAILSCALE_EXPLAINER.map((line, i) => (
+            <Text key={i} dimColor>  {line}</Text>
+          ))}
+          {existing && (
+            <Text color="green">  Already connected as {existing.dnsName ?? existing.ipv4} — choose yes to reconfigure.</Text>
+          )}
+          <Box marginTop={1}>
+            <Text>{existing ? "Reconfigure Tailscale? " : "Enable remote access? "}</Text>
+            <ConfirmInput
+              defaultChoice="cancel"
+              onConfirm={() => setPhase("setup")}
+              onCancel={() =>
+                complete(
+                  existing
+                    ? { name: "Remote Access", status: "done", message: `Tailscale already connected (${existing.dnsName ?? existing.ipv4})` }
+                    : { name: "Remote Access", status: "skipped", message: "Skipped — run `mithrandir install tailscale` anytime" },
+                  null,
+                )
+              }
+            />
+          </Box>
+        </Box>
+      )}
+      {phase === "setup" && (
+        <TailscaleSetup autoYes={autoYes} authKey={authKey} onComplete={handleResult} />
+      )}
+    </Box>
+  );
+}
+
 
 interface InstallAppsStepProps {
   selectedApps: AppDefinition[];
@@ -1192,7 +1339,7 @@ function InstallAppsStep({ selectedApps, envConfig, autoYes, onComplete }: Insta
     <Box flexDirection="column">
       <StepIndicator
         current={7}
-        total={10}
+        total={13}
         label={`Installing Apps (${installIdx + 1}/${selectedApps.length})`}
       />
 
@@ -1372,7 +1519,7 @@ function HttpsSetupStep({ selectedApps, envConfig, autoYes, onComplete, onEnvUpd
   if (error) {
     return (
       <Box flexDirection="column">
-        <StepIndicator current={8} total={10} label="HTTPS Setup" />
+        <StepIndicator current={8} total={13} label="HTTPS Setup" />
         <Text color="red">Error: {error}</Text>
       </Box>
     );
@@ -1380,7 +1527,7 @@ function HttpsSetupStep({ selectedApps, envConfig, autoYes, onComplete, onEnvUpd
 
   return (
     <Box flexDirection="column">
-      <StepIndicator current={8} total={10} label="HTTPS Setup" />
+      <StepIndicator current={8} total={13} label="HTTPS Setup" />
 
       {completedSteps.map((step, i) => (
         <AppStatus
@@ -1482,7 +1629,7 @@ function ConfirmAutoSetupStep({ selectedApps, autoYes, onYes, onNo }: ConfirmAut
 
   return (
     <Box flexDirection="column">
-      <StepIndicator current={9} total={10} label="Automatic Setup" />
+      <StepIndicator current={9} total={13} label="Automatic Setup" />
       <Text>Would you like to automatically configure your apps (credentials, download clients, etc.)?</Text>
       <ConfirmInput onConfirm={onYes} onCancel={onNo} />
     </Box>
@@ -2064,7 +2211,7 @@ function AutoSetupAppsStep({ selectedApps, envConfig, localIp, autoYes, onComple
     <Box flexDirection="column">
       <StepIndicator
         current={9}
-        total={10}
+        total={13}
         label={`Auto-Setup (${setupIdx + 1}/${setupableApps.length})`}
       />
 

@@ -14,6 +14,7 @@ Raspberry Pi 5 avec 4 Go de RAM sous Raspberry Pi OS en mode headless. D'autres 
 - **Sauvegardes automatiques** — Sauvegardes quotidiennes planifiées sur le stockage local et le cloud (Google Drive, etc.) via rclone, avec rétention configurable
 - **Reprise après sinistre** — Restaurez l'intégralité de votre homelab sur une nouvelle machine à partir d'une sauvegarde distante avec `mithrandir recover`
 - **HTTPS prêt à l'emploi** — HTTPS wildcard via le reverse proxy Caddy avec des certificats Let's Encrypt automatiques via DuckDNS
+- **Accès à distance** — Configuration optionnelle de [Tailscale](./remote-access) pour accéder à vos applications depuis n'importe où, sans ouvrir de ports sur votre box
 - **Configuration automatique** — Configuration automatique optionnelle des intégrations entre applications (Prowlarr → Sonarr/Radarr, bibliothèques Jellyfin, etc.)
 - **Surveillance de la santé** — Vérifications de santé intégrées pour Docker, l'espace disque, la fraîcheur des sauvegardes et l'état des conteneurs
 - **Mise à jour automatique** — Mettez à jour la CLI et toutes les images de conteneurs avec de simples commandes

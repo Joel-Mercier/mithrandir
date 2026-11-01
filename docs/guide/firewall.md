@@ -39,6 +39,10 @@ Most Docker containers use **bridge networking**, where they communicate through
 - **Bridge-networked apps** (most apps): Rules are managed via `ufw-docker allow <container> <port>`, which works with the `DOCKER-USER` iptables chain.
 - **Host-networked apps** (Home Assistant, DuckDNS): Rules are managed via standard `ufw allow <port>`, since Docker doesn't manage their iptables entries.
 
+### Tailscale
+
+If [Tailscale remote access](./remote-access) is enabled, the firewall also allows traffic arriving on the `tailscale0` interface and UDP port `41641`, which Tailscale uses for direct peer-to-peer connections. These rules are added both when Tailscale is set up on a server that already has the firewall, and when the firewall is installed on a server that already uses Tailscale.
+
 ## Setup Wizard
 
 The setup wizard includes a firewall step after app installation. You can choose to enable or skip it. In `--yes` mode, the firewall is installed automatically.

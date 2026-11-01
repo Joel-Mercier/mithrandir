@@ -2,6 +2,7 @@ import { shell, commandExists } from "@/lib/shell.js";
 import { existsSync } from "fs";
 import type { AppDefinition } from "@/types.js";
 import { getContainerName } from "@/lib/apps.js";
+import { TAILSCALE_INTERFACE, TAILSCALE_UDP_PORT } from "@/lib/tailscale.js";
 
 const UFW_DOCKER_PATH = "/usr/local/bin/ufw-docker";
 const UFW_DOCKER_RAW_URL =
@@ -142,6 +143,22 @@ export async function syncAllAppPorts(apps: AppDefinition[]): Promise<void> {
   for (const app of apps) {
     await allowAppPorts(app);
   }
+}
+
+/**
+ * Allow Tailscale traffic through UFW:
+ * - everything arriving on the tailscale0 interface (tailnet devices are your own, authenticated devices)
+ * - the WireGuard UDP port Tailscale uses for direct peer-to-peer connections
+ */
+export async function allowTailscaleTraffic(): Promise<void> {
+  await shell("ufw", ["allow", "in", "on", TAILSCALE_INTERFACE], { sudo: true, ignoreError: true });
+  await shell("ufw", ["allow", `${TAILSCALE_UDP_PORT}/udp`], { sudo: true, ignoreError: true });
+}
+
+/** Remove the Tailscale UFW rules added by allowTailscaleTraffic() */
+export async function removeTailscaleTraffic(): Promise<void> {
+  await shell("ufw", ["delete", "allow", "in", "on", TAILSCALE_INTERFACE], { sudo: true, ignoreError: true });
+  await shell("ufw", ["delete", "allow", `${TAILSCALE_UDP_PORT}/udp`], { sudo: true, ignoreError: true });
 }
 
 /** Get a human-readable UFW status summary */

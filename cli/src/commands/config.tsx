@@ -10,7 +10,12 @@ import { DataTable } from "@/components/DataTable.js";
 
 function isSensitive(key: string): boolean {
   const lower = key.toLowerCase();
-  return lower.includes("token") || lower.includes("secret") || lower.includes("password");
+  return (
+    lower.includes("token") ||
+    lower.includes("secret") ||
+    lower.includes("password") ||
+    lower.endsWith("_key")
+  );
 }
 
 

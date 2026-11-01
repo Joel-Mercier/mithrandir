@@ -20,17 +20,18 @@ When called with an app name, stops and removes the container, companion apps, a
 
 ## Full System Removal
 
-When called without an app argument, runs a guided 9-step removal with per-step prompts. Each destructive step can be individually accepted or skipped, allowing you to keep Docker and apps running independently:
+When called without an app argument, runs a guided 10-step removal with per-step prompts. Each destructive step can be individually accepted or skipped, allowing you to keep Docker and apps running independently:
 
 1. **Stop all apps** — Stops all Mithrandir-managed Docker containers
 2. **Remove systemd services** — Disables and removes `homelab-backup` timer/service, `mithrandir-ui` service, and `mithrandir-tusd` service
 3. **Delete local backups** — Removes the backup directory (skippable)
 4. **Uninstall rclone** — Removes rclone binary and configuration (skippable)
-5. **Remove app data** — Deletes app data/config directories from the base directory (skippable)
-6. **Remove Docker** — Purges Docker Engine, containers, images, and volumes (skippable — choosing "no" keeps Docker and apps running independently)
-7. **Remove log files** — Cleans up `/var/log/homelab-backup.log`, restore log, and UI update log
-8. **Remove CLI** — Removes the `/usr/local/bin/mithrandir` symlink and update check cache
-9. **Remove configuration** — Deletes the `.env` file (skippable)
+5. **Remove Tailscale** — Logs the server out of your tailnet, removes the Tailscale firewall rules, and uninstalls the package (skippable, only shown when Tailscale is installed). If you are connected through Tailscale, your session will drop
+6. **Remove app data** — Deletes app data/config directories from the base directory (skippable)
+7. **Remove Docker** — Purges Docker Engine, containers, images, and volumes (skippable — choosing "no" keeps Docker and apps running independently)
+8. **Remove log files** — Cleans up `/var/log/homelab-backup.log`, restore log, and UI update log
+9. **Remove CLI** — Removes the `/usr/local/bin/mithrandir` symlink and update check cache
+10. **Remove configuration** — Deletes the `.env` file (skippable)
 
 ## Flags
 

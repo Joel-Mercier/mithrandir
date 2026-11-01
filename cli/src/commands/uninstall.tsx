@@ -9,7 +9,8 @@ import { loadEnvConfig, getProjectRoot } from "@/lib/config.js";
 import { regenerateCaddyfile } from "@/lib/caddy.js";
 import { regenerateGatusConfig } from "@/lib/gatus.js";
 import { deregisterSsoClient } from "@/lib/sso.js";
-import { isUfwActive, removeAppPorts } from "@/lib/ufw.js";
+import { isUfwActive, removeAppPorts, removeTailscaleTraffic } from "@/lib/ufw.js";
+import { isTailscaleInstalled, uninstallTailscale } from "@/lib/tailscale.js";
 import {
   stopAllApps,
   removeAllSystemdUnits,
@@ -263,6 +264,7 @@ type RemovePhase =
   | "running"
   | "confirm-backups"
   | "confirm-rclone"
+  | "confirm-tailscale"
   | "confirm-appdata"
   | "confirm-docker"
   | "confirm-env"
@@ -363,7 +365,7 @@ function SystemRemoveInteractive({ autoYes }: { autoYes: boolean }) {
       addStep({ name: "rclone", status: "skipped", message: "Kept" });
     }
 
-    await continueFromAppData(options, resolvedBaseDir);
+    await continueFromTailscale(options, resolvedBaseDir);
   }
 
   async function doRemoveRclone() {
@@ -374,6 +376,34 @@ function SystemRemoveInteractive({ autoYes }: { autoYes: boolean }) {
       name: "rclone",
       status: removed ? "done" : "skipped",
       message: removed ? "Removed" : "Not installed",
+    });
+  }
+
+  async function continueFromTailscale(
+    options: { skipAppData: boolean; skipDocker: boolean; skipEnv: boolean },
+    resolvedBaseDir: string,
+  ) {
+    // Step 4b: Remove Tailscale (only when installed)
+    if (await isTailscaleInstalled()) {
+      if (!autoYes) {
+        setPhase("confirm-tailscale");
+        return;
+      }
+      await doRemoveTailscale();
+    }
+
+    await continueFromAppData(options, resolvedBaseDir);
+  }
+
+  async function doRemoveTailscale() {
+    setPhase("running");
+    setCurrentLabel("Logging out and uninstalling Tailscale...");
+    await removeTailscaleTraffic();
+    const removed = await uninstallTailscale();
+    addStep({
+      name: "Tailscale",
+      status: removed ? "done" : "skipped",
+      message: removed ? "Logged out and removed" : "Not installed",
     });
   }
 
@@ -502,7 +532,7 @@ function SystemRemoveInteractive({ autoYes }: { autoYes: boolean }) {
 
   async function handleConfirmRclone() {
     await doRemoveRclone();
-    await continueFromAppData(
+    await continueFromTailscale(
       { skipAppData: false, skipDocker: false, skipEnv: false },
       baseDir,
     );
@@ -510,6 +540,22 @@ function SystemRemoveInteractive({ autoYes }: { autoYes: boolean }) {
 
   async function handleSkipRclone() {
     addStep({ name: "rclone", status: "skipped", message: "Kept" });
+    await continueFromTailscale(
+      { skipAppData: false, skipDocker: false, skipEnv: false },
+      baseDir,
+    );
+  }
+
+  async function handleConfirmTailscale() {
+    await doRemoveTailscale();
+    await continueFromAppData(
+      { skipAppData: false, skipDocker: false, skipEnv: false },
+      baseDir,
+    );
+  }
+
+  async function handleSkipTailscale() {
+    addStep({ name: "Tailscale", status: "skipped", message: "Kept" });
     await continueFromAppData(
       { skipAppData: false, skipDocker: false, skipEnv: false },
       baseDir,
@@ -619,6 +665,18 @@ function SystemRemoveInteractive({ autoYes }: { autoYes: boolean }) {
           <Box marginTop={1}>
             <Text>Remove? </Text>
             <ConfirmInput onConfirm={handleConfirmRclone} onCancel={handleSkipRclone} />
+          </Box>
+        </Box>
+      )}
+
+      {phase === "confirm-tailscale" && (
+        <Box flexDirection="column" marginTop={1}>
+          <Text>Log out of Tailscale and uninstall it?</Text>
+          <Text dimColor>  This server will leave your tailnet. If you are connected through Tailscale,</Text>
+          <Text dimColor>  your session will drop — use the LAN address instead.</Text>
+          <Box marginTop={1}>
+            <Text>Remove? </Text>
+            <ConfirmInput onConfirm={handleConfirmTailscale} onCancel={handleSkipTailscale} />
           </Box>
         </Box>
       )}

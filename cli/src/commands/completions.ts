@@ -35,7 +35,7 @@ function generateBash(): string {
   const cmds = SUBCOMMANDS.join(" ");
   const appCmds = APP_COMMANDS.join("|");
   const backupSubs = BACKUP_SUBCOMMANDS.join(" ");
-  const installTargets = `docker backup https firewall ${stacks} ${apps}`;
+  const installTargets = `docker backup https firewall tailscale ${stacks} ${apps}`;
 
   const logServiceMap = getLogServiceMap();
   const logServiceCases = [...logServiceMap.entries()]
@@ -117,7 +117,7 @@ _mithrandir() {
     args)
       case \${words[2]} in
         install)
-          compadd -- docker backup https firewall ${stacks} ${apps}
+          compadd -- docker backup https firewall tailscale ${stacks} ${apps}
           ;;
         start|stop|restart|reinstall|uninstall|update)
           compadd -- ${apps}
@@ -184,6 +184,7 @@ function generateFish(): string {
   lines.push(`complete -c mithrandir -n '__fish_seen_subcommand_from install' -a 'backup'`);
   lines.push(`complete -c mithrandir -n '__fish_seen_subcommand_from install' -a 'https'`);
   lines.push(`complete -c mithrandir -n '__fish_seen_subcommand_from install' -a 'firewall'`);
+  lines.push(`complete -c mithrandir -n '__fish_seen_subcommand_from install' -a 'tailscale'`);
   for (const stack of stacks) {
     lines.push(
       `complete -c mithrandir -n '__fish_seen_subcommand_from install' -a '${stack}'`,

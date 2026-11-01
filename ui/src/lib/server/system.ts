@@ -40,6 +40,14 @@ import {
 import { getSwapInfo, formatSwapSize } from "@mithrandir/cli/lib/swap";
 import { isTimerActive } from "@mithrandir/cli/lib/systemd";
 import {
+	daysUntilKeyExpiry,
+	getPendingRoutes,
+	getTailscaleStatus,
+	resolveTailscaleSettings,
+	TAILSCALE_ADMIN_URL,
+} from "@mithrandir/cli/lib/tailscale";
+import {
+	allowTailscaleTraffic,
 	enableUfw,
 	installUfw,
 	installUfwDocker,
@@ -616,6 +624,11 @@ export const enableFirewall = createServerFn({ method: "POST" }).handler(
 			await syncAllAppPorts(installedApps);
 		}
 
+		// Keep the tailnet reachable when Tailscale is set up
+		if (envConfig.ENABLE_TAILSCALE === "true") {
+			await allowTailscaleTraffic();
+		}
+
 		// Save to .env
 		envConfig.ENABLE_FIREWALL = "true";
 		await saveEnvConfig(envConfig, projectRoot);
@@ -958,6 +971,78 @@ export const runDoctor = createServerFn({ method: "GET" }).handler(
 									hint: "Run `mithrandir install firewall`",
 								},
 					);
+				}
+			}
+		}
+
+		// Tailscale (optional)
+		if (envConfig.ENABLE_TAILSCALE !== "true") {
+			results.push({
+				category: "System",
+				name: "Tailscale",
+				status: "pass",
+				message: "Not enabled (optional)",
+			});
+		} else {
+			const ts = await getTailscaleStatus();
+			if (!ts.installed) {
+				results.push({
+					category: "System",
+					name: "Tailscale",
+					status: "fail",
+					message: "ENABLE_TAILSCALE=true but Tailscale is not installed",
+					hint: "Run `mithrandir install tailscale`",
+				});
+			} else if (!ts.daemonRunning) {
+				results.push({
+					category: "System",
+					name: "Tailscale",
+					status: "fail",
+					message: "tailscaled is not running",
+					hint: "Run `sudo systemctl enable --now tailscaled`",
+				});
+			} else if (!ts.connected) {
+				results.push({
+					category: "System",
+					name: "Tailscale",
+					status: "fail",
+					message: `Not connected (state: ${ts.backendState})`,
+					hint: "Reconnect from Settings → Network or run `mithrandir install tailscale`",
+				});
+			} else {
+				results.push({
+					category: "System",
+					name: "Tailscale",
+					status: "pass",
+					message: `Connected as ${ts.dnsName ?? ts.hostname ?? "this device"}${ts.ipv4 ? ` (${ts.ipv4})` : ""}`,
+				});
+				const tsSettings = await resolveTailscaleSettings(envConfig);
+				const pending = getPendingRoutes(ts, tsSettings.advertiseRoutes);
+				const awaiting = [
+					...pending,
+					...(tsSettings.exitNode && !ts.exitNodeApproved ? ["exit node"] : []),
+				];
+				if (awaiting.length > 0) {
+					results.push({
+						category: "System",
+						name: "Tailscale routes",
+						status: "warn",
+						message: `Awaiting approval: ${awaiting.join(", ")}`,
+						hint: `Approve in ${TAILSCALE_ADMIN_URL} → Edit route settings`,
+					});
+				}
+				const days = daysUntilKeyExpiry(ts);
+				if (days !== null && days < 14) {
+					results.push({
+						category: "System",
+						name: "Tailscale key",
+						status: "warn",
+						message:
+							days <= 0
+								? "Device key has expired"
+								: `Device key expires in ${days} day(s)`,
+						hint: `Disable key expiry for this machine in ${TAILSCALE_ADMIN_URL}`,
+					});
 				}
 			}
 		}

@@ -39,6 +39,10 @@ La plupart des conteneurs Docker utilisent le **réseau bridge**, où ils commun
 - **Applications en réseau bridge** (la plupart des applications) : Les règles sont gérées via `ufw-docker allow <container> <port>`, qui fonctionne avec la chaîne iptables `DOCKER-USER`.
 - **Applications en réseau hôte** (Home Assistant, DuckDNS) : Les règles sont gérées via le standard `ufw allow <port>`, car Docker ne gère pas leurs entrées iptables.
 
+### Tailscale
+
+Si l'[accès à distance Tailscale](./remote-access) est activé, le pare-feu autorise également le trafic arrivant sur l'interface `tailscale0` ainsi que le port UDP `41641`, utilisé par Tailscale pour les connexions directes entre appareils. Ces règles sont ajoutées dans les deux cas : quand Tailscale est configuré sur un serveur qui a déjà le pare-feu, et quand le pare-feu est installé sur un serveur qui utilise déjà Tailscale.
+
 ## Assistant de configuration
 
 L'assistant de configuration inclut une étape pare-feu après l'installation des applications. Vous pouvez choisir de l'activer ou de l'ignorer. En mode `--yes`, le pare-feu est installé automatiquement.

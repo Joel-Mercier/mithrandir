@@ -14,6 +14,13 @@ import { isRcloneInstalled, isRcloneRemoteConfigured } from "@/lib/rclone.js";
 import { isTimerActive } from "@/lib/systemd.js";
 import { shell } from "@/lib/shell.js";
 import { isUfwInstalled, isUfwDockerInstalled, isUfwActive } from "@/lib/ufw.js";
+import {
+  TAILSCALE_ADMIN_URL,
+  daysUntilKeyExpiry,
+  getPendingRoutes,
+  getTailscaleStatus,
+  resolveTailscaleSettings,
+} from "@/lib/tailscale.js";
 import { getSwapInfo, formatSwapSize } from "@/lib/swap.js";
 import { existsSync } from "fs";
 import type { EnvConfig } from "@/types.js";
@@ -282,6 +289,81 @@ async function checkSystemdTimer(): Promise<CheckResult> {
   };
 }
 
+async function checkTailscale(envConfig: EnvConfig): Promise<CheckResult[]> {
+  const base = { category: "System", name: "Tailscale" } as const;
+  if (envConfig.ENABLE_TAILSCALE !== "true") {
+    return [{ ...base, status: "pass", message: "Not enabled (optional)" }];
+  }
+
+  const status = await getTailscaleStatus();
+  if (!status.installed) {
+    return [{
+      ...base,
+      status: "fail",
+      message: "ENABLE_TAILSCALE=true but Tailscale is not installed",
+      hint: "Run `mithrandir install tailscale` to install and connect it",
+    }];
+  }
+  if (!status.daemonRunning) {
+    return [{
+      ...base,
+      status: "fail",
+      message: "tailscaled is not running",
+      hint: "Run `sudo systemctl enable --now tailscaled`",
+    }];
+  }
+  if (!status.connected) {
+    return [{
+      ...base,
+      status: "fail",
+      message: `Not connected (state: ${status.backendState})`,
+      hint: status.backendState === "NeedsLogin"
+        ? "The device was logged out or its key expired — run `mithrandir install tailscale` to sign in again"
+        : "Run `mithrandir install tailscale` to reconnect",
+    }];
+  }
+
+  const results: CheckResult[] = [{
+    ...base,
+    status: "pass",
+    message: `Connected as ${status.dnsName ?? status.hostname ?? "this device"}${status.ipv4 ? ` (${status.ipv4})` : ""}`,
+  }];
+
+  const settings = await resolveTailscaleSettings(envConfig);
+  const pending = getPendingRoutes(status, settings.advertiseRoutes);
+  if (pending.length > 0) {
+    results.push({
+      ...base,
+      name: "Tailscale routes",
+      status: "warn",
+      message: `Subnet route ${pending.join(", ")} not approved yet`,
+      hint: `Approve it in ${TAILSCALE_ADMIN_URL} → Edit route settings`,
+    });
+  }
+  if (settings.exitNode && !status.exitNodeApproved) {
+    results.push({
+      ...base,
+      name: "Tailscale exit node",
+      status: "warn",
+      message: "Exit node not approved yet",
+      hint: `Approve it in ${TAILSCALE_ADMIN_URL} → Edit route settings`,
+    });
+  }
+
+  const days = daysUntilKeyExpiry(status);
+  if (days !== null && days < 14) {
+    results.push({
+      ...base,
+      name: "Tailscale key",
+      status: "warn",
+      message: days <= 0 ? "Device key has expired" : `Device key expires in ${days} day(s)`,
+      hint: `Disable key expiry for this machine in ${TAILSCALE_ADMIN_URL}`,
+    });
+  }
+
+  return results;
+}
+
 async function checkFirewall(envConfig: EnvConfig): Promise<CheckResult[]> {
   if (envConfig.ENABLE_FIREWALL !== "true") {
     return [{
@@ -391,7 +473,8 @@ async function runChecks(): Promise<CheckResult[]> {
   const swapCheck = await checkSwap();
 
   const firewallChecks = await checkFirewall(envConfig);
-  const results: CheckResult[] = [envCheck, ...dockerChecks, swapCheck, ...firewallChecks];
+  const tailscaleChecks = await checkTailscale(envConfig);
+  const results: CheckResult[] = [envCheck, ...dockerChecks, swapCheck, ...firewallChecks, ...tailscaleChecks];
 
   // App checks
   const stoppedCheck = await checkStoppedContainers(baseDir);

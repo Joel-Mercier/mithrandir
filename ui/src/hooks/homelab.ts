@@ -85,6 +85,14 @@ import {
 	runMigrations,
 } from "#/lib/server/update";
 import {
+	disconnectTailscale,
+	fetchTailscale,
+	startTailscaleLogin,
+	type TailscaleLoginInput,
+	type TailscaleSettingsInput,
+	updateTailscaleSettings,
+} from "#/lib/server/tailscale";
+import {
 	fetchRemoveInfo,
 	removeStopApps,
 	removeSystemdServices,
@@ -97,6 +105,7 @@ import {
 } from "#/lib/server/remove";
 
 export type { RemoveInfo } from "#/lib/server/remove";
+export type { TailscaleOverview } from "#/lib/server/tailscale";
 
 import type { SystemConfig } from "#/lib/types";
 import { invalidateKeys } from "#/lib/utils";
@@ -126,6 +135,7 @@ const keys = {
 		["homelab", "media-category", category, search ?? "", sortBy ?? "", sortDirection ?? ""],
 	browseDirectory: (path: string) => ["homelab", "browse-directory", path],
 	setupStatus: ["homelab", "setup-status"],
+	tailscale: ["homelab", "tailscale"],
 	systemRequirements: ["homelab", "setup", "system-requirements"],
 	appRegistry: ["homelab", "setup", "app-registry"],
 	wireguardPeers: ["homelab", "wireguard", "peers"],
@@ -890,5 +900,55 @@ export function useRemoveCleanup() {
 export function useRemoveConfig() {
 	return useMutation({
 		mutationFn: () => removeConfig(),
+	});
+}
+
+// ─── Tailscale ───────────────────────────────────────────────────────────────
+
+/** Tailscale status; polls fast while a login is in progress or routes await approval */
+export function useTailscale(enabled = true) {
+	return useQuery({
+		queryKey: keys.tailscale,
+		queryFn: () => fetchTailscale(),
+		enabled,
+		refetchInterval: (query) => {
+			const d = query.state.data;
+			if (!d) return 10_000;
+			if (d.login.inProgress) return 2_000;
+			if (d.pendingRoutes.length > 0 || d.exitNodePending) return 3_000;
+			return 30_000;
+		},
+	});
+}
+
+export function useStartTailscaleLogin() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (input: TailscaleLoginInput) =>
+			startTailscaleLogin({ data: input }),
+		onSettled: () => {
+			invalidateKeys(queryClient, [keys.tailscale, keys.config, keys.activity]);
+		},
+	});
+}
+
+export function useUpdateTailscaleSettings() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (input: TailscaleSettingsInput) =>
+			updateTailscaleSettings({ data: input }),
+		onSuccess: () => {
+			invalidateKeys(queryClient, [keys.tailscale, keys.config, keys.activity]);
+		},
+	});
+}
+
+export function useDisconnectTailscale() {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: () => disconnectTailscale(),
+		onSuccess: () => {
+			invalidateKeys(queryClient, [keys.tailscale, keys.config, keys.activity]);
+		},
 	});
 }

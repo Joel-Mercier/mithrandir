@@ -10,3 +10,5 @@ export function allowAppPorts(app: AppDefinition): Promise<void>;
 export function removeAppPorts(app: AppDefinition): Promise<void>;
 export function syncAllAppPorts(apps: AppDefinition[]): Promise<void>;
 export function getUfwStatus(): Promise<string>;
+export function allowTailscaleTraffic(): Promise<void>;
+export function removeTailscaleTraffic(): Promise<void>;

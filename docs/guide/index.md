@@ -14,6 +14,7 @@ Raspberry Pi 5 with 4 GB RAM running Raspberry Pi OS in headless mode. Other Deb
 - **Automatic backups** — Daily scheduled backups to local storage and cloud (Google Drive, etc.) via rclone, with configurable retention
 - **Disaster recovery** — Restore your entire homelab on a fresh machine from a remote backup with `mithrandir recover`
 - **HTTPS out of the box** — Wildcard HTTPS via Caddy reverse proxy with automatic Let's Encrypt certificates using DuckDNS
+- **Remote access** — Optional [Tailscale](./remote-access) setup to reach your apps from anywhere without opening ports on your router
 - **Auto-configuration** — Optional automatic setup of app integrations (Prowlarr → Sonarr/Radarr, Jellyfin libraries, etc.)
 - **Health monitoring** — Built-in health checks for Docker, disk space, backup freshness, and container status
 - **Self-updating** — Update the CLI and all container images with simple commands

@@ -66,7 +66,7 @@ Gérer les sauvegardes sans toucher au terminal :
 
 ### Assistant de configuration
 
-Configuration guidée étape par étape avec le même flux que l'assistant CLI, présenté sous forme de formulaire à étapes visuelles.
+Configuration guidée étape par étape avec le même flux que l'assistant CLI, présenté sous forme de formulaire à étapes visuelles. Elle comprend une étape optionnelle **Accès à distance** qui connecte le serveur à [Tailscale](./remote-access) et affiche le lien de connexion sous forme de QR code à scanner avec votre téléphone.
 
 ### Bibliothèque multimédia
 
@@ -82,7 +82,7 @@ Configurer votre homelab depuis des panneaux de paramètres à onglets :
 
 - **Général** — Répertoire de base, fuseau horaire, IDs utilisateur/groupe
 - **Sauvegarde** — Répertoire de sauvegarde, rétention, remotes rclone, chiffrement, planification
-- **Réseau** — HTTPS, DuckDNS, paramètres de pare-feu
+- **Réseau** — HTTPS, DuckDNS, pare-feu et [accès à distance Tailscale](./remote-access) (état de la connexion, connexion, routes en attente d'approbation, paramètres, déconnexion)
 - **À propos** — Informations système et détails de version
 
 ### Profil utilisateur

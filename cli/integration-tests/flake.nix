@@ -318,6 +318,51 @@ ENVEOF"""))
         '';
       };
 
+      # ---------------------------------------------------------------
+      # Test: tailscale — mithrandir install tailscale
+      # CI has no Tailscale account, so login uses a bogus auth key and
+      # is expected to fail. Everything before the login (apt install,
+      # tailscaled, IP forwarding for the auto-detected LAN) must work,
+      # a failed login must not set ENABLE_TAILSCALE, and doctor must
+      # report the disconnected state.
+      # ---------------------------------------------------------------
+      tailscaleTest = mkTest {
+        diskSize = "+4G";
+        testScript = ''
+          ${bootstrap}
+
+          code, output = vm.execute(
+            as_user("mithrandir install tailscale --yes --auth-key tskey-auth-invalid"),
+            timeout=600,
+          )
+          assert code != 0, f"Expected login with an invalid auth key to fail, got: {output}"
+
+          # Installed from the official apt repo and the daemon is running
+          vm.succeed("which tailscale")
+          vm.succeed("test -f /etc/apt/sources.list.d/tailscale.list")
+          vm.succeed("systemctl is-active tailscaled")
+
+          # The LAN is auto-detected (subnet router), so IP forwarding was enabled
+          vm.succeed("test -f /etc/sysctl.d/99-tailscale.conf")
+          vm.succeed("sysctl -n net.ipv4.ip_forward | grep -qx 1")
+
+          # A failed login must not mark Tailscale as enabled
+          vm.fail("grep -q '^ENABLE_TAILSCALE=true' /home/testuser/homelab/.env")
+
+          # Re-running is idempotent: Tailscale is detected as already installed
+          code, output = vm.execute(
+            as_user("mithrandir install tailscale --yes --auth-key tskey-auth-invalid"),
+            timeout=300,
+          )
+          assert "Already installed" in output, f"Expected 'Already installed', got: {output}"
+
+          # doctor reports the enabled-but-disconnected state with a hint
+          vm.succeed(as_user("echo 'ENABLE_TAILSCALE=true' >> /home/testuser/homelab/.env"))
+          code, output = vm.execute(as_user("mithrandir doctor"), timeout=120)
+          assert "Not connected" in output, f"Expected Tailscale 'Not connected' in doctor output, got: {output}"
+        '';
+      };
+
     in {
       packages.${system} = {
         default = gettingStartedTest.driver;
@@ -334,6 +379,8 @@ ENVEOF"""))
         update-interactive = updateTest.driverInteractive;
         firewall = firewallTest.driver;
         firewall-interactive = firewallTest.driverInteractive;
+        tailscale = tailscaleTest.driver;
+        tailscale-interactive = tailscaleTest.driverInteractive;
       };
 
       checks.${system} = {
@@ -344,6 +391,7 @@ ENVEOF"""))
         diagnostics = diagnosticsTest.driver;
         update = updateTest.driver;
         firewall = firewallTest.driver;
+        tailscale = tailscaleTest.driver;
       };
     };
 }

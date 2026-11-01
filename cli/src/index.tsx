@@ -54,6 +54,7 @@ const cli = meow(
     install backup                     Install rclone and backup systemd timer
     install https                      Install Caddy HTTPS reverse proxy
     install firewall                   Install UFW firewall with ufw-docker
+    install tailscale                  Install Tailscale for secure remote access
     reinstall <app>                    Reinstall an app (stop, remove, recreate)
     uninstall [app]                    Uninstall an app, or guided system removal
     ui                                 Build and serve the UI dashboard
@@ -79,6 +80,7 @@ const cli = meow(
     --since, -s               Show logs since timestamp or relative (log command)
     --remote, -r              Verify remote backups (backup verify)
     --extract, -x             Test extraction during verify (backup verify)
+    --auth-key                Tailscale auth key for unattended login (install tailscale)
     --help                    Show this help
     --version                 Show version
 
@@ -109,6 +111,8 @@ const cli = meow(
     $ mithrandir stop radarr
     $ mithrandir restart radarr
     $ mithrandir install radarr
+    $ mithrandir install tailscale
+    $ mithrandir install tailscale --yes --auth-key tskey-auth-xxxx
     $ mithrandir reinstall radarr
     $ mithrandir reinstall --yes radarr
     $ mithrandir log --follow --tail 100 radarr
@@ -151,6 +155,9 @@ const cli = meow(
         type: "boolean",
         shortFlag: "x",
         default: false,
+      },
+      authKey: {
+        type: "string",
       },
     },
   },
@@ -249,7 +256,7 @@ switch (command) {
     break;
 
   case "install":
-    runInstall(cli.input.slice(1));
+    runInstall(cli.input.slice(1), cli.flags);
     break;
 
   case "reinstall":

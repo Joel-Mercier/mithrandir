@@ -76,6 +76,7 @@ mithrandir install docker                   # Install Docker engine
 mithrandir install backup                   # Install rclone + backup systemd timer
 mithrandir install https                    # Install Caddy HTTPS reverse proxy
 mithrandir install firewall                 # Install UFW firewall with ufw-docker
+mithrandir install tailscale [--auth-key K] # Install Tailscale + join tailnet (remote access)
 mithrandir reinstall <app> [--yes]        # Reinstall an app from scratch
 mithrandir uninstall <app>                 # Uninstall a single app
 mithrandir uninstall [--yes]               # Full system removal (per-step prompts)
@@ -150,6 +151,9 @@ When `ENABLE_HTTPS=true`, compose generation filters port 443 from Pi-hole's ext
 ### Firewall (`cli/src/lib/ufw.ts`)
 `mithrandir install firewall` sets up UFW with the `ufw-docker` third-party utility. Standard UFW doesn't work with Docker (Docker bypasses iptables), so `ufw-docker` manages rules in the `DOCKER-USER` chain. For host-networked apps (Home Assistant, DuckDNS), regular `ufw allow` rules are used. For bridge-networked apps, `ufw-docker allow <container> <port>` is used. When `ENABLE_FIREWALL=true`, install/uninstall commands automatically add/remove UFW rules. SSH (port 22) is always allowed.
 
+### Tailscale / Remote Access (`cli/src/lib/tailscale.ts`)
+Opt-in remote access. Tailscale is installed **on the host** (apt repo `pkgs.tailscale.com`, falling back to the official install script) and is not an app in the registry. The flow is `mithrandir install tailscale`, the CLI setup step `setup-tailscale` (after Firewall, before the Backup timer), or the UI wizard step "Remote Access" (between AutoSetup and FirewallBackup). Shared Ink UI lives in `cli/src/components/TailscaleSetup.tsx` (`TailscaleSetup`, `TailscaleNotes`, `TAILSCALE_EXPLAINER`). The interactive flow goes hostname → share LAN (subnet router, auto-detected via `ip route`) → exit node → Tailscale SSH → browser login (URL + QR parsed from `tailscale up --qr` output) or auth key (`--auth-key` / `TAILSCALE_AUTH_KEY`, passed as `--auth-key=file:<tmp 0600>`). `tailscale up` always uses `--reset --accept-dns=false --operator=<user>`; already-connected nodes use `tailscale set` instead. Subnet routes and exit nodes need manual approval in the admin console: `waitForRouteApproval()` polls `tailscale status --json` (Enter skips). Settings persist to `.env` via `applyTailscaleSettingsToEnv()` (`TAILSCALE_ADVERTISE_ROUTES` is `auto|none|CIDRs`, because empty .env values are dropped). The auth key is never written by mithrandir. When `ENABLE_FIREWALL=true`, `allowTailscaleTraffic()` in `ufw.ts` adds `allow in on tailscale0` + `41641/udp`; this happens both in install tailscale and in install firewall. `doctor` checks install/daemon/connection, pending approvals, and key expiry under 14 days. Full `uninstall` has an optional Tailscale step after rclone. UI: server fns in `ui/src/lib/server/tailscale.ts` (`tailscale up` runs in the background with module-level login state, and the client polls `useTailscale()`); shared `ui/src/components/tailscale/TailscalePanel.tsx` is used by the setup step and the Settings → Network card.
+
 ### Documentation Site (`docs/`)
 VitePress static site in `docs/` folder (its own workspace `@mithrandir/docs`), served via Docker (Caddy). `mithrandir docs` builds the Docker image and starts the container on port 4173. `mithrandir docs stop` stops it. When Caddy HTTPS is enabled, `regenerateCaddyfile()` automatically adds/removes a `mithrandir-docs` reverse proxy entry. The docs container is not part of the app registry — it's managed separately. **When modifying any docs content, always apply the same changes to all translation directories (e.g. `docs/fr/`).** The translated docs mirror the English structure — every file under `docs/guide/` and `docs/reference/` has a counterpart under `docs/fr/`.
 
@@ -179,7 +183,7 @@ These allow programmatic access to the APIs of the above services.
 
 ## Configuration
 
-- **.env** — All configuration lives here. Core settings: `BASE_DIR`, `PUID`/`PGID`, `TZ`. Per-app secrets: DuckDNS, WireGuard, Spotify. Backup settings: `BACKUP_DIR` (default `/backups`), `LOCAL_RETENTION` (5), `REMOTE_RETENTION` (10), `RCLONE_REMOTES` (comma-separated rclone remotes, default `gdrive`; legacy `RCLONE_REMOTE` also supported), `APPS` (auto or comma-separated), `BACKUP_HOUR` (0-23, default 2 — hour when systemd timer runs), `BACKUP_PASSWORD` (optional, encrypts backups with AES-256-CBC). HTTPS settings: `ENABLE_HTTPS`, `ACME_EMAIL`. Firewall: `ENABLE_FIREWALL`. Not in git.
+- **.env** — All configuration lives here. Core settings: `BASE_DIR`, `PUID`/`PGID`, `TZ`. Per-app secrets: DuckDNS, WireGuard, Spotify. Backup settings: `BACKUP_DIR` (default `/backups`), `LOCAL_RETENTION` (5), `REMOTE_RETENTION` (10), `RCLONE_REMOTES` (comma-separated rclone remotes, default `gdrive`; legacy `RCLONE_REMOTE` also supported), `APPS` (auto or comma-separated), `BACKUP_HOUR` (0-23, default 2 — hour when systemd timer runs), `BACKUP_PASSWORD` (optional, encrypts backups with AES-256-CBC). HTTPS settings: `ENABLE_HTTPS`, `ACME_EMAIL`. Firewall: `ENABLE_FIREWALL`. Tailscale: `ENABLE_TAILSCALE`, `TAILSCALE_HOSTNAME`, `TAILSCALE_ADVERTISE_ROUTES`, `TAILSCALE_EXIT_NODE`, `TAILSCALE_SSH`, `TAILSCALE_AUTH_KEY` (optional). Not in git.
 - **.env.example** — Template with all available env vars and defaults. **When adding new env vars (e.g. app secrets), always add them to `.env.example` too.**
 
 ### Changelog (`docs/changelog.md`)
@@ -200,6 +204,7 @@ Tests use Bun's built-in test runner. All test files live in `cli/src/__tests__/
 - **`systemd.test.ts`** — Service and timer unit generation snapshots and content validation
 - **`swap.test.ts`** — `formatSwapSize()` GB/MB formatting and threshold edge cases
 - **`logger.test.ts`** — `Logger.format()` timestamp pattern, log path constants
+- **`tailscale.test.ts`** — Tailscale pure helpers: routes/CIDR/hostname parsing, env round-trip, LAN subnet extraction, `tailscale up`/`set` args, status JSON parsing, pending routes, key expiry, auth URL/QR extraction
 - **`prowlarr.test.ts`** — `ensureByparrProxy()` against an in-memory fake Prowlarr API: tag/proxy creation, idempotency, legacy FlareSolverr proxies left untouched
 
 Snapshots are stored in `cli/src/__tests__/__snapshots__/` and committed to git. Update with `bun test --update-snapshots` when compose/caddy generation logic changes.
@@ -215,13 +220,14 @@ Tests use Vitest with a dedicated config (`ui/vitest.config.ts`). Test files liv
 
 VM-based end-to-end tests using [nix-vm-test](https://github.com/numtide/nix-vm-test). A Nix flake in `cli/integration-tests/flake.nix` defines tests that spin up Debian 13 QEMU VMs. Uses the NixOS test driver Python API (`vm.succeed()`, `vm.wait_for_unit()`, etc.). Requires Linux with KVM — cannot run on macOS directly.
 
-Tests (all use Prowlarr as the test app):
+Tests (app tests use Prowlarr as the test app):
 - **`getting-started`** — Clone → `install.sh` → `mithrandir --help`
 - **`docker-install`** — `mithrandir install docker` + idempotency
 - **`app-lifecycle`** — Install/status/stop/start/restart/uninstall
 - **`backup-restore`** — Backup, verify, verify --extract, restore
 - **`diagnostics`** — version, config, health, doctor, capacity, status
 - **`update`** — `mithrandir update prowlarr --yes` + backup verification
+- **`tailscale`** — `mithrandir install tailscale` with a bogus auth key: install, daemon, IP forwarding, idempotency, doctor reports not connected
 
 ### CI Pipeline
 
@@ -230,7 +236,7 @@ GitHub Actions workflow (`.github/workflows/ci.yml`) runs on every push/PR to `m
 2. `bun run typecheck`
 3. `bun run build`
 4. `bun test`
-5. Integration tests (parallel matrix of 6 jobs): enables KVM, installs Nix, runs each VM test with Nix store caching via `nix-community/cache-nix-action`
+5. Integration tests (parallel matrix of 8 jobs): enables KVM, installs Nix, runs each VM test with Nix store caching via `nix-community/cache-nix-action`
 
 ## Key Constraints
 

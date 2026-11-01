@@ -24,6 +24,14 @@ mithrandir install <target>
 | `backup` | Install rclone and the backup systemd timer for scheduled backups |
 | `https` | Install Caddy as a wildcard HTTPS reverse proxy using DuckDNS DNS-01 challenge |
 | `firewall` | Install UFW firewall with ufw-docker for Docker-aware port control |
+| `tailscale` | Install Tailscale and connect the server to your tailnet for remote access. See [Remote Access](/guide/remote-access) |
+
+### Options
+
+| Option | Description |
+| --- | --- |
+| `--auth-key <key>` | `tailscale` only: Tailscale auth key (`tskey-auth-…`) for unattended login. Defaults to `TAILSCALE_AUTH_KEY` from `.env`. Without a key, a browser sign-in link and QR code are shown |
+| `--yes`, `-y` | `tailscale` only: skip prompts and use the settings from `.env` (or the defaults) |
 
 ### Stacks
 
@@ -58,3 +66,11 @@ Any app name from the registry can be used as a target. Available apps:
 - Some apps install companion apps automatically (e.g., `jellyseerr` installs `jellyfin`)
 - Stack installs skip apps that are already installed and include companion apps automatically
 - The `security` stack skips Caddy — install it separately with `mithrandir install https`
+- `install tailscale` is opt-in and asks for the device name, LAN sharing (subnet router), exit node and Tailscale SSH. Re-running it on a connected server updates the settings without signing in again. Subnet routes and exit nodes must be approved in the [Tailscale admin console](https://login.tailscale.com/admin/machines)
+
+## Examples
+
+```sh
+mithrandir install tailscale                                   # interactive, browser / QR sign-in
+mithrandir install tailscale --auth-key tskey-auth-xxxxx --yes # unattended
+```
