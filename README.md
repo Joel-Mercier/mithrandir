@@ -438,6 +438,7 @@ Checks configuration correctness across three categories: System (.env file, Doc
 | AdventureLog     | 8015      | Travel planning and adventure journal                                                   |
 | AFFiNE         | 3010      | Privacy-focused knowledge base and workspace                                            |
 | Bazarr         | 6767      | Subtitle manager for Sonarr and Radarr                                                  |
+| Byparr         | 8192      | FlareSolverr-compatible proxy to bypass Cloudflare (auto-installed with Prowlarr)       |
 | Caddy          | —         | HTTPS reverse proxy with automatic certificates (hidden, installed via `install https`) |
 | CookCLI        | 9080      | Recipe manager using the Cooklang markup language                                       |
 | Mealie         | 9925      | Self-hosted recipe manager and meal planner                                             |
@@ -459,7 +460,7 @@ Checks configuration correctness across three categories: System (.env file, Doc
 | Penpot         | 9001      | Open-source design and prototyping platform                                             |
 | Pi-hole        | 80        | Network-wide ad blocker and DNS server                                                  |
 | Profilarr      | 6868      | Quality profile manager for Radarr and Sonarr                                           |
-| Prowlarr       | 9696      | Indexer manager for the *Arr stack (also installs Flaresolverr)                         |
+| Prowlarr       | 9696      | Indexer manager for the *Arr stack (also installs Byparr)                               |
 | qBittorrent    | 8080      | BitTorrent client with web UI                                                           |
 | Radarr         | 7878      | Movie collection manager                                                                |
 | RetroAssembly  | 8001      | Personal retro game collection cabinet in your browser                                   |

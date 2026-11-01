@@ -48,7 +48,7 @@ mithrandir install security           # Install Caddy and Pi-hole
 
 Any app name from the registry can be used as a target. Available apps:
 
-`actualbudget`, `adventurelog`, `affine`, `audiobookshelf`, `bazarr`, `cookcli`, `duckdns`, `excalidraw`, `flaresolverr`, `gatus`, `glance`, `homarr`, `homeassistant`, `immich`, `jellyfin`, `jellyseerr`, `lidarr`, `mealie`, `memos`, `n8n`, `navidrome`, `omni-tools`, `openwebui`, `paperlessngx`, `penpot`, `pihole`, `profilarr`, `prowlarr`, `qbittorrent`, `radarr`, `retroassembly`, `seerr`, `sonarr`, `stirlingpdf`, `sure`, `tandoor`, `trip`, `vaultwarden`, `wireguard`, `yourspotify`, `youtarr`
+`actualbudget`, `adventurelog`, `affine`, `audiobookshelf`, `bazarr`, `byparr`, `cookcli`, `duckdns`, `excalidraw`, `flaresolverr`, `gatus`, `glance`, `homarr`, `homeassistant`, `immich`, `jellyfin`, `jellyseerr`, `lidarr`, `mealie`, `memos`, `n8n`, `navidrome`, `omni-tools`, `openwebui`, `paperlessngx`, `penpot`, `pihole`, `profilarr`, `prowlarr`, `qbittorrent`, `radarr`, `retroassembly`, `seerr`, `sonarr`, `stirlingpdf`, `sure`, `tandoor`, `trip`, `vaultwarden`, `wireguard`, `yourspotify`, `youtarr`
 
 ## Notes
 

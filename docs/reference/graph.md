@@ -23,7 +23,7 @@ Prowlarr ───► Radarr  ───► qBittorrent ───► /data/media/
     │         Sonarr  ───► qBittorrent ───► /data/media/tv     ───► Jellyfin
     └──────►  Lidarr  ───► qBittorrent ───► /data/media/music  ───► Navidrome
 
-FlareSolverr ───► Prowlarr  (CAPTCHA solving, auto-installed with Prowlarr)
+Byparr       ───► Prowlarr  (Cloudflare bypass, auto-installed with Prowlarr)
 Bazarr       ───► Radarr, Sonarr  (subtitle management)
 Seerr        ───► Radarr, Sonarr, Jellyfin  (media requests & discovery)
 Profilarr    ───► Radarr, Sonarr  (quality profile management)

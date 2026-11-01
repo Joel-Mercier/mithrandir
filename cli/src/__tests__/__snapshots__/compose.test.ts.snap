@@ -296,6 +296,24 @@ exports[`generateCompose app with containerPort mapping (Excalidraw) 1`] = `
 "
 `;
 
+exports[`generateCompose app with shm_size and tmpfs (Byparr) 1`] = `
+"services:
+  byparr:
+    image: ghcr.io/thephaseless/byparr:latest
+    container_name: byparr
+    environment:
+      - TZ=Etc/UTC
+    ports:
+      - 8192:8191
+    volumes:
+      - /home/test/byparr/config:/config
+    shm_size: "1gb"
+    tmpfs:
+      - /tmp:exec,mode=1777,size=1G
+    restart: unless-stopped
+"
+`;
+
 exports[`generateCompose Gluetun rawCompose (VPN routing off) 1`] = `
 "services:
   gluetun:

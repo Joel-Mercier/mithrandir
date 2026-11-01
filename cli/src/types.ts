@@ -43,6 +43,10 @@ export interface AppDefinition {
   environment?: Record<string, string>;
   /** Use `init: true` in compose */
   init?: boolean;
+  /** Shared memory size (compose `shm_size`, e.g. "1gb") — headless browsers need more than Docker's 64MB default */
+  shmSize?: string;
+  /** tmpfs mounts (compose `tmpfs`, e.g. "/tmp:exec,mode=1777,size=1G") to keep scratch I/O in RAM */
+  tmpfs?: string[];
   /** Use specific user in compose */
   user?: string;
   /** Healthcheck definition */
@@ -71,6 +75,9 @@ export interface AppDefinition {
   hidden?: boolean;
   /** Name of the parent app this companion belongs to (auto-installed/uninstalled with parent) */
   companionOf?: string;
+  /** Name of the app that supersedes this one. A replaced companion is no longer auto-installed
+   *  with its parent, but existing installs keep working and are still removed with the parent. */
+  replacedBy?: string;
   /** Additional container names for multi-container apps (for orphan cleanup during reinstall/install) */
   additionalContainers?: string[];
   /** Extra Caddy subdomains beyond the app name (e.g. adventurelog-api → backend port) */

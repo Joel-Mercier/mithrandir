@@ -200,6 +200,7 @@ Tests use Bun's built-in test runner. All test files live in `cli/src/__tests__/
 - **`systemd.test.ts`** — Service and timer unit generation snapshots and content validation
 - **`swap.test.ts`** — `formatSwapSize()` GB/MB formatting and threshold edge cases
 - **`logger.test.ts`** — `Logger.format()` timestamp pattern, log path constants
+- **`prowlarr.test.ts`** — `ensureByparrProxy()` against an in-memory fake Prowlarr API: tag/proxy creation, idempotency, legacy FlareSolverr proxies left untouched
 
 Snapshots are stored in `cli/src/__tests__/__snapshots__/` and committed to git. Update with `bun test --update-snapshots` when compose/caddy generation logic changes.
 

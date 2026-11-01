@@ -140,6 +140,7 @@ function guideSidebar(prefix = ""): DefaultTheme.SidebarItem[] {
               items: [
                 { text: "Glance", link: `${prefix}/guide/apps/glance` },
                 { text: "Homarr", link: `${prefix}/guide/apps/homarr` },
+                { text: "Byparr", link: `${prefix}/guide/apps/byparr` },
                 { text: "FlareSolverr", link: `${prefix}/guide/apps/flaresolverr` },
               ],
             },

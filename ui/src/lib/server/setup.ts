@@ -41,6 +41,7 @@ import {
 } from "@mithrandir/cli/lib/lidarr";
 import {
 	createProwlarrClient,
+	ensureByparrProxy,
 	getProwlarrApiKey,
 } from "@mithrandir/cli/lib/prowlarr";
 // Auto-setup API clients
@@ -711,6 +712,20 @@ export const autoSetupApp = createServerFn({ method: "POST" })
 							});
 						} catch (err: unknown) {
 							warnings.push(err instanceof Error ? err.message : String(err));
+						}
+					}
+					// Register Byparr (Cloudflare bypass) as an indexer proxy, tagged "byparr"
+					const byparr = getApp("byparr");
+					if (hasApp("byparr") && byparr?.port) {
+						try {
+							await ensureByparrProxy(
+								client,
+								`http://${localIp}:${byparr.port}`,
+							);
+						} catch (err: unknown) {
+							warnings.push(
+								`Register Byparr indexer proxy: ${err instanceof Error ? err.message : String(err)}`,
+							);
 						}
 					}
 				}

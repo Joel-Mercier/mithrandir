@@ -59,3 +59,10 @@ export function createProwlarrClient(options: ProwlarrClientOptions): {
 };
 
 export type ProwlarrClient = ReturnType<typeof createProwlarrClient>;
+
+export const BYPARR_PROXY_TAG: string;
+
+export function ensureByparrProxy(
+	client: ProwlarrClient,
+	byparrUrl: string,
+): Promise<"created" | "exists">;

@@ -221,8 +221,8 @@ function DependencyGraphPage() {
 							<div className="space-y-1.5">
 								<div className="flex flex-wrap items-center gap-y-2">
 									<AppNode
-										name="flaresolverr"
-										label="FlareSolverr"
+										name="byparr"
+										label="Byparr"
 										installedNames={installedNames}
 									/>
 									<Arrow />

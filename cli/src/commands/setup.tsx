@@ -12,7 +12,7 @@ import {
   getComposePath,
   getConfigPaths,
   filterConflicts,
-  getCompanionApps,
+  withCompanionApps,
 } from "@/lib/apps.js";
 import {
   isDockerInstalled,
@@ -64,7 +64,7 @@ import type { AppDefinition, EnvConfig, SecretDefinition } from "@/types.js";
 import { existsSync } from "fs";
 import { homedir } from "os";
 import { createQBittorrentClient, getQBittorrentCredentials } from "@/lib/qbittorrent.js";
-import { createProwlarrClient, getProwlarrApiKey } from "@/lib/prowlarr.js";
+import { createProwlarrClient, ensureByparrProxy, getProwlarrApiKey } from "@/lib/prowlarr.js";
 import { createRadarrClient, getRadarrApiKey } from "@/lib/radarr.js";
 import { createSonarrClient, getSonarrApiKey } from "@/lib/sonarr.js";
 import { createLidarrClient, getLidarrApiKey } from "@/lib/lidarr.js";
@@ -465,9 +465,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
     useEffect(() => {
       if (autoYes) {
         const allApps = APP_REGISTRY.filter((app) => !app.hidden);
-        const filtered = filterConflicts(allApps);
-        const withCompanions = filtered.flatMap((app) => [app, ...getCompanionApps(app.name)]);
-        setSelectedApps(withCompanions);
+        setSelectedApps(withCompanionApps(filterConflicts(allApps)));
         setStep("check-secrets");
       }
     }, []);
@@ -502,9 +500,7 @@ export function SetupCommand({ flags }: SetupCommandProps) {
       const apps = [...resolved]
         .map((name) => getApp(name))
         .filter((a): a is AppDefinition => a !== undefined);
-      const filtered = filterConflicts(apps);
-      const withCompanions = filtered.flatMap((app) => [app, ...getCompanionApps(app.name)]);
-      setSelectedApps(withCompanions);
+      setSelectedApps(withCompanionApps(filterConflicts(apps)));
 
       if (added.length > 0) {
         setAutoAdded(added);
@@ -1686,6 +1682,15 @@ function AutoSetupAppsStep({ selectedApps, envConfig, localIp, autoYes, onComple
                   { order: 2, name: "apiKey", label: "API Key", value: arrApiKey },
                 ],
               }));
+            } catch (err: any) {
+              warnings.push(err.message);
+            }
+          }
+          // Register Byparr (Cloudflare bypass) as an indexer proxy, tagged "byparr"
+          const byparr = getApp("byparr");
+          if (hasApp("byparr") && byparr?.port) {
+            try {
+              await apiCall("Register Byparr indexer proxy", () => ensureByparrProxy(client, `http://${localIp}:${byparr.port}`));
             } catch (err: any) {
               warnings.push(err.message);
             }

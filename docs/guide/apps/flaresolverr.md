@@ -2,6 +2,10 @@
 
 Proxy server to bypass Cloudflare protection — used by Prowlarr to access Cloudflare-protected indexers.
 
+::: warning Replaced by Byparr
+FlareSolverr no longer bypasses Cloudflare reliably, so new installs use [Byparr](./byparr) instead. Existing FlareSolverr installs are left untouched and keep working with Mithrandir (status, backups, updates). See [Switching from FlareSolverr](./byparr#setup-in-prowlarr) to move over.
+:::
+
 | | |
 | --- | --- |
 | **Image** | `ghcr.io/flaresolverr/flaresolverr:latest` |
@@ -18,9 +22,14 @@ Proxy server to bypass Cloudflare protection — used by Prowlarr to access Clou
 
 ## Installation
 
-FlareSolverr is installed automatically as a companion to [Prowlarr](./prowlarr). You don't need to install it separately.
+FlareSolverr is no longer installed with [Prowlarr](./prowlarr) — [Byparr](./byparr) is installed instead. You can still install it manually if you need it:
+
+```sh
+mithrandir install flaresolverr
+```
 
 ## Notes
 
 - This is a hidden app — it doesn't appear in the setup wizard's app selection
 - It's included in backups and status checks like any other app
+- Uninstalling Prowlarr also removes FlareSolverr

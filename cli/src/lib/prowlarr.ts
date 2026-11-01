@@ -157,6 +157,31 @@ export interface IndexerResource {
   sortName?: string | null;
 }
 
+// Tag
+export interface TagResource {
+  id?: number;
+  label?: string | null;
+}
+
+// IndexerProxy (FlareSolverr, HTTP, SOCKS…)
+export interface IndexerProxyResource {
+  id?: number;
+  name?: string | null;
+  fields?: Field[] | null;
+  implementationName?: string | null;
+  implementation?: string | null;
+  configContract?: string | null;
+  infoLink?: string | null;
+  message?: ProviderMessage;
+  tags?: number[] | null;
+  presets?: IndexerProxyResource[] | null;
+  link?: string | null;
+  onHealthIssue?: boolean;
+  supportsOnHealthIssue?: boolean;
+  includeHealthWarnings?: boolean;
+  testCommand?: string | null;
+}
+
 // ---------------------------------------------------------------------------
 // API key retrieval from config.xml
 // ---------------------------------------------------------------------------
@@ -271,7 +296,105 @@ export function createProwlarrClient(options: ProwlarrClientOptions) {
         post<void>(`/api/v1/indexer/test?forceTest=${forceTest}`, resource),
       testAll: () => post<void>("/api/v1/indexer/testall", {}),
     },
+
+    // -----------------------------------------------------------------------
+    // Tag  /api/v1/tag
+    // -----------------------------------------------------------------------
+    tag: {
+      getAll: () => get<TagResource[]>("/api/v1/tag"),
+      create: (resource: TagResource) => post<TagResource>("/api/v1/tag", resource),
+    },
+
+    // -----------------------------------------------------------------------
+    // IndexerProxy  /api/v1/indexerproxy
+    // -----------------------------------------------------------------------
+    indexerProxy: {
+      getAll: () => get<IndexerProxyResource[]>("/api/v1/indexerproxy"),
+      getById: (id: number) => get<IndexerProxyResource>(`/api/v1/indexerproxy/${id}`),
+      create: (resource: IndexerProxyResource, forceSave = false) =>
+        post<IndexerProxyResource>(`/api/v1/indexerproxy?forceSave=${forceSave}`, resource),
+      update: (id: number, resource: IndexerProxyResource, forceSave = false) =>
+        put<IndexerProxyResource>(`/api/v1/indexerproxy/${id}?forceSave=${forceSave}`, resource),
+      delete: (id: number) => del(`/api/v1/indexerproxy/${id}`),
+      getSchema: () => get<IndexerProxyResource[]>("/api/v1/indexerproxy/schema"),
+      test: (resource: IndexerProxyResource, forceTest = false) =>
+        post<void>(`/api/v1/indexerproxy/test?forceTest=${forceTest}`, resource),
+    },
   };
 }
 
 export type ProwlarrClient = ReturnType<typeof createProwlarrClient>;
+
+// ---------------------------------------------------------------------------
+// Byparr indexer proxy registration
+// ---------------------------------------------------------------------------
+
+/** Tag that routes an indexer through Byparr — add it to Cloudflare-protected indexers */
+export const BYPARR_PROXY_TAG = "byparr";
+const BYPARR_PROXY_NAME = "Byparr";
+
+/** Read a provider field value by name */
+function getFieldValue(resource: { fields?: Field[] | null }, name: string): unknown {
+  return resource.fields?.find((f) => f.name === name)?.value;
+}
+
+/** True when a configured indexer proxy already points at the given Byparr URL */
+function isByparrProxy(proxy: IndexerProxyResource, byparrUrl: string): boolean {
+  if (proxy.name?.toLowerCase() === BYPARR_PROXY_NAME.toLowerCase()) return true;
+  if (proxy.implementation !== "FlareSolverr") return false;
+  const host = getFieldValue(proxy, "host");
+  if (typeof host !== "string") return false;
+  try {
+    const a = new URL(host);
+    const b = new URL(byparrUrl);
+    return a.hostname === b.hostname && a.port === b.port;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Register Byparr as an indexer proxy in Prowlarr, tagged `byparr`.
+ *
+ * Byparr speaks the FlareSolverr API, so it uses Prowlarr's built-in FlareSolverr proxy
+ * implementation. Idempotent: does nothing when a proxy already targets Byparr. A legacy
+ * FlareSolverr proxy (different host/port) is left untouched, together with its tag.
+ *
+ * Saved with forceSave: Prowlarr's save-time test makes Byparr launch its browser and
+ * solve a page, which can exceed the test timeout on a cold container.
+ */
+export async function ensureByparrProxy(
+  client: ProwlarrClient,
+  byparrUrl: string,
+): Promise<"created" | "exists"> {
+  const proxies = await client.indexerProxy.getAll();
+  if (proxies.some((p) => isByparrProxy(p, byparrUrl))) return "exists";
+
+  const tags = await client.tag.getAll();
+  let tag = tags.find((t) => t.label?.toLowerCase() === BYPARR_PROXY_TAG);
+  if (!tag) tag = await client.tag.create({ label: BYPARR_PROXY_TAG });
+  if (tag.id === undefined) throw new Error(`Prowlarr did not return an id for tag "${BYPARR_PROXY_TAG}"`);
+
+  // Start from Prowlarr's own schema so field names/defaults always match its version
+  const schema = await client.indexerProxy.getSchema();
+  const template = schema.find((s) => s.implementation === "FlareSolverr");
+  if (!template) throw new Error("Prowlarr has no FlareSolverr indexer proxy implementation");
+
+  const fields = (template.fields ?? []).map((f) => {
+    if (f.name === "host") return { ...f, value: byparrUrl };
+    if (f.name === "requestTimeout") return { ...f, value: 60 };
+    return f;
+  });
+
+  const { id: _id, presets: _presets, ...base } = template;
+  await client.indexerProxy.create(
+    {
+      ...base,
+      name: BYPARR_PROXY_NAME,
+      fields,
+      tags: [tag.id],
+    },
+    true,
+  );
+  return "created";
+}

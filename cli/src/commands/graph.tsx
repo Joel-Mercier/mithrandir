@@ -78,7 +78,7 @@ function GraphDisplay() {
 
       <Box marginTop={1} marginLeft={2} flexDirection="column">
         <Text>
-          <AppName name="flaresolverr" installedApps={i} /> <Arrow /> <AppName name="prowlarr" installedApps={i} />  <Text dimColor>(CAPTCHA solving, auto-installed with Prowlarr)</Text>
+          <AppName name="byparr" installedApps={i} />       <Arrow /> <AppName name="prowlarr" installedApps={i} />  <Text dimColor>(Cloudflare bypass, auto-installed with Prowlarr)</Text>
         </Text>
         <Text>
           <AppName name="bazarr" installedApps={i} />       <Arrow /> <AppName name="radarr" installedApps={i} />, <AppName name="sonarr" installedApps={i} />  <Text dimColor>(subtitle management)</Text>
@@ -95,7 +95,7 @@ function GraphDisplay() {
         <Text bold>Recommended Installation Order</Text>
         <Text>{""}</Text>
         <Text><Text dimColor>1.</Text> qBittorrent  <Text dimColor>(download client — no dependencies)</Text></Text>
-        <Text><Text dimColor>2.</Text> Prowlarr     <Text dimColor>(indexer manager, auto-installs FlareSolverr)</Text></Text>
+        <Text><Text dimColor>2.</Text> Prowlarr     <Text dimColor>(indexer manager, auto-installs Byparr)</Text></Text>
         <Text><Text dimColor>3.</Text> Radarr       <Text dimColor>(movies — connects to qBittorrent + Prowlarr)</Text></Text>
         <Text><Text dimColor>4.</Text> Sonarr       <Text dimColor>(TV — connects to qBittorrent + Prowlarr)</Text></Text>
         <Text><Text dimColor>5.</Text> Lidarr       <Text dimColor>(music — connects to qBittorrent + Prowlarr)</Text></Text>

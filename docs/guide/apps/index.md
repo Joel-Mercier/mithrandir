@@ -125,4 +125,5 @@ mithrandir log <app> [service] # View logs
 | --- | --- | --- |
 | [Glance](./glance) | 8082 | Self-hosted dashboard with various widgets |
 | [Homarr](./homarr) | 7575 | Customizable server dashboard |
-| [FlareSolverr](./flaresolverr) | 8191 | Proxy server to bypass Cloudflare protection |
+| [Byparr](./byparr) | 8192 | FlareSolverr-compatible proxy to bypass Cloudflare protection |
+| [FlareSolverr](./flaresolverr) | 8191 | Proxy server to bypass Cloudflare protection (replaced by Byparr) |

@@ -480,6 +480,7 @@ export const APP_REGISTRY: AppDefinition[] = [
     needsDataDir: false,
     hidden: true,
     companionOf: "prowlarr",
+    replacedBy: "byparr",
     capacity: { performance: "medium", storage: "low", note: "Headless browser for CAPTCHA solving" },
     environment: {
       LOG_LEVEL: "info",
@@ -487,6 +488,25 @@ export const APP_REGISTRY: AppDefinition[] = [
       LOG_HTML: "false",
       CAPTCHA_SOLVER: "none",
     },
+  },
+  {
+    name: "byparr",
+    displayName: "Byparr",
+    description: "FlareSolverr-compatible proxy to bypass Cloudflare for Prowlarr",
+    image: "ghcr.io/thephaseless/byparr:latest",
+    icon: "https://cdn.jsdelivr.net/gh/selfhst/icons/png/byparr.png",
+    // Host port 8192 so Byparr can run alongside a legacy FlareSolverr (8191) on existing installs
+    port: 8192,
+    containerPort: 8191,
+    configSubdir: "config",
+    needsDataDir: false,
+    companionOf: "prowlarr",
+    // Camoufox (Firefox) needs more than Docker's 64MB /dev/shm, and its scratch files are
+    // kept in RAM to limit disk wear. /cache is NOT a tmpfs: the browser binary is baked
+    // into /cache in the image, and masking it forces a re-download on every start.
+    shmSize: "1gb",
+    tmpfs: ["/tmp:exec,mode=1777,size=1G"],
+    capacity: { performance: "medium", storage: "low", note: "Headless Firefox for Cloudflare challenge solving" },
   },
   {
     name: "omnitools",
@@ -1761,9 +1781,30 @@ export function filterConflicts(apps: AppDefinition[]): AppDefinition[] {
   return result;
 }
 
-/** Get all companion apps for a given parent app */
-export function getCompanionApps(parentName: string): AppDefinition[] {
-  return APP_REGISTRY.filter((app) => app.companionOf === parentName);
+/**
+ * Get the companion apps for a given parent app.
+ * Companions that have been superseded (`replacedBy`) are excluded unless `includeReplaced`
+ * is set — they must not be auto-installed anymore, but uninstalling the parent still cleans them up.
+ */
+export function getCompanionApps(
+  parentName: string,
+  options: { includeReplaced?: boolean } = {},
+): AppDefinition[] {
+  return APP_REGISTRY.filter(
+    (app) => app.companionOf === parentName && (options.includeReplaced || !app.replacedBy),
+  );
+}
+
+/** Expand a selection with each app's companions, keeping order and dropping duplicates */
+export function withCompanionApps(apps: AppDefinition[]): AppDefinition[] {
+  const seen = new Set<string>();
+  const result: AppDefinition[] = [];
+  for (const app of apps.flatMap((a) => [a, ...getCompanionApps(a.name)])) {
+    if (seen.has(app.name)) continue;
+    seen.add(app.name);
+    result.push(app);
+  }
+  return result;
 }
 
 /** Predefined app stacks for one-command installs */

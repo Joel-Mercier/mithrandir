@@ -109,8 +109,8 @@ function AppUninstallInteractive({
       addStep({ name: "Stop container", status: "skipped", message: "No docker-compose.yml found" });
     }
 
-    // Uninstall companion apps
-    const companions = getCompanionApps(appName);
+    // Uninstall companion apps (including superseded ones, e.g. a legacy FlareSolverr)
+    const companions = getCompanionApps(appName, { includeReplaced: true });
     for (const companion of companions) {
       const companionDir = getAppDir(companion, env.BASE_DIR);
       const companionComposePath = `${companionDir}/docker-compose.yml`;

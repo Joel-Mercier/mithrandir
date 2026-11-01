@@ -23,11 +23,11 @@ Gestionnaire d'indexeurs pour la stack *Arr — gère les indexeurs en un seul e
 mithrandir install prowlarr
 ```
 
-Prowlarr installe automatiquement [FlareSolverr](./flaresolverr) comme service compagnon pour contourner les indexeurs protégés par Cloudflare.
+Prowlarr installe automatiquement [Byparr](./byparr) comme service compagnon pour contourner les indexeurs protégés par Cloudflare. Les installations plus anciennes peuvent utiliser [FlareSolverr](./flaresolverr) à la place ; il continue de fonctionner et n'est pas supprimé.
 
 ## Configuration automatique
 
-Lorsqu'il est installé via l'assistant de configuration, Prowlarr est automatiquement configuré avec le nom d'utilisateur et le mot de passe fournis. Il enregistre également la stack *Arr comme applications dans Prowlarr (Sonarr, Radarr, Lidarr).
+Lorsqu'il est installé via l'assistant de configuration, Prowlarr est automatiquement configuré avec le nom d'utilisateur et le mot de passe fournis. Il enregistre également la stack *Arr comme applications dans Prowlarr (Sonarr, Radarr, Lidarr) et ajoute [Byparr](./byparr) comme proxy d'indexeur nommé `Byparr` avec le tag `byparr`.
 
 ::: warning
 Ne définissez pas qBittorrent comme client de téléchargement dans Prowlarr. Cela sera fait directement dans Radarr, Sonarr et Lidarr.
@@ -37,7 +37,7 @@ Ne définissez pas qBittorrent comme client de téléchargement dans Prowlarr. C
 
 - Allez dans l'interface web de Prowlarr et définissez la méthode d'authentification sur "Forms", puis configurez le nom d'utilisateur et le mot de passe avec les valeurs définies lors de l'assistant de configuration.
 - Dans **Settings → Apps**, ajoutez Radarr, Sonarr et Lidarr comme applications. Les clés API de chaque application se trouvent dans **Settings → General**.
-- Certains indexeurs sont derrière un captcha Cloudflare. Pour le contourner, allez dans **Settings → Indexers**, cliquez sur le signe "+" et définissez le proxy de l'indexeur sur `FlareSolverr`. Ajoutez le nom `Flaresolverr`, le tag `flaresolverr` et l'URL `http://<local ip>:8191`. Ensuite, pour chaque indexeur nécessitant un captcha, ajoutez le tag `flaresolverr` à l'indexeur.
+- Certains indexeurs sont derrière un captcha Cloudflare. L'assistant de configuration et `mithrandir install byparr` ajoutent déjà un proxy d'indexeur `Byparr` (dans **Settings → Indexers**) avec le tag `byparr`. Ajoutez le tag `byparr` à chaque indexeur nécessitant un captcha. Si le proxy est absent, consultez [Byparr](./byparr#configuration-dans-prowlarr) pour l'ajouter manuellement ou pour migrer un proxy FlareSolverr existant.
 - Ajoutez des indexeurs pour pouvoir trouver des torrents pour le contenu souhaité.
 
 La documentation officielle de Prowlarr est disponible [ici](https://wiki.servarr.com/en/prowlarr).

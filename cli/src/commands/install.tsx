@@ -31,6 +31,7 @@ import { isUiServiceActive } from "@/lib/systemd-ui.js";
 import { regenerateGatusConfig } from "@/lib/gatus.js";
 import { registerSsoClient } from "@/lib/sso.js";
 import { getLocalIp } from "@/lib/distro.js";
+import { BYPARR_PROXY_TAG, createProwlarrClient, ensureByparrProxy, getProwlarrApiKey } from "@/lib/prowlarr.js";
 import {
   isUfwInstalled,
   isUfwDockerInstalled,
@@ -43,6 +44,41 @@ import {
 } from "@/lib/ufw.js";
 import { Header } from "@/components/Header.js";
 import { AppStatus } from "@/components/AppStatus.js";
+
+type ProxyRegistrationResult = { name: string; status: "done" | "skipped"; message: string };
+
+/**
+ * Register Byparr as an indexer proxy in an installed Prowlarr.
+ * Returns null when Prowlarr isn't installed. Prowlarr may have just been started alongside
+ * Byparr, so wait (up to ~60s) for its config.xml API key and HTTP API to come up.
+ */
+async function registerByparrInProwlarr(env: EnvConfig): Promise<ProxyRegistrationResult | null> {
+  const prowlarr = getApp("prowlarr");
+  const byparr = getApp("byparr");
+  if (!prowlarr?.port || !byparr?.port || !existsSync(getComposePath(prowlarr, env.BASE_DIR))) return null;
+
+  const ip = await getLocalIp();
+  let lastError = "Prowlarr API key not found";
+  for (let attempt = 0; attempt < 30; attempt++) {
+    if (attempt > 0) await new Promise((r) => setTimeout(r, 2000));
+    const apiKey = await getProwlarrApiKey(env.BASE_DIR);
+    if (!apiKey) continue;
+    try {
+      const client = createProwlarrClient({ apiKey, baseUrl: `http://${ip}:${prowlarr.port}` });
+      const result = await ensureByparrProxy(client, `http://${ip}:${byparr.port}`);
+      return {
+        name: "Prowlarr",
+        status: "done",
+        message: result === "created"
+          ? `Byparr indexer proxy added — tag Cloudflare-protected indexers with "${BYPARR_PROXY_TAG}"`
+          : "Byparr indexer proxy already configured",
+      };
+    } catch (err: any) {
+      lastError = err.message;
+    }
+  }
+  return { name: "Prowlarr", status: "skipped", message: `Could not add Byparr indexer proxy (${lastError}) — add it manually` };
+}
 import { ProgressBar } from "@/components/ProgressBar.js";
 import { writeComposeAndStart } from "@/commands/setup.js";
 
@@ -729,7 +765,7 @@ function InstallApp({ appName }: { appName: string }) {
   const [appResults, setAppResults] = useState<
     Array<{ name: string; status: "done" | "error" | "skipped"; message?: string }>
   >([]);
-  const [phase, setPhase] = useState<"init" | "wg-conf" | "secrets" | "pulling" | "composing" | "caddy" | "gatus" | "done">("init");
+  const [phase, setPhase] = useState<"init" | "wg-conf" | "secrets" | "pulling" | "composing" | "caddy" | "gatus" | "prowlarr" | "done">("init");
   const [wgConfResolver, setWgConfResolver] = useState<{ resolve: () => void } | null>(null);
   const [wgConfMessage, setWgConfMessage] = useState<string | null>(null);
   const [currentAppName, setCurrentAppName] = useState("");
@@ -966,6 +1002,14 @@ function InstallApp({ appName }: { appName: string }) {
       }
     }
 
+    // Register Byparr as an indexer proxy when it (or Prowlarr with it) was just installed
+    if (appsToInstall.some((a) => a.name === "byparr")) {
+      setPhase("prowlarr");
+      setCurrentAppName("Prowlarr");
+      const result = await registerByparrInProwlarr(env);
+      if (result) setAppResults((prev) => [...prev, result]);
+    }
+
     // Regenerate Gatus config if Gatus is installed (and we're not installing Gatus itself)
     if (appName !== "gatus") {
       setPhase("gatus");
@@ -1058,6 +1102,7 @@ function InstallApp({ appName }: { appName: string }) {
             {phase === "composing" && " — starting container..."}
             {phase === "caddy" && " — updating HTTPS..."}
             {phase === "gatus" && " — updating health checks..."}
+            {phase === "prowlarr" && " — registering Byparr in Prowlarr..."}
           </Text>
           {phase === "pulling" && pullProgress > 0 && pullProgress < 100 && (
             <ProgressBar percent={pullProgress} />
@@ -1083,7 +1128,7 @@ function InstallStack({ stackName }: { stackName: string }) {
   const [appResults, setAppResults] = useState<
     Array<{ name: string; status: "done" | "error" | "skipped"; message?: string }>
   >([]);
-  const [phase, setPhase] = useState<"init" | "pulling" | "composing" | "caddy" | "done">("init");
+  const [phase, setPhase] = useState<"init" | "pulling" | "composing" | "caddy" | "prowlarr" | "done">("init");
   const [currentAppName, setCurrentAppName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pullProgress, setPullProgress] = useState(0);
@@ -1198,6 +1243,14 @@ function InstallStack({ stackName }: { stackName: string }) {
       }
     }
 
+    // Register Byparr as an indexer proxy when the stack installed it
+    if (appsToInstall.some(({ app }) => app.name === "byparr")) {
+      setPhase("prowlarr");
+      setCurrentAppName("Prowlarr");
+      const result = await registerByparrInProwlarr(env);
+      if (result) setAppResults((prev) => [...prev, result]);
+    }
+
     // Regenerate Gatus config if Gatus is installed
     setPhase("caddy");
     setCurrentAppName("Gatus");
@@ -1245,6 +1298,7 @@ function InstallStack({ stackName }: { stackName: string }) {
               {phase === "pulling" && " — pulling image..."}
               {phase === "composing" && " — starting container..."}
               {phase === "caddy" && " — updating HTTPS..."}
+              {phase === "prowlarr" && " — registering Byparr in Prowlarr..."}
             </Text>
             {phase === "pulling" && pullProgress > 0 && pullProgress < 100 && (
               <ProgressBar percent={pullProgress} />

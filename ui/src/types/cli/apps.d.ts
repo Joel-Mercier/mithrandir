@@ -29,6 +29,8 @@ export interface AppDefinition {
 	}>;
 	environment?: Record<string, string>;
 	init?: boolean;
+	shmSize?: string;
+	tmpfs?: string[];
 	user?: string;
 	healthcheck?: {
 		test: string;
@@ -49,6 +51,7 @@ export interface AppDefinition {
 	requiresHttps?: boolean;
 	hidden?: boolean;
 	companionOf?: string;
+	replacedBy?: string;
 	additionalContainers?: string[];
 	caddyExtraSubdomains?: Array<{ subdomain: string; port: number }>;
 	rawCompose?: (envConfig: Record<string, string>) => string;
@@ -76,7 +79,10 @@ export function getApp(name: string): AppDefinition | undefined;
 export function getConfigPaths(app: AppDefinition, baseDir: string): string[];
 export function getAllContainerNames(app: AppDefinition): string[];
 export function filterConflicts(apps: AppDefinition[]): AppDefinition[];
-export function getCompanionApps(appName: string): AppDefinition[];
+export function getCompanionApps(
+	appName: string,
+	options?: { includeReplaced?: boolean },
+): AppDefinition[];
 
 export interface AppDependency {
 	[appName: string]: string[];

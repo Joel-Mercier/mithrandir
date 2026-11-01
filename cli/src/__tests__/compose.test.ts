@@ -113,6 +113,17 @@ describe("generateCompose", () => {
     expect(output).toContain("5000:80");
   });
 
+  test("app with shm_size and tmpfs (Byparr)", () => {
+    const app = getApp("byparr")!;
+    const output = generateCompose(app, baseEnv);
+    expect(output).toMatchSnapshot();
+    expect(output).toContain("      - 8192:8191");
+    expect(output).toContain('    shm_size: "1gb"');
+    expect(output).toContain("      - /tmp:exec,mode=1777,size=1G");
+    // The browser binary lives in /cache inside the image — it must not be masked by a tmpfs
+    expect(output).not.toContain("/cache");
+  });
+
   test("app with init flag (Seerr)", () => {
     const app = getApp("seerr")!;
     const output = generateCompose(app, baseEnv);

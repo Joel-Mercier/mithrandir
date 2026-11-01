@@ -20,6 +20,7 @@ Lorsque vous exécutez `mithrandir capacity`, la CLI recueille les spécificatio
 | AdventureLog   | Moyen       | Moyen    | Backend Django avec base de données PostGIS                                           |
 | AFFiNE         | Moyen       | Moyen    | Base de connaissances avec PostgreSQL                                                 |
 | Bazarr         | Faible      | Faible   | Récupération de sous-titres, ressources minimales                                     |
+| Byparr         | Moyen       | Faible   | Firefox headless pour la résolution des challenges Cloudflare                         |
 | CookCLI        | Faible      | Faible   | Gestionnaire de recettes utilisant le langage de balisage Cooklang                    |
 | DuckDNS        | Faible      | Faible   | Mise à jour DNS, service en arrière-plan                                              |
 | Excalidraw     | Faible      | Faible   | Tableau blanc client, ressources serveur minimales                                    |

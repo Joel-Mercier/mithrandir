@@ -12,6 +12,7 @@ import {
   getConfigPaths,
   filterConflicts,
   getCompanionApps,
+  withCompanionApps,
   getStackNames,
   getStack,
 } from "@/lib/apps.js";
@@ -152,14 +153,31 @@ describe("filterConflicts", () => {
 });
 
 describe("getCompanionApps", () => {
-  test("returns FlareSolverr for Prowlarr", () => {
+  test("returns Byparr (not the replaced FlareSolverr) for Prowlarr", () => {
     const companions = getCompanionApps("prowlarr");
-    expect(companions.length).toBe(1);
-    expect(companions[0].name).toBe("flaresolverr");
+    expect(companions.map((a) => a.name)).toEqual(["byparr"]);
+  });
+
+  test("includeReplaced also returns the legacy FlareSolverr", () => {
+    const names = getCompanionApps("prowlarr", { includeReplaced: true }).map((a) => a.name);
+    expect(names).toContain("byparr");
+    expect(names).toContain("flaresolverr");
   });
 
   test("returns empty for apps without companions", () => {
     expect(getCompanionApps("sonarr")).toEqual([]);
+  });
+});
+
+describe("withCompanionApps", () => {
+  test("adds companions after their parent", () => {
+    const names = withCompanionApps([getApp("prowlarr")!, getApp("sonarr")!]).map((a) => a.name);
+    expect(names).toEqual(["prowlarr", "byparr", "sonarr"]);
+  });
+
+  test("does not duplicate a companion that was also selected explicitly", () => {
+    const names = withCompanionApps([getApp("byparr")!, getApp("prowlarr")!]).map((a) => a.name);
+    expect(names).toEqual(["byparr", "prowlarr"]);
   });
 });
 
@@ -290,6 +308,18 @@ describe("registry field constraints", () => {
     const companions = APP_REGISTRY.filter((app) => app.companionOf);
     for (const app of companions) {
       expect(validNames.has(app.companionOf!)).toBe(true);
+    }
+  });
+
+  test("replaced apps point to a valid replacement that can run alongside them", () => {
+    const replaced = APP_REGISTRY.filter((app) => app.replacedBy);
+    for (const app of replaced) {
+      const replacement = getApp(app.replacedBy!);
+      expect(replacement).toBeDefined();
+      expect(replacement!.replacedBy).toBeUndefined();
+      // Existing installs keep the old app, so the replacement must not collide with it
+      expect(replacement!.port).not.toBe(app.port);
+      expect(getContainerName(replacement!)).not.toBe(getContainerName(app));
     }
   });
 

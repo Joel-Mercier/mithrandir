@@ -222,6 +222,17 @@ export function generateCompose(
     }
   }
 
+  // Shared memory / RAM-backed scratch dirs
+  if (app.shmSize) {
+    lines.push(`    shm_size: "${app.shmSize}"`);
+  }
+  if (app.tmpfs && app.tmpfs.length > 0) {
+    lines.push("    tmpfs:");
+    for (const mount of app.tmpfs) {
+      lines.push(`      - ${mount}`);
+    }
+  }
+
   // Healthcheck
   if (app.healthcheck) {
     lines.push("    healthcheck:");

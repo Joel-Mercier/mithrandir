@@ -20,6 +20,7 @@ When you run `mithrandir capacity`, the CLI gathers your system's hardware specs
 | AdventureLog   | Medium      | Medium  | Django backend with PostGIS database                                      |
 | AFFiNE         | Medium      | Medium  | Knowledge base with PostgreSQL                                            |
 | Bazarr         | Low         | Low     | Subtitle fetching, minimal resources                                      |
+| Byparr         | Medium      | Low     | Headless Firefox for Cloudflare challenge solving                         |
 | CookCLI        | Low         | Low     | Recipe manager using the Cooklang markup language                         |
 | DuckDNS        | Low         | Low     | DNS updater, background service                                           |
 | Excalidraw     | Low         | Low     | Client-side whiteboard, minimal server resources                          |
