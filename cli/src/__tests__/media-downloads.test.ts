@@ -135,7 +135,7 @@ describe("media management", () => {
   });
 
   test("uses the arr-specific unmonitor key", () => {
-    const fixed = applyMediaManagementSettings({ id: 1 }, radarr);
+    const fixed = applyMediaManagementSettings<Record<string, unknown>>({ id: 1 }, radarr);
     expect(fixed).toEqual({ id: 1, autoUnmonitorPreviouslyDownloadedMovies: true, copyUsingHardlinks: true });
   });
 });

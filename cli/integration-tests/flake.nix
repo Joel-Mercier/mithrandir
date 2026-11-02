@@ -2,7 +2,9 @@
   description = "Mithrandir integration tests — VM-based end-to-end testing";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
+    # Pinned to a stable release: nixos-unstable marked libguestfs (needed by
+    # nix-vm-test for virt-customize) broken after the fuse2 removal.
+    nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-26.05";
     nix-vm-test = {
       url = "github:numtide/nix-vm-test";
       inputs.nixpkgs.follows = "nixpkgs";
